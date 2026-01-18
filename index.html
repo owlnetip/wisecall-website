@@ -1158,6 +1158,7 @@
             <h3>Get Started</h3>
             <p>Fill in your details and we'll be in touch shortly.</p>
             <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST">
+                <input type="hidden" id="inquiryType" name="inquiry_type" value="General Contact">
                 <div class="form-group">
                     <label for="name">Name</label>
                     <input type="text" id="name" name="name" placeholder="Your name" required>
@@ -1192,8 +1193,8 @@
                 <li><a href="#benefits">Benefits</a></li>
                 <li><a href="#pricing">Pricing</a></li>
                 <li><a href="#about">About</a></li>
-                <li><a href="#" class="contact-link">Contact</a></li>
-                <li><a href="#" class="cta-button contact-link">Start Free Trial</a></li>
+                <li><a href="#" class="contact-link" data-inquiry="General Contact">Contact</a></li>
+                <li><a href="#" class="cta-button contact-link" data-inquiry="Free Trial">Start Free Trial</a></li>
             </ul>
         </nav>
     </header>
@@ -1408,7 +1409,7 @@
                     <span class="period">per month</span>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT</p>
-                <a href="#" class="plan-cta contact-link">Get Started</a>
+                <a href="#" class="plan-cta contact-link" data-inquiry="Free Trial - Owlet (50 calls, £69/mo)">Get Started</a>
                 <ul class="plan-features">
                     <li><span class="check">✓</span> 50 calls per month</li>
                     <li><span class="check">✓</span> £0.75 per call overage</li>
@@ -1434,7 +1435,7 @@
                     <span class="period">per month</span>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT</p>
-                <a href="#" class="plan-cta contact-link">Get Started</a>
+                <a href="#" class="plan-cta contact-link" data-inquiry="Free Trial - Fledgling (100 calls, £129/mo)">Get Started</a>
                 <ul class="plan-features">
                     <li><span class="check">✓</span> 100 calls per month</li>
                     <li><span class="check">✓</span> £0.75 per call overage</li>
@@ -1461,7 +1462,7 @@
                     <span class="period">per month</span>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT</p>
-                <a href="#" class="plan-cta contact-link">Get Started</a>
+                <a href="#" class="plan-cta contact-link" data-inquiry="Free Trial - Strix (250 calls, £249/mo)">Get Started</a>
                 <ul class="plan-features">
                     <li><span class="check">✓</span> 250 calls per month</li>
                     <li><span class="check">✓</span> £0.75 per call overage</li>
@@ -1487,7 +1488,7 @@
                     <span class="period">per month</span>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT</p>
-                <a href="#" class="plan-cta contact-link">Get Started</a>
+                <a href="#" class="plan-cta contact-link" data-inquiry="Free Trial - Elder (500 calls, £499/mo)">Get Started</a>
                 <ul class="plan-features">
                     <li><span class="check">✓</span> 500 calls per month</li>
                     <li><span class="check">✓</span> £0.75 per call overage</li>
@@ -1506,7 +1507,7 @@
         <div class="pricing-footer">
             <p>All plans include a 14-day free trial* • No credit card required</p>
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">*10 minutes of call time included in trial</p>
-            <p style="margin-top: 0.5rem;">Questions? <a href="#" class="contact-link" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in touch</a></p>
+            <p style="margin-top: 0.5rem;">Questions? <a href="#" class="contact-link" data-inquiry="General Contact" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in touch</a></p>
         </div>
     </section>
 
@@ -1560,7 +1561,7 @@
             <h2>Ready to Stop Missing Calls?</h2>
             <p>Start your free 14-day trial today. Setup takes 10 minutes, no credit card required, cancel anytime. Join hundreds of UK businesses who never miss a call.</p>
             <div class="hero-buttons" style="justify-content: center; margin-bottom: 2rem;">
-                <a href="#" class="primary-btn contact-link">Start Free Trial - 14 Days</a>
+                <a href="#" class="primary-btn contact-link" data-inquiry="Free Trial">Start Free Trial - 14 Days</a>
             </div>
             <p style="font-size: 0.95rem; color: var(--text-muted); margin-top: 1.5rem;">
                 ✓ Setup in 10 minutes &nbsp;•&nbsp; ✓ No technical knowledge needed &nbsp;•&nbsp; ✓ Cancel anytime
@@ -1576,7 +1577,7 @@
                 <a href="#features" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Features</a>
                 <a href="#pricing" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Pricing</a>
                 <a href="#about" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">About</a>
-                <a href="#" class="contact-link" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in Touch</a>
+                <a href="#" class="contact-link" data-inquiry="General Contact" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in Touch</a>
             </div>
             <div style="border-top: 1px solid rgba(125, 232, 235, 0.1); padding-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
                 <p>&copy; 2025 WiseCall. All rights reserved.</p>
@@ -1640,9 +1641,13 @@
         const contactForm = document.getElementById('contactForm');
 
         // Open modal on contact link click
+        const inquiryTypeField = document.getElementById('inquiryType');
         document.querySelectorAll('.contact-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
+                // Set the inquiry type from the button's data attribute
+                const inquiryType = link.dataset.inquiry || 'General Contact';
+                inquiryTypeField.value = inquiryType;
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
             });
