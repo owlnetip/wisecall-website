@@ -921,8 +921,56 @@
             text-decoration: none;
         }
 
+        /* Industries Grid */
+        .industries-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 3rem auto 0;
+        }
+
+        .industry-card {
+            background: var(--dark-card);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(125, 232, 235, 0.1);
+            text-align: center;
+        }
+
+        .industry-card .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .industry-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.75rem;
+        }
+
+        .industry-card p {
+            color: var(--text-medium);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* About Grid */
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
+            .industries-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
             .hero {
                 grid-template-columns: 1fr;
                 padding-top: 8rem;
@@ -947,6 +995,14 @@
         }
 
         @media (max-width: 768px) {
+            .industries-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .about-grid {
+                grid-template-columns: 1fr;
+            }
+
             .nav-links {
                 display: none;
             }
@@ -1298,29 +1354,29 @@
             <p>We specialise in industries where every missed call means lost revenue</p>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; max-width: 1200px; margin: 3rem auto 0;">
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">🍕</div>
-                <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Hospitality</h3>
-                <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Take bookings and orders 24/7 while you focus on the kitchen.</p>
+        <div class="industries-grid">
+            <div class="industry-card">
+                <div class="icon">🍕</div>
+                <h3>Hospitality</h3>
+                <p>Take bookings and orders 24/7 while you focus on the kitchen.</p>
             </div>
 
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">🔧</div>
-                <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Trades & Services</h3>
-                <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Capture every lead while you're on a job. No more voicemail.</p>
+            <div class="industry-card">
+                <div class="icon">🔧</div>
+                <h3>Trades & Services</h3>
+                <p>Capture every lead while you're on a job. No more voicemail.</p>
             </div>
 
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">🏥</div>
-                <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Clinics & Dentists</h3>
-                <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Book appointments 24/7. Free up reception for in-house patients.</p>
+            <div class="industry-card">
+                <div class="icon">🏥</div>
+                <h3>Clinics & Dentists</h3>
+                <p>Book appointments 24/7. Free up reception for in-house patients.</p>
             </div>
 
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">💼</div>
-                <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Professional Services</h3>
-                <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Sound professional from day one. No need to hire reception staff.</p>
+            <div class="industry-card">
+                <div class="icon">💼</div>
+                <h3>Professional Services</h3>
+                <p>Sound professional from day one. No need to hire reception staff.</p>
             </div>
         </div>
     </section>
@@ -1519,7 +1575,7 @@
         </div>
 
         <div style="max-width: 900px; margin: 0 auto;">
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 3rem;">
+            <div class="about-grid">
                 <div class="benefit-card">
                     <div class="benefit-icon">🏢</div>
                     <h3>Direct Carrier Relationships</h3>
@@ -1573,7 +1629,7 @@
         <div style="max-width: 1400px; margin: 0 auto; text-align: center;">
             <div class="logo" style="justify-content: center; margin-bottom: 1rem;">🦉 WiseCall</div>
             <p style="color: var(--text-medium); max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.7;">AI call handling backed by 20+ years of UK telecoms expertise.</p>
-            <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
                 <a href="#features" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Features</a>
                 <a href="#pricing" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Pricing</a>
                 <a href="#about" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">About</a>
