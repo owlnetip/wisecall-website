@@ -396,6 +396,17 @@
             50% { opacity: 0.5; transform: scale(0.9); }
         }
 
+        .hero-example {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .hero-example.active {
+            display: block;
+            opacity: 1;
+        }
+
         .ai-message {
             background: rgba(110, 212, 215, 0.05);
             border-left: 3px solid rgba(110, 212, 215, 0.4);
@@ -1202,11 +1213,32 @@
                         <h3>WiseCall AI</h3>
                         <span class="status"><span class="status-dot"></span> Handling Call</span>
                     </div>
-                    <div class="ai-message">
-                        "Good evening, thanks for calling Mario's. I can help you with a reservation or takeaway order – which would you prefer?"
-                    </div>
-                    <div class="ai-message">
-                        "Table for 4 at 7:30pm this Saturday? Let me check... Yes, that's available. Can I take a name and number to confirm?"
+                    <div id="heroMessages">
+                        <!-- Restaurant booking -->
+                        <div class="hero-example active">
+                            <div class="ai-message">"Good evening, thanks for calling Mario's. I can help you with a reservation or takeaway order."</div>
+                            <div class="ai-message">"Table for 4 at 7:30pm Saturday? Let me check... Yes, that's available. Can I take a name to confirm?"</div>
+                        </div>
+                        <!-- Trades and services -->
+                        <div class="hero-example">
+                            <div class="ai-message">"Hi, thanks for calling Smith Plumbing. How can I help you today?"</div>
+                            <div class="ai-message">"A leaking tap? I can book an engineer for tomorrow morning. What's your postcode?"</div>
+                        </div>
+                        <!-- Clinic or practice -->
+                        <div class="hero-example">
+                            <div class="ai-message">"Good morning, Riverside Dental. Would you like to book an appointment?"</div>
+                            <div class="ai-message">"We have a slot on Thursday at 2pm with Dr. Patel. Shall I book that for you?"</div>
+                        </div>
+                        <!-- Professional services -->
+                        <div class="hero-example">
+                            <div class="ai-message">"Hello, thank you for calling Harrison Law. How may I direct your enquiry?"</div>
+                            <div class="ai-message">"I'll arrange a callback from our property team. What's the best number to reach you?"</div>
+                        </div>
+                        <!-- Retail or orders -->
+                        <div class="hero-example">
+                            <div class="ai-message">"Hi, thanks for calling The Garden Store. Are you looking to place an order?"</div>
+                            <div class="ai-message">"I can check stock and arrange delivery. What items were you interested in?"</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1617,6 +1649,19 @@
                 header.classList.remove('scrolled');
             }
         });
+
+        // Hero examples rotation
+        const heroExamples = document.querySelectorAll('.hero-example');
+        let currentExample = 0;
+
+        function rotateHeroExamples() {
+            heroExamples[currentExample].classList.remove('active');
+            currentExample = (currentExample + 1) % heroExamples.length;
+            heroExamples[currentExample].classList.add('active');
+        }
+
+        // Rotate every 5 seconds
+        setInterval(rotateHeroExamples, 5000);
 
         // Contact Modal
         const modal = document.getElementById('contactModal');
