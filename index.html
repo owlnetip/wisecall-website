@@ -5,24 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- SEO Meta Tags -->
-    <title>WiseCall | Answer Every Call. Capture More Value.</title>
-    <meta name="description" content="WiseCall answers calls when your team can't and helps you get more from every conversation. Built-in upselling. Often pays for itself. Start free trial.">
-    <meta name="keywords" content="AI answering service UK, phone answering, call handling, virtual receptionist, business calls, upselling, order taking">
+    <title>WiseCall - AI Call Handling for UK Businesses | Never Miss a Call</title>
+    <meta name="description" content="AI call handling for UK businesses. Captures bookings, orders, and leads 24/7. Works while you work. Start your free trial today.">
+    <meta name="keywords" content="AI call handling UK, automated call handling, business call handling, 24/7 call handling, intelligent call handling">
     <meta name="author" content="WiseCall">
     <meta name="robots" content="index, follow">
     
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://wisecall.io/">
-    <meta property="og:title" content="WiseCall | Answer Every Call. Capture More Value.">
-    <meta property="og:description" content="WiseCall answers calls when your team can't and helps you get more from every conversation.">
+    <meta property="og:title" content="WiseCall - AI Call Handling for UK Businesses">
+    <meta property="og:description" content="AI call handling that captures bookings, orders, and leads 24/7. Works while you work.">
     <meta property="og:image" content="https://wisecall.io/og-image.jpg">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://wisecall.io/">
-    <meta name="twitter:title" content="WiseCall | Answer Every Call. Capture More Value.">
-    <meta name="twitter:description" content="WiseCall answers calls when your team can't and helps you get more from every conversation.">
+    <meta name="twitter:title" content="WiseCall - AI Call Handling for UK Businesses">
+    <meta name="twitter:description" content="AI call handling that captures bookings, orders, and leads 24/7. Works while you work.">
     <meta name="twitter:image" content="https://wisecall.io/og-image.jpg">
     
     <!-- Favicon -->
@@ -427,7 +427,7 @@
 
         /* Video Demo Section */
         .video-demo {
-            padding: 6rem 2rem;
+            padding: 4rem 2rem;
             max-width: 1200px;
             margin: 0 auto;
             text-align: center;
@@ -1008,14 +1008,181 @@
                 line-height: 1.7;
             }
         }
+
+        /* Contact Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--dark-card);
+            border-radius: 24px;
+            border: 2px solid rgba(125, 232, 235, 0.2);
+            max-width: 500px;
+            width: 100%;
+            padding: 2.5rem;
+            position: relative;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: var(--primary);
+        }
+
+        .modal h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .modal p {
+            color: var(--text-medium);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            border: 2px solid rgba(125, 232, 235, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-light);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--dark-bg);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .form-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(125, 232, 235, 0.4);
+        }
+
+        .form-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
   </head>
   <body>
     <div class="bg-animation"></div>
 
+    <!-- Contact Modal -->
+    <div class="modal-overlay" id="contactModal">
+        <div class="modal">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <h3>Get Started</h3>
+            <p>Fill in your details and we'll be in touch shortly.</p>
+            <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST">
+                <input type="hidden" id="inquiryType" name="inquiry_type" value="General Contact">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" placeholder="Your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone (optional)</label>
+                    <input type="tel" id="phone" name="phone" placeholder="Your phone number">
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" placeholder="Tell us about your business..."></textarea>
+                </div>
+                <button type="submit" class="form-submit">Send Message</button>
+            </form>
+        </div>
+    </div>
+
     <header>
         <nav>
-            <div class="logo">🦉 WiseCall</div>
+            <a href="#" class="logo" style="text-decoration: none;">🦉 WiseCall</a>
             <button class="mobile-menu-button" aria-label="Toggle menu">
                 <span></span>
                 <span></span>
@@ -1025,21 +1192,22 @@
                 <li><a href="#features">Features</a></li>
                 <li><a href="#benefits">Benefits</a></li>
                 <li><a href="#pricing">Pricing</a></li>
-                <li><a href="mailto:hello@wisecall.io">Contact</a></li>
-                <li><a href="#" class="cta-button">Start Free Trial</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#" class="contact-link" data-inquiry="General Contact">Contact</a></li>
+                <li><a href="#" class="cta-button contact-link" data-inquiry="Free Trial">Start Free Trial</a></li>
             </ul>
         </nav>
     </header>
 
     <section class="hero">
         <div class="hero-content">
-            <h1>Answer Every Call. Capture More Value.</h1>
+            <h1>When You Can't Answer, We Can</h1>
             <p class="subtitle">
-                WiseCall answers calls when your team can't and helps you get more from every conversation.
+                <span class="highlight">AI that answers while you work.</span> Whether you're in the kitchen, on a job, or with a patient – WiseCall captures every booking, every lead, every opportunity. 24/7.
             </p>
             <div class="hero-buttons">
-                <a href="#pricing" class="primary-btn">Start Free Trial</a>
-                <a href="#demo" class="secondary-btn">Hear a Live Demo</a>
+                <a href="#pricing" class="primary-btn">Start 14-Day Free Trial</a>
+                <a href="#industries" class="secondary-btn">See Who We Help</a>
             </div>
         </div>
 
@@ -1052,201 +1220,181 @@
                         <span class="status">● Handling Call</span>
                     </div>
                     <div class="ai-message">
-                        "Good evening, thanks for calling Mario's. I can help you with a reservation or takeaway order, which would you prefer?"
+                        "Good evening, thanks for calling Mario's. I can help you with a reservation or takeaway order – which would you prefer?"
                     </div>
                     <div class="ai-message">
-                        "Would you like to add garlic bread and dips for £3.50? It's our most popular combo."
+                        "Table for 4 at 7:30pm this Saturday? Let me check... Yes, that's available. Can I take a name and number to confirm?"
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="video-demo" id="demo">
+    <section class="video-demo">
         <div class="section-header">
             <h2>Try WiseCall Now</h2>
-            <p>Click the button below and have a real conversation with our AI receptionist</p>
+            <p>Click the start call button below and experience intelligent call handling in action</p>
         </div>
-        <div style="display: flex; justify-content: center; align-items: center; padding: 2rem;">
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 24px; border: 2px solid rgba(125, 232, 235, 0.2); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
+        <div style="display: flex; justify-content: center; align-items: center; padding: 1rem;">
+            <div style="background: var(--dark-card); padding: 1.5rem; border-radius: 24px; border: 2px solid rgba(125, 232, 235, 0.2); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
                 <iframe
                     src="https://embed.telzino.com/playground?agentId=4102b5b0-9cca-44c9-bc6a-0446884aeabb&name=Voice+Agent&theme=dark&backgroundColor=%23172929&primaryColor=%237DE8EB&accentColor=%237DE8EB"
-                    style="width: 400px; height: 600px; border: none; border-radius: 16px; display: block;"
+                    style="width: 380px; height: 500px; border: none; border-radius: 16px; display: block;"
                     allow="microphone"
                 ></iframe>
-                <p style="text-align: center; margin-top: 1.5rem; color: var(--text-medium); font-size: 0.95rem;">
-                    💬 Click the "Start Call" button to try it live
-                </p>
             </div>
         </div>
     </section>
 
     <section class="features" id="features">
         <div class="section-header">
-            <h2>What WiseCall Does</h2>
+            <h2>Intelligent Features</h2>
+            <p>Powered by advanced AI, designed for the modern UK business</p>
         </div>
 
         <div class="features-grid">
             <div class="feature-card">
+                <div class="feature-icon">🎙️</div>
+                <h3>Natural Conversations</h3>
+                <p>Our AI speaks fluent British English with regional accent support, creating authentic conversations that make callers feel valued and understood.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Smart Scheduling</h3>
+                <p>Automatically book appointments, sync with your calendar, and send confirmations. Integrates seamlessly with Google Calendar, Outlook, and more.</p>
+            </div>
+
+            <div class="feature-card">
                 <div class="feature-icon">📞</div>
-                <h3>Answers Instantly</h3>
-                <p>Picks up inbound calls the moment they arrive. No delays. No missed opportunities.</p>
+                <h3>24/7 Availability</h3>
+                <p>Never miss an opportunity. WiseCall answers every call, day or night, ensuring your business is always accessible to customers.</p>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">🧠</div>
-                <h3>Understands Intent</h3>
-                <p>Figures out what the caller wants. Orders, appointments, questions. WiseCall gets it.</p>
+                <div class="feature-icon">💬</div>
+                <h3>Live Transcripts</h3>
+                <p>Get real-time transcriptions and summaries of every conversation. Search, analyse, and gain insights from your call data.</p>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">📝</div>
-                <h3>Captures Details</h3>
-                <p>Records the important information. Nothing gets lost or forgotten.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">💡</div>
-                <h3>Suggests Add-Ons</h3>
-                <p>Recommends relevant extras at the right moment. Naturally. No pressure.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">✅</div>
-                <h3>Completes or Routes</h3>
-                <p>Handles simple requests immediately. Routes complex ones to your team.</p>
+                <div class="feature-icon">🎯</div>
+                <h3>Custom Workflows</h3>
+                <p>Train WiseCall on your business processes, FAQs, and protocols. It learns your business and gets smarter over time.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">📊</div>
-                <h3>Logs Everything</h3>
-                <p>Every call is tracked and recorded. See what's working and what's not.</p>
+                <h3>Analytics Dashboard</h3>
+                <p>Comprehensive insights into call volumes, peak times, customer sentiment, and conversion metrics to optimise your business.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Who We Help Section -->
+    <section class="pricing-section" id="industries" style="padding: 5rem 2rem; background: linear-gradient(180deg, var(--dark-bg), var(--dark-card));">
+        <div class="section-header">
+            <h2>Built For Businesses Like Yours</h2>
+            <p>We specialise in industries where every missed call means lost revenue</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; max-width: 1200px; margin: 3rem auto 0;">
+            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🍕</div>
+                <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Hospitality</h3>
+                <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Take bookings and orders 24/7 while you focus on the kitchen.</p>
+            </div>
+
+            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🔧</div>
+                <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Trades & Services</h3>
+                <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Capture every lead while you're on a job. No more voicemail.</p>
+            </div>
+
+            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🏥</div>
+                <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Clinics & Dentists</h3>
+                <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Book appointments 24/7. Free up reception for in-house patients.</p>
+            </div>
+
+            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">💼</div>
+                <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Professional Services</h3>
+                <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Sound professional from day one. No need to hire reception staff.</p>
             </div>
         </div>
     </section>
 
     <section class="benefits" id="benefits">
         <div class="section-header">
-            <h2>Why It Pays for Itself</h2>
-            <p>Small increases per call add up.</p>
+            <h2>Why UK Businesses Love WiseCall</h2>
+            <p>Built specifically for the UK market with local expertise</p>
         </div>
         
         <div class="benefits-grid">
             <div class="benefit-card">
-                <div class="benefit-icon">📞</div>
-                <h3>20 to 30 Calls Per Day</h3>
-                <p>That's what most businesses take. WiseCall handles them all. No call goes unanswered.</p>
-            </div>
-
-            <div class="benefit-card">
                 <div class="benefit-icon">💰</div>
-                <h3>£1 to £2 Per Call</h3>
-                <p>Small increases add up fast. Better order sizes. Relevant add-ons. Fewer missed opportunities.</p>
+                <h3>Save Thousands Per Year</h3>
+                <p>No staff salaries, no sick days, no overtime. Professional call handling at a fraction of the cost of hiring staff.</p>
             </div>
 
             <div class="benefit-card">
-                <div class="benefit-icon">✅</div>
-                <h3>Covers Its Own Cost</h3>
-                <p>WiseCall often pays for itself. The extra value from each conversation builds quickly.</p>
+                <div class="benefit-icon">⚡</div>
+                <h3>Live in 10 Minutes</h3>
+                <p>Pick your phone answering style, add your number, and you're done. No complicated setup, no training required. If you can use a smartphone, you can use WiseCall.</p>
             </div>
 
             <div class="benefit-card">
-                <div class="benefit-icon">💡</div>
-                <h3>Built-In Upselling</h3>
-                <p>WiseCall suggests simple, relevant extras at the right moment. No pressure. No scripts. Just better conversations.</p>
+                <div class="benefit-icon">🌙</div>
+                <h3>After Hours Helpdesk</h3>
+                <p>Stop relying on voicemail to capture important details after hours. The Helpdesk agent asks the right questions across all channels and can escalate or open trouble tickets as needed.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">📱</div>
+                <h3>Works With What You Have</h3>
+                <p>Keep your existing phone numbers. Works with Google Calendar, Outlook, and your favorite tools. No expensive new systems required.</p>
             </div>
         </div>
 
         <div class="stats-row">
             <div class="stat-item">
+                <div class="stat-number">10min</div>
+                <div class="stat-label">Average Setup Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">70%</div>
+                <div class="stat-label">Cost Savings vs Hiring</div>
+            </div>
+            <div class="stat-item">
                 <div class="stat-number">24/7</div>
                 <div class="stat-label">Always Available</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">£1-2</div>
-                <div class="stat-label">Extra Per Call</div>
-            </div>
-            <div class="stat-item">
                 <div class="stat-number">0</div>
                 <div class="stat-label">Missed Calls</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">ROI</div>
-                <div class="stat-label">Pays for Itself</div>
-            </div>
-        </div>
-    </section>
-
-    <section class="features" style="background: var(--dark-bg);">
-        <div class="section-header">
-            <h2>Who It's For</h2>
-            <p>Any business that relies on phone calls</p>
-        </div>
-
-        <div class="features-grid" style="max-width: 1000px; margin: 0 auto; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-            <div class="feature-card" style="text-align: center;">
-                <div class="feature-icon" style="margin: 0 auto;">🍕</div>
-                <h3>Take Orders</h3>
-                <p>Restaurants, takeaways, delivery services.</p>
-            </div>
-
-            <div class="feature-card" style="text-align: center;">
-                <div class="feature-icon" style="margin: 0 auto;">📅</div>
-                <h3>Book Appointments</h3>
-                <p>Salons, clinics, tradespeople.</p>
-            </div>
-
-            <div class="feature-card" style="text-align: center;">
-                <div class="feature-icon" style="margin: 0 auto;">💬</div>
-                <h3>Handle Enquiries</h3>
-                <p>Service businesses, consultants, agencies.</p>
-            </div>
-
-            <div class="feature-card" style="text-align: center;">
-                <div class="feature-icon" style="margin: 0 auto;">🎯</div>
-                <h3>Capture Leads</h3>
-                <p>Sales teams, property, professional services.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="benefits" style="background: linear-gradient(180deg, var(--dark-bg), var(--dark-card)); padding: 4rem 2rem;">
-        <div class="section-header">
-            <h2>How It Works</h2>
-            <p>Four simple steps</p>
-        </div>
-        
-        <div class="benefits-grid" style="max-width: 1000px; margin: 0 auto;">
-            <div class="benefit-card">
-                <div class="benefit-icon">1️⃣</div>
-                <h3>Customer Calls</h3>
-                <p>Your business number rings. WiseCall is ready.</p>
-            </div>
-
-            <div class="benefit-card">
-                <div class="benefit-icon">2️⃣</div>
-                <h3>WiseCall Answers</h3>
-                <p>Instantly. Professionally. Every time.</p>
-            </div>
-
-            <div class="benefit-card">
-                <div class="benefit-icon">3️⃣</div>
-                <h3>Conversation Handled</h3>
-                <p>Order taken. Appointment booked. Question answered.</p>
-            </div>
-
-            <div class="benefit-card">
-                <div class="benefit-icon">4️⃣</div>
-                <h3>Logged or Routed</h3>
-                <p>Simple requests completed. Complex ones sent to your team.</p>
             </div>
         </div>
     </section>
 
     <section class="pricing-section" id="pricing">
         <div class="section-header">
-            <h2>Pricing</h2>
-            <p>Simple plans. No contracts. Scales with call volume.</p>
+            <h2>Simple, Transparent Pricing</h2>
+            <p>Choose the plan that fits your call volume</p>
+        </div>
+
+        <!-- Value Comparison Banner -->
+        <div style="background: linear-gradient(135deg, rgba(125, 232, 235, 0.1), rgba(157, 125, 232, 0.1)); border: 2px solid rgba(125, 232, 235, 0.3); border-radius: 16px; padding: 1.5rem 2rem; margin-bottom: 3rem; text-align: center;">
+            <p style="font-size: 1.1rem; color: var(--text-light); margin-bottom: 0.75rem; font-weight: 600;">
+                🎯 Unlike basic AI services, <span style="color: var(--primary);">every WiseCall plan</span> includes:
+            </p>
+            <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; color: var(--text-medium); font-size: 0.95rem;">
+                <span>✓ Transfer to mobile</span>
+                <span>✓ No phone system required</span>
+                <span>✓ Custom AI prompts</span>
+                <span>✓ Call recording</span>
+                <span>✓ Dedicated support</span>
+            </div>
         </div>
 
         <div class="pricing-grid">
@@ -1261,13 +1409,17 @@
                     <span class="period">per month</span>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT</p>
-                <a href="mailto:hello@wisecall.io" class="plan-cta">Get Started</a>
+                <a href="#" class="plan-cta contact-link" data-inquiry="Free Trial - Owlet (50 calls, £69/mo)">Get Started</a>
                 <ul class="plan-features">
                     <li><span class="check">✓</span> 50 calls per month</li>
                     <li><span class="check">✓</span> £0.75 per call overage</li>
-                    <li><span class="check">✓</span> 24/7 AI receptionist</li>
+                    <li><span class="check">✓</span> 24/7 call handling</li>
                     <li><span class="check">✓</span> Call transcripts via email</li>
-                    <li><span class="check">✓</span> Transfer to live employee</li>
+                    <li><span class="check">✓</span> Transfer to mobile or landline</li>
+                    <li><span class="check">✓</span> Custom AI prompts</li>
+                    <li><span class="check">✓</span> Call recording</li>
+                    <li><span class="check">✓</span> Sentiment scores</li>
+                    <li><span class="check">✓</span> Dedicated support</li>
                     <li><span class="check">✓</span> UK phone number</li>
                 </ul>
             </div>
@@ -1283,14 +1435,17 @@
                     <span class="period">per month</span>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT</p>
-                <a href="mailto:hello@wisecall.io" class="plan-cta">Get Started</a>
+                <a href="#" class="plan-cta contact-link" data-inquiry="Free Trial - Fledgling (100 calls, £129/mo)">Get Started</a>
                 <ul class="plan-features">
                     <li><span class="check">✓</span> 100 calls per month</li>
-                    <li><span class="check">✓</span> 200 minutes included</li>
                     <li><span class="check">✓</span> £0.75 per call overage</li>
-                    <li><span class="check">✓</span> 24/7 AI receptionist</li>
+                    <li><span class="check">✓</span> 24/7 call handling</li>
                     <li><span class="check">✓</span> Call transcripts via email</li>
-                    <li><span class="check">✓</span> Transfer to live employee</li>
+                    <li><span class="check">✓</span> Transfer to mobile or landline</li>
+                    <li><span class="check">✓</span> Custom AI prompts</li>
+                    <li><span class="check">✓</span> Call recording</li>
+                    <li><span class="check">✓</span> Sentiment scores</li>
+                    <li><span class="check">✓</span> Dedicated support</li>
                     <li><span class="check">✓</span> UK phone number</li>
                 </ul>
             </div>
@@ -1307,13 +1462,17 @@
                     <span class="period">per month</span>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT</p>
-                <a href="mailto:hello@wisecall.io" class="plan-cta">Get Started</a>
+                <a href="#" class="plan-cta contact-link" data-inquiry="Free Trial - Strix (250 calls, £249/mo)">Get Started</a>
                 <ul class="plan-features">
                     <li><span class="check">✓</span> 250 calls per month</li>
                     <li><span class="check">✓</span> £0.75 per call overage</li>
-                    <li><span class="check">✓</span> 24/7 AI receptionist</li>
+                    <li><span class="check">✓</span> 24/7 call handling</li>
                     <li><span class="check">✓</span> Call transcripts via email</li>
-                    <li><span class="check">✓</span> Transfer to live employee</li>
+                    <li><span class="check">✓</span> Transfer to mobile or landline</li>
+                    <li><span class="check">✓</span> Custom AI prompts</li>
+                    <li><span class="check">✓</span> Call recording</li>
+                    <li><span class="check">✓</span> Sentiment scores</li>
+                    <li><span class="check">✓</span> Dedicated support</li>
                     <li><span class="check">✓</span> UK phone number</li>
                 </ul>
             </div>
@@ -1329,75 +1488,100 @@
                     <span class="period">per month</span>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT</p>
-                <a href="mailto:hello@wisecall.io" class="plan-cta">Get Started</a>
+                <a href="#" class="plan-cta contact-link" data-inquiry="Free Trial - Elder (500 calls, £499/mo)">Get Started</a>
                 <ul class="plan-features">
                     <li><span class="check">✓</span> 500 calls per month</li>
                     <li><span class="check">✓</span> £0.75 per call overage</li>
-                    <li><span class="check">✓</span> 24/7 AI receptionist</li>
+                    <li><span class="check">✓</span> 24/7 call handling</li>
                     <li><span class="check">✓</span> Call transcripts via email</li>
-                    <li><span class="check">✓</span> Transfer to live employee</li>
+                    <li><span class="check">✓</span> Transfer to mobile or landline</li>
+                    <li><span class="check">✓</span> Custom AI prompts</li>
+                    <li><span class="check">✓</span> Call recording</li>
+                    <li><span class="check">✓</span> Sentiment scores</li>
+                    <li><span class="check">✓</span> Dedicated support</li>
                     <li><span class="check">✓</span> UK phone number</li>
                 </ul>
             </div>
         </div>
 
         <div class="pricing-footer">
-            <p>All plans include a 14-day free trial • No credit card required</p>
-            <p style="margin-top: 0.5rem;">Questions? <a href="mailto:hello@wisecall.io" style="color: var(--primary); text-decoration: none; font-weight: 600;">Email us at hello@wisecall.io</a></p>
+            <p>All plans include a 14-day free trial* • No credit card required</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">*10 minutes of call time included in trial</p>
+            <p style="margin-top: 0.5rem;">Questions? <a href="#" class="contact-link" data-inquiry="General Contact" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in touch</a></p>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="benefits" id="about" style="padding: 6rem 2rem;">
+        <div class="section-header">
+            <h2>Built by Telecoms Experts</h2>
+            <p>Over 20 years of experience powering business communications</p>
+        </div>
+
+        <div style="max-width: 900px; margin: 0 auto;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 3rem;">
+                <div class="benefit-card">
+                    <div class="benefit-icon">🏢</div>
+                    <h3>Direct Carrier Relationships</h3>
+                    <p>We're not a reseller or middleman. Our infrastructure connects directly to Tier 1 UK carriers, giving you enterprise-grade reliability at SME-friendly prices.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">🔧</div>
+                    <h3>Our Own Technology</h3>
+                    <p>We built our own SIP network, mobile apps, and communication platform from the ground up. When you need something custom, we can make it happen.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">💼</div>
+                    <h3>SME Specialists</h3>
+                    <p>We've spent two decades helping small and medium businesses save money on telecoms without compromising on quality. We understand your challenges.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">⚙️</div>
+                    <h3>Custom Solutions</h3>
+                    <p>Need your AI agent to handle specific workflows? We specialise in tailoring solutions to your exact requirements. No cookie-cutter approaches here.</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: rgba(125, 232, 235, 0.05); border-radius: 16px; border: 1px solid rgba(125, 232, 235, 0.1);">
+                <p style="font-size: 1.2rem; color: var(--text-light); margin-bottom: 0.5rem; font-weight: 600;">
+                    "Real people, real support, real results"
+                </p>
+                <p style="color: var(--text-medium);">
+                    When you call us, you speak to our UK-based team who actually know telecoms. No scripts, no runaround.
+                </p>
+            </div>
         </div>
     </section>
 
     <section class="cta-section">
         <div class="cta-content">
-            <h2>Try WiseCall</h2>
-            <p>Start your free trial or hear a live demo.</p>
+            <h2>Ready to Stop Missing Calls?</h2>
+            <p>Start your free 14-day trial today. Setup takes 10 minutes, no credit card required, cancel anytime. Join hundreds of UK businesses who never miss a call.</p>
             <div class="hero-buttons" style="justify-content: center; margin-bottom: 2rem;">
-                <a href="#pricing" class="primary-btn">Start Free Trial</a>
-                <a href="#demo" class="secondary-btn">Hear a Live Demo</a>
+                <a href="#" class="primary-btn contact-link" data-inquiry="Free Trial">Start Free Trial - 14 Days</a>
             </div>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-top: 1.5rem;">
+                ✓ Setup in 10 minutes &nbsp;•&nbsp; ✓ No technical knowledge needed &nbsp;•&nbsp; ✓ Cancel anytime
+            </p>
         </div>
     </section>
 
     <footer>
-        <div class="footer-content">
-            <div class="footer-brand">
-                <div class="logo">🦉 WiseCall</div>
-                <p>Answer every call. Capture more value.</p>
+        <div style="max-width: 1400px; margin: 0 auto; text-align: center;">
+            <div class="logo" style="justify-content: center; margin-bottom: 1rem;">🦉 WiseCall</div>
+            <p style="color: var(--text-medium); max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.7;">AI call handling backed by 20+ years of UK telecoms expertise.</p>
+            <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;">
+                <a href="#features" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Features</a>
+                <a href="#pricing" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Pricing</a>
+                <a href="#about" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">About</a>
+                <a href="#" class="contact-link" data-inquiry="General Contact" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in Touch</a>
             </div>
-
-            <div class="footer-links">
-                <h4>Product</h4>
-                <ul>
-                    <li><a href="#">Features</a></li>
-                    <li><a href="#">Pricing</a></li>
-                    <li><a href="#">Integrations</a></li>
-                    <li><a href="#">API</a></li>
-                </ul>
+            <div style="border-top: 1px solid rgba(125, 232, 235, 0.1); padding-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                <p>&copy; 2025 WiseCall. All rights reserved.</p>
             </div>
-
-            <div class="footer-links">
-                <h4>Company</h4>
-                <ul>
-                    <li><a href="#">About</a></li>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Careers</a></li>
-                    <li><a href="#">Contact</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-links">
-                <h4>Legal</h4>
-                <ul>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                    <li><a href="#">GDPR</a></li>
-                    <li><a href="#">Security</a></li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>&copy; 2025 WiseCall. All rights reserved.</p>
         </div>
     </footer>
 
@@ -1448,6 +1632,82 @@
                 header.classList.add('scrolled');
             } else {
                 header.classList.remove('scrolled');
+            }
+        });
+
+        // Contact Modal
+        const modal = document.getElementById('contactModal');
+        const modalClose = document.getElementById('modalClose');
+        const contactForm = document.getElementById('contactForm');
+
+        // Open modal on contact link click
+        const inquiryTypeField = document.getElementById('inquiryType');
+        document.querySelectorAll('.contact-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Set the inquiry type from the button's data attribute
+                const inquiryType = link.dataset.inquiry || 'General Contact';
+                inquiryTypeField.value = inquiryType;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        // Close modal
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        // Close on overlay click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Form submission
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = contactForm.querySelector('.form-submit');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(contactForm.action, {
+                    method: 'POST',
+                    body: new FormData(contactForm),
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (response.ok) {
+                    submitBtn.textContent = 'Sent!';
+                    contactForm.reset();
+                    setTimeout(() => {
+                        modal.classList.remove('active');
+                        document.body.style.overflow = '';
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    }, 1500);
+                } else {
+                    throw new Error('Failed');
+                }
+            } catch (error) {
+                submitBtn.textContent = 'Error - Try Again';
+                submitBtn.disabled = false;
+                setTimeout(() => {
+                    submitBtn.textContent = originalText;
+                }, 2000);
             }
         });
     </script>
