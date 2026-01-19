@@ -374,11 +374,26 @@
             color: var(--primary);
             padding: 0.5rem 1.5rem;
             border-radius: 20px;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             font-size: 0.9rem;
             font-weight: 600;
             letter-spacing: -0.01em;
             line-height: 1;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: livePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
         }
 
         .ai-message {
@@ -1185,7 +1200,7 @@
                     <div class="caller-info">
                         <div class="avatar"><img src="owl-logo.png" alt="WiseCall" style="width: 100px; height: 100px; object-fit: contain;"></div>
                         <h3>WiseCall AI</h3>
-                        <span class="status">● Handling Call</span>
+                        <span class="status"><span class="status-dot"></span> Handling Call</span>
                     </div>
                     <div class="ai-message">
                         "Good evening, thanks for calling Mario's. I can help you with a reservation or takeaway order – which would you prefer?"
