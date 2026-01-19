@@ -396,24 +396,45 @@
             50% { opacity: 0.5; transform: scale(0.9); }
         }
 
-        .hero-example {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.5s ease;
+        .scenario-container {
+            position: relative;
+            min-height: 120px;
+            margin-top: 1.5rem;
         }
 
-        .hero-example.active {
-            display: block;
+        .scenario {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            background: rgba(110, 212, 215, 0.05);
+            border-left: 3px solid rgba(110, 212, 215, 0.3);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .scenario.active {
             opacity: 1;
         }
 
-        .ai-message {
-            background: rgba(110, 212, 215, 0.05);
-            border-left: 3px solid rgba(110, 212, 215, 0.4);
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin: 1.5rem 0;
+        .scenario-label {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-message {
             font-size: 0.95rem;
+            color: var(--text-medium);
+            line-height: 1.6;
+            margin: 0;
+            font-style: italic;
             font-weight: 400;
             line-height: 1.65;
             color: var(--text-medium);
@@ -1213,31 +1234,26 @@
                         <h3>WiseCall AI</h3>
                         <span class="status"><span class="status-dot"></span> Handling Call</span>
                     </div>
-                    <div id="heroMessages">
-                        <!-- Restaurant booking -->
-                        <div class="hero-example active">
-                            <div class="ai-message">"Good evening, thanks for calling Mario's. I can help you with a reservation or takeaway order."</div>
-                            <div class="ai-message">"Table for 4 at 7:30pm Saturday? Let me check... Yes, that's available. Can I take a name to confirm?"</div>
+                    <div id="heroMessages" class="scenario-container">
+                        <div class="scenario active">
+                            <span class="scenario-label">Restaurant Booking</span>
+                            <p class="scenario-message">"Table for 4 at 7:30pm Saturday? Yes, that's available. Can I take a name to confirm?"</p>
                         </div>
-                        <!-- Trades and services -->
-                        <div class="hero-example">
-                            <div class="ai-message">"Hi, thanks for calling Smith Plumbing. How can I help you today?"</div>
-                            <div class="ai-message">"A leaking tap? I can book an engineer for tomorrow morning. What's your postcode?"</div>
+                        <div class="scenario">
+                            <span class="scenario-label">Trades & Services</span>
+                            <p class="scenario-message">"A leaking tap? I can book an engineer for tomorrow morning. What's your postcode?"</p>
                         </div>
-                        <!-- Clinic or practice -->
-                        <div class="hero-example">
-                            <div class="ai-message">"Good morning, Riverside Dental. Would you like to book an appointment?"</div>
-                            <div class="ai-message">"We have a slot on Thursday at 2pm with Dr. Patel. Shall I book that for you?"</div>
+                        <div class="scenario">
+                            <span class="scenario-label">Clinic Appointment</span>
+                            <p class="scenario-message">"We have a slot Thursday at 2pm with Dr. Patel. Shall I book that for you?"</p>
                         </div>
-                        <!-- Professional services -->
-                        <div class="hero-example">
-                            <div class="ai-message">"Hello, thank you for calling Harrison Law. How may I direct your enquiry?"</div>
-                            <div class="ai-message">"I'll arrange a callback from our property team. What's the best number to reach you?"</div>
+                        <div class="scenario">
+                            <span class="scenario-label">Professional Services</span>
+                            <p class="scenario-message">"I'll arrange a callback from our property team. What's the best number to reach you?"</p>
                         </div>
-                        <!-- Retail or orders -->
-                        <div class="hero-example">
-                            <div class="ai-message">"Hi, thanks for calling The Garden Store. Are you looking to place an order?"</div>
-                            <div class="ai-message">"I can check stock and arrange delivery. What items were you interested in?"</div>
+                        <div class="scenario">
+                            <span class="scenario-label">Retail Order</span>
+                            <p class="scenario-message">"I can check stock and arrange delivery for you. What items were you interested in?"</p>
                         </div>
                     </div>
                 </div>
@@ -1650,18 +1666,29 @@
             }
         });
 
-        // Hero examples rotation
-        const heroExamples = document.querySelectorAll('.hero-example');
-        let currentExample = 0;
+        // Hero scenario rotation
+        const scenarios = document.querySelectorAll('.scenario');
+        const scenarioContainer = document.getElementById('heroMessages');
+        let currentScenario = 0;
+        let rotationPaused = false;
 
-        function rotateHeroExamples() {
-            heroExamples[currentExample].classList.remove('active');
-            currentExample = (currentExample + 1) % heroExamples.length;
-            heroExamples[currentExample].classList.add('active');
+        function rotateScenarios() {
+            if (rotationPaused) return;
+            scenarios[currentScenario].classList.remove('active');
+            currentScenario = (currentScenario + 1) % scenarios.length;
+            scenarios[currentScenario].classList.add('active');
         }
 
         // Rotate every 5 seconds
-        setInterval(rotateHeroExamples, 5000);
+        setInterval(rotateScenarios, 5000);
+
+        // Pause on hover
+        scenarioContainer.addEventListener('mouseenter', () => {
+            rotationPaused = true;
+        });
+        scenarioContainer.addEventListener('mouseleave', () => {
+            rotationPaused = false;
+        });
 
         // Contact Modal
         const modal = document.getElementById('contactModal');
