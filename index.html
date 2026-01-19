@@ -58,7 +58,7 @@
             text-rendering: optimizeLegibility;
         }
 
-        /* Background gradient */
+        /* Background gradient - positioned lower for calm hero, stronger pricing */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -66,12 +66,12 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            opacity: 0.10;
+            opacity: 0.08;
             background:
-                radial-gradient(circle at 20% 30%, var(--primary) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, var(--accent-purple) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, var(--accent-orange) 0%, transparent 70%);
-            filter: blur(100px);
+                radial-gradient(circle at 15% 70%, var(--primary) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, var(--accent-purple) 0%, transparent 45%),
+                radial-gradient(circle at 50% 90%, var(--accent-orange) 0%, transparent 50%);
+            filter: blur(120px);
         }
 
         /* Header */
