@@ -37,15 +37,15 @@
         }
 
         :root {
-            --primary: #7DE8EB;
-            --primary-dark: #4DB8BB;
-            --dark-bg: #172929;
-            --dark-card: #1f3838;
+            --primary: #6ED4D7;
+            --primary-dark: #4AA8AB;
+            --dark-bg: #141f1f;
+            --dark-card: #1a2d2d;
             --text-light: #ffffff;
             --text-medium: #B8C5D6;
             --text-muted: #9BABC2;
-            --accent-purple: #9D7DE8;
-            --accent-orange: #FF8A5B;
+            --accent-purple: #8A6DD0;
+            --accent-orange: #E07A52;
         }
 
         body {
@@ -66,12 +66,12 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            opacity: 0.15;
+            opacity: 0.10;
             background:
                 radial-gradient(circle at 20% 30%, var(--primary) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, var(--accent-purple) 0%, transparent 50%),
                 radial-gradient(circle at 50% 50%, var(--accent-orange) 0%, transparent 70%);
-            filter: blur(80px);
+            filter: blur(100px);
         }
 
         /* Header */
@@ -89,7 +89,7 @@
 
         header.scrolled {
             background: rgba(23, 41, 41, 0.95);
-            border-bottom: 1px solid rgba(125, 232, 235, 0.1);
+            border-bottom: 1px solid rgba(110, 212, 215, 0.08);
         }
 
         @keyframes slideDown {
@@ -163,12 +163,12 @@
             letter-spacing: -0.01em;
             text-decoration: none;
             transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(125, 232, 235, 0.3);
+            box-shadow: 0 4px 20px rgba(110, 212, 215, 0.2);
         }
 
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(125, 232, 235, 0.5);
+            box-shadow: 0 6px 30px rgba(110, 212, 215, 0.3);
         }
 
         /* Mobile Menu */
@@ -219,7 +219,7 @@
                 flex-direction: column;
                 padding: 2rem;
                 gap: 2rem;
-                border-left: 1px solid rgba(125, 232, 235, 0.2);
+                border-left: 1px solid rgba(110, 212, 215, 0.12);
                 transition: right 0.4s ease;
                 box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
             }
@@ -304,7 +304,7 @@
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
-            box-shadow: 0 6px 30px rgba(125, 232, 235, 0.4);
+            box-shadow: 0 6px 30px rgba(110, 212, 215, 0.25);
             font-size: 1.05rem;
             letter-spacing: -0.01em;
             line-height: 1;
@@ -312,7 +312,7 @@
 
         .primary-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 40px rgba(125, 232, 235, 0.6);
+            box-shadow: 0 10px 40px rgba(110, 212, 215, 0.35);
         }
 
         .secondary-btn {
@@ -330,7 +330,7 @@
         }
 
         .secondary-btn:hover {
-            background: rgba(125, 232, 235, 0.1);
+            background: rgba(110, 212, 215, 0.08);
             transform: translateY(-3px);
         }
 
@@ -344,7 +344,7 @@
             border-radius: 40px;
             padding: 3rem;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(125, 232, 235, 0.2);
+            border: 1px solid rgba(110, 212, 215, 0.12);
             position: relative;
             overflow: hidden;
         }
@@ -356,7 +356,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(125, 232, 235, 0.1), rgba(157, 125, 232, 0.1));
+            background: linear-gradient(135deg, rgba(110, 212, 215, 0.08), rgba(157, 125, 232, 0.1));
             opacity: 0.5;
         }
 
@@ -385,7 +385,7 @@
         }
 
         .status {
-            background: rgba(125, 232, 235, 0.2);
+            background: rgba(110, 212, 215, 0.12);
             color: var(--primary);
             padding: 0.5rem 1.5rem;
             border-radius: 20px;
@@ -403,7 +403,7 @@
         }
 
         .ai-message {
-            background: rgba(125, 232, 235, 0.1);
+            background: rgba(110, 212, 215, 0.08);
             border-left: 3px solid var(--primary);
             padding: 1.5rem;
             border-radius: 12px;
@@ -430,7 +430,7 @@
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(125, 232, 235, 0.2);
+            border: 2px solid rgba(110, 212, 215, 0.12);
         }
 
         .video-container iframe,
@@ -449,7 +449,7 @@
             justify-content: center;
             flex-direction: column;
             gap: 1.5rem;
-            border: 2px dashed rgba(125, 232, 235, 0.3);
+            border: 2px dashed rgba(110, 212, 215, 0.2);
         }
 
         .video-placeholder-icon {
@@ -505,7 +505,7 @@
             background: var(--dark-card);
             padding: 2.5rem;
             border-radius: 20px;
-            border: 1px solid rgba(125, 232, 235, 0.1);
+            border: 1px solid rgba(110, 212, 215, 0.08);
             transition: all 0.4s;
             position: relative;
             overflow: hidden;
@@ -530,7 +530,7 @@
         .feature-card:hover {
             transform: translateY(-10px);
             border-color: var(--primary);
-            box-shadow: 0 20px 60px rgba(125, 232, 235, 0.2);
+            box-shadow: 0 20px 60px rgba(110, 212, 215, 0.12);
         }
 
         .feature-icon {
@@ -581,14 +581,14 @@
             background: var(--dark-card);
             padding: 2.5rem;
             border-radius: 20px;
-            border: 1px solid rgba(125, 232, 235, 0.1);
+            border: 1px solid rgba(110, 212, 215, 0.08);
             transition: all 0.4s;
         }
 
         .benefit-card:hover {
             transform: translateY(-5px);
             border-color: var(--primary);
-            box-shadow: 0 15px 40px rgba(125, 232, 235, 0.15);
+            box-shadow: 0 15px 40px rgba(110, 212, 215, 0.1);
         }
 
         .benefit-icon {
@@ -625,7 +625,7 @@
             padding: 2.5rem 2rem;
             border-radius: 20px;
             text-align: center;
-            border: 1px solid rgba(125, 232, 235, 0.1);
+            border: 1px solid rgba(110, 212, 215, 0.08);
         }
 
         .stat-number {
@@ -673,7 +673,7 @@
             background: var(--dark-card);
             padding: 2rem 1.8rem;
             border-radius: 24px;
-            border: 2px solid rgba(125, 232, 235, 0.15);
+            border: 2px solid rgba(110, 212, 215, 0.1);
             transition: all 0.4s ease;
             position: relative;
             display: flex;
@@ -683,12 +683,12 @@
         .pricing-card:hover {
             transform: translateY(-8px);
             border-color: var(--primary);
-            box-shadow: 0 20px 60px rgba(125, 232, 235, 0.25);
+            box-shadow: 0 20px 60px rgba(110, 212, 215, 0.15);
         }
 
         .pricing-card.popular {
             border-color: var(--primary);
-            box-shadow: 0 10px 40px rgba(125, 232, 235, 0.2);
+            box-shadow: 0 10px 40px rgba(110, 212, 215, 0.12);
         }
 
         .pricing-card.popular:hover {
@@ -774,7 +774,7 @@
 
         .plan-cta:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(125, 232, 235, 0.4);
+            box-shadow: 0 8px 25px rgba(110, 212, 215, 0.25);
         }
 
         .plan-features {
@@ -786,7 +786,7 @@
         .plan-features li {
             color: var(--text-medium);
             padding: 0.6rem 0;
-            border-bottom: 1px solid rgba(125, 232, 235, 0.1);
+            border-bottom: 1px solid rgba(110, 212, 215, 0.08);
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
@@ -820,7 +820,7 @@
         .cta-section {
             padding: 8rem 2rem;
             text-align: center;
-            background: linear-gradient(135deg, rgba(125, 232, 235, 0.1), rgba(157, 125, 232, 0.1));
+            background: linear-gradient(135deg, rgba(110, 212, 215, 0.08), rgba(157, 125, 232, 0.1));
         }
 
         .cta-content {
@@ -850,7 +850,7 @@
         footer {
             background: var(--dark-card);
             padding: 3rem 2rem 2rem;
-            border-top: 1px solid rgba(125, 232, 235, 0.1);
+            border-top: 1px solid rgba(110, 212, 215, 0.08);
         }
 
         .footer-content {
@@ -899,7 +899,7 @@
         .footer-bottom {
             text-align: center;
             padding-top: 2rem;
-            border-top: 1px solid rgba(125, 232, 235, 0.1);
+            border-top: 1px solid rgba(110, 212, 215, 0.08);
             color: var(--text-medium);
             font-size: 0.95rem;
             line-height: 1.5;
@@ -1021,7 +1021,7 @@
         .modal {
             background: var(--dark-card);
             border-radius: 24px;
-            border: 2px solid rgba(125, 232, 235, 0.2);
+            border: 2px solid rgba(110, 212, 215, 0.12);
             max-width: 500px;
             width: 100%;
             padding: 2.5rem;
@@ -1088,7 +1088,7 @@
             width: 100%;
             padding: 0.9rem 1rem;
             border-radius: 12px;
-            border: 2px solid rgba(125, 232, 235, 0.2);
+            border: 2px solid rgba(110, 212, 215, 0.12);
             background: rgba(0, 0, 0, 0.3);
             color: var(--text-light);
             font-family: 'DM Sans', sans-serif;
@@ -1127,7 +1127,7 @@
 
         .form-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(125, 232, 235, 0.4);
+            box-shadow: 0 8px 25px rgba(110, 212, 215, 0.25);
         }
 
         .form-submit:disabled {
@@ -1225,7 +1225,7 @@
             <p>Click the start call button below and experience intelligent call handling in action</p>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; padding: 1rem;">
-            <div style="background: var(--dark-card); padding: 1.5rem; border-radius: 24px; border: 2px solid rgba(125, 232, 235, 0.2); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
+            <div style="background: var(--dark-card); padding: 1.5rem; border-radius: 24px; border: 2px solid rgba(110, 212, 215, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
                 <iframe
                     src="https://embed.telzino.com/playground?agentId=4102b5b0-9cca-44c9-bc6a-0446884aeabb&name=Voice+Agent&theme=dark&backgroundColor=%23172929&primaryColor=%237DE8EB&accentColor=%237DE8EB"
                     style="width: 380px; height: 500px; border: none; border-radius: 16px; display: block;"
@@ -1288,25 +1288,25 @@
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; max-width: 1200px; margin: 3rem auto 0;">
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
+            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(110, 212, 215, 0.08); text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">🍕</div>
                 <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Hospitality</h3>
                 <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Take bookings and orders 24/7 while you focus on the kitchen.</p>
             </div>
 
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
+            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(110, 212, 215, 0.08); text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">🔧</div>
                 <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Trades & Services</h3>
                 <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Capture every lead while you're on a job. No more voicemail.</p>
             </div>
 
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
+            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(110, 212, 215, 0.08); text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">🏥</div>
                 <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Clinics & Dentists</h3>
                 <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Book appointments 24/7. Free up reception for in-house patients.</p>
             </div>
 
-            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(125, 232, 235, 0.1); text-align: center;">
+            <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(110, 212, 215, 0.08); text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">💼</div>
                 <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Professional Services</h3>
                 <p style="color: var(--text-medium); font-size: 0.9rem; line-height: 1.6; margin: 0;">Sound professional from day one. No need to hire reception staff.</p>
@@ -1373,7 +1373,7 @@
         </div>
 
         <!-- Overage Pricing Banner -->
-        <div style="background: linear-gradient(135deg, rgba(125, 232, 235, 0.1), rgba(157, 125, 232, 0.1)); border: 2px solid rgba(125, 232, 235, 0.3); border-radius: 16px; padding: 1.5rem 2rem; margin-bottom: 3rem; text-align: center;">
+        <div style="background: linear-gradient(135deg, rgba(110, 212, 215, 0.08), rgba(157, 125, 232, 0.1)); border: 2px solid rgba(110, 212, 215, 0.2); border-radius: 16px; padding: 1.5rem 2rem; margin-bottom: 3rem; text-align: center;">
             <p style="font-size: 1.1rem; color: var(--text-light); margin-bottom: 0.5rem; font-weight: 600;">
                 Overage pricing
             </p>
@@ -1534,7 +1534,7 @@
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: rgba(125, 232, 235, 0.05); border-radius: 16px; border: 1px solid rgba(125, 232, 235, 0.1);">
+            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: rgba(125, 232, 235, 0.05); border-radius: 16px; border: 1px solid rgba(110, 212, 215, 0.08);">
                 <p style="font-size: 1.2rem; color: var(--text-light); margin-bottom: 0.5rem; font-weight: 600;">
                     "Real people, real support, real results"
                 </p>
@@ -1568,7 +1568,7 @@
                 <a href="#about" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">About</a>
                 <a href="#" class="contact-link" data-inquiry="General Contact" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in Touch</a>
             </div>
-            <div style="border-top: 1px solid rgba(125, 232, 235, 0.1); padding-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+            <div style="border-top: 1px solid rgba(110, 212, 215, 0.08); padding-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
                 <p>&copy; 2025 WiseCall. All rights reserved.</p>
             </div>
         </div>
