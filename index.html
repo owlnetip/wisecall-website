@@ -604,6 +604,13 @@
             margin: 4rem 0;
         }
 
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
         .benefit-card {
             background: var(--dark-card);
             padding: 2.5rem;
@@ -999,6 +1006,10 @@
             }
 
             .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .about-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1591,7 +1602,7 @@
         </div>
 
         <div style="max-width: 900px; margin: 0 auto;">
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 3rem;">
+            <div class="about-grid">
                 <div class="benefit-card">
                     <div class="benefit-icon">🏢</div>
                     <h3>Direct Carrier Relationships</h3>
