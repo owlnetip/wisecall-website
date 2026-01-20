@@ -1582,6 +1582,7 @@
             <div style="padding-top: 1.5rem; border-top: 1px solid rgba(110, 212, 215, 0.1);">
                 <label style="display: block; font-weight: 600; color: var(--text-light); margin-bottom: 0.5rem;">Estimated additional revenue per month</label>
                 <p id="roiResult" style="font-size: 2rem; color: var(--primary); font-weight: 700; margin: 0;">£1,125</p>
+                <p id="roiDaily" style="color: var(--text-medium); font-size: 0.95rem; margin-top: 0.5rem;">That's around £37 per day.</p>
                 <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">Based on 30 days per month.</p>
             </div>
         </div>
@@ -1721,13 +1722,16 @@
         // ROI Calculator
         const roiInput = document.getElementById('roiCalls');
         const roiResult = document.getElementById('roiResult');
+        const roiDaily = document.getElementById('roiDaily');
 
         function calculateROI() {
             const callsPerDay = parseInt(roiInput.value) || 0;
             const upliftPerCall = 1.50;
             const daysPerMonth = 30;
-            const monthlyRevenue = callsPerDay * upliftPerCall * daysPerMonth;
+            const dailyRevenue = callsPerDay * upliftPerCall;
+            const monthlyRevenue = dailyRevenue * daysPerMonth;
             roiResult.textContent = '£' + monthlyRevenue.toLocaleString('en-GB');
+            roiDaily.textContent = "That's around £" + Math.round(dailyRevenue) + ' per day.';
         }
 
         roiInput.addEventListener('input', calculateROI);
