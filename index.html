@@ -611,6 +611,14 @@
             margin-top: 3rem;
         }
 
+        .industries-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 3rem auto 0;
+        }
+
         .benefit-card {
             background: var(--dark-card);
             padding: 2.5rem;
@@ -960,6 +968,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .industries-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
             .stats-row {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -1010,6 +1022,10 @@
             }
 
             .about-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .industries-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1346,7 +1362,7 @@
             <p>We specialise in industries where every missed call means lost revenue</p>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; max-width: 1200px; margin: 3rem auto 0;">
+        <div class="industries-grid">
             <div style="background: var(--dark-card); padding: 2rem; border-radius: 20px; border: 1px solid rgba(110, 212, 215, 0.08); text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">🍕</div>
                 <h3 style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: white; margin-bottom: 0.75rem; min-height: 2.5rem; display: flex; align-items: center; justify-content: center;">Hospitality</h3>
