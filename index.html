@@ -1548,6 +1548,40 @@
         </div>
     </section>
 
+    <!-- ROI Calculator -->
+    <section style="padding: 5rem 2rem; max-width: 600px; margin: 0 auto;">
+        <div class="section-header">
+            <h2>See how WiseCall can pay for itself</h2>
+            <p>Even small increases per call can cover the monthly cost.</p>
+        </div>
+
+        <div style="background: var(--dark-card); border-radius: 20px; padding: 2.5rem; border: 1px solid rgba(110, 212, 215, 0.08);">
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-weight: 600; color: var(--text-light); margin-bottom: 0.5rem;">Average calls per day</label>
+                <input type="number" id="roiCalls" value="25" min="1" style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid rgba(110, 212, 215, 0.15); background: var(--dark-bg); color: var(--text-light); font-size: 1.1rem;">
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">Rough estimate is fine.</p>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-weight: 600; color: var(--text-light); margin-bottom: 0.5rem;">Extra value per call</label>
+                <p style="font-size: 1.5rem; color: var(--primary); font-weight: 700; margin: 0;">£1.50</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Based on simple add-ons or better call handling.</p>
+            </div>
+
+            <div style="padding-top: 1.5rem; border-top: 1px solid rgba(110, 212, 215, 0.1);">
+                <label style="display: block; font-weight: 600; color: var(--text-light); margin-bottom: 0.5rem;">Estimated additional revenue per month</label>
+                <p id="roiResult" style="font-size: 2rem; color: var(--primary); font-weight: 700; margin: 0;">£1,125</p>
+            </div>
+        </div>
+
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 1.5rem;">Many customers cover their WiseCall cost with smaller increases than this.</p>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="#" class="primary-btn contact-link" data-inquiry="Free Trial">Start 7-Day Free Trial</a>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">No contract. Cancel anytime.</p>
+        </div>
+    </section>
+
     <!-- About Section -->
     <section class="benefits" id="about" style="padding: 6rem 2rem;">
         <div class="section-header">
@@ -1671,6 +1705,20 @@
                 header.classList.remove('scrolled');
             }
         });
+
+        // ROI Calculator
+        const roiInput = document.getElementById('roiCalls');
+        const roiResult = document.getElementById('roiResult');
+
+        function calculateROI() {
+            const callsPerDay = parseInt(roiInput.value) || 0;
+            const upliftPerCall = 1.50;
+            const daysPerMonth = 30;
+            const monthlyRevenue = callsPerDay * upliftPerCall * daysPerMonth;
+            roiResult.textContent = '£' + monthlyRevenue.toLocaleString('en-GB');
+        }
+
+        roiInput.addEventListener('input', calculateROI);
 
         // Hero scenario rotation
         const scenarios = document.querySelectorAll('.scenario');
