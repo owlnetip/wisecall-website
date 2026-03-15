@@ -596,23 +596,27 @@
         .hover-cta {
             display: inline-block;
             margin-top: 1.4rem;
-            padding: 0.5rem 1.2rem;
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
+            padding: 0.6rem 1.4rem;
+            background: var(--primary);
+            border: 2px solid var(--primary);
+            color: #0a1a1a;
             border-radius: 8px;
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             font-family: 'Poppins', sans-serif;
-            font-weight: 500;
+            font-weight: 700;
             cursor: pointer;
             opacity: 0;
             transform: translateY(8px);
-            transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease;
+            transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease, box-shadow 0.2s ease;
             text-decoration: none;
+            letter-spacing: 0.01em;
+            box-shadow: 0 4px 15px rgba(110, 212, 215, 0.35);
         }
 
         .hover-cta:hover {
-            background: rgba(110, 212, 215, 0.12);
+            background: #fff;
+            border-color: #fff;
+            box-shadow: 0 6px 20px rgba(110, 212, 215, 0.5);
         }
 
         .feature-card:hover .hover-cta,
