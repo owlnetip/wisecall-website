@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         dental: resolve(__dirname, 'dental.html'),
+        legal: resolve(__dirname, 'legal.html'),
       },
     },
   },
