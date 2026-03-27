@@ -11,6 +11,8 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         dental: resolve(__dirname, 'dental.html'),
         legal: resolve(__dirname, 'legal.html'),
+        property: resolve(__dirname, 'property.html'),
+        trades: resolve(__dirname, 'trades.html'),
       },
     },
   },

@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO Meta Tags -->
+    <title>WiseCall for Trades and Services | AI Receptionist for UK Service Businesses</title>
+    <meta name="description" content="AI answering service for UK trades and service businesses. Never miss a job enquiry while your team is on-site. Capture every lead, book callbacks and handle overflow 24/7.">
+    <meta name="keywords" content="AI receptionist for trades, missed call solution for plumbers, electrician answering service UK, trades lead capture, service business call handling">
+    <meta name="author" content="WiseCall">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wisecall.io/trades">
+    <meta property="og:title" content="WiseCall for Trades and Services | Capture Every Job Enquiry">
+    <meta property="og:description" content="AI call handling built for trades and service businesses. Capture every job enquiry, book callbacks and route urgent work while your team is on-site.">
+    <meta property="og:image" content="https://wisecall.io/og-image.jpg">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://wisecall.io/trades">
+    <meta name="twitter:title" content="WiseCall for Trades and Services | Capture Every Job Enquiry">
+    <meta name="twitter:description" content="AI call handling built for trades and service businesses. Capture every job enquiry, book callbacks and route urgent work while your team is on-site.">
+    <meta name="twitter:image" content="https://wisecall.io/og-image.jpg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6ED4D7;
+            --primary-dark: #4AA8AB;
+            --dark-bg: #141f1f;
+            --dark-card: #1a2d2d;
+            --text-light: #ffffff;
+            --text-medium: #B8C5D6;
+            --text-muted: #9BABC2;
+            --accent-purple: #8A6DD0;
+            --accent-orange: #E07A52;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-variant-numeric: tabular-nums;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            overflow-x: hidden;
+            line-height: 1.65;
+            -webkit-font-smoothing: subpixel-antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.08;
+            background:
+                radial-gradient(circle at 15% 70%, var(--primary) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, var(--accent-purple) 0%, transparent 45%),
+                radial-gradient(circle at 50% 90%, var(--accent-orange) 0%, transparent 50%);
+            filter: blur(120px);
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: transparent;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(125, 232, 235, 0.05);
+            animation: slideDown 0.6s ease-out;
+            transition: all 0.3s ease;
+        }
+
+        header.scrolled {
+            background: rgba(23, 41, 41, 0.95);
+            border-bottom: 1px solid rgba(110, 212, 215, 0.08);
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: -0.01em;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--dark-bg);
+            padding: 0.8rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: -0.01em;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(110, 212, 215, 0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(110, 212, 215, 0.3);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-button {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            z-index: 1001;
+        }
+
+        .mobile-menu-button span {
+            width: 28px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-button.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .mobile-menu-button.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-button.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-button {
+                display: flex;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 80px;
+                right: -100%;
+                width: 280px;
+                height: calc(100vh - 80px);
+                background: rgba(23, 41, 41, 0.98);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                padding: 2rem;
+                gap: 2rem;
+                border-left: 1px solid rgba(110, 212, 215, 0.12);
+                transition: right 0.4s ease;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            }
+
+            .nav-links.active {
+                right: 0;
+                display: flex;
+            }
+
+            .nav-links li {
+                width: 100%;
+            }
+
+            .nav-links a {
+                display: block;
+                padding: 1rem 0;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 10rem 2rem 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.01em;
+            margin-bottom: 1.5rem;
+            color: white;
+            max-width: 900px;
+        }
+
+        .hero .subtitle {
+            font-size: 1.35rem;
+            color: var(--text-medium);
+            margin-bottom: 1rem;
+            line-height: 1.75;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            max-width: 750px;
+        }
+
+        .hero .credibility {
+            font-size: 0.95rem;
+            color: var(--primary);
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--dark-bg);
+            padding: 1.2rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 6px 30px rgba(110, 212, 215, 0.25);
+            font-size: 1.05rem;
+            letter-spacing: -0.01em;
+            line-height: 1;
+            cursor: pointer;
+            border: none;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(110, 212, 215, 0.35);
+        }
+
+        .secondary-btn {
+            background: transparent;
+            color: var(--text-light);
+            padding: 1.2rem 2.5rem;
+            border: 2px solid var(--primary);
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 1.05rem;
+            letter-spacing: -0.01em;
+            line-height: 1;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(110, 212, 215, 0.08);
+            transform: translateY(-3px);
+        }
+
+        /* Sections */
+        .section {
+            padding: 5rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .section-header p {
+            color: var(--text-medium);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* Reception Reality */
+        .reality-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .reality-content p {
+            color: var(--text-medium);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .reality-content strong {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        /* Feature List */
+        .feature-list-section {
+            background: var(--dark-card);
+            border-radius: 24px;
+            border: 1px solid rgba(110, 212, 215, 0.08);
+            padding: 3rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2rem 0;
+        }
+
+        .feature-list li {
+            color: var(--text-medium);
+            font-size: 1.05rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(110, 212, 215, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list .check {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .compatibility {
+            background: rgba(110, 212, 215, 0.06);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .compatibility p {
+            color: var(--text-medium);
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .compatibility .systems {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .disclaimer {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 1.5rem;
+            font-style: italic;
+        }
+
+        /* Calculator */
+        .calculator-card {
+            background: var(--dark-card);
+            border-radius: 24px;
+            border: 2px solid rgba(110, 212, 215, 0.12);
+            padding: 3rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .calc-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .calc-input-group label {
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .calc-input-group input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            border: 2px solid rgba(110, 212, 215, 0.12);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-light);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .calc-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .calc-results {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(110, 212, 215, 0.1);
+        }
+
+        .calc-result-item {
+            text-align: center;
+        }
+
+        .calc-result-item .label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .calc-result-item .value {
+            color: var(--primary);
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .calc-result-item.highlight .value {
+            font-size: 2.2rem;
+        }
+
+        .calc-note {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Use Cases Grid */
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .use-case-card {
+            background: var(--dark-card);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(110, 212, 215, 0.08);
+            transition: all 0.4s;
+        }
+
+        .use-case-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(110, 212, 215, 0.2);
+        }
+
+        .use-case-card h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.75rem;
+        }
+
+        .use-case-card p {
+            color: var(--text-medium);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Compliance */
+        .compliance-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .compliance-item {
+            background: var(--dark-card);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(110, 212, 215, 0.08);
+            text-align: center;
+        }
+
+        .compliance-item h4 {
+            color: var(--primary);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .compliance-item p {
+            color: var(--text-medium);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Case Study */
+        .case-study {
+            background: var(--dark-card);
+            border-radius: 24px;
+            border: 1px solid rgba(110, 212, 215, 0.08);
+            padding: 3rem;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .case-study h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .case-study-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric .desc {
+            color: var(--text-medium);
+            font-size: 0.9rem;
+        }
+
+        .case-study .coming-soon {
+            display: inline-block;
+            background: rgba(110, 212, 215, 0.1);
+            color: var(--primary);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 5rem 2rem;
+            text-align: center;
+            background: linear-gradient(180deg, transparent, rgba(110, 212, 215, 0.03));
+        }
+
+        .cta-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .cta-content h2 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .cta-content .reassurance {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 2rem;
+            font-style: italic;
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 2rem;
+            border-top: 1px solid rgba(110, 212, 215, 0.08);
+        }
+
+        /* Contact Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--dark-card);
+            border-radius: 24px;
+            border: 2px solid rgba(110, 212, 215, 0.12);
+            max-width: 500px;
+            width: 100%;
+            padding: 2.5rem;
+            position: relative;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: var(--primary);
+        }
+
+        .modal h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .modal p {
+            color: var(--text-medium);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            border: 2px solid rgba(110, 212, 215, 0.12);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-light);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--dark-bg);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .form-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(110, 212, 215, 0.25);
+        }
+
+        .form-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .calc-results {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .case-study-metrics {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .compliance-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                padding: 8rem 1.5rem 3rem;
+                min-height: auto;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.15rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .section {
+                padding: 3rem 1.5rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.8rem;
+            }
+
+            .calc-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .use-cases-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-list-section {
+                padding: 2rem;
+            }
+
+            .calculator-card {
+                padding: 2rem;
+            }
+
+            .case-study {
+                padding: 2rem;
+            }
+
+            .calc-result-item .value {
+                font-size: 1.4rem;
+            }
+
+            .calc-result-item.highlight .value {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+  </head>
+  <body>
+    <div class="bg-animation"></div>
+
+    <!-- Contact Modal -->
+    <div class="modal-overlay" id="contactModal">
+        <div class="modal">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <h3>Book a Trades Demo</h3>
+            <p>Fill in your details and we'll arrange a personalised demo for your business.</p>
+            <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST">
+                <input type="hidden" id="inquiryType" name="inquiry_type" value="Trades Demo">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" placeholder="Your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone (optional)</label>
+                    <input type="tel" id="phone" name="phone" placeholder="Your phone number">
+                </div>
+                <div class="form-group">
+                    <label for="business">Business name (optional)</label>
+                    <input type="text" id="business" name="business_name" placeholder="Your business name">
+                </div>
+                <div class="form-group">
+                    <label for="message">Message (optional)</label>
+                    <textarea id="message" name="message" placeholder="Tell us about your business and the jobs you handle"></textarea>
+                </div>
+                <button type="submit" class="form-submit">Request Demo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="owl-logo.png" alt="WiseCall" style="height: 40px; margin-right: 10px;">WiseCall
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#features">Features</a></li>
+                <li><a href="index.html#pricing">Pricing</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="#calculator">Lead Value Calculator</a></li>
+                <li><a href="#" class="cta-button contact-link" data-inquiry="Trades Demo">Book a Demo</a></li>
+            </ul>
+            <button class="mobile-menu-button" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1>Capture Every Job Enquiry</h1>
+        <p class="subtitle">WiseCall answers every call, captures job details, books callbacks and helps your business win more work while your team is on the tools.</p>
+        <p class="credibility">Built for trades, field services and mobile teams.</p>
+        <div class="hero-buttons">
+            <a href="#" class="primary-btn contact-link" data-inquiry="Trades Demo">Book a Demo</a>
+            <a href="#calculator" class="secondary-btn">Calculate Your Missed Lead Value</a>
+        </div>
+    </section>
+
+    <!-- Section 1: The On-Site Reality -->
+    <section class="section">
+        <div class="section-header">
+            <h2>The On-Site Reality</h2>
+        </div>
+        <div class="reality-content">
+            <p>Every trades and service business knows the pattern. The phone rings while you are on a job, driving between sites, pricing work or dealing with a customer in front of you. By the time you are free to call back, the lead has often gone cold.</p>
+
+            <p>New enquiries are especially unforgiving. Homeowners and commercial customers usually call more than one business when they need help. If your line goes to voicemail, many will simply move on to the next contractor.</p>
+
+            <p>At the same time, existing customers need updates, appointment confirmations and urgent support. Those calls matter, but they can easily crowd out valuable new work when the team is already under pressure.</p>
+
+            <p>Evenings, weekends and out-of-hours periods create another gap. That is often exactly when customers are home, finally have time to ring or are dealing with something urgent.</p>
+
+            <p>The result is a business that does great work, but still loses leads through calls that never get answered at the right moment.</p>
+        </div>
+    </section>
+
+    <!-- Section 2: What WiseCall Does for Trades and Service Businesses -->
+    <section class="section">
+        <div class="section-header">
+            <h2>What WiseCall Does for Trades and Service Businesses</h2>
+            <p>An AI answering service that helps you capture more work without pulling your team off the job.</p>
+        </div>
+        <div class="feature-list-section">
+            <ul class="feature-list">
+                <li><span class="check">&#10003;</span> Answers every inbound call, day and night</li>
+                <li><span class="check">&#10003;</span> Captures caller, postcode and job details accurately</li>
+                <li><span class="check">&#10003;</span> Books quotes, site surveys and callbacks into your workflow</li>
+                <li><span class="check">&#10003;</span> Handles overflow when the team is busy or on-site</li>
+                <li><span class="check">&#10003;</span> Covers evenings, weekends and out-of-hours enquiries</li>
+                <li><span class="check">&#10003;</span> Routes urgent jobs based on your rules</li>
+                <li><span class="check">&#10003;</span> Keeps every lead logged and ready for follow-up</li>
+            </ul>
+            <div class="compatibility">
+                <p>Fits around trades and field service workflows:</p>
+                <p class="systems">Quote requests &nbsp;&bull;&nbsp; Callback scheduling &nbsp;&bull;&nbsp; Shared inbox and job follow-up</p>
+            </div>
+            <p class="disclaimer">WiseCall captures job details and routes calls. Technical advice, pricing decisions and emergency instructions stay with your team.</p>
+        </div>
+    </section>
+
+    <!-- Section 3: Lead Value Calculator -->
+    <section class="section" id="calculator">
+        <div class="section-header">
+            <h2>Lead Value Calculator</h2>
+            <p>See what missed calls could be costing your business every month.</p>
+        </div>
+        <div class="calculator-card">
+            <div class="calc-grid">
+                <div class="calc-input-group">
+                    <label for="calcCalls">Average calls per day</label>
+                    <input type="number" id="calcCalls" value="25" min="0" max="500">
+                </div>
+                <div class="calc-input-group">
+                    <label for="calcMissed">Estimated missed call percentage</label>
+                    <input type="number" id="calcMissed" value="20" min="0" max="100">
+                </div>
+                <div class="calc-input-group">
+                    <label for="calcNewLead">Percentage of missed calls that are new job enquiries</label>
+                    <input type="number" id="calcNewLead" value="30" min="0" max="100">
+                </div>
+                <div class="calc-input-group">
+                    <label for="calcValue">Average value of a booked job</label>
+                    <input type="number" id="calcValue" value="250" min="0" max="5000" step="10">
+                </div>
+            </div>
+            <div class="calc-results">
+                <div class="calc-result-item">
+                    <div class="label">Daily Missed Job Value</div>
+                    <div class="value" id="resultDaily">&pound;375</div>
+                </div>
+                <div class="calc-result-item highlight">
+                    <div class="label">Monthly Missed Job Value</div>
+                    <div class="value" id="resultMonthly">&pound;8,250</div>
+                </div>
+                <div class="calc-result-item">
+                    <div class="label">Estimated Annual Impact</div>
+                    <div class="value" id="resultAnnual">&pound;99,000</div>
+                </div>
+            </div>
+            <p class="calc-note">Use your average first job or callout value to keep the estimate conservative. The true value of repeat work, maintenance plans and referrals is often higher.</p>
+        </div>
+    </section>
+
+    <!-- Section 4: Use Cases -->
+    <section class="section">
+        <div class="section-header">
+            <h2>Built for Every Scenario</h2>
+        </div>
+        <div class="use-cases-grid">
+            <div class="use-case-card">
+                <h3>Lead Capture While On Site</h3>
+                <p>WiseCall makes sure every new enquiry is answered and logged while you stay focused on the job in front of you.</p>
+            </div>
+            <div class="use-case-card">
+                <h3>After-Hours and Urgent Calls</h3>
+                <p>Evening and out-of-hours calls can be captured, qualified and escalated when needed, instead of disappearing into voicemail.</p>
+            </div>
+            <div class="use-case-card">
+                <h3>Quote and Survey Booking</h3>
+                <p>Customers can request quotes, surveys and callbacks without waiting for someone to get back to the office first.</p>
+            </div>
+            <div class="use-case-card">
+                <h3>Multi-Van or Multi-Engineer Dispatch</h3>
+                <p>For growing teams, WiseCall helps keep enquiries routed clearly and consistently across engineers, vans and service areas.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Compliance & Security -->
+    <section class="section">
+        <div class="section-header">
+            <h2>Compliance and Security</h2>
+            <p>Operational control and customer data handling built in as standard.</p>
+        </div>
+        <div class="compliance-grid">
+            <div class="compliance-item">
+                <h4>UK Hosted</h4>
+                <p>All data is processed and stored on UK-based servers.</p>
+            </div>
+            <div class="compliance-item">
+                <h4>GDPR Compliant</h4>
+                <p>Full compliance with UK data protection regulations.</p>
+            </div>
+            <div class="compliance-item">
+                <h4>Configurable Call Flows</h4>
+                <p>Different call types can be qualified and routed in different ways based on your rules.</p>
+            </div>
+            <div class="compliance-item">
+                <h4>Secure Data Processing</h4>
+                <p>Encrypted communications and secure storage as standard.</p>
+            </div>
+            <div class="compliance-item">
+                <h4>Urgent Job Escalation</h4>
+                <p>Priority jobs can be flagged and routed quickly to the right person when timing matters.</p>
+            </div>
+            <div class="compliance-item">
+                <h4>Transparent Reporting</h4>
+                <p>Every enquiry is logged with call notes, recordings and transcripts so follow-up is clear and accountable.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Pilot Programme -->
+    <section class="section">
+        <div class="section-header">
+            <h2>Try It Risk Free</h2>
+        </div>
+        <div class="case-study">
+            <h3>7 Day Trades Pilot Programme</h3>
+            <div class="case-study-metrics">
+                <div class="metric">
+                    <span class="number">7 days</span>
+                    <span class="desc">Full featured trial period</span>
+                </div>
+                <div class="metric">
+                    <span class="number">No risk</span>
+                    <span class="desc">Cancel anytime, no commitment</span>
+                </div>
+                <div class="metric">
+                    <span class="number">Full support</span>
+                    <span class="desc">Dedicated onboarding from our team</span>
+                </div>
+            </div>
+            <p style="color: var(--text-medium); margin: 1.5rem 0 2rem; line-height: 1.7; max-width: 600px; margin-left: auto; margin-right: auto;">See how many leads WiseCall captures, how quickly callbacks are booked and how much work is recovered while your team stays focused on the job.</p>
+            <a href="#" class="primary-btn contact-link" data-inquiry="Trades Pilot Programme" style="display: inline-block;">Start Your 7 Day Pilot</a>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Stay On the Tools. Keep Winning Work.</h2>
+            <div class="hero-buttons" style="margin-bottom: 1rem;">
+                <a href="#" class="primary-btn contact-link" data-inquiry="Trades Demo">Book a Trades Demo</a>
+                <a href="#" class="secondary-btn contact-link" data-inquiry="Trades ROI Analysis">Request ROI Analysis</a>
+            </div>
+            <p class="reassurance">WiseCall works alongside your team. Never in place of them.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div style="max-width: 1400px; margin: 0 auto; text-align: center;">
+            <a href="index.html" class="logo" style="justify-content: center; margin-bottom: 1rem; display: flex; align-items: center; text-decoration: none;"><img src="owl-logo.png" alt="WiseCall" style="height: 50px; margin-right: 14px;">WiseCall</a>
+            <p style="color: var(--text-medium); max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.7;">AI call handling backed by 20+ years of UK telecoms expertise.</p>
+            <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;">
+                <a href="index.html" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Home</a>
+                <a href="index.html#features" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Features</a>
+                <a href="index.html#pricing" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Pricing</a>
+                <a href="index.html#about" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">About</a>
+                <a href="#" class="contact-link" data-inquiry="General Contact" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in Touch</a>
+            </div>
+            <div style="border-top: 1px solid rgba(110, 212, 215, 0.08); padding-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                <p>&copy; 2025 WiseCall. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.querySelector('.mobile-menu-button');
+        const navLinks = document.querySelector('.nav-links');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenuButton.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenuButton.classList.remove('active');
+                navLinks.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('nav')) {
+                mobileMenuButton.classList.remove('active');
+                navLinks.classList.remove('active');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                if (this.getAttribute('href') === '#') return;
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Header scroll effect
+        const header = document.querySelector('header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Lead value calculator
+        const calcCalls = document.getElementById('calcCalls');
+        const calcMissed = document.getElementById('calcMissed');
+        const calcNewLead = document.getElementById('calcNewLead');
+        const calcValue = document.getElementById('calcValue');
+        const resultDaily = document.getElementById('resultDaily');
+        const resultMonthly = document.getElementById('resultMonthly');
+        const resultAnnual = document.getElementById('resultAnnual');
+
+        function calculateLeadValue() {
+            const calls = parseInt(calcCalls.value) || 0;
+            const missedPct = (parseInt(calcMissed.value) || 0) / 100;
+            const newLeadPct = (parseInt(calcNewLead.value) || 0) / 100;
+            const jobValue = parseInt(calcValue.value) || 0;
+
+            const dailyMissedLeads = calls * missedPct * newLeadPct;
+            const daily = dailyMissedLeads * jobValue;
+            const monthly = daily * 22; // working days
+            const annual = monthly * 12;
+
+            resultDaily.textContent = '\u00A3' + Math.round(daily).toLocaleString('en-GB');
+            resultMonthly.textContent = '\u00A3' + Math.round(monthly).toLocaleString('en-GB');
+            resultAnnual.textContent = '\u00A3' + Math.round(annual).toLocaleString('en-GB');
+        }
+
+        calcCalls.addEventListener('input', calculateLeadValue);
+        calcMissed.addEventListener('input', calculateLeadValue);
+        calcNewLead.addEventListener('input', calculateLeadValue);
+        calcValue.addEventListener('input', calculateLeadValue);
+
+        // Initial calculation
+        calculateLeadValue();
+
+        // Contact Modal
+        const modal = document.getElementById('contactModal');
+        const modalClose = document.getElementById('modalClose');
+        const contactForm = document.getElementById('contactForm');
+        const inquiryTypeField = document.getElementById('inquiryType');
+
+        document.querySelectorAll('.contact-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const inquiryType = link.dataset.inquiry || 'Trades Demo';
+                inquiryTypeField.value = inquiryType;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = contactForm.querySelector('.form-submit');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(contactForm.action, {
+                    method: 'POST',
+                    body: new FormData(contactForm),
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (response.ok) {
+                    submitBtn.textContent = 'Sent!';
+                    contactForm.reset();
+                    setTimeout(() => {
+                        modal.classList.remove('active');
+                        document.body.style.overflow = '';
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    }, 1500);
+                } else {
+                    throw new Error('Failed');
+                }
+            } catch (error) {
+                submitBtn.textContent = 'Error - Try Again';
+                submitBtn.disabled = false;
+                setTimeout(() => {
+                    submitBtn.textContent = originalText;
+                }, 2000);
+            }
+        });
+    </script>
+  </body>
+</html>
