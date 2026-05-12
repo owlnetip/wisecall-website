@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>WiseCall AI Transformation Workshop | For Business Leaders</title>
+    <meta name="description" content="An exclusive hands-on workshop for directors, founders and decision makers to explore practical AI systems, automation and modern workflows in a small private environment.">
+    <meta name="keywords" content="AI workshop UK, AI transformation, business AI training, WiseCall AI workshop, AI automation for business leaders">
+    <meta name="author" content="WiseCall">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wisecall.io/ai-workshop">
+    <meta property="og:title" content="WiseCall AI Transformation Workshop">
+    <meta property="og:description" content="An exclusive hands-on workshop for directors, founders and decision makers. Bring your idea, build it on the day. Limited to 6–8 attendees.">
+    <meta property="og:image" content="https://wisecall.io/og-image.jpg">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://wisecall.io/ai-workshop">
+    <meta name="twitter:title" content="WiseCall AI Transformation Workshop">
+    <meta name="twitter:description" content="An exclusive hands-on workshop for directors, founders and decision makers.">
+    <meta name="twitter:image" content="https://wisecall.io/og-image.jpg">
+
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #172929;
+        color: #fff;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      /* ---------- Framer-Motion-equivalent scroll animations ---------- */
+      .motion {
+        opacity: 0;
+        will-change: transform, opacity;
+        transition-property: opacity, transform;
+        transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+      }
+      .motion[data-anim="fade-up"]   { transform: translateY(20px); transition-duration: 0.8s; }
+      .motion[data-anim="fade-up-fast"] { transform: translateY(20px); transition-duration: 0.6s; }
+      .motion[data-anim="fade-right"] { transform: translateX(-20px); transition-duration: 0.6s; }
+      .motion[data-anim="fade-left"]  { transform: translateX(20px); transition-duration: 0.6s; }
+      .motion[data-anim="scale-in"]   { transform: scale(0.9); transition-duration: 0.5s; }
+      .motion[data-anim="scale-in-soft"] { transform: scale(0.95); transition-duration: 0.8s; }
+      .motion[data-anim="fade"]       { transition-duration: 1s; }
+
+      .motion.in-view {
+        opacity: 1;
+        transform: translate(0,0) scale(1);
+      }
+
+      /* Button hover/tap (Framer whileHover scale 1.05, whileTap 0.95) */
+      .mbtn {
+        transition: transform 0.18s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.25s;
+      }
+      .mbtn:hover { transform: scale(1.05); }
+      .mbtn:active { transform: scale(0.95); }
+
+      /* Hide Lucide stroke flash before init */
+      [data-lucide] { width: 1em; height: 1em; }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar { width: 10px; }
+      ::-webkit-scrollbar-track { background: #0f1f1f; }
+      ::-webkit-scrollbar-thumb { background: rgba(125,232,235,0.18); border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(125,232,235,0.32); }
+    </style>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+
+  <body class="min-h-screen bg-[#172929] overflow-x-hidden">
+
+    <!-- ============================ Top bar (minimal) ============================ -->
+    <header class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#172929]/60 border-b border-[#7de8eb]/10">
+      <nav class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-2 text-white font-bold">
+          <img src="owl-logo.png" alt="WiseCall" class="h-8 w-auto">
+          <span class="text-sm tracking-wide">WiseCall</span>
+        </a>
+        <a href="#" data-modal-open class="mbtn inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]">
+          Apply For A Place
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </nav>
+    </header>
+
+    <!-- ============================ HERO ============================ -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden px-6 py-20">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#172929] via-[#1a3535] to-[#172929]"></div>
+
+      <div class="absolute inset-0 opacity-30">
+        <div class="absolute top-20 left-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-20 right-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[120px]"></div>
+      </div>
+
+      <div class="relative z-10 max-w-6xl mx-auto text-center">
+        <div class="motion" data-anim="fade-up">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-8">
+            <i data-lucide="sparkles" class="w-4 h-4 text-[#7de8eb]"></i>
+            <span class="text-sm text-white/80">Bring your idea, build it on the day • Limited to 6–8 attendees</span>
+          </div>
+
+          <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            AI Transformation For
+            <br>
+            <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">
+              Business Leaders
+            </span>
+          </h1>
+
+          <p class="text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-12 leading-relaxed">
+            An exclusive hands-on workshop for directors, founders and decision makers to explore practical AI systems, automation and modern workflows in a small private environment.
+          </p>
+
+          <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <button data-modal-open class="mbtn px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-semibold text-lg shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]">
+              Reserve Your Place
+            </button>
+            <a href="#agenda" class="mbtn px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/30 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10 transition-colors">
+              View Workshop Agenda
+            </a>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+            <div class="motion flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="fade-up-fast" data-delay="200">
+              <i data-lucide="users" class="w-6 h-6 text-[#7de8eb]"></i>
+              <span class="text-sm text-white/80">6–8 Attendees</span>
+            </div>
+            <div class="motion flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="fade-up-fast" data-delay="300">
+              <i data-lucide="zap" class="w-6 h-6 text-[#7de8eb]"></i>
+              <span class="text-sm text-white/80">Live Demos</span>
+            </div>
+            <div class="motion flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="fade-up-fast" data-delay="400">
+              <i data-lucide="sparkles" class="w-6 h-6 text-[#7de8eb]"></i>
+              <span class="text-sm text-white/80">Hands-On Build</span>
+            </div>
+            <div class="motion flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="fade-up-fast" data-delay="500">
+              <i data-lucide="users" class="w-6 h-6 text-[#7de8eb]"></i>
+              <span class="text-sm text-white/80">Beginner Friendly</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ WHY ============================ -->
+    <section class="relative py-24 px-6 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#172929] to-[#1a3535]"></div>
+
+      <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="motion text-center mb-16" data-anim="fade-up-fast">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Why This Event Exists</h2>
+          <p class="text-xl text-white/70 max-w-3xl mx-auto">
+            Most businesses know AI matters, but struggle to move forward
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="motion p-8 rounded-2xl bg-white/5 backdrop-blur-sm border border-red-500/20" data-anim="fade-right" data-delay="200">
+            <div class="flex items-center gap-3 mb-6">
+              <i data-lucide="alert-circle" class="w-8 h-8 text-red-400"></i>
+              <h3 class="text-2xl font-semibold text-white">The Problem</h3>
+            </div>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3 text-white/70"><span class="text-red-400 mt-1">×</span><span>Don't know where to start</span></li>
+              <li class="flex items-start gap-3 text-white/70"><span class="text-red-400 mt-1">×</span><span>Overwhelmed by options</span></li>
+              <li class="flex items-start gap-3 text-white/70"><span class="text-red-400 mt-1">×</span><span>Wasting money on wrong tools</span></li>
+              <li class="flex items-start gap-3 text-white/70"><span class="text-red-400 mt-1">×</span><span>Fear security risks</span></li>
+              <li class="flex items-start gap-3 text-white/70"><span class="text-red-400 mt-1">×</span><span>Experimenting without structure</span></li>
+            </ul>
+          </div>
+
+          <div class="motion p-8 rounded-2xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/20" data-anim="fade-left" data-delay="400">
+            <div class="flex items-center gap-3 mb-6">
+              <i data-lucide="check-circle" class="w-8 h-8 text-[#7de8eb]"></i>
+              <h3 class="text-2xl font-semibold text-white">Our Approach</h3>
+            </div>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3 text-white/70"><span class="text-[#7de8eb] mt-1">✓</span><span>Simplify AI adoption</span></li>
+              <li class="flex items-start gap-3 text-white/70"><span class="text-[#7de8eb] mt-1">✓</span><span>Show real use cases</span></li>
+              <li class="flex items-start gap-3 text-white/70"><span class="text-[#7de8eb] mt-1">✓</span><span>Understand opportunities</span></li>
+              <li class="flex items-start gap-3 text-white/70"><span class="text-[#7de8eb] mt-1">✓</span><span>Explain risks properly</span></li>
+              <li class="flex items-start gap-3 text-white/70"><span class="text-[#7de8eb] mt-1">✓</span><span>Demonstrate practical implementation</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ LIVE BUILDING ============================ -->
+    <section class="relative py-24 px-6 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535] to-[#172929]"></div>
+      <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#7de8eb]/10 to-transparent opacity-30"></div>
+
+      <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="motion text-center mb-16" data-anim="fade-up-fast">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 backdrop-blur-sm mb-6">
+            <span class="text-sm text-[#7de8eb] font-semibold">Live Building Workshop</span>
+          </div>
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">This Is Not Just Slides</h2>
+          <p class="text-xl text-white/70 max-w-3xl mx-auto">
+            You'll watch real AI systems being built live, interact with working prototypes, and see exactly how these tools can transform your business
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div class="motion p-6 rounded-xl bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="scale-in" data-delay="0">
+            <i data-lucide="code" class="w-10 h-10 text-[#7de8eb] mb-4"></i>
+            <h3 class="text-lg font-semibold text-white mb-2">Build AI Workflows Live</h3>
+            <p class="text-white/60 text-sm">Watch as complex automation systems are created in real-time</p>
+          </div>
+          <div class="motion p-6 rounded-xl bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="scale-in" data-delay="100">
+            <i data-lucide="palette" class="w-10 h-10 text-[#7de8eb] mb-4"></i>
+            <h3 class="text-lg font-semibold text-white mb-2">Branded Landing Pages</h3>
+            <p class="text-white/60 text-sm">Create professional websites in minutes, not weeks</p>
+          </div>
+          <div class="motion p-6 rounded-xl bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="scale-in" data-delay="200">
+            <i data-lucide="bot" class="w-10 h-10 text-[#7de8eb] mb-4"></i>
+            <h3 class="text-lg font-semibold text-white mb-2">AI Assistant Creation</h3>
+            <p class="text-white/60 text-sm">Build custom AI assistants tailored to your business needs</p>
+          </div>
+          <div class="motion p-6 rounded-xl bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="scale-in" data-delay="300">
+            <i data-lucide="link" class="w-10 h-10 text-[#7de8eb] mb-4"></i>
+            <h3 class="text-lg font-semibold text-white mb-2">Connect Automation Tools</h3>
+            <p class="text-white/60 text-sm">Integrate multiple platforms into seamless workflows</p>
+          </div>
+          <div class="motion p-6 rounded-xl bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="scale-in" data-delay="400">
+            <i data-lucide="file-type" class="w-10 h-10 text-[#7de8eb] mb-4"></i>
+            <h3 class="text-lg font-semibold text-white mb-2">AI-Generated Assets</h3>
+            <p class="text-white/60 text-sm">Produce high-quality business content with AI assistance</p>
+          </div>
+          <div class="motion p-6 rounded-xl bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="scale-in" data-delay="500">
+            <i data-lucide="cog" class="w-10 h-10 text-[#7de8eb] mb-4"></i>
+            <h3 class="text-lg font-semibold text-white mb-2">Enhanced Operations</h3>
+            <p class="text-white/60 text-sm">Transform existing processes with intelligent automation</p>
+          </div>
+        </div>
+
+        <div class="motion p-8 rounded-2xl bg-gradient-to-r from-[#7de8eb]/10 to-transparent border border-[#7de8eb]/20 backdrop-blur-sm text-center" data-anim="fade-up-fast" data-delay="400">
+          <p class="text-2xl text-white font-semibold">
+            "A real interactive workshop where you see AI in action"
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ BRING YOUR IDEA ============================ -->
+    <section class="relative py-32 px-6 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#172929] via-[#1a3535] to-[#172929]"></div>
+
+      <div class="absolute inset-0 opacity-40">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#7de8eb] rounded-full blur-[160px]"></div>
+      </div>
+
+      <div class="relative z-10 max-w-5xl mx-auto">
+        <div class="motion text-center mb-12" data-anim="scale-in-soft">
+          <div class="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-[#7de8eb]/20 to-[#5dbfc2]/20 border border-[#7de8eb]/40 backdrop-blur-sm mb-8">
+            <i data-lucide="lightbulb" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-base text-white font-semibold">The Workshop Difference</span>
+          </div>
+
+          <h2 class="text-5xl md:text-6xl font-bold text-white mb-8 leading-tight">
+            Bring Your Idea,
+            <br>
+            <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">
+              Build It On The Day
+            </span>
+          </h2>
+
+          <p class="text-2xl md:text-3xl text-white/80 max-w-3xl mx-auto leading-relaxed">
+            This isn't just about learning what AI can do—it's about building what <span class="text-[#7de8eb] font-semibold">your business</span> needs
+          </p>
+        </div>
+
+        <div class="motion p-10 md:p-12 rounded-3xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-[#7de8eb]/30 shadow-[0_0_60px_rgba(125,232,235,0.2)]" data-anim="fade-up" data-delay="200">
+          <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(125,232,235,0.4)]">
+                <i data-lucide="rocket" class="w-10 h-10 text-[#172929]"></i>
+              </div>
+              <h3 class="text-3xl font-bold text-white mb-4">Your Challenge, Our Workshop</h3>
+              <p class="text-lg text-white/70 leading-relaxed">
+                Come prepared with a business problem, workflow bottleneck, or idea you want to explore. We'll work together to prototype a solution using the latest AI tools.
+              </p>
+            </div>
+
+            <div class="space-y-4">
+              <div class="motion flex items-start gap-4 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="fade-left" data-delay="300">
+                <i data-lucide="check-circle" class="w-6 h-6 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <span class="text-white/90">Bring your real business challenge or idea</span>
+              </div>
+              <div class="motion flex items-start gap-4 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="fade-left" data-delay="400">
+                <i data-lucide="check-circle" class="w-6 h-6 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <span class="text-white/90">Work with AI tools to build a solution live</span>
+              </div>
+              <div class="motion flex items-start gap-4 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="fade-left" data-delay="500">
+                <i data-lucide="check-circle" class="w-6 h-6 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <span class="text-white/90">Leave with a working prototype or clear roadmap</span>
+              </div>
+              <div class="motion flex items-start gap-4 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10" data-anim="fade-left" data-delay="600">
+                <i data-lucide="check-circle" class="w-6 h-6 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <span class="text-white/90">Get expert guidance on your specific use case</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="motion mt-10 pt-8 border-t border-[#7de8eb]/20 text-center" data-anim="fade-up-fast" data-delay="700">
+            <p class="text-xl text-white/90 font-semibold mb-4">
+              Leave with more than knowledge—leave with a solution
+            </p>
+            <div class="flex items-center justify-center gap-2 text-[#7de8eb] flex-wrap">
+              <span class="text-lg">Your idea</span>
+              <i data-lucide="arrow-right" class="w-5 h-5"></i>
+              <span class="text-lg">AI tools</span>
+              <i data-lucide="arrow-right" class="w-5 h-5"></i>
+              <span class="text-lg font-bold">Working prototype</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ WHO ============================ -->
+    <section class="relative py-24 px-6 overflow-hidden">
+      <div class="absolute inset-0 bg-[#172929]"></div>
+
+      <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="motion text-center mb-16" data-anim="fade-up-fast">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Who Should Attend</h2>
+          <p class="text-xl text-white/70 max-w-3xl mx-auto">
+            This workshop is designed for decision makers ready to explore AI transformation
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="motion p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 hover:-translate-y-1 transition-all" data-anim="fade-up-fast" data-delay="0">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#7de8eb]/20 to-transparent flex items-center justify-center mb-4">
+              <i data-lucide="briefcase" class="w-7 h-7 text-[#7de8eb]"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-2">Business Owners</h3>
+            <p class="text-white/60 text-sm">Looking to leverage AI for competitive advantage</p>
+          </div>
+          <div class="motion p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 hover:-translate-y-1 transition-all" data-anim="fade-up-fast" data-delay="50">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#7de8eb]/20 to-transparent flex items-center justify-center mb-4">
+              <i data-lucide="users" class="w-7 h-7 text-[#7de8eb]"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-2">Directors</h3>
+            <p class="text-white/60 text-sm">Responsible for strategic technology decisions</p>
+          </div>
+          <div class="motion p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 hover:-translate-y-1 transition-all" data-anim="fade-up-fast" data-delay="100">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#7de8eb]/20 to-transparent flex items-center justify-center mb-4">
+              <i data-lucide="bar-chart" class="w-7 h-7 text-[#7de8eb]"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-2">Operations Managers</h3>
+            <p class="text-white/60 text-sm">Seeking to optimize workflows and efficiency</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ EXCLUSIVITY ============================ -->
+    <section class="relative py-24 px-6 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#1a3535] to-[#172929]"></div>
+
+      <div class="absolute inset-0 opacity-20">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7de8eb] rounded-full blur-[150px]"></div>
+      </div>
+
+      <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="motion text-center mb-16" data-anim="fade-up-fast">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/30 backdrop-blur-sm mb-6">
+            <i data-lucide="award" class="w-4 h-4 text-[#7de8eb]"></i>
+            <span class="text-sm text-[#7de8eb] font-semibold">Exclusive Format</span>
+          </div>
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Small, Private &amp; High-Value</h2>
+          <p class="text-xl text-white/70 max-w-3xl mx-auto">
+            Experience a premium workshop designed for meaningful learning and genuine connections
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12 justify-items-center">
+          <div class="motion text-center lg:col-span-2" data-anim="scale-in" data-delay="0">
+            <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#7de8eb]/20 to-transparent border border-[#7de8eb]/20 flex items-center justify-center mb-4">
+              <i data-lucide="users" class="w-8 h-8 text-[#7de8eb]"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-2">Only 6–8 Attendees</h3>
+            <p class="text-white/60 text-sm">Small group ensures personalized attention and deep interaction</p>
+          </div>
+          <div class="motion text-center lg:col-span-2" data-anim="scale-in" data-delay="100">
+            <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#7de8eb]/20 to-transparent border border-[#7de8eb]/20 flex items-center justify-center mb-4">
+              <i data-lucide="message-circle" class="w-8 h-8 text-[#7de8eb]"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-2">Interactive Environment</h3>
+            <p class="text-white/60 text-sm">Ask questions freely and get immediate answers</p>
+          </div>
+          <div class="motion text-center lg:col-span-2" data-anim="scale-in" data-delay="200">
+            <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#7de8eb]/20 to-transparent border border-[#7de8eb]/20 flex items-center justify-center mb-4">
+              <i data-lucide="user-check" class="w-8 h-8 text-[#7de8eb]"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-2">Tailored Discussions</h3>
+            <p class="text-white/60 text-sm">Focus on use cases relevant to your specific industry</p>
+          </div>
+          <div class="motion text-center lg:col-start-2 lg:col-span-2" data-anim="scale-in" data-delay="300">
+            <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#7de8eb]/20 to-transparent border border-[#7de8eb]/20 flex items-center justify-center mb-4">
+              <i data-lucide="network" class="w-8 h-8 text-[#7de8eb]"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-2">Executive Networking</h3>
+            <p class="text-white/60 text-sm">Connect with other forward-thinking decision makers</p>
+          </div>
+          <div class="motion text-center lg:col-span-2" data-anim="scale-in" data-delay="400">
+            <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#7de8eb]/20 to-transparent border border-[#7de8eb]/20 flex items-center justify-center mb-4">
+              <i data-lucide="award" class="w-8 h-8 text-[#7de8eb]"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-2">Premium Experience</h3>
+            <p class="text-white/60 text-sm">No crowded conference halls, just focused learning</p>
+          </div>
+        </div>
+
+        <div class="motion max-w-2xl mx-auto p-8 rounded-2xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/20 text-center" data-anim="fade-up-fast" data-delay="300">
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] mb-4 shadow-[0_0_40px_rgba(125,232,235,0.4)]">
+            <span class="text-3xl font-bold text-[#172929]">8</span>
+          </div>
+          <p class="text-xl text-white/80 font-semibold mb-2">Limited Places Available</p>
+          <p class="text-white/60">Maximum 8 attendees per session to ensure quality interaction</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ SCHEDULE ============================ -->
+    <section id="agenda" class="relative py-24 px-6 overflow-hidden">
+      <div class="absolute inset-0 bg-[#172929]"></div>
+
+      <div class="relative z-10 max-w-5xl mx-auto">
+        <div class="motion text-center mb-16" data-anim="fade-up-fast">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-6">
+            <i data-lucide="clock" class="w-4 h-4 text-[#7de8eb]"></i>
+            <span class="text-sm text-white/80">Half-day intensive workshop</span>
+          </div>
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Event Format</h2>
+          <p class="text-xl text-white/70 max-w-3xl mx-auto">
+            A structured yet flexible agenda designed for maximum learning
+          </p>
+        </div>
+
+        <div class="relative">
+          <div class="absolute left-8 md:left-16 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#7de8eb]/50 via-[#7de8eb]/20 to-transparent"></div>
+
+          <div class="space-y-8">
+            <div class="motion relative pl-20 md:pl-32" data-anim="fade-right" data-delay="0">
+              <div class="absolute left-4 md:left-10 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center shadow-[0_0_20px_rgba(125,232,235,0.4)]">
+                <i data-lucide="presentation" class="w-4 h-4 text-[#172929]"></i>
+              </div>
+              <div class="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all">
+                <div class="text-sm text-[#7de8eb] font-semibold mb-2">09:00 - 09:30</div>
+                <h3 class="text-xl font-semibold text-white mb-2">Introduction to Practical AI</h3>
+                <p class="text-white/60">Understanding the AI landscape and real business opportunities</p>
+              </div>
+            </div>
+
+            <div class="motion relative pl-20 md:pl-32" data-anim="fade-right" data-delay="100">
+              <div class="absolute left-4 md:left-10 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center shadow-[0_0_20px_rgba(125,232,235,0.4)]">
+                <i data-lucide="presentation" class="w-4 h-4 text-[#172929]"></i>
+              </div>
+              <div class="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all">
+                <div class="text-sm text-[#7de8eb] font-semibold mb-2">09:30 - 10:15</div>
+                <h3 class="text-xl font-semibold text-white mb-2">Practical AI Examples</h3>
+                <p class="text-white/60">Brief examples of assistants, voice agents and automation before the build work begins</p>
+              </div>
+            </div>
+
+            <div class="motion relative pl-20 md:pl-32" data-anim="fade-right" data-delay="200">
+              <div class="absolute left-4 md:left-10 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center shadow-[0_0_20px_rgba(125,232,235,0.4)]">
+                <i data-lucide="wrench" class="w-4 h-4 text-[#172929]"></i>
+              </div>
+              <div class="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all">
+                <div class="text-sm text-[#7de8eb] font-semibold mb-2">10:15 - 11:45</div>
+                <h3 class="text-xl font-semibold text-white mb-2">Build Your Business Workflow</h3>
+                <p class="text-white/60">Hands-on work on your own use case, workflow bottleneck or AI idea</p>
+              </div>
+            </div>
+
+            <div class="motion relative pl-20 md:pl-32" data-anim="fade-right" data-delay="300">
+              <div class="absolute left-4 md:left-10 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center shadow-[0_0_20px_rgba(125,232,235,0.4)]">
+                <i data-lucide="coffee" class="w-4 h-4 text-[#172929]"></i>
+              </div>
+              <div class="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all">
+                <div class="text-sm text-[#7de8eb] font-semibold mb-2">11:45 - 12:00</div>
+                <h3 class="text-xl font-semibold text-white mb-2">Live Building Walkthrough</h3>
+                <p class="text-white/60">A short guided build showing how the same thinking becomes a working AI system</p>
+              </div>
+            </div>
+
+            <div class="motion relative pl-20 md:pl-32" data-anim="fade-right" data-delay="400">
+              <div class="absolute left-4 md:left-10 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center shadow-[0_0_20px_rgba(125,232,235,0.4)]">
+                <i data-lucide="code" class="w-4 h-4 text-[#172929]"></i>
+              </div>
+              <div class="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all">
+                <div class="text-sm text-[#7de8eb] font-semibold mb-2">12:00 - 13:30</div>
+                <h3 class="text-xl font-semibold text-white mb-2">Lunch &amp; Networking</h3>
+                <p class="text-white/60">Time to discuss ideas, compare use cases and connect with other business leaders</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ TRUST ============================ -->
+    <section class="relative py-24 px-6 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#172929] via-[#1a3535] to-[#172929]"></div>
+
+      <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="motion text-center mb-16" data-anim="fade-up-fast">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Built on Real Experience</h2>
+          <p class="text-xl text-white/70 max-w-3xl mx-auto">Focused on real implementation, not just presentations</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="motion p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:bg-white/10 transition-all group" data-anim="fade-up-fast" data-delay="0">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-transparent flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.3)] transition-shadow">
+                <i data-lucide="zap" class="w-6 h-6 text-[#7de8eb]"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold text-white mb-2">Real Implementation Focus</h3>
+                <p class="text-white/60">Not theoretical presentations—actual working systems and deployments</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="motion p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:bg-white/10 transition-all group" data-anim="fade-up-fast" data-delay="100">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-transparent flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.3)] transition-shadow">
+                <i data-lucide="building-2" class="w-6 h-6 text-[#7de8eb]"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold text-white mb-2">Telecom &amp; AI Infrastructure</h3>
+                <p class="text-white/60">Deep experience in enterprise-grade technology and communications</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="motion p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:bg-white/10 transition-all group" data-anim="fade-up-fast" data-delay="200">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-transparent flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.3)] transition-shadow">
+                <i data-lucide="rocket" class="w-6 h-6 text-[#7de8eb]"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold text-white mb-2">Modern Workflow Expertise</h3>
+                <p class="text-white/60">Proven track record in AI-powered productivity and automation</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="motion p-8 rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 hover:bg-white/10 transition-all group" data-anim="fade-up-fast" data-delay="300">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-transparent flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.3)] transition-shadow">
+                <i data-lucide="check-circle-2" class="w-6 h-6 text-[#7de8eb]"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold text-white mb-2">Practical Deployment</h3>
+                <p class="text-white/60">Focus on solutions you can implement immediately, not distant concepts</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="motion mt-12 p-8 rounded-2xl bg-gradient-to-r from-[#7de8eb]/5 to-transparent border border-[#7de8eb]/20 backdrop-blur-sm" data-anim="fade-up-fast" data-delay="400">
+          <p class="text-2xl text-white/90 font-semibold text-center">
+            "Real business transformation through practical AI adoption"
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ FINAL CTA ============================ -->
+    <section class="relative py-32 px-6 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#1a3535] to-[#172929]"></div>
+
+      <div class="absolute inset-0 opacity-30">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#7de8eb] rounded-full blur-[180px]"></div>
+      </div>
+
+      <div class="relative z-10 max-w-4xl mx-auto text-center">
+        <div class="motion" data-anim="fade-up-fast">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-8">
+            <i data-lucide="sparkles" class="w-4 h-4 text-[#7de8eb]"></i>
+            <span class="text-sm text-white/80">Join the next session</span>
+          </div>
+
+          <h2 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            The Businesses Learning AI Early
+            <br>
+            <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">
+              Will Move Faster
+            </span>
+          </h2>
+
+          <p class="text-xl md:text-2xl text-white/70 mb-12 max-w-2xl mx-auto">
+            Bring your business challenge. Build a working solution. Leave with a clear implementation roadmap.
+          </p>
+
+          <button data-modal-open class="mbtn inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-xl shadow-[0_0_40px_rgba(125,232,235,0.4)] hover:shadow-[0_0_60px_rgba(125,232,235,0.6)] group">
+            Apply For A Place
+            <i data-lucide="arrow-right" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></i>
+          </button>
+
+          <p class="text-sm text-white/50 mt-6">Limited to 6–8 attendees per session</p>
+        </div>
+
+        <div class="motion mt-20 grid grid-cols-3 gap-8 max-w-3xl mx-auto" data-anim="fade" data-delay="300">
+          <div class="text-center">
+            <div class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent mb-2">5+</div>
+            <div class="text-sm text-white/60">Hour Workshop</div>
+          </div>
+          <div class="text-center">
+            <div class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent mb-2">6-8</div>
+            <div class="text-sm text-white/60">Attendees Max</div>
+          </div>
+          <div class="text-center">
+            <div class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent mb-2">100%</div>
+            <div class="text-sm text-white/60">Hands-On</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ FOOTER ============================ -->
+    <footer class="relative py-12 px-6 border-t border-[#7de8eb]/10">
+      <div class="absolute inset-0 bg-[#172929]"></div>
+
+      <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div class="motion text-center md:text-left" data-anim="fade">
+            <h3 class="text-2xl font-bold bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent mb-2">
+              WiseCall AI Workshop
+            </h3>
+            <p class="text-white/60 text-sm">Practical AI for business leaders</p>
+          </div>
+
+          <div class="motion flex flex-wrap items-center justify-center gap-6" data-anim="fade">
+            <a href="#" data-modal-open class="flex items-center gap-2 text-white/70 hover:text-[#7de8eb] transition-colors group">
+              <i data-lucide="mail" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+              <span class="text-sm">Contact</span>
+            </a>
+            <a href="#" data-modal-open class="flex items-center gap-2 text-white/70 hover:text-[#7de8eb] transition-colors group">
+              <i data-lucide="calendar" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+              <span class="text-sm">Future Workshops</span>
+            </a>
+            <a href="index.html" class="flex items-center gap-2 text-white/70 hover:text-[#7de8eb] transition-colors group">
+              <i data-lucide="shield" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+              <span class="text-sm">Privacy</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="motion mt-8 pt-8 border-t border-[#7de8eb]/10 text-center text-sm text-white/50" data-anim="fade">
+          <p>&copy; 2026 WiseCall AI Workshop. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ============================ MODAL ============================ -->
+    <div id="contactModal" class="fixed inset-0 z-[100] hidden items-center justify-center px-6 bg-black/70 backdrop-blur-md">
+      <div class="relative w-full max-w-lg p-8 rounded-2xl bg-gradient-to-br from-[#1a3535] to-[#172929] border border-[#7de8eb]/30 shadow-[0_0_80px_rgba(125,232,235,0.25)]">
+        <button id="modalClose" aria-label="Close" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/5 border border-[#7de8eb]/20 text-white/80 hover:bg-white/10 transition-colors flex items-center justify-center text-xl leading-none">×</button>
+        <h3 class="text-2xl font-bold text-white mb-1">Reserve Your Place</h3>
+        <p class="text-white/60 text-sm mb-6">Tell us a little about your business and we'll send workshop details.</p>
+        <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST" class="space-y-4">
+          <input type="hidden" id="inquiryType" name="inquiry_type" value="AI Workshop">
+          <div>
+            <label for="name" class="block text-sm text-white/70 mb-1.5">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your name" required class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors">
+          </div>
+          <div>
+            <label for="email" class="block text-sm text-white/70 mb-1.5">Email</label>
+            <input type="email" id="email" name="email" placeholder="your@email.com" required class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors">
+          </div>
+          <div>
+            <label for="phone" class="block text-sm text-white/70 mb-1.5">Phone</label>
+            <input type="tel" id="phone" name="phone" placeholder="Your phone number" class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors">
+          </div>
+          <div>
+            <label for="message" class="block text-sm text-white/70 mb-1.5">What challenge or idea do you want to explore?</label>
+            <textarea id="message" name="message" placeholder="Workflow bottleneck, AI use case, automation idea..." rows="3" class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors resize-none"></textarea>
+          </div>
+          <button type="submit" class="mbtn w-full px-6 py-3.5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]">
+            Send Request
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Render Lucide icons
+      lucide.createIcons();
+
+      // Scroll-triggered fade animations (Framer Motion whileInView equivalent)
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const delay = parseInt(entry.target.dataset.delay || '0', 10);
+            setTimeout(() => entry.target.classList.add('in-view'), delay);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+      document.querySelectorAll('.motion').forEach((el) => observer.observe(el));
+
+      // Reserve / Apply / Contact buttons → open modal
+      const modal = document.getElementById('contactModal');
+      const modalClose = document.getElementById('modalClose');
+      const contactForm = document.getElementById('contactForm');
+      const inquiryTypeField = document.getElementById('inquiryType');
+
+      function openModal(e) {
+        if (e) e.preventDefault();
+        inquiryTypeField.value = 'AI Workshop';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      document.querySelectorAll('[data-modal-open]').forEach((btn) => btn.addEventListener('click', openModal));
+      modalClose.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+
+      // Form submit (Formspree async)
+      contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Sending...';
+        submitBtn.disabled = true;
+        try {
+          const response = await fetch(contactForm.action, {
+            method: 'POST',
+            body: new FormData(contactForm),
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!response.ok) throw new Error('Failed');
+          submitBtn.textContent = 'Sent!';
+          contactForm.reset();
+          setTimeout(() => {
+            closeModal();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+          }, 1500);
+        } catch (err) {
+          submitBtn.textContent = 'Error - Try Again';
+          submitBtn.disabled = false;
+          setTimeout(() => { submitBtn.textContent = originalText; }, 2000);
+        }
+      });
+    </script>
+  </body>
+</html>

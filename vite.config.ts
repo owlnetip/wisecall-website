@@ -13,6 +13,7 @@ export default defineConfig({
         legal: resolve(__dirname, 'legal.html'),
         property: resolve(__dirname, 'property.html'),
         trades: resolve(__dirname, 'trades.html'),
+        aiWorkshop: resolve(__dirname, 'ai-workshop.html'),
       },
     },
   },
