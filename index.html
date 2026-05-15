@@ -1,2171 +1,978 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- SEO Meta Tags -->
-    <title>WiseCall - AI-Powered Business Communications | Phone System Included</title>
-    <meta name="description" content="WiseCall is an AI-powered business communications platform. AI receptionist plus a complete phone system, included on every plan. UK businesses, predictable monthly pricing.">
-    <meta name="keywords" content="AI receptionist UK, business phone system, AI call handling UK, virtual receptionist, business communications platform">
-    <meta name="author" content="WiseCall">
-    <meta name="robots" content="index, follow">
-
-    <!-- Open Graph / Social Media -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://wisecall.io/">
-    <meta property="og:title" content="WiseCall - AI-Powered Business Communications">
-    <meta property="og:description" content="AI receptionist plus a complete phone system, included on every plan. Always on, always professional.">
-    <meta property="og:image" content="https://wisecall.io/og-image.jpg">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://wisecall.io/">
-    <meta name="twitter:title" content="WiseCall - AI-Powered Business Communications">
-    <meta name="twitter:description" content="AI receptionist plus a complete phone system, included on every plan.">
-    <meta name="twitter:image" content="https://wisecall.io/og-image.jpg">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png">
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #6ED4D7;
-            --primary-dark: #4AA8AB;
-            --dark-bg: #141f1f;
-            --dark-card: #1a2d2d;
-            --text-light: #ffffff;
-            --text-medium: #B8C5D6;
-            --text-muted: #9BABC2;
-            --accent-purple: #8A6DD0;
-            --accent-orange: #E07A52;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            font-style: normal;
-            font-weight: 400;
-            font-variant-numeric: tabular-nums;
-            background: var(--dark-bg);
-            color: var(--text-light);
-            overflow-x: hidden;
-            line-height: 1.65;
-            -webkit-font-smoothing: subpixel-antialiased;
-            text-rendering: optimizeLegibility;
-        }
-
-        /* Background gradient - positioned lower for calm hero, stronger pricing */
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.08;
-            background:
-                radial-gradient(circle at 15% 70%, var(--primary) 0%, transparent 40%),
-                radial-gradient(circle at 85% 80%, var(--accent-purple) 0%, transparent 45%),
-                radial-gradient(circle at 50% 90%, var(--accent-orange) 0%, transparent 50%);
-            filter: blur(120px);
-        }
-
-        /* Header */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            background: transparent;
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(125, 232, 235, 0.05);
-            animation: slideDown 0.6s ease-out;
-            transition: all 0.3s ease;
-        }
-
-        header.scrolled {
-            background: rgba(23, 41, 41, 0.95);
-            border-bottom: 1px solid rgba(110, 212, 215, 0.08);
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        nav {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1.5rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: white;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2.5rem;
-            list-style: none;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: var(--text-light);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            transition: width 0.3s;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary);
-        }
-
-        .cta-button {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark-bg);
-            padding: 0.8rem 1.8rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-            text-decoration: none;
-            transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(110, 212, 215, 0.2);
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(110, 212, 215, 0.3);
-        }
-
-        /* Mobile Menu */
-        .mobile-menu-button {
-            display: none;
-            flex-direction: column;
-            gap: 6px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            z-index: 1001;
-        }
-
-        .mobile-menu-button span {
-            width: 28px;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-
-        .mobile-menu-button.active span:nth-child(1) {
-            transform: rotate(45deg) translate(8px, 8px);
-        }
-
-        .mobile-menu-button.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .mobile-menu-button.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(7px, -7px);
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-button {
-                display: flex;
-            }
-
-            .nav-links {
-                position: fixed;
-                top: 80px;
-                right: -100%;
-                width: 280px;
-                height: calc(100vh - 80px);
-                background: rgba(23, 41, 41, 0.98);
-                backdrop-filter: blur(20px);
-                flex-direction: column;
-                padding: 2rem;
-                gap: 2rem;
-                border-left: 1px solid rgba(110, 212, 215, 0.12);
-                transition: right 0.4s ease;
-                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-            }
-
-            .nav-links.active {
-                right: 0;
-                display: flex;
-            }
-
-            .nav-links li {
-                width: 100%;
-            }
-
-            .nav-links a {
-                display: block;
-                padding: 1rem 0;
-                font-size: 1.1rem;
-            }
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 10rem 2rem 4rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 4rem;
-            align-items: center;
-            min-height: 85vh;
-        }
-
-        .hero-content h1 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 3.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            letter-spacing: -0.01em;
-            margin-bottom: 1.5rem;
-            color: white;
-        }
-
-        .hero-content .subtitle {
-            font-size: 1.35rem;
-            color: var(--text-medium);
-            margin-bottom: 2rem;
-            line-height: 1.75;
-            font-weight: 400;
-            letter-spacing: -0.01em;
-        }
-
-        .hero-content .highlight {
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1.5rem;
-            margin-top: 2.5rem;
-        }
-
-        .primary-btn {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark-bg);
-            padding: 1.2rem 2.5rem;
-            border-radius: 50px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            box-shadow: 0 6px 30px rgba(110, 212, 215, 0.25);
-            font-size: 1.05rem;
-            letter-spacing: -0.01em;
-            line-height: 1;
-        }
-
-        .primary-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 40px rgba(110, 212, 215, 0.35);
-        }
-
-        .secondary-btn {
-            background: transparent;
-            color: var(--text-light);
-            padding: 1.2rem 2.5rem;
-            border: 2px solid var(--primary);
-            border-radius: 50px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            font-size: 1.05rem;
-            letter-spacing: -0.01em;
-            line-height: 1;
-        }
-
-        .secondary-btn:hover {
-            background: rgba(110, 212, 215, 0.08);
-            transform: translateY(-3px);
-        }
-
-        .hero-visual {
-            position: relative;
-        }
-
-        .phone-mockup {
-            background: var(--dark-card);
-            border-radius: 40px;
-            padding: 3rem;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(110, 212, 215, 0.12);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .phone-mockup::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(110, 212, 215, 0.08), rgba(157, 125, 232, 0.1));
-            opacity: 0.5;
-        }
-
-        .call-interface {
-            position: relative;
-            z-index: 1;
-        }
-
-        .caller-info {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .avatar {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .status {
-            background: rgba(110, 212, 215, 0.08);
-            color: var(--primary);
-            padding: 0.5rem 1.5rem;
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            line-height: 1;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--primary);
-            border-radius: 50%;
-            animation: livePulse 2s ease-in-out infinite;
-        }
-
-        @keyframes livePulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.9); }
-        }
-
-        .scenario-container {
-            position: relative;
-            min-height: 120px;
-            margin-top: 1.5rem;
-        }
-
-        .scenario {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            opacity: 0;
-            transition: opacity 0.6s ease;
-            background: rgba(110, 212, 215, 0.05);
-            border-left: 3px solid rgba(110, 212, 215, 0.3);
-            border-radius: 12px;
-            padding: 1.25rem 1.5rem;
-        }
-
-        .scenario.active {
-            opacity: 1;
-        }
-
-        .scenario-label {
-            display: inline-block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
-        }
-
-        .scenario-message {
-            font-size: 0.95rem;
-            color: var(--text-medium);
-            line-height: 1.6;
-            margin: 0;
-            font-style: italic;
-            font-weight: 400;
-            line-height: 1.65;
-            color: var(--text-medium);
-        }
-
-        /* Video Demo Section */
-        .video-demo {
-            padding: 4rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .video-container {
-            position: relative;
-            width: 100%;
-            max-width: 900px;
-            margin: 3rem auto 0;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(110, 212, 215, 0.12);
-        }
-
-        .video-container iframe,
-        .video-container video {
-            width: 100%;
-            aspect-ratio: 16/9;
-            display: block;
-        }
-
-        .video-placeholder {
-            width: 100%;
-            aspect-ratio: 16/9;
-            background: var(--dark-card);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 1.5rem;
-            border: 2px dashed rgba(110, 212, 215, 0.2);
-        }
-
-        .video-placeholder-icon {
-            font-size: 4rem;
-        }
-
-        .video-placeholder-text {
-            color: var(--text-medium);
-            font-size: 1.2rem;
-            font-weight: 500;
-            line-height: 1.5;
-        }
-
-        /* Features Section */
-        .features {
-            padding: 6rem 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .section-header h2 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2.8rem;
-            font-weight: 700;
-            line-height: 1.25;
-            letter-spacing: -0.01em;
-            margin-bottom: 1rem;
-            color: white;
-        }
-
-        .section-header p {
-            font-size: 1.1rem;
-            color: var(--text-medium);
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.65;
-            font-weight: 400;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .feature-card {
-            background: var(--dark-card);
-            padding: 2.5rem;
-            border-radius: 20px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            transition: all 0.4s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(125, 232, 235, 0.05), transparent);
-            opacity: 0;
-            transition: opacity 0.4s;
-        }
-
-        .feature-card:hover::before {
-            opacity: 1;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 60px rgba(110, 212, 215, 0.12);
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .feature-card h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1.3;
-            letter-spacing: -0.01em;
-            margin-bottom: 1rem;
-            color: white;
-            min-height: 2.6rem;
-        }
-
-        .feature-card p {
-            color: var(--text-medium);
-            line-height: 1.7;
-            font-size: 1rem;
-            font-weight: 400;
-        }
-
-        /* Hover-reveal CTA button */
-        .hover-cta {
-            display: inline-block;
-            margin-top: 1.4rem;
-            padding: 0.6rem 1.4rem;
-            background: var(--primary);
-            border: 2px solid var(--primary);
-            color: #0a1a1a;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            cursor: pointer;
-            opacity: 0;
-            transform: translateY(8px);
-            transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease, box-shadow 0.2s ease;
-            text-decoration: none;
-            letter-spacing: 0.01em;
-            box-shadow: 0 4px 15px rgba(110, 212, 215, 0.35);
-        }
-
-        .hover-cta:hover {
-            background: #fff;
-            border-color: #fff;
-            box-shadow: 0 6px 20px rgba(110, 212, 215, 0.5);
-        }
-
-        .feature-card:hover .hover-cta,
-        .benefit-card:hover .hover-cta,
-        .industry-card:hover .hover-cta {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Industry card class */
-        .industry-card {
-            background: var(--dark-card);
-            padding: 2rem;
-            border-radius: 20px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            text-align: center;
-            transition: all 0.4s;
-            text-decoration: none;
-            display: block;
-        }
-
-        .industry-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(110, 212, 215, 0.1);
-        }
-
-        .industry-card h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.75rem;
-        }
-
-        .industry-card p {
-            color: var(--text-medium);
-            font-size: 0.9rem;
-            line-height: 1.65;
-            margin: 0;
-        }
-
-        .industry-card .industry-emoji {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Benefits Section */
-        .benefits {
-            padding: 6rem 2rem;
-            background: linear-gradient(180deg, var(--dark-bg), var(--dark-card));
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .benefits-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
-            margin: 4rem 0;
-        }
-
-        .about-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .industries-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-            max-width: 1200px;
-            margin: 3rem auto 0;
-        }
-
-        .benefit-card {
-            background: var(--dark-card);
-            padding: 2.5rem;
-            border-radius: 20px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            transition: all 0.4s;
-        }
-
-        .benefit-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 15px 40px rgba(110, 212, 215, 0.1);
-        }
-
-        .benefit-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .benefit-card h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            line-height: 1.3;
-            letter-spacing: -0.01em;
-            margin-bottom: 1rem;
-            color: white;
-        }
-
-        .benefit-card p {
-            color: var(--text-medium);
-            line-height: 1.7;
-            font-size: 1rem;
-            font-weight: 400;
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2rem;
-            margin-top: 4rem;
-        }
-
-        .stat-item {
-            background: rgba(125, 232, 235, 0.05);
-            padding: 2.5rem 2rem;
-            border-radius: 20px;
-            text-align: center;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-        }
-
-        .stat-number {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.75rem;
-        }
-
-        .stat-label {
-            color: var(--text-medium);
-            font-size: 0.95rem;
-            font-weight: 500;
-            line-height: 1.5;
-        }
-
-        /* Pricing Section */
-        .pricing-section {
-            padding: 6rem 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-top: 4rem;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        @media (max-width: 1100px) {
-            .pricing-grid {
-                grid-template-columns: repeat(2, 1fr);
-                max-width: 800px;
-            }
-        }
-
-        .pricing-card {
-            background: var(--dark-card);
-            padding: 2rem 1.8rem;
-            border-radius: 24px;
-            border: 2px solid rgba(110, 212, 215, 0.1);
-            transition: all 0.4s ease;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .pricing-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 60px rgba(110, 212, 215, 0.15);
-        }
-
-        .pricing-card.popular {
-            border-color: var(--primary);
-            box-shadow: 0 10px 40px rgba(110, 212, 215, 0.12);
-        }
-
-        .pricing-card.popular:hover {
-            transform: translateY(-8px);
-        }
-
-        .badge {
-            position: absolute;
-            top: -12px;
-            right: 30px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark-bg);
-            padding: 0.5rem 1.2rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            line-height: 1;
-        }
-
-        .plan-header {
-            margin-bottom: 1rem;
-        }
-
-        .plan-header h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1.3;
-            letter-spacing: -0.01em;
-            color: white;
-            margin-bottom: 0.3rem;
-        }
-
-        .plan-desc {
-            color: var(--text-medium);
-            font-size: 0.95rem;
-            font-weight: 400;
-            line-height: 1.5;
-            min-height: 2.9rem;
-        }
-
-        .plan-minutes {
-            font-size: 2.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .plan-price {
-            margin-bottom: 1.5rem;
-        }
-
-        .plan-price .amount {
-            font-size: 2rem;
-            font-weight: 700;
-            color: white;
-        }
-
-        .plan-price .period {
-            color: var(--text-muted);
-            font-size: 1rem;
-            margin-left: 0.5rem;
-        }
-
-        .plan-cta {
-            display: block;
-            text-align: center;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark-bg);
-            padding: 0.85rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            margin-bottom: 1.5rem;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-            line-height: 1;
-        }
-
-        .plan-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(110, 212, 215, 0.25);
-        }
-
-        .plan-features {
-            list-style: none;
-            padding: 0;
-            flex-grow: 1;
-        }
-
-        .plan-features li {
-            color: var(--text-medium);
-            padding: 0.6rem 0;
-            border-bottom: 1px solid rgba(110, 212, 215, 0.08);
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            font-size: 0.9rem;
-            font-weight: 400;
-            line-height: 1.6;
-        }
-
-        .plan-features li:last-child {
-            border-bottom: none;
-        }
-
-        .check {
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .pricing-footer {
-            text-align: center;
-            margin-top: 3rem;
-            color: var(--text-muted);
-        }
-
-        .pricing-footer p {
-            font-size: 0.95rem;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            padding: 8rem 2rem;
-            text-align: center;
-            background: linear-gradient(135deg, rgba(110, 212, 215, 0.04), rgba(138, 109, 208, 0.05));
-        }
-
-        .cta-content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .cta-content h2 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2.8rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            line-height: 1.25;
-            letter-spacing: -0.01em;
-            color: white;
-        }
-
-        .cta-content p {
-            font-size: 1.1rem;
-            color: var(--text-medium);
-            margin-bottom: 2.5rem;
-            line-height: 1.7;
-            font-weight: 400;
-        }
-
-        /* Footer */
-        footer {
-            background: var(--dark-card);
-            padding: 3rem 2rem 2rem;
-            border-top: 1px solid rgba(110, 212, 215, 0.08);
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 3rem;
-            margin-bottom: 2rem;
-        }
-
-        .footer-brand p {
-            color: var(--text-medium);
-            margin: 1rem 0;
-            line-height: 1.7;
-            font-weight: 400;
-        }
-
-        .footer-links h4 {
-            font-family: 'Poppins', sans-serif;
-            color: var(--primary);
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-
-        .footer-links ul {
-            list-style: none;
-        }
-
-        .footer-links a {
-            color: var(--text-medium);
-            text-decoration: none;
-            display: block;
-            margin-bottom: 0.5rem;
-            transition: color 0.3s;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .footer-links a:hover {
-            color: var(--primary);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(110, 212, 215, 0.08);
-            color: var(--text-medium);
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .footer-bottom a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .hero {
-                grid-template-columns: 1fr;
-                padding-top: 8rem;
-            }
-
-            .hero-content h1 {
-                font-size: 3rem;
-                letter-spacing: -0.015em;
-            }
-
-            .benefits-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .industries-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .stats-row {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .footer-content {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero-content h1 {
-                font-size: 2.2rem;
-                letter-spacing: -0.01em;
-                line-height: 1.2;
-            }
-
-            .hero-content .subtitle {
-                font-size: 1.15rem;
-                line-height: 1.7;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .pricing-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .pricing-card.popular {
-                transform: scale(1);
-            }
-
-            .stats-row {
-                grid-template-columns: 1fr;
-            }
-
-            .footer-content {
-                grid-template-columns: 1fr;
-            }
-
-            .about-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .industries-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section-header h2 {
-                font-size: 2.2rem;
-                letter-spacing: -0.01em;
-                line-height: 1.25;
-            }
-
-            .section-header p {
-                font-size: 1.05rem;
-                line-height: 1.65;
-            }
-
-            .cta-content h2 {
-                font-size: 2.2rem;
-                letter-spacing: -0.01em;
-                line-height: 1.25;
-            }
-
-            .cta-content p {
-                font-size: 1.05rem;
-                line-height: 1.7;
-            }
-        }
-
-        /* Contact Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: var(--dark-card);
-            border-radius: 24px;
-            border: 2px solid rgba(110, 212, 215, 0.12);
-            max-width: 500px;
-            width: 100%;
-            padding: 2.5rem;
-            position: relative;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            line-height: 1;
-            transition: color 0.3s;
-        }
-
-        .modal-close:hover {
-            color: var(--primary);
-        }
-
-        .modal h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: white;
-        }
-
-        .modal p {
-            color: var(--text-medium);
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-group label {
-            display: block;
-            color: var(--text-light);
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.9rem 1rem;
-            border-radius: 12px;
-            border: 2px solid rgba(110, 212, 215, 0.12);
-            background: rgba(0, 0, 0, 0.3);
-            color: var(--text-light);
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .form-group input::placeholder,
-        .form-group textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-submit {
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark-bg);
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .form-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(110, 212, 215, 0.25);
-        }
-
-        .form-submit:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* FAQ */
-        .faq-section {
-            padding: 6rem 2rem;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .faq-item {
-            background: var(--dark-card);
-            border-radius: 16px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            margin-bottom: 1rem;
-            overflow: hidden;
-            transition: border-color 0.3s;
-        }
-
-        .faq-item:hover {
-            border-color: rgba(110, 212, 215, 0.2);
-        }
-
-        .faq-item summary {
-            padding: 1.5rem 2rem;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: var(--text-light);
-            list-style: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: color 0.3s;
-            user-select: none;
-        }
-
-        .faq-item summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .faq-item summary:hover {
-            color: var(--primary);
-        }
-
-        .faq-item summary::after {
-            content: '+';
-            font-size: 1.5rem;
-            color: var(--primary);
-            font-weight: 300;
-            transition: transform 0.3s;
-            flex-shrink: 0;
-            margin-left: 1rem;
-        }
-
-        .faq-item[open] summary::after {
-            transform: rotate(45deg);
-        }
-
-        .faq-answer {
-            padding: 0 2rem 1.5rem;
-            color: var(--text-medium);
-            line-height: 1.75;
-            font-size: 0.95rem;
-        }
-
-        /* Partners steps */
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-            max-width: 1200px;
-            margin: 3rem auto 0;
-        }
-
-        .step-card {
-            background: var(--dark-card);
-            padding: 2rem;
-            border-radius: 20px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            text-align: center;
-            position: relative;
-        }
-
-        .step-number {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--dark-bg);
-            margin: 0 auto 1.25rem;
-        }
-
-        .step-card h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.75rem;
-            line-height: 1.3;
-        }
-
-        .step-card p {
-            color: var(--text-medium);
-            font-size: 0.9rem;
-            line-height: 1.65;
-        }
-
-        @media (max-width: 900px) {
-            .steps-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 600px) {
-            .steps-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .faq-item summary {
-                padding: 1.25rem 1.5rem;
-                font-size: 0.95rem;
-            }
-
-            .faq-answer {
-                padding: 0 1.5rem 1.25rem;
-            }
-        }
-    </style>
-  </head>
-  <body>
-    <div class="bg-animation"></div>
-
-    <!-- Contact / Demo Modal -->
-    <div class="modal-overlay" id="contactModal">
-        <div class="modal">
-            <button class="modal-close" id="modalClose">&times;</button>
-            <h3>Book a Demo</h3>
-            <p>Fill in your details and we will be in touch shortly.</p>
-            <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST">
-                <input type="hidden" id="inquiryType" name="inquiry_type" value="Demo Request">
-                <div class="form-group">
-                    <label for="name">Name</label>
-                    <input type="text" id="name" name="name" placeholder="Your name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">Phone (optional)</label>
-                    <input type="tel" id="phone" name="phone" placeholder="Your phone number">
-                </div>
-                <div class="form-group">
-                    <label for="message">Tell us about your business</label>
-                    <textarea id="message" name="message" placeholder="What type of business, how many calls per month..."></textarea>
-                </div>
-                <button type="submit" class="form-submit">Send Request</button>
-            </form>
-        </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WiseCall | AI Business Communications Platform</title>
+  <meta name="description" content="WiseCall is an AI-powered business communications platform. It answers calls, qualifies enquiries, books appointments and captures information around the clock. Complete phone system included.">
+  <meta name="keywords" content="AI receptionist UK, business phone system, AI call answering, WiseCall, AI communications">
+  <meta name="author" content="WiseCall">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://wisecall.io/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://wisecall.io/">
+  <meta property="og:title" content="WiseCall | AI Business Communications Platform">
+  <meta property="og:description" content="AI receptionist that answers calls, qualifies enquiries, and books appointments. Complete phone system included on every plan.">
+  <meta property="og:image" content="https://wisecall.io/og-image.jpg">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WiseCall | AI Business Communications">
+  <meta name="twitter:description" content="AI receptionist. Complete phone system. One monthly price.">
+
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #172929;
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    /* Scroll animations */
+    .motion { opacity: 0; will-change: transform, opacity; transition-property: opacity, transform; transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1); }
+    .motion[data-anim="fade-up"] { transform: translateY(20px); transition-duration: 0.75s; }
+    .motion[data-anim="fade-right"] { transform: translateX(-20px); transition-duration: 0.7s; }
+    .motion[data-anim="fade-left"] { transform: translateX(20px); transition-duration: 0.7s; }
+    .motion[data-anim="scale-in"] { transform: scale(0.95); transition-duration: 0.65s; }
+    .motion[data-anim="fade"] { transition-duration: 1s; }
+    .motion.in-view { opacity: 1; transform: translate(0, 0) scale(1); }
+    /* Button hover */
+    .mbtn { transition: transform 0.18s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.25s, border-color 0.25s, background-color 0.25s; }
+    .mbtn:hover { transform: translateY(-2px); }
+    .mbtn:active { transform: translateY(0) scale(0.98); }
+    /* Header */
+    header.scrolled { background: rgba(23, 41, 41, 0.95); box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
+    /* Scroll progress */
+    .scroll-progress { position: fixed; top: 0; left: 0; height: 3px; z-index: 60; background: linear-gradient(90deg, #7de8eb, #5dbfc2); width: 0%; transition: width 0.12s linear; }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #0f1f1f; }
+    ::-webkit-scrollbar-thumb { background: rgba(125, 232, 235, 0.18); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(125, 232, 235, 0.32); }
+    /* Mobile menu */
+    .mobile-menu { transform: translateY(-100%); transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1); }
+    .mobile-menu.open { transform: translateY(0); }
+    /* Scenario rotation */
+    .scenario { display: none; }
+    .scenario.active { display: block; animation: fadeScenario 0.45s ease forwards; }
+    @keyframes fadeScenario { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    /* Pulse dot */
+    @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+    .pulse-dot { animation: pulse-soft 2.2s ease-in-out infinite; }
+    /* FAQ */
+    details summary { list-style: none; cursor: pointer; }
+    details summary::-webkit-details-marker { display: none; }
+    details[open] .faq-chevron { transform: rotate(180deg); }
+    .faq-chevron { transition: transform 0.3s ease; }
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 1.5rem; }
+    .modal-overlay.active { display: flex; }
+    /* Stat number font */
+    .stat-num { font-variant-numeric: tabular-nums; }
+    [data-lucide] { width: 1em; height: 1em; }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] }
+        }
+      }
+    };
+  </script>
+</head>
+
+<body class="min-h-screen bg-[#172929] overflow-x-hidden">
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- ───── HEADER ───── -->
+  <header id="siteHeader" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#172929]/70 border-b border-[#7de8eb]/10 transition-all duration-300">
+    <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
+      <a href="/" class="flex items-center gap-3 text-white font-bold text-lg" style="text-decoration:none;">
+        <img src="owl-logo.png" alt="WiseCall" style="height:46px;margin-right:8px;">WiseCall
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
+        <a href="#how-it-works" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
+        <a href="#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="#partners" class="hover:text-[#7de8eb] transition-colors">Partners</a>
+        <a href="#faq" class="hover:text-[#7de8eb] transition-colors">FAQ</a>
+        <a href="ai-consultancy.html" class="hover:text-[#7de8eb] transition-colors">Consultancy</a>
+        <a href="#" class="contact-link hover:text-[#7de8eb] transition-colors" data-inquiry="General Contact">Contact</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="#" class="mbtn contact-link hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]" data-inquiry="Demo Request">
+          Book a Demo <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+        <button id="mobileMenuToggle" aria-label="Open menu" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </nav>
+    <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 right-0 bg-[#172929]/98 backdrop-blur-xl border-b border-[#7de8eb]/15 shadow-2xl">
+      <div class="px-6 py-6 flex flex-col gap-4 text-white">
+        <a href="#how-it-works" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How It Works</a>
+        <a href="#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
+        <a href="#partners" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Partners</a>
+        <a href="#faq" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">FAQ</a>
+        <a href="ai-consultancy.html" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Consultancy</a>
+        <a href="#" class="contact-link py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link" data-inquiry="General Contact">Contact</a>
+        <a href="#" class="mbtn contact-link mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold" data-inquiry="Demo Request">
+          Book a Demo <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
     </div>
+  </header>
 
-    <header>
-        <nav>
-            <a href="/" class="logo" style="text-decoration: none; display: flex; align-items: center;"><img src="owl-logo.png" alt="WiseCall" style="height: 50px; margin-right: 14px;">WiseCall</a>
-            <button class="mobile-menu-button" aria-label="Toggle menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <ul class="nav-links">
-                <li><a href="#how-it-works">How It Works</a></li>
-                <li><a href="#pricing">Pricing</a></li>
-                <li><a href="#partners">Partners</a></li>
-                <li><a href="#faq">FAQ</a></li>
-                <li><a href="ai-consultancy.html">Consultancy</a></li>
-                <li><a href="#" class="contact-link" data-inquiry="General Contact">Contact</a></li>
-                <li><a href="#" class="cta-button contact-link" data-inquiry="Demo Request">Book a Demo</a></li>
-            </ul>
-        </nav>
-    </header>
+  <!-- ───── CONTACT MODAL ───── -->
+  <div class="modal-overlay" id="contactModal">
+    <div class="w-full max-w-lg rounded-2xl bg-[#1a3535] border border-[#7de8eb]/20 p-8 relative shadow-2xl">
+      <button id="modalClose" class="absolute top-4 right-4 w-9 h-9 rounded-lg border border-[#7de8eb]/20 text-white/60 flex items-center justify-center hover:text-white hover:border-[#7de8eb]/40 transition-colors text-xl">&times;</button>
+      <h3 class="text-2xl font-bold text-white mb-1">Get in Touch</h3>
+      <p class="text-white/60 text-sm mb-6">We will come back to you within one business day.</p>
+      <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST" class="flex flex-col gap-4">
+        <input type="hidden" id="inquiryType" name="inquiry_type" value="Demo Request">
+        <input type="text" id="name" name="name" placeholder="Your name" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <input type="email" id="email" name="email" placeholder="your@email.com" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <input type="tel" id="phone" name="phone" placeholder="Your phone number" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <textarea id="message" name="message" rows="4" placeholder="What type of business, how many calls per month..." class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors resize-none"></textarea>
+        <button type="submit" class="form-submit mbtn w-full py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)]">Send Enquiry</button>
+      </form>
+    </div>
+  </div>
 
-    <!-- Hero -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Your business, <span class="highlight">always reachable.</span></h1>
-            <p class="subtitle">
-                WiseCall is an AI-powered business communications platform. It answers calls, qualifies enquiries, books appointments and captures information around the clock, with a complete phone system included as standard.
-            </p>
-            <p style="color: rgba(155, 171, 194, 0.8); font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 1rem;">AI receptionist. Complete phone system. One monthly price.</p>
-            <div class="hero-buttons">
-                <a href="#" class="primary-btn contact-link" data-inquiry="Demo Request">Book a Demo</a>
-                <a href="#how-it-works" class="secondary-btn">How It Works</a>
-            </div>
+  <!-- ───── HERO ───── -->
+  <section class="relative min-h-screen flex items-center overflow-hidden px-6 pt-24 pb-16">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#172929] via-[#1a3535] to-[#172929]"></div>
+    <div class="absolute top-24 left-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
+    <div class="absolute bottom-16 right-1/4 w-80 h-80 bg-[#7de8eb] rounded-full blur-[120px] opacity-15 pointer-events-none"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Left: copy -->
+      <div>
+        <div class="motion inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-8" data-anim="fade-up">
+          <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
+          <span class="text-sm text-white/80">AI-Powered Communications Platform</span>
         </div>
 
-        <div class="hero-visual">
-            <div class="phone-mockup">
-                <div class="call-interface">
-                    <div class="caller-info">
-                        <div class="avatar"><img src="owl-logo.png" alt="WiseCall" style="width: 100px; height: 100px; object-fit: contain;"></div>
-                        <h3 style="font-family: 'Poppins', sans-serif; font-size: 1.2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">WiseCall AI</h3>
-                        <span class="status"><span class="status-dot"></span> Handling Call</span>
-                    </div>
-                    <div id="heroMessages" class="scenario-container">
-                        <div class="scenario active">
-                            <span class="scenario-label">Dental Practice</span>
-                            <p class="scenario-message">"We have an appointment on Thursday at 2pm with Dr. Patel. Shall I book that for you?"</p>
-                        </div>
-                        <div class="scenario">
-                            <span class="scenario-label">Property</span>
-                            <p class="scenario-message">"I can arrange a callback from our lettings team this afternoon. What's the best number to reach you?"</p>
-                        </div>
-                        <div class="scenario">
-                            <span class="scenario-label">Legal Services</span>
-                            <p class="scenario-message">"I'll take your details and make sure a member of the team contacts you before close of play today."</p>
-                        </div>
-                        <div class="scenario">
-                            <span class="scenario-label">Care Provider</span>
-                            <p class="scenario-message">"I can pass your details to the care coordinator right away. Are you calling on behalf of yourself or a family member?"</p>
-                        </div>
-                        <div class="scenario">
-                            <span class="scenario-label">Trades</span>
-                            <p class="scenario-message">"A call-out Monday morning works. Can I take the address and a brief description of the issue?"</p>
-                        </div>
-                        <div class="scenario">
-                            <span class="scenario-label">General Enquiry</span>
-                            <p class="scenario-message">"I'll note that down and make sure someone gets back to you with a confirmed time. Can I take a name?"</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+        <h1 class="motion text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight" data-anim="fade-up" style="transition-delay:0.05s">
+          Your business,<br>
+          <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">always reachable.</span>
+        </h1>
 
-    <!-- Live Demo -->
-    <section class="video-demo">
-        <div class="section-header">
-            <h2>Hear it for yourself</h2>
-            <p>Click the button below and speak directly with the WiseCall AI. No setup required.</p>
-        </div>
-        <div style="display: flex; justify-content: center; align-items: center; padding: 1rem;">
-            <div style="background: var(--dark-card); padding: 1.5rem; border-radius: 24px; border: 2px solid rgba(110, 212, 215, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
-                <iframe
-                    src="https://embed.telzino.com/playground?agentId=4102b5b0-9cca-44c9-bc6a-0446884aeabb&name=Voice+Agent&theme=dark&backgroundColor=%23172929&primaryColor=%237DE8EB&accentColor=%237DE8EB"
-                    style="width: 380px; height: 500px; border: none; border-radius: 16px; display: block;"
-                    allow="microphone"
-                ></iframe>
-            </div>
-        </div>
-    </section>
+        <p class="motion text-xl text-white/70 leading-relaxed mb-3 max-w-xl" data-anim="fade-up" style="transition-delay:0.1s">
+          WiseCall is an AI-powered business communications platform. It answers calls, qualifies enquiries, books appointments and captures information around the clock, with a complete phone system included as standard.
+        </p>
+        <p class="motion text-sm text-white/50 mb-10" data-anim="fade-up" style="transition-delay:0.12s">AI receptionist. Complete phone system. One monthly price.</p>
 
-    <!-- How It Works -->
-    <section class="features" id="how-it-works">
-        <div class="section-header">
-            <h2>Everything your business needs, in one platform</h2>
-            <p>AI receptionist and complete phone system included on every plan. Nothing extra to procure.</p>
+        <div class="motion flex flex-col sm:flex-row gap-4 mb-12" data-anim="fade-up" style="transition-delay:0.15s">
+          <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
+            Book a Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
+          </a>
+          <a href="#how-it-works" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
+            How It Works
+          </a>
         </div>
 
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">📞</div>
-                <h3>AI Receptionist</h3>
-                <p>Answers and manages inbound calls with a natural, professional voice. Trained on your business details: opening hours, services, FAQs and booking instructions. Available 24 hours a day.</p>
-                <a class="hover-cta contact-link" href="#">See how it works →</a>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🏢</div>
-                <h3>Complete Phone System</h3>
-                <p>Business numbers, staff extensions, call routing and apps for iOS, Android and desktop. No separate telecoms contract required. Your team uses WiseCall as their everyday business phone.</p>
-                <a class="hover-cta" href="#pricing">View plans →</a>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">📋</div>
-                <h3>Call Summaries and Data Capture</h3>
-                <p>Every AI-handled call is logged and summarised. Caller information is captured in a structured format and delivered where your team needs it, reducing errors and missed details.</p>
-                <a class="hover-cta contact-link" href="#">Learn more →</a>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🌙</div>
-                <h3>Out-of-Hours and Overflow</h3>
-                <p>Configure WiseCall to answer full-time, cover evenings and weekends only, or step in when your lines are busy. All three modes are included in every plan, at no extra cost.</p>
-                <a class="hover-cta" href="#pricing">View plans →</a>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🔔</div>
-                <h3>Escalation and Routing</h3>
-                <p>WiseCall knows when a call needs a person. Urgent calls are routed to an on-call number or flagged for a callback. You configure which call types get which treatment.</p>
-                <a class="hover-cta contact-link" href="#">Learn more →</a>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <h3>Audit Trail</h3>
-                <p>Full call logs and summaries for compliance purposes. Access controls per team member. GDPR-aware data handling as standard. Every call accounted for.</p>
-                <a class="hover-cta contact-link" href="#">Learn more →</a>
-            </div>
+        <!-- Trust badges -->
+        <div class="motion grid grid-cols-2 sm:grid-cols-4 gap-3" data-anim="fade-up" style="transition-delay:0.2s">
+          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
+            <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-xs text-white/70">24/7 Availability</span>
+          </div>
+          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
+            <i data-lucide="zap" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-xs text-white/70">Instant Setup</span>
+          </div>
+          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
+            <i data-lucide="map-pin" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-xs text-white/70">UK-Based</span>
+          </div>
+          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
+            <i data-lucide="shield-check" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-xs text-white/70">GDPR Compliant</span>
+          </div>
         </div>
-    </section>
+      </div>
 
-    <!-- Industries -->
-    <section class="pricing-section" id="industries" style="padding: 5rem 2rem; background: linear-gradient(180deg, var(--dark-bg), var(--dark-card));">
-        <div class="section-header">
-            <h2>Built for any business that relies on the phone</h2>
-            <p>WiseCall is horizontally applicable. If the phone is a primary channel and administrative pressure is a constraint, WiseCall is designed for you.</p>
+      <!-- Right: phone mockup -->
+      <div class="motion" data-anim="fade-left" style="transition-delay:0.1s">
+        <div class="relative max-w-sm mx-auto rounded-2xl border border-[#7de8eb]/20 bg-white/5 backdrop-blur-sm p-6 shadow-[0_0_60px_rgba(125,232,235,0.12)]">
+          <!-- Caller info -->
+          <div class="text-center mb-5">
+            <div class="w-20 h-20 rounded-full mx-auto mb-3 border border-[#7de8eb]/30 bg-[#172929] flex items-center justify-center overflow-hidden">
+              <img src="owl-logo.png" alt="WiseCall" class="w-16 h-16 object-contain">
+            </div>
+            <h3 class="font-bold text-white text-lg mb-1">WiseCall AI</h3>
+            <span class="inline-flex items-center gap-1.5 text-sm text-[#7de8eb]">
+              <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
+              Handling Call
+            </span>
+          </div>
+
+          <!-- Rotating scenarios -->
+          <div id="heroMessages" class="rounded-xl bg-[#172929]/60 border border-[#7de8eb]/10 p-4 min-h-[120px]">
+            <div class="scenario active">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Dental Practice</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"We have an appointment on Thursday at 2pm with Dr. Patel. Shall I book that for you?"</p>
+            </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Property</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"I can arrange a callback from our lettings team this afternoon. What's the best number to reach you?"</p>
+            </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Legal Services</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"I'll take your details and make sure a member of the team contacts you before close of play today."</p>
+            </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Care Provider</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"I can pass your details to the care coordinator right away. Are you calling on behalf of yourself or a family member?"</p>
+            </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Trades</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"A call-out Monday morning works. Can I take the address and a brief description of the issue?"</p>
+            </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">General Enquiry</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"I'll note that down and make sure someone gets back to you with a confirmed time. Can I take a name?"</p>
+            </div>
+          </div>
+
+          <!-- Call controls -->
+          <div class="flex justify-center gap-6 mt-5">
+            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+              <i data-lucide="mic" class="w-5 h-5 text-white/60"></i>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-red-500/80 flex items-center justify-center">
+              <i data-lucide="phone-off" class="w-5 h-5 text-white"></i>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+              <i data-lucide="volume-2" class="w-5 h-5 text-white/60"></i>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="industries-grid">
-            <a href="dental.html" class="industry-card">
-                <div class="industry-emoji">🦷</div>
-                <h3>Dental and Healthcare</h3>
-                <p>Book appointments 24/7. Free up reception for in-person patients. Handle enquiries and recalls without adding headcount.</p>
-                <span class="hover-cta">Find out more →</span>
-            </a>
-
-            <a href="legal.html" class="industry-card">
-                <div class="industry-emoji">🏛️</div>
-                <h3>Legal and Professional</h3>
-                <p>Sound professional from first contact. Qualify enquiries, capture matter details, route urgent calls and support Clio intake workflows.</p>
-                <span class="hover-cta">Find out more →</span>
-            </a>
-
-            <a href="property.html" class="industry-card">
-                <div class="industry-emoji">🏠</div>
-                <h3>Property</h3>
-                <p>Handle vendor and buyer enquiries, book valuations and manage call volume across lettings and sales without extra staff.</p>
-                <span class="hover-cta">Find out more →</span>
-            </a>
-
-            <a href="trades.html" class="industry-card">
-                <div class="industry-emoji">🔧</div>
-                <h3>Trades and Services</h3>
-                <p>Capture every lead while you are on a job. No more voicemail. Every enquiry logged, routed and ready when you need it.</p>
-                <span class="hover-cta">Find out more →</span>
-            </a>
+  <!-- ───── LIVE DEMO ───── -->
+  <section class="relative py-20 px-6">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
+    <div class="relative z-10 max-w-3xl mx-auto text-center">
+      <div class="motion" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Live Demo</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Hear it for yourself</h2>
+        <p class="text-xl text-white/70 mb-10">Click the button below and speak directly with the WiseCall AI. No setup required.</p>
+      </div>
+      <div class="motion inline-block" data-anim="scale-in" style="transition-delay:0.1s">
+        <div class="rounded-2xl border border-[#7de8eb]/15 bg-white/5 backdrop-blur-sm p-5 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+          <iframe
+            src="https://embed.telzino.com/playground?agentId=4102b5b0-9cca-44c9-bc6a-0446884aeabb&name=Voice+Agent&theme=dark&backgroundColor=%23172929&primaryColor=%237DE8EB&accentColor=%237DE8EB"
+            style="width:380px;height:500px;border:none;border-radius:16px;display:block;"
+            allow="microphone"
+          ></iframe>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- Benefits / Staffing -->
-    <section class="benefits" id="benefits">
-        <div class="section-header">
-            <h2>Reduce staffing pressure. Handle more calls.</h2>
-            <p>WiseCall handles call volume so your team can focus on the work only they can do.</p>
-        </div>
+  <!-- ───── HOW IT WORKS ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="how-it-works">
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">How It Works</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Everything your business needs, in one platform</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">AI receptionist and complete phone system included on every plan. Nothing extra to procure.</p>
+      </div>
 
-        <div class="benefits-grid">
-            <div class="benefit-card">
-                <div class="benefit-icon">💼</div>
-                <h3>Avoid additional headcount</h3>
-                <p>Manage higher call volumes without scaling your reception or admin team. WiseCall handles the volume so your business can grow without proportional cost increases in staffing.</p>
-                <a class="hover-cta" href="#pricing">See pricing →</a>
-            </div>
-
-            <div class="benefit-card">
-                <div class="benefit-icon">📊</div>
-                <h3>Accurate data capture</h3>
-                <p>Structured call summaries and data capture reduce the risk of errors compared to manual note-taking. Every enquiry is recorded consistently, every time.</p>
-                <a class="hover-cta contact-link" href="#">Learn more →</a>
-            </div>
-
-            <div class="benefit-card">
-                <div class="benefit-icon">🌙</div>
-                <h3>Always on</h3>
-                <p>Coverage across evenings, weekends and bank holidays. Callers who currently reach voicemail out of hours receive a proper response. Enquiries are captured and ready for the morning.</p>
-                <a class="hover-cta contact-link" href="#">Learn more →</a>
-            </div>
-
-            <div class="benefit-card">
-                <div class="benefit-icon">📱</div>
-                <h3>Your numbers. Your team. One system.</h3>
-                <p>Keep your existing business numbers. Your team gets a full phone system with apps for iOS, Android and desktop, included in every plan. No additional hardware or contracts.</p>
-                <a class="hover-cta" href="#pricing">View plans →</a>
-            </div>
-        </div>
-
-        <div class="stats-row">
-            <div class="stat-item">
-                <div class="stat-number">24/7</div>
-                <div class="stat-label">AI receptionist availability</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">100%</div>
-                <div class="stat-label">Calls logged with summaries</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">UK</div>
-                <div class="stat-label">Based infrastructure</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">0</div>
-                <div class="stat-label">Extra contracts to manage</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing -->
-    <section class="pricing-section" id="pricing">
-        <div class="section-header">
-            <h2>Simple, predictable pricing</h2>
-            <p>Every plan includes the AI receptionist and a complete phone system. No hidden telecoms fees, no per-seat software charges.</p>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="bot" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">AI Receptionist</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Answers and manages inbound calls with a natural, professional voice. Trained on your business details: opening hours, services, FAQs and booking instructions. Available 24 hours a day.</p>
+          <a href="#" class="contact-link inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors" data-inquiry="Demo Request">See how it works &rarr;</a>
         </div>
 
-        <p style="text-align: center; color: var(--text-medium); font-size: 0.95rem; margin-bottom: 3rem;">Every plan includes the AI receptionist, a complete phone system, and UK outbound calling. Full inclusions and exclusions are listed beneath the plans.</p>
-
-        <div class="pricing-grid">
-            <!-- Core -->
-            <div class="pricing-card">
-                <div class="plan-header">
-                    <h3>Core</h3>
-                    <p class="plan-desc">Suited to smaller teams and practices</p>
-                </div>
-                <div class="plan-minutes">250 AI calls</div>
-                <div class="plan-price">
-                    <span class="amount">£249</span>
-                    <span class="period">per month</span>
-                </div>
-                <p style="font-size: 0.9rem; color: var(--primary); margin-bottom: 0.35rem; font-weight: 500;">5 staff extensions included</p>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT. 12-month minimum term.</p>
-                <a href="#" class="plan-cta contact-link" data-inquiry="Demo Request - Core (250 calls, £249/mo)">Book a Demo</a>
-                <ul class="plan-features">
-                    <li><span class="check">✓</span> AI receptionist, 24/7</li>
-                    <li><span class="check">✓</span> Complete phone system included</li>
-                    <li><span class="check">✓</span> Business numbers included</li>
-                    <li><span class="check">✓</span> Up to 3,000 outbound minutes per user</li>
-                    <li><span class="check">✓</span> Apps for iOS, Android and desktop</li>
-                    <li><span class="check">✓</span> Call summaries and data capture</li>
-                    <li><span class="check">✓</span> Out-of-hours and overflow modes</li>
-                    <li><span class="check">✓</span> Escalation and call routing</li>
-                    <li><span class="check">✓</span> Audit trail and call logs</li>
-                </ul>
-            </div>
-
-            <!-- Growth (Most Popular) -->
-            <div class="pricing-card popular">
-                <div class="badge">Most Popular</div>
-                <div class="plan-header">
-                    <h3>Growth</h3>
-                    <p class="plan-desc">For busier teams managing higher volumes</p>
-                </div>
-                <div class="plan-minutes">500 AI calls</div>
-                <div class="plan-price">
-                    <span class="amount">£399</span>
-                    <span class="period">per month</span>
-                </div>
-                <p style="font-size: 0.9rem; color: var(--primary); margin-bottom: 0.35rem; font-weight: 500;">10 staff extensions included</p>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT. 12-month minimum term.</p>
-                <a href="#" class="plan-cta contact-link" data-inquiry="Demo Request - Growth (500 calls, £399/mo)">Book a Demo</a>
-                <ul class="plan-features">
-                    <li><span class="check">✓</span> AI receptionist, 24/7</li>
-                    <li><span class="check">✓</span> Complete phone system included</li>
-                    <li><span class="check">✓</span> Business numbers included</li>
-                    <li><span class="check">✓</span> Up to 3,000 outbound minutes per user</li>
-                    <li><span class="check">✓</span> Apps for iOS, Android and desktop</li>
-                    <li><span class="check">✓</span> Call summaries and data capture</li>
-                    <li><span class="check">✓</span> Out-of-hours and overflow modes</li>
-                    <li><span class="check">✓</span> Escalation and call routing</li>
-                    <li><span class="check">✓</span> Audit trail and call logs</li>
-                </ul>
-            </div>
-
-            <!-- Pro -->
-            <div class="pricing-card">
-                <div class="plan-header">
-                    <h3>Pro</h3>
-                    <p class="plan-desc">High volume, unlimited extensions</p>
-                </div>
-                <div class="plan-minutes">1,000 AI calls</div>
-                <div class="plan-price">
-                    <span class="amount">£699</span>
-                    <span class="period">per month</span>
-                </div>
-                <p style="font-size: 0.9rem; color: var(--primary); margin-bottom: 0.35rem; font-weight: 500;">Unlimited staff extensions</p>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Prices exclude VAT. 12-month minimum term.</p>
-                <a href="#" class="plan-cta contact-link" data-inquiry="Demo Request - Pro (1000 calls, £699/mo)">Book a Demo</a>
-                <ul class="plan-features">
-                    <li><span class="check">✓</span> AI receptionist, 24/7</li>
-                    <li><span class="check">✓</span> Complete phone system included</li>
-                    <li><span class="check">✓</span> Business numbers included</li>
-                    <li><span class="check">✓</span> Up to 3,000 outbound minutes per user</li>
-                    <li><span class="check">✓</span> Apps for iOS, Android and desktop</li>
-                    <li><span class="check">✓</span> Call summaries and data capture</li>
-                    <li><span class="check">✓</span> Out-of-hours and overflow modes</li>
-                    <li><span class="check">✓</span> Escalation and call routing</li>
-                    <li><span class="check">✓</span> Audit trail and call logs</li>
-                </ul>
-            </div>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="building-2" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Complete Phone System</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Business numbers, staff extensions, call routing and apps for iOS, Android and desktop. No separate telecoms contract required. Your team uses WiseCall as their everyday business phone.</p>
+          <a href="#pricing" class="inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors">View plans &rarr;</a>
         </div>
 
-        <div class="pricing-footer">
-            <p style="font-size: 1rem; color: var(--text-light); margin-bottom: 1rem; font-weight: 600;">Inclusions and exclusions</p>
-            <p style="margin-bottom: 0.4rem;"><span style="color: var(--primary); font-weight: 500;">Included outbound destinations:</span> UK 01/02 (local and national), UK 03 numbers, and major UK mobile networks. Up to 3,000 outbound minutes per user, per month.</p>
-            <p style="margin-bottom: 0.4rem;"><span style="color: var(--primary); font-weight: 500;">Standard exclusions:</span> premium rate numbers, international destinations, directory enquiries, and non-standard number ranges.</p>
-            <p style="margin-bottom: 0.4rem;"><span style="color: var(--primary); font-weight: 500;">AI call overage:</span> £0.65 per additional AI-handled inbound call beyond your monthly allowance.</p>
-            <p style="margin-bottom: 1rem;">Outbound minutes beyond the included allowance and calls to non-included destinations are charged at standard rates and itemised on your monthly statement.</p>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">All prices exclude VAT. 12-month minimum term. Payment by monthly Direct Debit.</p>
-            <p style="margin-top: 1rem;">Questions about which plan fits? <a href="#" class="contact-link" data-inquiry="Pricing Enquiry" style="color: var(--primary); text-decoration: none; font-weight: 600;">Book a demo and we will advise.</a></p>
-        </div>
-    </section>
-
-    <!-- How to Choose -->
-    <section style="padding: 5rem 2rem; max-width: 900px; margin: 0 auto;">
-        <div class="section-header">
-            <h2>How to choose a plan</h2>
-            <p>Not sure where to start? Here is a straightforward guide based on typical call volumes.</p>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="file-text" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Call Summaries and Data Capture</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Every AI-handled call is logged and summarised. Caller information is captured in a structured format and delivered where your team needs it, reducing errors and missed details.</p>
+          <a href="#" class="contact-link inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors" data-inquiry="Demo Request">Learn more &rarr;</a>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-top: 3rem;">
-            <div style="background: var(--dark-card); border-radius: 16px; padding: 1.75rem 2rem; border: 1px solid rgba(110, 212, 215, 0.08); display: flex; gap: 1.5rem; align-items: flex-start;">
-                <div style="background: linear-gradient(135deg, var(--primary), var(--accent-purple)); border-radius: 12px; padding: 0.5rem 0; font-weight: 700; font-size: 1rem; color: var(--dark-bg); flex-shrink: 0; width: 5.5rem; text-align: center;">Core</div>
-                <div>
-                    <p style="color: var(--text-light); font-weight: 600; margin-bottom: 0.4rem;">Up to 250 AI-handled inbound calls per month</p>
-                    <p style="color: var(--text-medium); font-size: 0.95rem; line-height: 1.65;">Well suited to sole-practitioner clinics, small law firms, property teams and trades businesses with up to 250 inbound calls per month that they want the AI to handle.</p>
-                </div>
-            </div>
-
-            <div style="background: var(--dark-card); border-radius: 16px; padding: 1.75rem 2rem; border: 1px solid rgba(110, 212, 215, 0.15); display: flex; gap: 1.5rem; align-items: flex-start;">
-                <div style="background: linear-gradient(135deg, var(--primary), var(--accent-purple)); border-radius: 12px; padding: 0.5rem 0; font-weight: 700; font-size: 1rem; color: var(--dark-bg); flex-shrink: 0; width: 5.5rem; text-align: center;">Growth</div>
-                <div>
-                    <p style="color: var(--text-light); font-weight: 600; margin-bottom: 0.4rem;">251–500 AI-handled inbound calls per month</p>
-                    <p style="color: var(--text-medium); font-size: 0.95rem; line-height: 1.65;">Suitable for businesses with a higher AI call volume or a larger team. If your reception or admin function is handling 251 to 500 AI calls a month and you would prefer not to add headcount to keep up, Growth is designed for that situation.</p>
-                </div>
-            </div>
-
-            <div style="background: var(--dark-card); border-radius: 16px; padding: 1.75rem 2rem; border: 1px solid rgba(110, 212, 215, 0.08); display: flex; gap: 1.5rem; align-items: flex-start;">
-                <div style="background: linear-gradient(135deg, var(--primary), var(--accent-purple)); border-radius: 12px; padding: 0.5rem 0; font-weight: 700; font-size: 1rem; color: var(--dark-bg); flex-shrink: 0; width: 5.5rem; text-align: center;">Pro</div>
-                <div>
-                    <p style="color: var(--text-light); font-weight: 600; margin-bottom: 0.4rem;">501+ AI-handled inbound calls per month</p>
-                    <p style="color: var(--text-medium); font-size: 0.95rem; line-height: 1.65;">For businesses with over 500 AI-handled inbound calls per month, or those with larger teams requiring unlimited extensions. Also suitable for businesses that want room to grow without renegotiating their plan.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Partners -->
-    <section class="benefits" id="partners" style="padding: 6rem 2rem;">
-        <div class="section-header">
-            <h2>Partner with WiseCall</h2>
-            <p>Earn lifetime commission reselling WiseCall to your clients. Built for telecoms resellers, MSPs and IT consultants.</p>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="moon" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Out-of-Hours and Overflow</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Configure WiseCall to answer full-time, cover evenings and weekends only, or step in when your lines are busy. All three modes are included in every plan, at no extra cost.</p>
+          <a href="#pricing" class="inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors">View plans &rarr;</a>
         </div>
 
-        <div class="steps-grid">
-            <div class="step-card">
-                <div class="step-number">1</div>
-                <h3>Apply</h3>
-                <p>Submit your application. We review it and come back within a few business days. We look for partners who already work with SME clients and understand the communications space.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-number">2</div>
-                <h3>Onboard</h3>
-                <p>Access your partner portal, sales materials and product training. Onboarding typically takes one session. You will be ready to sell WiseCall to your first client straight away.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-number">3</div>
-                <h3>Sell</h3>
-                <p>Introduce WiseCall to your clients. You manage the relationship. WiseCall provides demos, onboarding and ongoing customer support directly.</p>
-            </div>
-            <div class="step-card">
-                <div class="step-number">4</div>
-                <h3>Earn</h3>
-                <p>Commission paid monthly on cleared funds, alongside a partner statement showing all active accounts and payments. No chasing, no ambiguity.</p>
-            </div>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.17s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="git-branch" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Escalation and Routing</h3>
+          <p class="text-white/60 text-sm leading-relaxed">WiseCall knows when a call needs a person. Urgent calls are routed to an on-call number or flagged for a callback. You configure which call types get which treatment.</p>
+          <a href="#" class="contact-link inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors" data-inquiry="Demo Request">Learn more &rarr;</a>
         </div>
 
-        <div style="max-width: 900px; margin: 4rem auto 0;">
-            <div class="about-grid">
-                <div class="benefit-card">
-                    <div class="benefit-icon">💷</div>
-                    <h3>50% on plan fees</h3>
-                    <p>Earn 50% of the monthly plan fee on every active customer you introduce, for the lifetime of that customer. No cap, no sliding scale.</p>
-                </div>
-
-                <div class="benefit-card">
-                    <div class="benefit-icon">📈</div>
-                    <h3>40% on overage</h3>
-                    <p>Earn 40% of any overage revenue your customers generate beyond their included AI calls. Recurring revenue that grows with your clients.</p>
-                </div>
-
-                <div class="benefit-card">
-                    <div class="benefit-icon">🔒</div>
-                    <h3>50% profit margins</h3>
-                    <p>Partners enjoy 50% margins on profit, not RRP. Discounting is permitted but comes from your margin. You may charge above RRP and retain the difference.</p>
-                </div>
-
-                <div class="benefit-card">
-                    <div class="benefit-icon">📅</div>
-                    <h3>12-month customer terms</h3>
-                    <p>WiseCall customers sign 12-month minimum terms. This protects your recurring revenue and reduces churn risk on your commission stream.</p>
-                </div>
-            </div>
-
-            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: rgba(125, 232, 235, 0.05); border-radius: 16px; border: 1px solid rgba(110, 212, 215, 0.08);">
-                <p style="font-size: 1.05rem; color: var(--text-light); margin-bottom: 0.75rem; font-weight: 600;">
-                    With 50% profit margins, a Growth plan customer generates significant recurring commission for you, every month, for as long as they remain a customer.
-                </p>
-                <p style="color: var(--text-medium); font-size: 0.9rem;">WiseCall bills the end customer directly. You take no credit risk and handle no invoicing.</p>
-            </div>
-
-            <div style="text-align: center; margin-top: 2.5rem;">
-                <a href="#" class="primary-btn contact-link" data-inquiry="Partner Application">Apply to Become a Partner</a>
-            </div>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.2s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="shield" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Audit Trail</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Full call logs and summaries for compliance purposes. Access controls per team member. GDPR-aware data handling as standard. Every call accounted for.</p>
+          <a href="#" class="contact-link inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors" data-inquiry="Demo Request">Learn more &rarr;</a>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- Security and Reliability -->
-    <section class="benefits" id="security" style="padding: 6rem 2rem; background: linear-gradient(180deg, var(--dark-card), var(--dark-bg));">
-        <div class="section-header">
-            <h2>Built to be trusted</h2>
-            <p>Security, reliability and data accuracy are not afterthoughts. They are built into how WiseCall works.</p>
-        </div>
+  <!-- ───── INDUSTRIES ───── -->
+  <section class="relative py-24 px-6 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/30 to-[#172929] pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Industries</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Built for any business that relies on the phone</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">WiseCall is horizontally applicable. If the phone is a primary channel and administrative pressure is a constraint, WiseCall is designed for you.</p>
+      </div>
 
-        <div style="max-width: 900px; margin: 0 auto;">
-            <div class="about-grid">
-                <div class="benefit-card">
-                    <div class="benefit-icon">🇬🇧</div>
-                    <h3>UK-based infrastructure</h3>
-                    <p>UK-based infrastructure and UK carrier connectivity. Designed for UK businesses, with data storage and call handling in the UK.</p>
-                </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <a href="dental.html" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="text-3xl mb-4">🦷</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Dental and Healthcare</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-4">Book appointments 24/7. Free up reception for in-person patients. Handle enquiries and recalls without adding headcount.</p>
+          <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors">Find out more &rarr;</span>
+        </a>
 
-                <div class="benefit-card">
-                    <div class="benefit-icon">📁</div>
-                    <h3>Full audit trail</h3>
-                    <p>Every AI-handled call is logged with a summary, timestamp, duration and outcome. This supports compliance, dispute resolution and internal review processes.</p>
-                </div>
+        <a href="legal.html" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="text-3xl mb-4">🏛️</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Legal and Professional</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-4">Sound professional from first contact. Qualify enquiries, capture matter details, route urgent calls and support Clio intake workflows.</p>
+          <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors">Find out more &rarr;</span>
+        </a>
 
-                <div class="benefit-card">
-                    <div class="benefit-icon">👤</div>
-                    <h3>Access controls</h3>
-                    <p>Permissions are set per team member. Not everyone needs access to everything. You control who sees call logs, summaries and account settings.</p>
-                </div>
+        <a href="property.html" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="text-3xl mb-4">🏠</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Property</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-4">Handle vendor and buyer enquiries, book valuations and manage call volume across lettings and sales without extra staff.</p>
+          <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors">Find out more &rarr;</span>
+        </a>
 
-                <div class="benefit-card">
-                    <div class="benefit-icon">🛡️</div>
-                    <h3>GDPR-aware by design</h3>
-                    <p>Data capture is structured and purposeful. WiseCall is built with data minimisation principles in mind. Contact us for specifics relevant to your sector.</p>
-                </div>
-            </div>
+        <a href="trades.html" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="text-3xl mb-4">🔧</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Trades and Services</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-4">Capture every lead while you are on a job. No more voicemail. Every enquiry logged, routed and ready when you need it.</p>
+          <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors">Find out more &rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
 
-            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: rgba(125, 232, 235, 0.05); border-radius: 16px; border: 1px solid rgba(110, 212, 215, 0.08);">
-                <p style="font-size: 1.1rem; color: var(--text-light); margin-bottom: 0.5rem; font-weight: 600;">
-                    "Real people, real support, real results."
-                </p>
-                <p style="color: var(--text-medium); font-size: 0.95rem;">
-                    When you contact us, you speak to our UK-based team who actually know the product and the platform. No scripts, no runaround.
-                </p>
-            </div>
-        </div>
-    </section>
+  <!-- ───── BENEFITS + STATS ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="benefits">
+    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-96 h-96 bg-[#7de8eb] rounded-full blur-[160px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Benefits</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Reduce staffing pressure. Handle more calls.</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">WiseCall handles call volume so your team can focus on the work only they can do.</p>
+      </div>
 
-    <!-- FAQ -->
-    <section class="faq-section" id="faq">
-        <div class="section-header" style="margin-bottom: 3rem;">
-            <h2>Frequently asked questions</h2>
-            <p>If your question is not covered here, book a demo and we will walk you through it.</p>
+      <div class="grid md:grid-cols-2 gap-6 mb-16">
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 transition-all" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="text-2xl mb-3">💼</div>
+          <h3 class="text-xl font-semibold text-white mb-2">Avoid additional headcount</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Manage higher call volumes without scaling your reception or admin team. WiseCall handles the volume so your business can grow without proportional cost increases in staffing.</p>
+          <a href="#pricing" class="inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors">See pricing &rarr;</a>
         </div>
 
-        <details class="faq-item">
-            <summary>What is WiseCall?</summary>
-            <div class="faq-answer">WiseCall is an AI-powered business communications platform. It combines an AI receptionist that answers and manages your inbound calls with a complete phone system for your team. Every plan includes business numbers, staff extensions, mobile and desktop apps, and call handling around the clock.</div>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 transition-all" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="text-2xl mb-3">📊</div>
+          <h3 class="text-xl font-semibold text-white mb-2">Accurate data capture</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Structured call summaries and data capture reduce the risk of errors compared to manual note-taking. Every enquiry is recorded consistently, every time.</p>
+          <a href="#" class="contact-link inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors" data-inquiry="Demo Request">Learn more &rarr;</a>
+        </div>
+
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 transition-all" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="text-2xl mb-3">🌙</div>
+          <h3 class="text-xl font-semibold text-white mb-2">Always on</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Coverage across evenings, weekends and bank holidays. Callers who currently reach voicemail out of hours receive a proper response. Enquiries are captured and ready for the morning.</p>
+          <a href="#" class="contact-link inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors" data-inquiry="Demo Request">Learn more &rarr;</a>
+        </div>
+
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 transition-all" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="text-2xl mb-3">📱</div>
+          <h3 class="text-xl font-semibold text-white mb-2">Your numbers. Your team. One system.</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Keep your existing business numbers. Your team gets a full phone system with apps for iOS, Android and desktop, included in every plan. No additional hardware or contracts.</p>
+          <a href="#pricing" class="inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors">View plans &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="motion grid grid-cols-2 md:grid-cols-4 gap-6" data-anim="fade-up" style="transition-delay:0.1s">
+        <div class="rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center">
+          <div class="text-4xl md:text-5xl font-bold text-[#7de8eb] stat-num mb-2">24/7</div>
+          <div class="text-white/60 text-sm">AI receptionist availability</div>
+        </div>
+        <div class="rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center">
+          <div class="text-4xl md:text-5xl font-bold text-[#7de8eb] stat-num mb-2">100%</div>
+          <div class="text-white/60 text-sm">Calls logged with summaries</div>
+        </div>
+        <div class="rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center">
+          <div class="text-4xl md:text-5xl font-bold text-[#7de8eb] stat-num mb-2">UK</div>
+          <div class="text-white/60 text-sm">Based infrastructure</div>
+        </div>
+        <div class="rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center">
+          <div class="text-4xl md:text-5xl font-bold text-[#7de8eb] stat-num mb-2">0</div>
+          <div class="text-white/60 text-sm">Extra contracts to manage</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── PRICING ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="pricing">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/20 to-[#172929] pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-6" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Pricing</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Simple, predictable pricing</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">Every plan includes the AI receptionist and a complete phone system. No hidden telecoms fees, no per-seat software charges.</p>
+      </div>
+      <p class="motion text-center text-white/50 text-sm mb-12" data-anim="fade-up" style="transition-delay:0.05s">Every plan includes the AI receptionist, a complete phone system, and UK outbound calling. Full inclusions and exclusions are listed beneath the plans.</p>
+
+      <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
+        <!-- Core -->
+        <div class="motion rounded-2xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-8 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" style="transition-delay:0.05s">
+          <h3 class="text-2xl font-bold text-white mb-1">Core</h3>
+          <p class="text-white/50 text-sm mb-5">Suited to smaller teams and practices</p>
+          <div class="inline-block px-3 py-1 rounded-full bg-[#7de8eb]/10 text-[#7de8eb] text-sm font-semibold mb-5">250 AI calls/month</div>
+          <div class="mb-2">
+            <span class="text-5xl font-bold text-white">£249</span>
+            <span class="text-white/50 text-sm ml-1">per month</span>
+          </div>
+          <p class="text-[#7de8eb] text-sm font-medium mb-1">5 staff extensions included</p>
+          <p class="text-white/40 text-xs mb-5">Prices exclude VAT. 12-month minimum term.</p>
+          <a href="#" class="mbtn contact-link block text-center py-3 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors mb-6" data-inquiry="Demo Request - Core (250 calls, £249/mo)">Book a Demo</a>
+          <ul class="space-y-2.5">
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Complete phone system included</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Business numbers included</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Up to 3,000 outbound minutes per user</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Apps for iOS, Android and desktop</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries and data capture</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Out-of-hours and overflow modes</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Escalation and call routing</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Audit trail and call logs</li>
+          </ul>
+        </div>
+
+        <!-- Growth (popular) -->
+        <div class="motion rounded-2xl bg-gradient-to-br from-[#7de8eb]/10 to-transparent border border-[#7de8eb]/40 p-8 shadow-[0_0_40px_rgba(125,232,235,0.18)] md:scale-105 relative" data-anim="scale-in" style="transition-delay:0.08s">
+          <div class="inline-block px-3 py-1 rounded-full bg-[#7de8eb] text-[#172929] text-xs font-bold mb-4">Most Popular</div>
+          <h3 class="text-2xl font-bold text-white mb-1">Growth</h3>
+          <p class="text-white/50 text-sm mb-5">For busier teams managing higher volumes</p>
+          <div class="inline-block px-3 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-sm font-semibold mb-5">500 AI calls/month</div>
+          <div class="mb-2">
+            <span class="text-5xl font-bold text-white">£399</span>
+            <span class="text-white/50 text-sm ml-1">per month</span>
+          </div>
+          <p class="text-[#7de8eb] text-sm font-medium mb-1">10 staff extensions included</p>
+          <p class="text-white/40 text-xs mb-5">Prices exclude VAT. 12-month minimum term.</p>
+          <a href="#" class="mbtn contact-link block text-center py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)] mb-6" data-inquiry="Demo Request - Growth (500 calls, £399/mo)">Book a Demo</a>
+          <ul class="space-y-2.5">
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Complete phone system included</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Business numbers included</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Up to 3,000 outbound minutes per user</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Apps for iOS, Android and desktop</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries and data capture</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Out-of-hours and overflow modes</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Escalation and call routing</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Audit trail and call logs</li>
+          </ul>
+        </div>
+
+        <!-- Pro -->
+        <div class="motion rounded-2xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-8 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" style="transition-delay:0.11s">
+          <h3 class="text-2xl font-bold text-white mb-1">Pro</h3>
+          <p class="text-white/50 text-sm mb-5">High volume, unlimited extensions</p>
+          <div class="inline-block px-3 py-1 rounded-full bg-[#7de8eb]/10 text-[#7de8eb] text-sm font-semibold mb-5">1,000 AI calls/month</div>
+          <div class="mb-2">
+            <span class="text-5xl font-bold text-white">£699</span>
+            <span class="text-white/50 text-sm ml-1">per month</span>
+          </div>
+          <p class="text-[#7de8eb] text-sm font-medium mb-1">Unlimited staff extensions</p>
+          <p class="text-white/40 text-xs mb-5">Prices exclude VAT. 12-month minimum term.</p>
+          <a href="#" class="mbtn contact-link block text-center py-3 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors mb-6" data-inquiry="Demo Request - Pro (1000 calls, £699/mo)">Book a Demo</a>
+          <ul class="space-y-2.5">
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Complete phone system included</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Business numbers included</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Up to 3,000 outbound minutes per user</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Apps for iOS, Android and desktop</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries and data capture</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Out-of-hours and overflow modes</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Escalation and call routing</li>
+            <li class="flex items-start gap-2 text-white/70 text-sm"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Audit trail and call logs</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Inclusions / exclusions -->
+      <div class="motion max-w-4xl mx-auto rounded-xl bg-white/5 border border-[#7de8eb]/10 p-8" data-anim="fade-up" style="transition-delay:0.1s">
+        <p class="text-white font-semibold mb-4">Inclusions and exclusions</p>
+        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">Included outbound destinations:</span> UK 01/02 (local and national), UK 03 numbers, and major UK mobile networks. Up to 3,000 outbound minutes per user, per month.</p>
+        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">Standard exclusions:</span> premium rate numbers, international destinations, directory enquiries, and non-standard number ranges.</p>
+        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">AI call overage:</span> £0.65 per additional AI-handled inbound call beyond your monthly allowance.</p>
+        <p class="text-white/50 text-sm mb-3">Outbound minutes beyond the included allowance and calls to non-included destinations are charged at standard rates and itemised on your monthly statement.</p>
+        <p class="text-white/40 text-xs">All prices exclude VAT. 12-month minimum term. Payment by monthly Direct Debit.</p>
+        <p class="text-white/60 text-sm mt-4">Questions about which plan fits? <a href="#" class="contact-link text-[#7de8eb] font-semibold" data-inquiry="Pricing Enquiry">Book a demo and we will advise.</a></p>
+      </div>
+
+      <!-- How to choose -->
+      <div class="motion mt-20 max-w-3xl mx-auto" data-anim="fade-up" style="transition-delay:0.05s">
+        <div class="text-center mb-10">
+          <h3 class="text-3xl font-bold text-white mb-3">How to choose a plan</h3>
+          <p class="text-white/60">Not sure where to start? Here is a straightforward guide based on typical call volumes.</p>
+        </div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-start gap-5 rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6">
+            <div class="flex-shrink-0 w-20 text-center rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm py-2">Core</div>
+            <div>
+              <p class="text-white font-semibold mb-1">Up to 250 AI-handled inbound calls per month</p>
+              <p class="text-white/55 text-sm leading-relaxed">Well suited to sole-practitioner clinics, small law firms, property teams and trades businesses with up to 250 inbound calls per month that they want the AI to handle.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-5 rounded-xl bg-white/5 border border-[#7de8eb]/20 p-6">
+            <div class="flex-shrink-0 w-20 text-center rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm py-2">Growth</div>
+            <div>
+              <p class="text-white font-semibold mb-1">251 to 500 AI-handled inbound calls per month</p>
+              <p class="text-white/55 text-sm leading-relaxed">Suitable for businesses with a higher AI call volume or a larger team. If your reception or admin function is handling 251 to 500 AI calls a month and you would prefer not to add headcount to keep up, Growth is designed for that situation.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-5 rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6">
+            <div class="flex-shrink-0 w-20 text-center rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm py-2">Pro</div>
+            <div>
+              <p class="text-white font-semibold mb-1">501+ AI-handled inbound calls per month</p>
+              <p class="text-white/55 text-sm leading-relaxed">For businesses with over 500 AI-handled inbound calls per month, or those with larger teams requiring unlimited extensions. Also suitable for businesses that want room to grow without renegotiating their plan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── PARTNERS ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="partners">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535]/30 to-[#172929] pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Partner Programme</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Partner with WiseCall</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">Earn lifetime commission reselling WiseCall to your clients. Built for telecoms resellers, MSPs and IT consultants.</p>
+      </div>
+
+      <!-- Steps -->
+      <div class="grid md:grid-cols-4 gap-6 mb-16">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">1</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Apply</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Submit your application. We review it and come back within a few business days. We look for partners who already work with SME clients and understand the communications space.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">2</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Onboard</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Access your partner portal, sales materials and product training. Onboarding typically takes one session. You will be ready to sell WiseCall to your first client straight away.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">3</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Sell</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Introduce WiseCall to your clients. You manage the relationship. WiseCall provides demos, onboarding and ongoing customer support directly.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">4</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Earn</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Commission paid monthly on cleared funds, alongside a partner statement showing all active accounts and payments. No chasing, no ambiguity.</p>
+        </div>
+      </div>
+
+      <!-- Commission cards -->
+      <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-6 mb-10">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="text-2xl mb-3">💷</div>
+          <h3 class="text-lg font-semibold text-white mb-2">50% on plan fees</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Earn 50% of the monthly plan fee on every active customer you introduce, for the lifetime of that customer. No cap, no sliding scale.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="text-2xl mb-3">📈</div>
+          <h3 class="text-lg font-semibold text-white mb-2">40% on overage</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Earn 40% of any overage revenue your customers generate beyond their included AI calls. Recurring revenue that grows with your clients.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="text-2xl mb-3">🔒</div>
+          <h3 class="text-lg font-semibold text-white mb-2">50% profit margins</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Partners enjoy 50% margins on profit, not RRP. Discounting is permitted but comes from your margin. You may charge above RRP and retain the difference.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="text-2xl mb-3">📅</div>
+          <h3 class="text-lg font-semibold text-white mb-2">12-month customer terms</h3>
+          <p class="text-white/55 text-sm leading-relaxed">WiseCall customers sign 12-month minimum terms. This protects your recurring revenue and reduces churn risk on your commission stream.</p>
+        </div>
+      </div>
+
+      <div class="motion max-w-4xl mx-auto rounded-xl bg-[#7de8eb]/5 border border-[#7de8eb]/15 p-7 text-center mb-8" data-anim="fade-up">
+        <p class="text-white font-semibold text-lg mb-2">With 50% profit margins, a Growth plan customer generates significant recurring commission for you, every month, for as long as they remain a customer.</p>
+        <p class="text-white/50 text-sm">WiseCall bills the end customer directly. You take no credit risk and handle no invoicing.</p>
+      </div>
+
+      <div class="motion text-center" data-anim="fade-up">
+        <a href="#" class="mbtn contact-link inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]" data-inquiry="Partner Application">
+          Apply to Become a Partner <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── SECURITY ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="security">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#1a3535]/20 to-[#172929] pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Trust and Compliance</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Built to be trusted</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">Security, reliability and data accuracy are not afterthoughts. They are built into how WiseCall works.</p>
+      </div>
+
+      <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-6 mb-10">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="text-2xl mb-3">🇬🇧</div>
+          <h3 class="text-lg font-semibold text-white mb-2">UK-based infrastructure</h3>
+          <p class="text-white/55 text-sm leading-relaxed">UK-based infrastructure and UK carrier connectivity. Designed for UK businesses, with data storage and call handling in the UK.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="text-2xl mb-3">📁</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Full audit trail</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Every AI-handled call is logged with a summary, timestamp, duration and outcome. This supports compliance, dispute resolution and internal review processes.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="text-2xl mb-3">👤</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Access controls</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Permissions are set per team member. Not everyone needs access to everything. You control who sees call logs, summaries and account settings.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="text-2xl mb-3">🛡️</div>
+          <h3 class="text-lg font-semibold text-white mb-2">GDPR-aware by design</h3>
+          <p class="text-white/55 text-sm leading-relaxed">Data capture is structured and purposeful. WiseCall is built with data minimisation principles in mind. Contact us for specifics relevant to your sector.</p>
+        </div>
+      </div>
+
+      <div class="motion max-w-3xl mx-auto rounded-xl bg-[#7de8eb]/5 border border-[#7de8eb]/15 p-7 text-center" data-anim="fade-up">
+        <p class="text-white font-semibold text-xl mb-2">"Real people, real support, real results."</p>
+        <p class="text-white/55 text-sm">When you contact us, you speak to our UK-based team who actually know the product and the platform. No scripts, no runaround.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── FAQ ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="faq">
+    <div class="relative z-10 max-w-3xl mx-auto">
+      <div class="motion text-center mb-14" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">FAQ</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Frequently asked questions</h2>
+        <p class="text-white/60">If your question is not covered here, book a demo and we will walk you through it.</p>
+      </div>
+
+      <div class="motion flex flex-col gap-3" data-anim="fade-up" style="transition-delay:0.05s">
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            What is WiseCall?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">WiseCall is an AI-powered business communications platform. It combines an AI receptionist that answers and manages your inbound calls with a complete phone system for your team. Every plan includes business numbers, staff extensions, mobile and desktop apps, and call handling around the clock.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>Is the phone system included?</summary>
-            <div class="faq-answer">Yes. Every WiseCall plan includes a complete phone system with business numbers, extensions and apps for iOS, Android and desktop. You do not need a separate telecoms contract or any hardware.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            Is the phone system included?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. Every WiseCall plan includes a complete phone system with business numbers, extensions and apps for iOS, Android and desktop. You do not need a separate telecoms contract or any hardware.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>What counts as an AI call?</summary>
-            <div class="faq-answer">An AI call is any inbound call answered and handled by the WiseCall AI receptionist. Internal calls between your team members are not counted. Your plan includes a set number of AI calls per month. Additional calls are charged at £0.65 each.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            What counts as an AI call?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">An AI call is any inbound call answered and handled by the WiseCall AI receptionist. Internal calls between your team members are not counted. Your plan includes a set number of AI calls per month. Additional calls are charged at £0.65 each.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>Can I keep my existing business number?</summary>
-            <div class="faq-answer">Yes. In most cases your existing number can be ported to WiseCall. If you need a new number, one is included with your plan. We will confirm what is possible for your specific number during onboarding.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            Can I keep my existing business number?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. In most cases your existing number can be ported to WiseCall. If you need a new number, one is included with your plan. We will confirm what is possible for your specific number during onboarding.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>What happens if the AI cannot help a caller?</summary>
-            <div class="faq-answer">WiseCall knows when a call needs a person. If the AI cannot resolve an enquiry, it will route the call to a member of your team, offer a callback, or send an urgent alert depending on how you have configured your escalation settings. No caller is left without a clear next step.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            What happens if the AI cannot help a caller?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">WiseCall knows when a call needs a person. If the AI cannot resolve an enquiry, it will route the call to a member of your team, offer a callback, or send an urgent alert depending on how you have configured your escalation settings. No caller is left without a clear next step.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>Do you offer out-of-hours only or overflow modes?</summary>
-            <div class="faq-answer">Yes. You can configure WiseCall to answer all inbound calls, to cover only out-of-hours periods, or to step in when your lines are busy. All three modes are available on every plan at no extra cost.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            Do you offer out-of-hours only or overflow modes?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. You can configure WiseCall to answer all inbound calls, to cover only out-of-hours periods, or to step in when your lines are busy. All three modes are available on every plan at no extra cost.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>What UK outbound calls are included?</summary>
-            <div class="faq-answer">Every plan includes outbound calls to UK 01/02 (local and national), UK 03, and major UK mobile networks. Standard exclusions apply. See the full inclusions and exclusions listed under the <a href="#pricing" style="color: var(--primary); text-decoration: none;">Pricing</a> section.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            What UK outbound calls are included?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Every plan includes outbound calls to UK 01/02 (local and national), UK 03, and major UK mobile networks. Standard exclusions apply. See the full inclusions and exclusions listed under the <a href="#pricing" class="text-[#7de8eb]">Pricing</a> section.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>How many outbound minutes are included?</summary>
-            <div class="faq-answer">Up to 3,000 outbound minutes per user, per month to included UK destinations. Calls beyond the allowance or to non-included destinations are charged at standard rates. Full details are under <a href="#pricing" style="color: var(--primary); text-decoration: none;">Pricing</a>.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            How many outbound minutes are included?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Up to 3,000 outbound minutes per user, per month to included UK destinations. Calls beyond the allowance or to non-included destinations are charged at standard rates. Full details are under <a href="#pricing" class="text-[#7de8eb]">Pricing</a>.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>How does pricing work?</summary>
-            <div class="faq-answer">Plans are £249, £399 or £699 per month, each including a set number of AI-handled inbound calls, staff extensions, and UK outbound minutes. The phone system, apps and business numbers are included. Additional AI calls cost £0.65 each. All prices exclude VAT. Full inclusions and exclusions are listed under the pricing table.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            How does pricing work?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Plans are £249, £399 or £699 per month, each including a set number of AI-handled inbound calls, staff extensions, and UK outbound minutes. The phone system, apps and business numbers are included. Additional AI calls cost £0.65 each. All prices exclude VAT. Full inclusions and exclusions are listed under the pricing table.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>What is the contract term?</summary>
-            <div class="faq-answer">All WiseCall plans require a 12-month minimum term. Payment is made monthly by Direct Debit. You can upgrade at any time. Downgrades are handled at the point of renewal at the end of your current term.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            What is the contract term?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">All WiseCall plans require a 12-month minimum term. Payment is made monthly by Direct Debit. You can upgrade at any time. Downgrades are handled at the point of renewal at the end of your current term.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>How is my data handled?</summary>
-            <div class="faq-answer">WiseCall is built with GDPR-aware data handling. Call summaries and captured data are stored securely on UK-based infrastructure, with access controls per team member. For specific data processing questions relevant to your sector, please contact us directly.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            How is my data handled?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">WiseCall is built with GDPR-aware data handling. Call summaries and captured data are stored securely on UK-based infrastructure, with access controls per team member. For specific data processing questions relevant to your sector, please contact us directly.</div>
         </details>
 
-        <details class="faq-item">
-            <summary>Can my IT provider or telecoms reseller offer WiseCall?</summary>
-            <div class="faq-answer">Yes. WiseCall has a partner programme for telecoms resellers, managed service providers and IT consultants. Partners earn lifetime commission on every customer they introduce. Visit the Partners section above or contact us to start an application.</div>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
+            Can my IT provider or telecoms reseller offer WiseCall?
+            <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. WiseCall has a partner programme for telecoms resellers, managed service providers and IT consultants. Partners earn lifetime commission on every customer they introduce. Visit the Partners section above or contact us to start an application.</div>
         </details>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- Final CTA -->
-    <section class="cta-section">
-        <div class="cta-content">
-            <h2>Ready to see WiseCall in action?</h2>
-            <p>Book a demo and we will recommend the right plan based on your current call volumes and team setup. Most businesses are up and running within a week.</p>
-            <div class="hero-buttons" style="justify-content: center; margin-bottom: 2rem;">
-                <a href="#" class="primary-btn contact-link" data-inquiry="Demo Request">Book a Demo</a>
-                <a href="#pricing" class="secondary-btn">See Pricing</a>
-            </div>
-            <p style="font-size: 0.95rem; color: var(--text-muted); margin-top: 1.5rem;">
-                12-month minimum term. Monthly Direct Debit. UK-based support.
-            </p>
+  <!-- ───── FINAL CTA ───── -->
+  <section class="relative py-24 px-6 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535] to-[#172929] pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#7de8eb] rounded-full blur-[200px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-3xl mx-auto text-center">
+      <div class="motion" data-anim="fade-up">
+        <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">Ready to see WiseCall in action?</h2>
+        <p class="text-xl text-white/70 mb-10 leading-relaxed">Book a demo and we will recommend the right plan based on your current call volumes and team setup. Most businesses are up and running within a week.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+          <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
+            Book a Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
+          </a>
+          <a href="#pricing" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
+            See Pricing
+          </a>
         </div>
-    </section>
+        <p class="text-white/40 text-sm">12-month minimum term. Monthly Direct Debit. UK-based support.</p>
+      </div>
+    </div>
+  </section>
 
-    <footer>
-        <div style="max-width: 1400px; margin: 0 auto; text-align: center;">
-            <div class="logo" style="justify-content: center; margin-bottom: 1rem; display: flex; align-items: center;"><img src="owl-logo.png" alt="WiseCall" style="height: 50px; margin-right: 14px;">WiseCall</div>
-            <p style="color: var(--text-medium); max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.7;">AI-powered business communications. Phone system included. UK-based.</p>
-            <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap;">
-                <a href="#how-it-works" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-medium)'">How It Works</a>
-                <a href="#pricing" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-medium)'">Pricing</a>
-                <a href="#partners" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-medium)'">Partners</a>
-                <a href="ai-consultancy.html" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-medium)'">Consultancy</a>
-                <a href="ai-workshop.html" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-medium)'">Workshop</a>
-                <a href="#faq" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-medium)'">FAQ</a>
-                <a href="#" class="contact-link" data-inquiry="General Contact" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in Touch</a>
-            </div>
-            <div style="border-top: 1px solid rgba(110, 212, 215, 0.08); padding-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
-                <p>&copy; 2026 WiseCall. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+  <!-- ───── FOOTER ───── -->
+  <footer class="relative border-t border-[#7de8eb]/10 py-14 px-6">
+    <div class="max-w-7xl mx-auto text-center">
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <img src="owl-logo.png" alt="WiseCall" class="h-10">
+        <span class="text-white font-bold text-xl">WiseCall</span>
+      </div>
+      <p class="text-white/50 max-w-sm mx-auto mb-8 text-sm leading-relaxed">AI-powered business communications. Phone system included. UK-based.</p>
+      <div class="flex flex-wrap justify-center gap-6 mb-8 text-sm">
+        <a href="#how-it-works" class="text-white/50 hover:text-[#7de8eb] transition-colors">How It Works</a>
+        <a href="#pricing" class="text-white/50 hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="#partners" class="text-white/50 hover:text-[#7de8eb] transition-colors">Partners</a>
+        <a href="ai-consultancy.html" class="text-white/50 hover:text-[#7de8eb] transition-colors">Consultancy</a>
+        <a href="ai-workshop.html" class="text-white/50 hover:text-[#7de8eb] transition-colors">Workshop</a>
+        <a href="#faq" class="text-white/50 hover:text-[#7de8eb] transition-colors">FAQ</a>
+        <a href="#" class="contact-link text-[#7de8eb] font-semibold hover:text-white transition-colors" data-inquiry="General Contact">Get in Touch</a>
+      </div>
+      <div class="border-t border-[#7de8eb]/8 pt-6 text-white/30 text-xs">
+        <p>&copy; 2026 WiseCall. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
 
-    <script>
-        // Mobile menu toggle
-        const mobileMenuButton = document.querySelector('.mobile-menu-button');
-        const navLinks = document.querySelector('.nav-links');
+  <script>
+    // Init Lucide icons
+    lucide.createIcons();
 
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenuButton.classList.toggle('active');
-            navLinks.classList.toggle('active');
+    // Scroll progress bar
+    const scrollProgress = document.getElementById('scrollProgress');
+    window.addEventListener('scroll', () => {
+      const pct = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+      scrollProgress.style.width = pct + '%';
+    });
+
+    // Header scroll class
+    const siteHeader = document.getElementById('siteHeader');
+    window.addEventListener('scroll', () => {
+      siteHeader.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Mobile menu
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileMenuToggle.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+    document.querySelectorAll('.mobile-link').forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.remove('open'));
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('nav')) mobileMenu.classList.remove('open');
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href === '#') return;
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // Hero scenario rotation
+    const scenarios = document.querySelectorAll('.scenario');
+    const scenarioContainer = document.getElementById('heroMessages');
+    let currentScenario = 0;
+    let rotationPaused = false;
+
+    function rotateScenarios() {
+      if (rotationPaused) return;
+      scenarios[currentScenario].classList.remove('active');
+      currentScenario = (currentScenario + 1) % scenarios.length;
+      scenarios[currentScenario].classList.add('active');
+    }
+
+    setInterval(rotateScenarios, 5000);
+    scenarioContainer.addEventListener('mouseenter', () => { rotationPaused = true; });
+    scenarioContainer.addEventListener('mouseleave', () => { rotationPaused = false; });
+
+    // Contact / Demo Modal
+    const modal = document.getElementById('contactModal');
+    const modalClose = document.getElementById('modalClose');
+    const contactForm = document.getElementById('contactForm');
+    const inquiryTypeField = document.getElementById('inquiryType');
+
+    document.querySelectorAll('.contact-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        inquiryTypeField.value = link.dataset.inquiry || 'General Contact';
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
+
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = contactForm.querySelector('.form-submit');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Sending...';
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch(contactForm.action, {
+          method: 'POST',
+          body: new FormData(contactForm),
+          headers: { 'Accept': 'application/json' }
         });
-
-        // Close mobile menu when clicking on a link
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenuButton.classList.remove('active');
-                navLinks.classList.remove('active');
-            });
-        });
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('nav')) {
-                mobileMenuButton.classList.remove('active');
-                navLinks.classList.remove('active');
-            }
-        });
-
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                const href = this.getAttribute('href');
-                if (href === '#') return;
-                e.preventDefault();
-                const target = document.querySelector(href);
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Add background to header on scroll
-        const header = document.querySelector('header');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
-            }
-        });
-
-        // Hero scenario rotation
-        const scenarios = document.querySelectorAll('.scenario');
-        const scenarioContainer = document.getElementById('heroMessages');
-        let currentScenario = 0;
-        let rotationPaused = false;
-
-        function rotateScenarios() {
-            if (rotationPaused) return;
-            scenarios[currentScenario].classList.remove('active');
-            currentScenario = (currentScenario + 1) % scenarios.length;
-            scenarios[currentScenario].classList.add('active');
+        if (response.ok) {
+          submitBtn.textContent = 'Sent!';
+          contactForm.reset();
+          setTimeout(() => { closeModal(); submitBtn.textContent = originalText; submitBtn.disabled = false; }, 1500);
+        } else {
+          throw new Error('Failed');
         }
+      } catch {
+        submitBtn.textContent = 'Error - Try Again';
+        submitBtn.disabled = false;
+        setTimeout(() => { submitBtn.textContent = originalText; }, 2000);
+      }
+    });
 
-        setInterval(rotateScenarios, 5000);
-
-        scenarioContainer.addEventListener('mouseenter', () => {
-            rotationPaused = true;
-        });
-        scenarioContainer.addEventListener('mouseleave', () => {
-            rotationPaused = false;
-        });
-
-        // Contact / Demo Modal
-        const modal = document.getElementById('contactModal');
-        const modalClose = document.getElementById('modalClose');
-        const contactForm = document.getElementById('contactForm');
-        const inquiryTypeField = document.getElementById('inquiryType');
-
-        document.querySelectorAll('.contact-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const inquiryType = link.dataset.inquiry || 'General Contact';
-                inquiryTypeField.value = inquiryType;
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
-        });
-
-        modalClose.addEventListener('click', () => {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('active')) {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
-
-        contactForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = contactForm.querySelector('.form-submit');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Sending...';
-            submitBtn.disabled = true;
-
-            try {
-                const response = await fetch(contactForm.action, {
-                    method: 'POST',
-                    body: new FormData(contactForm),
-                    headers: { 'Accept': 'application/json' }
-                });
-
-                if (response.ok) {
-                    submitBtn.textContent = 'Sent!';
-                    contactForm.reset();
-                    setTimeout(() => {
-                        modal.classList.remove('active');
-                        document.body.style.overflow = '';
-                        submitBtn.textContent = originalText;
-                        submitBtn.disabled = false;
-                    }, 1500);
-                } else {
-                    throw new Error('Failed');
-                }
-            } catch (error) {
-                submitBtn.textContent = 'Error - Try Again';
-                submitBtn.disabled = false;
-                setTimeout(() => {
-                    submitBtn.textContent = originalText;
-                }, 2000);
-            }
-        });
-    </script>
-  </body>
+    // Scroll animations (IntersectionObserver)
+    const motionEls = document.querySelectorAll('.motion');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    motionEls.forEach(el => observer.observe(el));
+  </script>
+</body>
 </html>
