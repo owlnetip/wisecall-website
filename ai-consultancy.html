@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>WiseCall AI Consultancy | Human-Led AI Project Studio</title>
+    <meta name="description" content="WiseCall AI Consultancy helps businesses move from idea to working AI systems with human-led design, practical build sessions, onsite workshops and private online project acceleration.">
+    <meta name="keywords" content="AI consultancy UK, AI project studio, business AI consultancy, AI workshops, onsite AI training, private AI sessions, human-led AI design">
+    <meta name="author" content="WiseCall">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://wisecall.io/ai-consultancy">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wisecall.io/ai-consultancy">
+    <meta property="og:title" content="WiseCall AI Consultancy | Human-Led AI Project Studio">
+    <meta property="og:description" content="A premium AI consultancy for businesses that want practical systems, human design quality and fast project momentum without generic AI output.">
+    <meta property="og:image" content="https://wisecall.io/og-image.jpg">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://wisecall.io/ai-consultancy">
+    <meta name="twitter:title" content="WiseCall AI Consultancy">
+    <meta name="twitter:description" content="Human-led AI consultancy, onsite sessions and private online project acceleration.">
+    <meta name="twitter:image" content="https://wisecall.io/og-image.jpg">
+
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": "WiseCall AI Consultancy",
+      "description": "Human-led AI consultancy and project studio for businesses, founders and teams.",
+      "url": "https://wisecall.io/ai-consultancy",
+      "image": "https://wisecall.io/og-image.jpg",
+      "telephone": "+44",
+      "areaServed": ["United Kingdom", "Worldwide online"],
+      "serviceType": ["AI Consultancy", "AI Workshops", "AI Project Studio", "Onsite Workshops", "Private Online Sessions"]
+    }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #172929;
+        color: #fff;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      .motion {
+        opacity: 0;
+        will-change: transform, opacity;
+        transition-property: opacity, transform;
+        transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+      }
+      .motion[data-anim="fade-up"] { transform: translateY(20px); transition-duration: 0.75s; }
+      .motion[data-anim="fade-right"] { transform: translateX(-20px); transition-duration: 0.7s; }
+      .motion[data-anim="fade-left"] { transform: translateX(20px); transition-duration: 0.7s; }
+      .motion[data-anim="scale-in"] { transform: scale(0.95); transition-duration: 0.65s; }
+      .motion[data-anim="fade"] { transition-duration: 1s; }
+      .motion.in-view { opacity: 1; transform: translate(0, 0) scale(1); }
+      .mbtn {
+        transition: transform 0.18s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.25s, border-color 0.25s, background-color 0.25s;
+      }
+      .mbtn:hover { transform: translateY(-2px); }
+      .mbtn:active { transform: translateY(0) scale(0.98); }
+      [data-lucide] { width: 1em; height: 1em; }
+      .hero-media {
+        background-image:
+          linear-gradient(180deg, rgba(23, 41, 41, 0) 0%, rgba(23, 41, 41, 0.82) 100%),
+          url('https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1600&q=82');
+        background-size: cover;
+        background-position: center;
+      }
+      ::-webkit-scrollbar { width: 10px; }
+      ::-webkit-scrollbar-track { background: #0f1f1f; }
+      ::-webkit-scrollbar-thumb { background: rgba(125, 232, 235, 0.18); border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(125, 232, 235, 0.32); }
+
+      header.scrolled { background: rgba(23, 41, 41, 0.92); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); }
+
+      .scroll-progress {
+        position: fixed; top: 0; left: 0; height: 3px; z-index: 60;
+        background: linear-gradient(90deg, #7de8eb, #5dbfc2); width: 0%;
+        transition: width 0.12s linear;
+      }
+
+      .faq-item[open] summary .faq-icon { transform: rotate(180deg); }
+      .faq-item summary { list-style: none; cursor: pointer; }
+      .faq-item summary::-webkit-details-marker { display: none; }
+      .faq-item .faq-icon { transition: transform 0.3s ease; }
+
+      .stat-num { font-variant-numeric: tabular-nums; }
+
+      .toast {
+        position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(120%);
+        background: linear-gradient(90deg, #7de8eb, #5dbfc2); color: #172929;
+        padding: 14px 24px; border-radius: 12px; font-weight: 700;
+        box-shadow: 0 10px 40px rgba(125,232,235,0.4); z-index: 200;
+        transition: transform 0.45s cubic-bezier(0.25, 0.1, 0.25, 1);
+        display: flex; align-items: center; gap: 10px;
+      }
+      .toast.show { transform: translateX(-50%) translateY(0); }
+      .toast.error { background: linear-gradient(90deg, #e07a52, #c25d3f); color: #fff; }
+
+      .mobile-menu { transform: translateY(-100%); transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1); }
+      .mobile-menu.open { transform: translateY(0); }
+
+      @keyframes pulse-soft {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 0.9; }
+      }
+      .pulse-dot { animation: pulse-soft 2.2s ease-in-out infinite; }
+    </style>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+
+  <body class="min-h-screen bg-[#172929] overflow-x-hidden">
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <header id="siteHeader" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#172929]/70 border-b border-[#7de8eb]/10 transition-all duration-300">
+      <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
+        <a href="index.html" class="flex items-center gap-2 text-white font-bold">
+          <img src="owl-logo.png" alt="WiseCall" class="h-8 w-auto">
+          <span class="text-sm tracking-wide">WiseCall</span>
+        </a>
+        <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
+          <a href="#work" class="hover:text-[#7de8eb] transition-colors">Work</a>
+          <a href="#method" class="hover:text-[#7de8eb] transition-colors">Method</a>
+          <a href="#process" class="hover:text-[#7de8eb] transition-colors">Process</a>
+          <a href="#packages" class="hover:text-[#7de8eb] transition-colors">Engagements</a>
+          <a href="#events" class="hover:text-[#7de8eb] transition-colors">Good Fit?</a>
+          <a href="#faq" class="hover:text-[#7de8eb] transition-colors">FAQ</a>
+          <a href="ai-workshop.html" class="hover:text-[#7de8eb] transition-colors">AI Workshop</a>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="#" data-modal-open class="mbtn hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]">
+            Discuss a Project
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+          <button id="mobileMenuToggle" aria-label="Open menu" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </nav>
+
+      <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 right-0 bg-[#172929]/98 backdrop-blur-xl border-b border-[#7de8eb]/15 shadow-2xl">
+        <div class="px-6 py-6 flex flex-col gap-4 text-white">
+          <a href="#work" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Work</a>
+          <a href="#method" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Method</a>
+          <a href="#process" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Process</a>
+          <a href="#packages" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Engagements</a>
+          <a href="#events" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Good Fit?</a>
+          <a href="#faq" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">FAQ</a>
+          <a href="ai-workshop.html" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">AI Workshop</a>
+          <a href="#" data-modal-open class="mbtn mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold">
+            Discuss a Project
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="relative min-h-screen flex items-end overflow-hidden px-6 pt-28 pb-12">
+        <div class="absolute inset-0 hero-media"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-[#172929]/95 via-[#172929]/74 to-[#172929]/38"></div>
+        <div class="absolute inset-0 opacity-30">
+          <div class="absolute top-24 left-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[130px]"></div>
+          <div class="absolute bottom-16 right-1/4 w-96 h-96 bg-[#e07a52] rounded-full blur-[150px]"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto w-full">
+          <div class="motion max-w-4xl" data-anim="fade-up">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/6 border border-[#7de8eb]/20 backdrop-blur-sm mb-7">
+              <span class="w-2 h-2 rounded-full bg-[#7de8eb] pulse-dot"></span>
+              <span class="text-sm text-white/80">Now booking projects for Q3 2026</span>
+            </div>
+
+            <h1 class="text-5xl md:text-7xl font-bold text-white leading-tight mb-7">
+              Premium AI Projects,
+              <br>
+              <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">
+                Without Generic AI Output
+              </span>
+            </h1>
+
+            <p class="text-xl md:text-2xl text-white/74 max-w-3xl leading-relaxed mb-10">
+              We help founders, teams and leaders turn raw ideas into useful AI systems, branded prototypes and working workflows. Every project starts with real people, proper design thinking and practical build work.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 mb-10">
+              <a href="#" data-modal-open class="mbtn inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]">
+                Start a Project
+                <i data-lucide="send" class="w-5 h-5"></i>
+              </a>
+              <a href="#work" class="mbtn inline-flex items-center justify-center gap-3 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
+                View Our Work
+              </a>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-6 text-white/60 text-sm">
+              <div class="flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb]"></i>
+                <span>UK-based founders & operators</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb]"></i>
+                <span>UK onsite delivery</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb]"></i>
+                <span>Projects in 4 markets</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="relative py-16 px-6 border-y border-[#7de8eb]/10 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535] to-[#172929]"></div>
+        <div class="relative z-10 max-w-7xl mx-auto">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div class="motion" data-anim="fade-up" data-delay="0">
+              <div class="text-4xl md:text-5xl font-black bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent mb-2">10+</div>
+              <p class="text-sm text-white/60">Projects worked on</p>
+            </div>
+            <div class="motion" data-anim="fade-up" data-delay="100">
+              <div class="text-4xl md:text-5xl font-black bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent mb-2 stat-num" data-count="7" data-suffix=" Days">0</div>
+              <p class="text-sm text-white/60">To first working build</p>
+            </div>
+            <div class="motion" data-anim="fade-up" data-delay="200">
+              <div class="text-4xl md:text-5xl font-black bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent mb-2 stat-num" data-count="100" data-suffix="%">0</div>
+              <p class="text-sm text-white/60">Project completion rate</p>
+            </div>
+            <div class="motion" data-anim="fade-up" data-delay="300">
+              <div class="text-4xl md:text-5xl font-black bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent mb-2 stat-num" data-count="4">0</div>
+              <p class="text-sm text-white/60">Active project markets</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="work" class="relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[#172929]"></div>
+        <div class="relative z-10 max-w-7xl mx-auto">
+          <div class="motion max-w-3xl mb-14" data-anim="fade-up">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 mb-6">
+              <i data-lucide="briefcase-business" class="w-4 h-4 text-[#7de8eb]"></i>
+              <span class="text-sm text-[#7de8eb] font-semibold">Selected Projects</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">Real Work, Real Clients</h2>
+            <p class="text-xl text-white/70 leading-relaxed">A cross-section of what we build — SaaS platforms, marketplaces, AI-powered property search and brand-led consultancy sites. Every project shaped around a specific business outcome. Including this site.</p>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <article class="motion group rounded-2xl overflow-hidden bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" data-delay="0">
+              <div class="relative h-64 overflow-hidden">
+                <img src="moriapp-screenshot.jpg" alt="MoriApp — Japan property platform" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute top-4 left-4">
+                  <span class="px-3 py-1 rounded-full bg-[#172929]/80 backdrop-blur-sm border border-[#7de8eb]/25 text-[#7de8eb] text-xs font-bold uppercase tracking-wider">Property Platform</span>
+                </div>
+              </div>
+              <div class="p-7">
+                <h3 class="text-xl font-bold text-white mb-3">MoriApp — Japan Property Search</h3>
+                <p class="text-white/65 text-sm leading-relaxed">A bilingual Japanese real estate platform with station-based search, agency onboarding and AI-ready property data extraction. Built for buyers, renters and agencies operating across Tokyo, Osaka and Kyoto.</p>
+                <div class="mt-5 flex items-center gap-2 text-xs text-white/40 font-medium">
+                  <span class="px-2 py-1 rounded bg-white/5">Next.js 15</span>
+                  <span class="px-2 py-1 rounded bg-white/5">Supabase</span>
+                  <span class="px-2 py-1 rounded bg-white/5">PostGIS</span>
+                  <span class="px-2 py-1 rounded bg-white/5">Bilingual</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="motion group rounded-2xl overflow-hidden bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" data-delay="80">
+              <div class="relative h-64 overflow-hidden">
+                <img src="owlnet-screenshot.png" alt="Owlnet Portal — Telecom management platform dashboard" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute top-4 left-4">
+                  <span class="px-3 py-1 rounded-full bg-[#172929]/80 backdrop-blur-sm border border-[#7de8eb]/25 text-[#7de8eb] text-xs font-bold uppercase tracking-wider">SaaS Platform</span>
+                </div>
+              </div>
+              <div class="p-7">
+                <h3 class="text-xl font-bold text-white mb-3">Owlnet Portal — Telecoms Management Platform</h3>
+                <p class="text-white/65 text-sm leading-relaxed">A full-stack telecoms management platform built for resellers — combining a quote system, ticket desk, CRM, port wallboard, renewals management, integrated PBX and SIP, AI agents, website live chat with knowledge base RAG, live call stats, and granular reseller access controls. Processing over 11,000 calls per day in production.</p>
+                <div class="mt-5 flex flex-wrap items-center gap-2 text-xs text-white/40 font-medium">
+                  <span class="px-2 py-1 rounded bg-white/5">React 18</span>
+                  <span class="px-2 py-1 rounded bg-white/5">Supabase</span>
+                  <span class="px-2 py-1 rounded bg-white/5">AI Agents</span>
+                  <span class="px-2 py-1 rounded bg-white/5">VoIP / SIP</span>
+                  <span class="px-2 py-1 rounded bg-white/5">RAG</span>
+                  <span class="px-2 py-1 rounded bg-white/5">Multi-tenant</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="motion group rounded-2xl overflow-hidden bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" data-delay="120">
+              <div class="relative h-64 overflow-hidden">
+                <img src="whiskychasers-screenshot.png" alt="Whisky Chasers International — cask marketplace" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute top-4 left-4">
+                  <span class="px-3 py-1 rounded-full bg-[#172929]/80 backdrop-blur-sm border border-[#7de8eb]/25 text-[#7de8eb] text-xs font-bold uppercase tracking-wider">B2B Marketplace</span>
+                </div>
+              </div>
+              <div class="p-7">
+                <h3 class="text-xl font-bold text-white mb-3">Whisky Chasers — Cask Marketplace & Portal</h3>
+                <p class="text-white/65 text-sm leading-relaxed">A trade-only cask marketplace for bottlers, brokers and blenders — with 40,000+ cask records, HMRC bonded movements, AI-assisted search and a built-in CRM. Supports six languages and active buyer markets across Scotland, Ireland, Japan and the USA, with WhatsApp and LINE integrated for direct trade messaging.</p>
+                <div class="mt-5 flex flex-wrap items-center gap-2 text-xs text-white/40 font-medium">
+                  <span class="px-2 py-1 rounded bg-white/5">AI Search</span>
+                  <span class="px-2 py-1 rounded bg-white/5">CRM</span>
+                  <span class="px-2 py-1 rounded bg-white/5">6 Languages</span>
+                  <span class="px-2 py-1 rounded bg-white/5">HMRC Bonded</span>
+                  <span class="px-2 py-1 rounded bg-white/5">WhatsApp / LINE</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="motion group rounded-2xl overflow-hidden bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" data-delay="200">
+              <div class="relative h-64 overflow-hidden">
+                <img src="wisecall-screenshot.png" alt="WiseCall — AI business communications platform" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute top-4 left-4">
+                  <span class="px-3 py-1 rounded-full bg-[#172929]/80 backdrop-blur-sm border border-[#7de8eb]/25 text-[#7de8eb] text-xs font-bold uppercase tracking-wider">AI Product</span>
+                </div>
+              </div>
+              <div class="p-7">
+                <h3 class="text-xl font-bold text-white mb-3">WiseCall — AI Business Communications</h3>
+                <p class="text-white/65 text-sm leading-relaxed">An AI-powered business communications platform that answers calls, qualifies enquiries, books appointments and captures information around the clock — with a complete phone system included. Brand, product design and build delivered end to end.</p>
+                <div class="mt-5 flex flex-wrap items-center gap-2 text-xs text-white/40 font-medium">
+                  <span class="px-2 py-1 rounded bg-white/5">AI Receptionist</span>
+                  <span class="px-2 py-1 rounded bg-white/5">Phone System</span>
+                  <span class="px-2 py-1 rounded bg-white/5">Brand</span>
+                  <span class="px-2 py-1 rounded bg-white/5">Product Design</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="method" class="relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535] to-[#172929]"></div>
+        <div class="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-[0.9fr_1.1fr] gap-12 items-center">
+          <div class="motion" data-anim="fade-right">
+            <div class="rounded-3xl overflow-hidden border border-[#7de8eb]/20 shadow-[0_0_70px_rgba(125,232,235,0.14)]">
+              <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=82" alt="A premium creative studio workspace for AI project planning" class="w-full h-[520px] object-cover">
+            </div>
+          </div>
+          <div class="motion" data-anim="fade-left">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 mb-6">
+              <i data-lucide="fingerprint" class="w-4 h-4 text-[#7de8eb]"></i>
+              <span class="text-sm text-[#7de8eb] font-semibold">What Makes It Different</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Real People First. AI Second.</h2>
+            <p class="text-xl text-white/72 leading-relaxed mb-8">
+              The best AI work does not start with a prompt. It starts with taste, business context, brand judgement and a clear human brief. Our graphic design and project thinking gives the AI a strong base, so the output feels intentional rather than generic.
+            </p>
+
+            <div class="space-y-4">
+              <div class="p-5 rounded-2xl bg-white/5 border border-[#7de8eb]/10 flex gap-4 hover:border-[#7de8eb]/25 transition-colors">
+                <i data-lucide="pen-tool" class="w-7 h-7 text-[#7de8eb] flex-shrink-0 mt-1"></i>
+                <div>
+                  <h3 class="text-lg font-bold text-white mb-1">A proper creative brief</h3>
+                  <p class="text-white/60 text-sm leading-relaxed">We shape the offer, audience, tone and visual direction before the AI build work begins.</p>
+                </div>
+              </div>
+              <div class="p-5 rounded-2xl bg-white/5 border border-[#7de8eb]/10 flex gap-4 hover:border-[#7de8eb]/25 transition-colors">
+                <i data-lucide="hammer" class="w-7 h-7 text-[#7de8eb] flex-shrink-0 mt-1"></i>
+                <div>
+                  <h3 class="text-lg font-bold text-white mb-1">Live practical building</h3>
+                  <p class="text-white/60 text-sm leading-relaxed">We prototype in front of you, refine with your feedback and keep momentum high.</p>
+                </div>
+              </div>
+              <div class="p-5 rounded-2xl bg-white/5 border border-[#7de8eb]/10 flex gap-4 hover:border-[#7de8eb]/25 transition-colors">
+                <i data-lucide="shield-check" class="w-7 h-7 text-[#7de8eb] flex-shrink-0 mt-1"></i>
+                <div>
+                  <h3 class="text-lg font-bold text-white mb-1">Useful systems, not novelty demos</h3>
+                  <p class="text-white/60 text-sm leading-relaxed">The goal is a practical next step your team can use, review and build on.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="process" class="relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[#172929]"></div>
+        <div class="absolute inset-0 opacity-20">
+          <div class="absolute top-1/3 right-0 w-[600px] h-[600px] bg-[#7de8eb] rounded-full blur-[170px]"></div>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto">
+          <div class="motion text-center max-w-3xl mx-auto mb-16" data-anim="fade-up">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 mb-6">
+              <i data-lucide="route" class="w-4 h-4 text-[#7de8eb]"></i>
+              <span class="text-sm text-[#7de8eb] font-semibold">How We Work</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">From First Call To Working System</h2>
+            <p class="text-xl text-white/70">A clear, repeatable path that respects your time and gets to a useful output fast.</p>
+          </div>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="motion relative p-7 rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" data-delay="0">
+              <div class="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-black text-xl flex items-center justify-center shadow-[0_0_24px_rgba(125,232,235,0.4)]">01</div>
+              <i data-lucide="message-circle-question" class="w-8 h-8 text-[#7de8eb] mb-5 mt-2"></i>
+              <h3 class="text-xl font-bold text-white mb-3">Discovery Call</h3>
+              <p class="text-white/62 text-sm leading-relaxed">A free 30-minute call to understand the goal, audience and what good looks like for you.</p>
+              <p class="text-[#7de8eb] text-xs font-bold mt-4 uppercase tracking-wider">Day 1</p>
+            </div>
+            <div class="motion relative p-7 rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" data-delay="100">
+              <div class="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-black text-xl flex items-center justify-center shadow-[0_0_24px_rgba(125,232,235,0.4)]">02</div>
+              <i data-lucide="clipboard-list" class="w-8 h-8 text-[#7de8eb] mb-5 mt-2"></i>
+              <h3 class="text-xl font-bold text-white mb-3">Creative Brief</h3>
+              <p class="text-white/62 text-sm leading-relaxed">We shape the project scope, branding direction, deliverables and success criteria together.</p>
+              <p class="text-[#7de8eb] text-xs font-bold mt-4 uppercase tracking-wider">Days 2-4</p>
+            </div>
+            <div class="motion relative p-7 rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" data-delay="200">
+              <div class="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-black text-xl flex items-center justify-center shadow-[0_0_24px_rgba(125,232,235,0.4)]">03</div>
+              <i data-lucide="hammer" class="w-8 h-8 text-[#7de8eb] mb-5 mt-2"></i>
+              <h3 class="text-xl font-bold text-white mb-3">Build & Iterate</h3>
+              <p class="text-white/62 text-sm leading-relaxed">We prototype live, review with you, and refine until the system fits your business reality.</p>
+              <p class="text-[#7de8eb] text-xs font-bold mt-4 uppercase tracking-wider">Days 5-12</p>
+            </div>
+            <div class="motion relative p-7 rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" data-delay="300">
+              <div class="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-black text-xl flex items-center justify-center shadow-[0_0_24px_rgba(125,232,235,0.4)]">04</div>
+              <i data-lucide="rocket" class="w-8 h-8 text-[#7de8eb] mb-5 mt-2"></i>
+              <h3 class="text-xl font-bold text-white mb-3">Handover & Support</h3>
+              <p class="text-white/62 text-sm leading-relaxed">Full handover, documentation, training session and ongoing support options if needed.</p>
+              <p class="text-[#7de8eb] text-xs font-bold mt-4 uppercase tracking-wider">Day 14+</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="packages" class="relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535] to-[#172929]"></div>
+        <div class="relative z-10 max-w-7xl mx-auto">
+
+          <div class="motion grid lg:grid-cols-[1fr_1fr] gap-16 items-start mb-16" data-anim="fade-up">
+            <div>
+              <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 mb-6">
+                <i data-lucide="gem" class="w-4 h-4 text-[#7de8eb]"></i>
+                <span class="text-sm text-[#7de8eb] font-semibold">How We Engage</span>
+              </div>
+              <h2 class="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">No Fixed Packages.<br>Every Project Is Different.</h2>
+              <p class="text-xl text-white/70 leading-relaxed">
+                We do not sell off-the-shelf packages because no two projects are the same. Some clients need a focused one-day strategy session. Others need design work, build time and a team behind them for six months. We scope the right engagement after we understand the actual problem.
+              </p>
+            </div>
+            <div class="space-y-5 lg:pt-20">
+              <div class="flex gap-4 p-5 rounded-2xl bg-white/5 border border-[#7de8eb]/10">
+                <i data-lucide="search" class="w-6 h-6 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <div>
+                  <h3 class="text-white font-bold mb-1">It starts with a free call</h3>
+                  <p class="text-white/60 text-sm leading-relaxed">A 30-minute conversation to understand the goal, the decision makers and whether we are the right fit before anything else is discussed.</p>
+                </div>
+              </div>
+              <div class="flex gap-4 p-5 rounded-2xl bg-white/5 border border-[#7de8eb]/10">
+                <i data-lucide="sliders-horizontal" class="w-6 h-6 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <div>
+                  <h3 class="text-white font-bold mb-1">Then we scope to the work</h3>
+                  <p class="text-white/60 text-sm leading-relaxed">One-off builds, workshop intensives, onsite sessions, retained design and development — scoped around the actual project, not a menu.</p>
+                </div>
+              </div>
+              <div class="flex gap-4 p-5 rounded-2xl bg-white/5 border border-[#7de8eb]/10">
+                <i data-lucide="shield-check" class="w-6 h-6 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <div>
+                  <h3 class="text-white font-bold mb-1">We work selectively</h3>
+                  <p class="text-white/60 text-sm leading-relaxed">We take on a small number of clients at a time. The focus is on senior leaders and decision makers with a real business outcome to work toward.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="motion rounded-2xl border border-[#7de8eb]/20 bg-white/4 overflow-hidden" data-anim="fade-up">
+            <div class="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#7de8eb]/10">
+              <div class="p-8">
+                <i data-lucide="zap" class="w-7 h-7 text-[#7de8eb] mb-5"></i>
+                <h3 class="text-lg font-bold text-white mb-2">One-Off Projects</h3>
+                <p class="text-white/60 text-sm leading-relaxed">A defined brief, a clear deliverable and a fixed engagement. Suits businesses that need a prototype, workflow, assistant or strategy built to a specific outcome.</p>
+              </div>
+              <div class="p-8">
+                <i data-lucide="calendar-clock" class="w-7 h-7 text-[#7de8eb] mb-5"></i>
+                <h3 class="text-lg font-bold text-white mb-2">Sessions & Intensives</h3>
+                <p class="text-white/60 text-sm leading-relaxed">Half-day or full-day focused sessions — onsite at a UK venue or private online. Fast, structured and designed to unblock or accelerate a specific problem.</p>
+              </div>
+              <div class="p-8">
+                <i data-lucide="repeat-2" class="w-7 h-7 text-[#7de8eb] mb-5"></i>
+                <h3 class="text-lg font-bold text-white mb-2">Ongoing Retained Work</h3>
+                <p class="text-white/60 text-sm leading-relaxed">A reserved allocation of strategy, build and management time each month. For teams that want continued momentum, iteration and a partner rather than a one-off supplier.</p>
+              </div>
+            </div>
+            <div class="px-8 py-6 bg-[#7de8eb]/5 border-t border-[#7de8eb]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p class="text-white/65 text-sm">All engagements begin with a free discovery call. No pitch decks, no sales process — just a direct conversation.</p>
+              <a href="#" data-modal-open class="mbtn flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-sm shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_40px_rgba(125,232,235,0.45)] whitespace-nowrap">
+                Book a Discovery Call
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[#172929]"></div>
+        <div class="relative z-10 max-w-7xl mx-auto">
+          <div class="motion text-center max-w-3xl mx-auto mb-14" data-anim="fade-up">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 mb-6">
+              <i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb]"></i>
+              <span class="text-sm text-[#7de8eb] font-semibold">Client Voices</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">What Clients Value</h2>
+            <p class="text-xl text-white/70">The feedback we hear most often is about speed, clarity and the difference made by human creative judgement.</p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-6">
+            <figure class="motion p-8 rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-up" data-delay="0">
+              <div class="flex items-center gap-1 mb-6">
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+              </div>
+              <blockquote class="text-xl text-white leading-relaxed mb-8">"They turned a loose idea into something we could actually show people. It felt designed, not generated."</blockquote>
+              <figcaption class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center text-[#172929] font-bold">F</div>
+                <div>
+                  <div class="text-white text-sm font-semibold">Founder</div>
+                  <div class="text-white/55 text-xs">B2B services company</div>
+                </div>
+              </figcaption>
+            </figure>
+            <figure class="motion p-8 rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-up" data-delay="100">
+              <div class="flex items-center gap-1 mb-6">
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+              </div>
+              <blockquote class="text-xl text-white leading-relaxed mb-8">"The session gave us more progress in one afternoon than weeks of internal discussion."</blockquote>
+              <figcaption class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center text-[#172929] font-bold">O</div>
+                <div>
+                  <div class="text-white text-sm font-semibold">Operations Director</div>
+                  <div class="text-white/55 text-xs">Professional services</div>
+                </div>
+              </figcaption>
+            </figure>
+            <figure class="motion p-8 rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-up" data-delay="200">
+              <div class="flex items-center gap-1 mb-6">
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+                <i data-lucide="star" class="w-5 h-5 text-[#7de8eb] fill-[#7de8eb]"></i>
+              </div>
+              <blockquote class="text-xl text-white leading-relaxed mb-8">"The design layer changed everything. It stopped feeling like AI content and started feeling like our brand."</blockquote>
+              <figcaption class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center text-[#172929] font-bold">C</div>
+                <div>
+                  <div class="text-white text-sm font-semibold">Creative Lead</div>
+                  <div class="text-white/55 text-xs">Growing brand</div>
+                </div>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="events" class="relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#172929] via-[#1a3535] to-[#172929]"></div>
+        <div class="absolute inset-0 opacity-20">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] bg-[#7de8eb] rounded-full blur-[170px]"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto">
+          <div class="motion text-center max-w-3xl mx-auto mb-14" data-anim="fade-up">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 mb-6">
+              <i data-lucide="filter" class="w-4 h-4 text-[#7de8eb]"></i>
+              <span class="text-sm text-[#7de8eb] font-semibold">Who We Work With</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">We Only Work With People Who Want To Build</h2>
+            <p class="text-xl text-white/70">We are selective because we invest properly in every project. We want clients with a real problem, a decision maker in the room and the intention to actually ship something.</p>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div class="motion p-7 rounded-2xl bg-white/5 border border-[#7de8eb]/15" data-anim="fade-up" data-delay="0">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-8 h-8 rounded-full bg-[#7de8eb]/15 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="check" class="w-4 h-4 text-[#7de8eb]"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">This is a good fit if you…</h3>
+              </div>
+              <ul class="space-y-3">
+                <li class="flex gap-3 text-white/75 text-sm"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i><span>Have a specific problem or idea you want to move forward on</span></li>
+                <li class="flex gap-3 text-white/75 text-sm"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i><span>Are a founder, director or decision maker who can approve scope</span></li>
+                <li class="flex gap-3 text-white/75 text-sm"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i><span>Want something built, not just a report or a slide deck</span></li>
+                <li class="flex gap-3 text-white/75 text-sm"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i><span>Are ready to move within weeks, not months of internal debate</span></li>
+                <li class="flex gap-3 text-white/75 text-sm"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i><span>Value design quality and want the output to look and feel right</span></li>
+              </ul>
+            </div>
+
+            <div class="motion p-7 rounded-2xl bg-white/5 border border-white/8" data-anim="fade-up" data-delay="100">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-8 h-8 rounded-full bg-white/8 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="x" class="w-4 h-4 text-white/50"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white/70">Probably not the right fit if you…</h3>
+              </div>
+              <ul class="space-y-3">
+                <li class="flex gap-3 text-white/50 text-sm"><i data-lucide="minus" class="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5"></i><span>Are still at the "we should probably explore AI" stage with no clear goal</span></li>
+                <li class="flex gap-3 text-white/50 text-sm"><i data-lucide="minus" class="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5"></i><span>Need multiple approval layers before anything can move</span></li>
+                <li class="flex gap-3 text-white/50 text-sm"><i data-lucide="minus" class="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5"></i><span>Want a generic AI overview or a training session for a large group</span></li>
+                <li class="flex gap-3 text-white/50 text-sm"><i data-lucide="minus" class="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5"></i><span>Are looking for the cheapest option rather than the best outcome</span></li>
+                <li class="flex gap-3 text-white/50 text-sm"><i data-lucide="minus" class="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5"></i><span>Have no intention of acting on the output</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="motion text-center mt-12" data-anim="fade-up">
+            <p class="text-white/55 text-sm mb-6">Not sure if you're a fit? The discovery call is the right place to find out — no commitment, no pitch.</p>
+            <a href="#" data-modal-open class="mbtn inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold shadow-[0_0_30px_rgba(125,232,235,0.25)] hover:shadow-[0_0_50px_rgba(125,232,235,0.45)]">
+              Book a Free Discovery Call
+              <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" class="relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[#172929]"></div>
+        <div class="relative z-10 max-w-4xl mx-auto">
+          <div class="motion text-center mb-14" data-anim="fade-up">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 mb-6">
+              <i data-lucide="help-circle" class="w-4 h-4 text-[#7de8eb]"></i>
+              <span class="text-sm text-[#7de8eb] font-semibold">FAQ</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">Common Questions</h2>
+            <p class="text-xl text-white/70">Things people ask before working with us. Anything else, just send a quick message.</p>
+          </div>
+
+          <div class="space-y-3">
+            <details class="motion faq-item rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors overflow-hidden" data-anim="fade-up" data-delay="0">
+              <summary class="p-6 flex items-center justify-between gap-4">
+                <h3 class="text-lg font-bold text-white">How long does a typical project take?</h3>
+                <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+              </summary>
+              <div class="px-6 pb-6 text-white/70 leading-relaxed">
+                It depends on the scope agreed after the free discovery call. Some clients need a focused setup and design consultation before a first build; others need a longer project or monthly retainer. We move fast because we work closely with senior decision makers rather than disappearing for weeks.
+              </div>
+            </details>
+            <details class="motion faq-item rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors overflow-hidden" data-anim="fade-up" data-delay="50">
+              <summary class="p-6 flex items-center justify-between gap-4">
+                <h3 class="text-lg font-bold text-white">Do I need technical knowledge to work with you?</h3>
+                <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+              </summary>
+              <div class="px-6 pb-6 text-white/70 leading-relaxed">
+                Not at all. Most of our clients are non-technical founders, directors and operators. We translate your business problem into a working AI system and explain everything in plain language. Your job is to know your business; ours is to build the right tools.
+              </div>
+            </details>
+            <details class="motion faq-item rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors overflow-hidden" data-anim="fade-up" data-delay="100">
+              <summary class="p-6 flex items-center justify-between gap-4">
+                <h3 class="text-lg font-bold text-white">What AI tools and platforms do you use?</h3>
+                <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+              </summary>
+              <div class="px-6 pb-6 text-white/70 leading-relaxed">
+                We work with the best tool for the job — Claude, ChatGPT, custom models, N8N for automation, plus design tools like Figma. We are platform-agnostic; the goal is what works for your business, not pushing one specific vendor.
+              </div>
+            </details>
+            <details class="motion faq-item rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors overflow-hidden" data-anim="fade-up" data-delay="150">
+              <summary class="p-6 flex items-center justify-between gap-4">
+                <h3 class="text-lg font-bold text-white">Do you offer ongoing support after handover?</h3>
+                <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+              </summary>
+              <div class="px-6 pb-6 text-white/70 leading-relaxed">
+                Yes. Ongoing support is usually handled through a monthly retainer, with an agreed amount of strategy, development, training or project management time each month. For larger work, we can support the project with a fuller design and development team.
+              </div>
+            </details>
+            <details class="motion faq-item rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors overflow-hidden" data-anim="fade-up" data-delay="200">
+              <summary class="p-6 flex items-center justify-between gap-4">
+                <h3 class="text-lg font-bold text-white">Where are you based? Will you travel?</h3>
+                <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+              </summary>
+              <div class="px-6 pb-6 text-white/70 leading-relaxed">
+                We are UK-based and travel across the UK for onsite engagements. Europe and international work is delivered through private online sessions, which work well for project builds, reviews and team training.
+              </div>
+            </details>
+            <details class="motion faq-item rounded-2xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors overflow-hidden" data-anim="fade-up" data-delay="250">
+              <summary class="p-6 flex items-center justify-between gap-4">
+                <h3 class="text-lg font-bold text-white">What if my idea is too vague to start?</h3>
+                <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+              </summary>
+              <div class="px-6 pb-6 text-white/70 leading-relaxed">
+                That is exactly what the free discovery call is for. We help you move from "we should probably do something with AI" to a clearer brief, a sensible first step and an honest view of whether we are the right partner.
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="relative py-24 px-6 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535] to-[#172929]"></div>
+        <div class="absolute inset-0 opacity-25">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7de8eb] rounded-full blur-[150px]"></div>
+        </div>
+        <div class="relative z-10 max-w-5xl mx-auto text-center">
+          <div class="motion" data-anim="fade-up">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-8">
+              <i data-lucide="rocket" class="w-4 h-4 text-[#7de8eb]"></i>
+              <span class="text-sm text-white/80">For ideas that need momentum</span>
+            </div>
+            <h2 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              Bring The Idea.
+              <br>
+              <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">We Will Help Make It Real.</span>
+            </h2>
+            <p class="text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-12">
+              Use WiseCall as your premium AI project partner for concept design, build sessions, automation strategy and practical implementation.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <a href="#" data-modal-open class="mbtn inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-xl shadow-[0_0_40px_rgba(125,232,235,0.4)] hover:shadow-[0_0_60px_rgba(125,232,235,0.6)]">
+                Enquire About Consultancy
+                <i data-lucide="arrow-right" class="w-6 h-6"></i>
+              </a>
+              <a href="tel:+44" class="mbtn inline-flex items-center justify-center gap-3 px-10 py-5 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-xl backdrop-blur-sm hover:bg-white/10">
+                <i data-lucide="phone" class="w-5 h-5"></i>
+                Book a Call
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="relative py-16 px-6 border-t border-[#7de8eb]/10">
+      <div class="absolute inset-0 bg-[#172929]"></div>
+      <div class="relative z-10 max-w-7xl mx-auto">
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+          <div class="motion" data-anim="fade">
+            <a href="index.html" class="flex items-center gap-2 mb-4">
+              <img src="owl-logo.png" alt="WiseCall" class="h-8 w-auto">
+              <span class="text-white font-bold tracking-wide">WiseCall</span>
+            </a>
+            <p class="text-white/60 text-sm leading-relaxed mb-5">Human-led AI project work for ambitious businesses. From idea to working system.</p>
+            <div class="flex items-center gap-3">
+              <a href="#" aria-label="LinkedIn" class="w-9 h-9 rounded-lg bg-white/5 border border-[#7de8eb]/15 text-white/70 hover:text-[#7de8eb] hover:border-[#7de8eb]/40 transition-all flex items-center justify-center">
+                <i data-lucide="linkedin" class="w-4 h-4"></i>
+              </a>
+              <a href="#" aria-label="Twitter" class="w-9 h-9 rounded-lg bg-white/5 border border-[#7de8eb]/15 text-white/70 hover:text-[#7de8eb] hover:border-[#7de8eb]/40 transition-all flex items-center justify-center">
+                <i data-lucide="twitter" class="w-4 h-4"></i>
+              </a>
+              <a href="mailto:info@wisecall.io" aria-label="Email" class="w-9 h-9 rounded-lg bg-white/5 border border-[#7de8eb]/15 text-white/70 hover:text-[#7de8eb] hover:border-[#7de8eb]/40 transition-all flex items-center justify-center">
+                <i data-lucide="mail" class="w-4 h-4"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="motion" data-anim="fade">
+            <h4 class="text-white font-bold mb-4">Navigate</h4>
+            <ul class="space-y-3 text-sm">
+              <li><a href="#work" class="text-white/60 hover:text-[#7de8eb] transition-colors">Our Work</a></li>
+              <li><a href="#method" class="text-white/60 hover:text-[#7de8eb] transition-colors">Method</a></li>
+              <li><a href="#process" class="text-white/60 hover:text-[#7de8eb] transition-colors">Process</a></li>
+              <li><a href="#packages" class="text-white/60 hover:text-[#7de8eb] transition-colors">Engagements</a></li>
+              <li><a href="#faq" class="text-white/60 hover:text-[#7de8eb] transition-colors">FAQ</a></li>
+            </ul>
+          </div>
+
+          <div class="motion" data-anim="fade">
+            <h4 class="text-white font-bold mb-4">Services</h4>
+            <ul class="space-y-3 text-sm">
+              <li><a href="ai-workshop.html" class="text-white/60 hover:text-[#7de8eb] transition-colors">AI Workshops</a></li>
+              <li><a href="#packages" class="text-white/60 hover:text-[#7de8eb] transition-colors">Setup & Retainer</a></li>
+              <li><a href="#events" class="text-white/60 hover:text-[#7de8eb] transition-colors">Onsite Sessions</a></li>
+              <li><a href="#events" class="text-white/60 hover:text-[#7de8eb] transition-colors">Private Online</a></li>
+              <li><a href="index.html" class="text-white/60 hover:text-[#7de8eb] transition-colors">All Services</a></li>
+            </ul>
+          </div>
+
+          <div class="motion" data-anim="fade">
+            <h4 class="text-white font-bold mb-4">Contact</h4>
+            <ul class="space-y-3 text-sm">
+              <li class="flex items-start gap-2 text-white/60">
+                <i data-lucide="mail" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <a href="mailto:info@wisecall.io" class="hover:text-[#7de8eb] transition-colors">info@wisecall.io</a>
+              </li>
+              <li class="flex items-start gap-2 text-white/60">
+                <i data-lucide="map-pin" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <span>United Kingdom onsite<br>Worldwide online</span>
+              </li>
+              <li class="pt-2">
+                <a href="#" data-modal-open class="mbtn inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold">
+                  Start a Project
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="motion pt-8 border-t border-[#7de8eb]/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/50" data-anim="fade">
+          <p>&copy; 2026 WiseCall AI Consultancy. All rights reserved.</p>
+          <div class="flex items-center gap-6">
+            <a href="#" class="hover:text-[#7de8eb] transition-colors">Privacy</a>
+            <a href="#" class="hover:text-[#7de8eb] transition-colors">Terms</a>
+            <a href="#" class="hover:text-[#7de8eb] transition-colors">Cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <div id="contactModal" class="fixed inset-0 z-[100] hidden items-center justify-center px-6 bg-black/70 backdrop-blur-md">
+      <div class="relative w-full max-w-lg p-8 rounded-2xl bg-gradient-to-br from-[#1a3535] to-[#172929] border border-[#7de8eb]/30 shadow-[0_0_80px_rgba(125,232,235,0.25)]">
+        <button id="modalClose" aria-label="Close" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/5 border border-[#7de8eb]/20 text-white/80 hover:bg-white/10 transition-colors flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+        <h3 class="text-2xl font-bold text-white mb-1">Discuss Your AI Project</h3>
+        <p class="text-white/60 text-sm mb-6">Tell us what you want to build, improve or explore and we will come back with the right next step.</p>
+        <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST" class="space-y-4">
+          <input type="hidden" id="inquiryType" name="inquiry_type" value="AI Consultancy">
+          <input type="hidden" id="landingPage" name="landing_page" value="">
+          <input type="hidden" id="submittedAt" name="submitted_at" value="">
+          <div>
+            <label for="name" class="block text-sm text-white/70 mb-1.5">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your name" required class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors">
+          </div>
+          <div>
+            <label for="email" class="block text-sm text-white/70 mb-1.5">Email</label>
+            <input type="email" id="email" name="email" placeholder="your@email.com" required class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors">
+          </div>
+          <div>
+            <label for="phone" class="block text-sm text-white/70 mb-1.5">Phone <span class="text-white/40 text-xs">(optional)</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="Your phone number" class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors">
+          </div>
+          <div>
+            <label for="budget" class="block text-sm text-white/70 mb-1.5">Likely engagement <span class="text-white/40 text-xs">(optional)</span></label>
+            <select id="budget" name="budget" class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors">
+              <option value="" class="bg-[#172929]">Select option</option>
+              <option value="discovery" class="bg-[#172929]">Free discovery call first</option>
+              <option value="setup-project" class="bg-[#172929]">Setup fee / one-off project</option>
+              <option value="monthly-retainer" class="bg-[#172929]">Monthly retainer</option>
+              <option value="managed-team" class="bg-[#172929]">Full project management and dev team</option>
+              <option value="unsure" class="bg-[#172929]">Not sure yet</option>
+            </select>
+          </div>
+          <div>
+            <label for="message" class="block text-sm text-white/70 mb-1.5">What do you want to create or accelerate?</label>
+            <textarea id="message" name="message" placeholder="AI product idea, workflow bottleneck, private session, onsite workshop..." rows="3" class="w-full px-4 py-3 bg-white/5 border border-[#7de8eb]/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#7de8eb] focus:bg-[#7de8eb]/5 transition-colors resize-none"></textarea>
+          </div>
+          <button type="submit" class="mbtn w-full px-6 py-3.5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]">
+            Send Enquiry
+          </button>
+          <p class="text-center text-white/40 text-xs">We reply within 1 business day</p>
+        </form>
+      </div>
+    </div>
+
+    <div id="toast" class="toast">
+      <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+      <span id="toastMessage">Message sent successfully</span>
+    </div>
+
+    <script>
+      lucide.createIcons();
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const delay = parseInt(entry.target.dataset.delay || '0', 10);
+            setTimeout(() => entry.target.classList.add('in-view'), delay);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+      document.querySelectorAll('.motion').forEach((el) => observer.observe(el));
+
+      const header = document.getElementById('siteHeader');
+      const scrollProgress = document.getElementById('scrollProgress');
+
+      function handleScroll() {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const percent = (scrollTop / docHeight) * 100;
+        scrollProgress.style.width = percent + '%';
+
+        if (scrollTop > 60) header.classList.add('scrolled');
+        else header.classList.remove('scrolled');
+      }
+      window.addEventListener('scroll', handleScroll, { passive: true });
+
+      const statObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            const target = parseInt(el.dataset.count || '0', 10);
+            const prefix = el.dataset.prefix || '';
+            const suffix = el.dataset.suffix || '';
+            const duration = 1400;
+            const start = performance.now();
+            function tick(now) {
+              const progress = Math.min((now - start) / duration, 1);
+              const eased = 1 - Math.pow(1 - progress, 3);
+              el.textContent = prefix + Math.floor(eased * target) + suffix;
+              if (progress < 1) requestAnimationFrame(tick);
+              else el.textContent = prefix + target + suffix;
+            }
+            requestAnimationFrame(tick);
+            statObserver.unobserve(el);
+          }
+        });
+      }, { threshold: 0.5 });
+      document.querySelectorAll('.stat-num').forEach((el) => statObserver.observe(el));
+
+      const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+      const mobileMenu = document.getElementById('mobileMenu');
+      mobileMenuToggle.addEventListener('click', () => {
+        mobileMenu.classList.toggle('open');
+      });
+      document.querySelectorAll('.mobile-link').forEach((link) => {
+        link.addEventListener('click', () => mobileMenu.classList.remove('open'));
+      });
+
+      const modal = document.getElementById('contactModal');
+      const modalClose = document.getElementById('modalClose');
+      const contactForm = document.getElementById('contactForm');
+      const inquiryTypeField = document.getElementById('inquiryType');
+      const landingPageField = document.getElementById('landingPage');
+      const submittedAtField = document.getElementById('submittedAt');
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+
+      function showToast(message, isError = false) {
+        toastMessage.textContent = message;
+        toast.classList.toggle('error', isError);
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+      }
+
+      function populateMetaFields() {
+        landingPageField.value = window.location.href;
+        submittedAtField.value = new Date().toISOString();
+      }
+
+      populateMetaFields();
+
+      function openModal(e) {
+        if (e) e.preventDefault();
+        inquiryTypeField.value = 'AI Consultancy';
+        populateMetaFields();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      document.querySelectorAll('[data-modal-open]').forEach((btn) => btn.addEventListener('click', openModal));
+      modalClose.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+
+      contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        populateMetaFields();
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Sending...';
+        submitBtn.disabled = true;
+        try {
+          const response = await fetch(contactForm.action, {
+            method: 'POST',
+            body: new FormData(contactForm),
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!response.ok) throw new Error('Failed');
+          submitBtn.textContent = 'Sent!';
+          contactForm.reset();
+          showToast('Enquiry sent — we will reply within 1 business day');
+          setTimeout(() => {
+            closeModal();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+          }, 1500);
+        } catch (err) {
+          submitBtn.textContent = 'Error - Try Again';
+          submitBtn.disabled = false;
+          showToast('Something went wrong, please try again', true);
+          setTimeout(() => { submitBtn.textContent = originalText; }, 2000);
+        }
+      });
+    </script>
+  </body>
+</html>
