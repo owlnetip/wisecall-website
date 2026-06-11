@@ -1,5 +1,37 @@
 {
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/dental",
+      "destination": "/industries/dental/",
+      "permanent": true
+    },
+    {
+      "source": "/dental.html",
+      "destination": "/industries/dental/",
+      "permanent": true
+    },
+    {
+      "source": "/legal",
+      "destination": "/industries/legal/",
+      "permanent": true
+    },
+    {
+      "source": "/legal.html",
+      "destination": "/industries/legal/",
+      "permanent": true
+    },
+    {
+      "source": "/estate-agents",
+      "destination": "/property",
+      "permanent": true
+    },
+    {
+      "source": "/care-homes",
+      "destination": "/industries/care-homes/",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

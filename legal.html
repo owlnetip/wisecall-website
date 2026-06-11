@@ -1,1334 +1,538 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- SEO Meta Tags -->
-    <title>WiseCall for Legal and Professional Services | AI Receptionist for UK Firms</title>
-    <meta name="description" content="AI answering service for UK law firms and professional services. Never miss a new enquiry. Qualify callers, capture matter details, route urgent calls and support Clio workflows 24/7.">
-    <meta name="keywords" content="AI receptionist for law firms, legal answering service UK, Clio integration, legal intake automation, professional services call handling">
-    <meta name="author" content="WiseCall">
-    <meta name="robots" content="index, follow">
-
-    <!-- Open Graph / Social Media -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://wisecall.io/legal">
-    <meta property="og:title" content="WiseCall for Legal and Professional Services | Never Miss Another Enquiry">
-    <meta property="og:description" content="AI call handling built for UK law firms and professional services. Captures new enquiries, routes urgent calls and supports Clio workflows 24/7.">
-    <meta property="og:image" content="https://wisecall.io/og-image.jpg">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://wisecall.io/legal">
-    <meta name="twitter:title" content="WiseCall for Legal and Professional Services | Never Miss Another Enquiry">
-    <meta name="twitter:description" content="AI call handling built for UK law firms and professional services. Captures new enquiries, routes urgent calls and supports Clio workflows 24/7.">
-    <meta name="twitter:image" content="https://wisecall.io/og-image.jpg">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png">
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #6ED4D7;
-            --primary-dark: #4AA8AB;
-            --dark-bg: #141f1f;
-            --dark-card: #1a2d2d;
-            --text-light: #ffffff;
-            --text-medium: #B8C5D6;
-            --text-muted: #9BABC2;
-            --accent-purple: #8A6DD0;
-            --accent-orange: #E07A52;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            font-style: normal;
-            font-weight: 400;
-            font-variant-numeric: tabular-nums;
-            background: var(--dark-bg);
-            color: var(--text-light);
-            overflow-x: hidden;
-            line-height: 1.65;
-            -webkit-font-smoothing: subpixel-antialiased;
-            text-rendering: optimizeLegibility;
-        }
-
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.08;
-            background:
-                radial-gradient(circle at 15% 70%, var(--primary) 0%, transparent 40%),
-                radial-gradient(circle at 85% 80%, var(--accent-purple) 0%, transparent 45%),
-                radial-gradient(circle at 50% 90%, var(--accent-orange) 0%, transparent 50%);
-            filter: blur(120px);
-        }
-
-        /* Header */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            background: transparent;
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(125, 232, 235, 0.05);
-            animation: slideDown 0.6s ease-out;
-            transition: all 0.3s ease;
-        }
-
-        header.scrolled {
-            background: rgba(23, 41, 41, 0.95);
-            border-bottom: 1px solid rgba(110, 212, 215, 0.08);
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        nav {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1.5rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: white;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2.5rem;
-            list-style: none;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: var(--text-light);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            transition: width 0.3s;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary);
-        }
-
-        .cta-button {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark-bg);
-            padding: 0.8rem 1.8rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-            text-decoration: none;
-            transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(110, 212, 215, 0.2);
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(110, 212, 215, 0.3);
-        }
-
-        /* Mobile Menu */
-        .mobile-menu-button {
-            display: none;
-            flex-direction: column;
-            gap: 6px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            z-index: 1001;
-        }
-
-        .mobile-menu-button span {
-            width: 28px;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-
-        .mobile-menu-button.active span:nth-child(1) {
-            transform: rotate(45deg) translate(8px, 8px);
-        }
-
-        .mobile-menu-button.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .mobile-menu-button.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(7px, -7px);
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-button {
-                display: flex;
-            }
-
-            .nav-links {
-                position: fixed;
-                top: 80px;
-                right: -100%;
-                width: 280px;
-                height: calc(100vh - 80px);
-                background: rgba(23, 41, 41, 0.98);
-                backdrop-filter: blur(20px);
-                flex-direction: column;
-                padding: 2rem;
-                gap: 2rem;
-                border-left: 1px solid rgba(110, 212, 215, 0.12);
-                transition: right 0.4s ease;
-                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-            }
-
-            .nav-links.active {
-                right: 0;
-                display: flex;
-            }
-
-            .nav-links li {
-                width: 100%;
-            }
-
-            .nav-links a {
-                display: block;
-                padding: 1rem 0;
-                font-size: 1.1rem;
-            }
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 10rem 2rem 4rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            text-align: center;
-            min-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .hero h1 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 3.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            letter-spacing: -0.01em;
-            margin-bottom: 1.5rem;
-            color: white;
-            max-width: 900px;
-        }
-
-        .hero .subtitle {
-            font-size: 1.35rem;
-            color: var(--text-medium);
-            margin-bottom: 1rem;
-            line-height: 1.75;
-            font-weight: 400;
-            letter-spacing: -0.01em;
-            max-width: 750px;
-        }
-
-        .hero .credibility {
-            font-size: 0.95rem;
-            color: var(--primary);
-            font-weight: 500;
-            margin-bottom: 2rem;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1.5rem;
-            margin-top: 1rem;
-            justify-content: center;
-        }
-
-        .primary-btn {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark-bg);
-            padding: 1.2rem 2.5rem;
-            border-radius: 50px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            box-shadow: 0 6px 30px rgba(110, 212, 215, 0.25);
-            font-size: 1.05rem;
-            letter-spacing: -0.01em;
-            line-height: 1;
-            cursor: pointer;
-            border: none;
-        }
-
-        .primary-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 40px rgba(110, 212, 215, 0.35);
-        }
-
-        .secondary-btn {
-            background: transparent;
-            color: var(--text-light);
-            padding: 1.2rem 2.5rem;
-            border: 2px solid var(--primary);
-            border-radius: 50px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            font-size: 1.05rem;
-            letter-spacing: -0.01em;
-            line-height: 1;
-        }
-
-        .secondary-btn:hover {
-            background: rgba(110, 212, 215, 0.08);
-            transform: translateY(-3px);
-        }
-
-        /* Sections */
-        .section {
-            padding: 5rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .section-header h2 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: white;
-        }
-
-        .section-header p {
-            color: var(--text-medium);
-            font-size: 1.1rem;
-            max-width: 700px;
-            margin: 0 auto;
-            line-height: 1.7;
-        }
-
-        .video-section {
-            padding-top: 0;
-        }
-
-        .video-frame {
-            position: relative;
-            overflow: hidden;
-            aspect-ratio: 1920 / 1080;
-            border-radius: 24px;
-            border: 1px solid rgba(110, 212, 215, 0.1);
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-            background: rgba(0, 0, 0, 0.18);
-        }
-
-        .video-frame iframe {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            padding: 0;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        /* Reception Reality */
-        .reality-content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .reality-content p {
-            color: var(--text-medium);
-            font-size: 1.05rem;
-            line-height: 1.8;
-            margin-bottom: 1.5rem;
-        }
-
-        .reality-content strong {
-            color: var(--text-light);
-            font-weight: 600;
-        }
-
-        /* Feature List */
-        .feature-list-section {
-            background: var(--dark-card);
-            border-radius: 24px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            padding: 3rem;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .feature-list {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 2rem 0;
-        }
-
-        .feature-list li {
-            color: var(--text-medium);
-            font-size: 1.05rem;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(110, 212, 215, 0.06);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .feature-list li:last-child {
-            border-bottom: none;
-        }
-
-        .feature-list .check {
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .compatibility {
-            background: rgba(110, 212, 215, 0.06);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .compatibility p {
-            color: var(--text-medium);
-            font-size: 0.95rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .compatibility .systems {
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .disclaimer {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-top: 1.5rem;
-            font-style: italic;
-        }
-
-        /* Calculator */
-        .calculator-card {
-            background: var(--dark-card);
-            border-radius: 24px;
-            border: 2px solid rgba(110, 212, 215, 0.12);
-            padding: 3rem;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .calc-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .calc-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .calc-input-group label {
-            color: var(--text-light);
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        .calc-input-group input {
-            width: 100%;
-            padding: 0.9rem 1rem;
-            border-radius: 12px;
-            border: 2px solid rgba(110, 212, 215, 0.12);
-            background: rgba(0, 0, 0, 0.3);
-            color: var(--text-light);
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .calc-input-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .calc-results {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(110, 212, 215, 0.1);
-        }
-
-        .calc-result-item {
-            text-align: center;
-        }
-
-        .calc-result-item .label {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        .calc-result-item .value {
-            color: var(--primary);
-            font-size: 1.8rem;
-            font-weight: 700;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .calc-result-item.highlight .value {
-            font-size: 2.2rem;
-        }
-
-        .calc-note {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        /* Use Cases Grid */
-        .use-cases-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-        }
-
-        .use-case-card {
-            background: var(--dark-card);
-            padding: 2rem;
-            border-radius: 20px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            transition: all 0.4s;
-        }
-
-        .use-case-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(110, 212, 215, 0.2);
-        }
-
-        .use-case-card h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.75rem;
-        }
-
-        .use-case-card p {
-            color: var(--text-medium);
-            font-size: 0.95rem;
-            line-height: 1.7;
-        }
-
-        /* Compliance */
-        .compliance-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .compliance-item {
-            background: var(--dark-card);
-            padding: 1.5rem;
-            border-radius: 16px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            text-align: center;
-        }
-
-        .compliance-item h4 {
-            color: var(--primary);
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .compliance-item p {
-            color: var(--text-medium);
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-
-        /* Case Study */
-        .case-study {
-            background: var(--dark-card);
-            border-radius: 24px;
-            border: 1px solid rgba(110, 212, 215, 0.08);
-            padding: 3rem;
-            max-width: 900px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .case-study h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 2rem;
-        }
-
-        .case-study-metrics {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .metric {
-            text-align: center;
-        }
-
-        .metric .number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-            display: block;
-            margin-bottom: 0.25rem;
-        }
-
-        .metric .desc {
-            color: var(--text-medium);
-            font-size: 0.9rem;
-        }
-
-        .case-study .coming-soon {
-            display: inline-block;
-            background: rgba(110, 212, 215, 0.1);
-            color: var(--primary);
-            padding: 0.5rem 1.5rem;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            padding: 5rem 2rem;
-            text-align: center;
-            background: linear-gradient(180deg, transparent, rgba(110, 212, 215, 0.03));
-        }
-
-        .cta-content {
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        .cta-content h2 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: white;
-        }
-
-        .cta-content .reassurance {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-top: 2rem;
-            font-style: italic;
-        }
-
-        /* Footer */
-        footer {
-            padding: 3rem 2rem;
-            border-top: 1px solid rgba(110, 212, 215, 0.08);
-        }
-
-        /* Contact Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: var(--dark-card);
-            border-radius: 24px;
-            border: 2px solid rgba(110, 212, 215, 0.12);
-            max-width: 500px;
-            width: 100%;
-            padding: 2.5rem;
-            position: relative;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            line-height: 1;
-            transition: color 0.3s;
-        }
-
-        .modal-close:hover {
-            color: var(--primary);
-        }
-
-        .modal h3 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: white;
-        }
-
-        .modal p {
-            color: var(--text-medium);
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-group label {
-            display: block;
-            color: var(--text-light);
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.9rem 1rem;
-            border-radius: 12px;
-            border: 2px solid rgba(110, 212, 215, 0.12);
-            background: rgba(0, 0, 0, 0.3);
-            color: var(--text-light);
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .form-group input::placeholder,
-        .form-group textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-submit {
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark-bg);
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .form-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(110, 212, 215, 0.25);
-        }
-
-        .form-submit:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .calc-results {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .case-study-metrics {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .compliance-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero {
-                padding: 8rem 1.5rem 3rem;
-                min-height: auto;
-            }
-
-            .hero h1 {
-                font-size: 2.2rem;
-            }
-
-            .hero .subtitle {
-                font-size: 1.15rem;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .section {
-                padding: 3rem 1.5rem;
-            }
-
-            .section-header h2 {
-                font-size: 1.8rem;
-            }
-
-            .calc-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .use-cases-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .feature-list-section {
-                padding: 2rem;
-            }
-
-            .calculator-card {
-                padding: 2rem;
-            }
-
-            .case-study {
-                padding: 2rem;
-            }
-
-            .calc-result-item .value {
-                font-size: 1.4rem;
-            }
-
-            .calc-result-item.highlight .value {
-                font-size: 1.8rem;
-            }
-        }
-    </style>
-  </head>
-  <body>
-    <div class="bg-animation"></div>
-
-    <!-- Contact Modal -->
-    <div class="modal-overlay" id="contactModal">
-        <div class="modal">
-            <button class="modal-close" id="modalClose">&times;</button>
-            <h3>Book a Legal Demo</h3>
-            <p>Fill in your details and we'll arrange a personalised demo for your firm.</p>
-            <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST">
-                <input type="hidden" id="inquiryType" name="inquiry_type" value="Legal Demo">
-                <div class="form-group">
-                    <label for="name">Name</label>
-                    <input type="text" id="name" name="name" placeholder="Your name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">Phone (optional)</label>
-                    <input type="tel" id="phone" name="phone" placeholder="Your phone number">
-                </div>
-                <div class="form-group">
-                    <label for="firm">Firm name (optional)</label>
-                    <input type="text" id="firm" name="firm_name" placeholder="Your firm name">
-                </div>
-                <div class="form-group">
-                    <label for="message">Message (optional)</label>
-                    <textarea id="message" name="message" placeholder="Tell us about your intake process"></textarea>
-                </div>
-                <button type="submit" class="form-submit">Request Demo</button>
-            </form>
-        </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WiseCall for Legal and Professional Services | AI Receptionist for UK Firms</title>
+  <meta name="description" content="AI answering service for UK law firms and professional services. Never miss a new enquiry. Qualify callers, capture matter details, route urgent calls and support Clio workflows 24/7.">
+  <meta name="keywords" content="AI receptionist for law firms, legal answering service UK, Clio integration, legal intake automation, professional services call handling">
+  <meta name="author" content="WiseCall">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://wisecall.io/legal">
+  <meta property="og:title" content="WiseCall for Legal and Professional Services | Never Miss Another Enquiry">
+  <meta property="og:description" content="AI call handling built for UK law firms and professional services. Captures new enquiries, routes urgent calls and supports Clio workflows 24/7.">
+  <meta property="og:image" content="https://wisecall.io/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://wisecall.io/legal">
+  <meta name="twitter:title" content="WiseCall for Legal and Professional Services | Never Miss Another Enquiry">
+  <meta name="twitter:description" content="AI call handling built for UK law firms and professional services. Captures new enquiries, routes urgent calls and supports Clio workflows 24/7.">
+  <meta name="twitter:image" content="https://wisecall.io/og-image.jpg">
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #172929;
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .motion { opacity: 0; will-change: transform, opacity; transition-property: opacity, transform; transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1); }
+    .motion[data-anim="fade-up"] { transform: translateY(20px); transition-duration: 0.75s; }
+    .motion[data-anim="fade-right"] { transform: translateX(-20px); transition-duration: 0.7s; }
+    .motion[data-anim="fade-left"] { transform: translateX(20px); transition-duration: 0.7s; }
+    .motion[data-anim="scale-in"] { transform: scale(0.95); transition-duration: 0.65s; }
+    .motion[data-anim="fade"] { transition-duration: 1s; }
+    .motion.in-view { opacity: 1; transform: translate(0, 0) scale(1); }
+    .mbtn { transition: transform 0.18s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.25s, border-color 0.25s; }
+    .mbtn:hover { transform: translateY(-2px); }
+    .mbtn:active { transform: translateY(0) scale(0.98); }
+    header.scrolled { background: rgba(23, 41, 41, 0.95); box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
+    .scroll-progress { position: fixed; top: 0; left: 0; height: 3px; z-index: 60; background: linear-gradient(90deg, #7de8eb, #5dbfc2); width: 0%; transition: width 0.12s linear; }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #0f1f1f; }
+    ::-webkit-scrollbar-thumb { background: rgba(125, 232, 235, 0.18); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(125, 232, 235, 0.32); }
+    .mobile-menu { transform: translateY(-100%); transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1); }
+    .mobile-menu.open { transform: translateY(0); }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 1.5rem; }
+    .modal-overlay.active { display: flex; }
+    [data-lucide] { width: 1em; height: 1em; }
+    .video-frame { position: relative; overflow: hidden; aspect-ratio: 1920 / 1080; border-radius: 1.25rem; border: 1px solid rgba(125, 232, 235, 0.12); box-shadow: 0 24px 60px rgba(0,0,0,0.28); background: rgba(0,0,0,0.18); }
+    .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { opacity: 1; }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } }
+    };
+  </script>
+</head>
+
+<body class="min-h-screen bg-[#172929] overflow-x-hidden">
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- CONTACT MODAL -->
+  <div class="modal-overlay" id="contactModal">
+    <div class="w-full max-w-lg rounded-2xl bg-[#1a3535] border border-[#7de8eb]/20 p-8 relative shadow-2xl">
+      <button id="modalClose" class="absolute top-4 right-4 w-9 h-9 rounded-lg border border-[#7de8eb]/20 text-white/60 flex items-center justify-center hover:text-white hover:border-[#7de8eb]/40 transition-colors text-xl leading-none">&times;</button>
+      <h3 class="text-2xl font-bold text-white mb-1">Book a Legal Demo</h3>
+      <p class="text-white/60 text-sm mb-6">Fill in your details and we'll arrange a personalised demo for your firm.</p>
+      <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST" class="flex flex-col gap-4">
+        <input type="hidden" id="inquiryType" name="inquiry_type" value="Legal Demo">
+        <input type="text" id="name" name="name" placeholder="Your name" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <input type="email" id="email" name="email" placeholder="your@email.com" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <input type="tel" id="phone" name="phone" placeholder="Your phone number" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <input type="text" id="firm" name="firm_name" placeholder="Your firm name" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <textarea id="message" name="message" rows="3" placeholder="Tell us about your intake process" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors resize-none"></textarea>
+        <button type="submit" class="form-submit mbtn w-full py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)]">Request Demo</button>
+      </form>
     </div>
+  </div>
 
-    <!-- Header -->
-    <header>
-        <nav>
-            <a href="index.html" class="logo">
-                <img src="owl-logo.png" alt="WiseCall" style="height: 40px; margin-right: 10px;">WiseCall
-            </a>
-            <ul class="nav-links">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="index.html#features">Features</a></li>
-                <li><a href="index.html#pricing">Pricing</a></li>
-                <li><a href="index.html#about">About</a></li>
-                <li><a href="#calculator">Enquiry Value Calculator</a></li>
-                <li><a href="#" class="cta-button contact-link" data-inquiry="Legal Demo">Book a Demo</a></li>
-            </ul>
-            <button class="mobile-menu-button" aria-label="Toggle menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </nav>
-    </header>
+  <!-- HEADER -->
+  <header id="siteHeader" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#172929]/70 border-b border-[#7de8eb]/10 transition-all duration-300">
+    <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
+      <a href="index.html" class="flex items-center gap-2 text-white font-bold text-lg" style="text-decoration:none;">
+        <img src="owl-logo.png" alt="WiseCall" style="height:46px;margin-right:8px;">WiseCall
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
+        <a href="index.html" class="hover:text-[#7de8eb] transition-colors">Home</a>
+        <a href="index.html#features" class="hover:text-[#7de8eb] transition-colors">Features</a>
+        <a href="index.html#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="#calculator" class="hover:text-[#7de8eb] transition-colors">Calculator</a>
+        <a href="dental.html" class="hover:text-[#7de8eb] transition-colors">Dental</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="#" class="mbtn contact-link hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]" data-inquiry="Legal Demo">
+          Book a Demo <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+        <button id="mobileMenuToggle" aria-label="Open menu" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </nav>
+    <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 right-0 bg-[#172929]/98 backdrop-blur-xl border-b border-[#7de8eb]/15 shadow-2xl">
+      <div class="px-6 py-6 flex flex-col gap-4 text-white">
+        <a href="index.html" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Home</a>
+        <a href="index.html#features" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Features</a>
+        <a href="index.html#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
+        <a href="#calculator" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Calculator</a>
+        <a href="dental.html" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Dental</a>
+        <a href="#" class="mbtn contact-link mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold" data-inquiry="Legal Demo">
+          Book a Demo <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  </header>
 
-    <!-- Hero -->
-    <section class="hero">
-        <h1>Never Miss Another New Matter Enquiry</h1>
-        <p class="subtitle">WiseCall answers every call, qualifies new enquiries, captures matter details, routes urgent calls and supports your team 24/7.</p>
-        <p class="credibility">Built for UK law firms and professional services.</p>
-        <div class="hero-buttons">
-            <a href="#" class="primary-btn contact-link" data-inquiry="Legal Demo">Book a Demo</a>
-            <a href="#calculator" class="secondary-btn">Calculate Your Missed Enquiry Value</a>
+  <!-- HERO -->
+  <section class="pt-40 pb-24 px-6 flex flex-col items-center text-center">
+    <div class="max-w-4xl mx-auto">
+      <div class="motion mb-4" data-anim="fade-up">
+        <span class="inline-block px-4 py-1.5 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 text-[#7de8eb] text-sm font-medium">Built for UK law firms and professional services</span>
+      </div>
+      <h1 class="motion text-5xl md:text-6xl font-extrabold leading-tight tracking-tight text-white mb-6" data-anim="fade-up">
+        Never Miss Another<br><span class="text-[#7de8eb]">New Matter Enquiry</span>
+      </h1>
+      <p class="motion text-xl text-white/65 max-w-2xl mx-auto mb-10 leading-relaxed" data-anim="fade-up">
+        WiseCall answers every call, qualifies new enquiries, captures matter details, routes urgent calls and supports your team 24/7.
+      </p>
+      <div class="motion flex flex-col sm:flex-row gap-4 justify-center" data-anim="fade-up">
+        <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-base shadow-[0_0_32px_rgba(125,232,235,0.3)] hover:shadow-[0_0_48px_rgba(125,232,235,0.5)]" data-inquiry="Legal Demo">
+          Book a Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </a>
+        <a href="#calculator" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-[#7de8eb]/30 text-white font-semibold text-base hover:bg-white/5 hover:border-[#7de8eb]/60 transition-colors">
+          Calculate Missed Enquiry Value <i data-lucide="calculator" class="w-5 h-5"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEO -->
+  <section class="pb-20 px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="motion video-frame" data-anim="scale-in">
+        <iframe src="https://share.synthesia.io/embeds/videos/1fe63106-36fb-4cd6-88d5-110dcd0568e1" loading="lazy" title="Synthesia video player - WiseCall for legal and professional services" allowfullscreen allow="encrypted-media; fullscreen; microphone; screen-wake-lock;"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: The Intake Bottleneck -->
+  <section class="py-20 px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="motion text-center mb-12" data-anim="fade-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">The Intake Bottleneck</h2>
+      </div>
+      <div class="motion space-y-5 text-white/70 text-lg leading-relaxed" data-anim="fade-up">
+        <p>Every legal and professional services firm knows the pattern. The phone rings while fee earners are in meetings, reception is handling existing clients and someone is racing a deadline. By the time the call is returned, the enquiry has moved on.</p>
+        <p>New matter enquiries are especially unforgiving. <strong class="text-white font-semibold">Prospective clients comparing firms want a fast, confident first response.</strong> If the call is missed at lunch, after hours or during a busy patch, they rarely wait around.</p>
+        <p>Existing clients create a second pressure point. They call for updates, document requests, billing queries and urgent escalations. Those conversations matter, but they can easily crowd out valuable new intake when the front desk is already stretched.</p>
+        <p>For firms with multiple departments or offices, consistent call handling becomes harder again. One missed handoff can mean lost instructions, slower response times and less visibility into what demand is actually coming in.</p>
+        <p>The result is a firm that looks busy and professional, but still loses opportunities through calls that never reach the right person quickly enough.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: What WiseCall Does -->
+  <section class="py-20 px-6">
+    <div class="max-w-3xl mx-auto">
+      <div class="motion text-center mb-12" data-anim="fade-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">What WiseCall Does for Legal and Professional Firms</h2>
+        <p class="text-white/60 text-lg">An AI answering service that supports your intake team and front desk, not replaces them.</p>
+      </div>
+      <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-8" data-anim="scale-in">
+        <ul class="space-y-0 mb-8">
+          <li class="flex items-center gap-4 py-4 border-b border-white/5">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <span class="text-white/80">Answers every inbound call, day and night</span>
+          </li>
+          <li class="flex items-center gap-4 py-4 border-b border-white/5">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <span class="text-white/80">Qualifies new enquiries using your intake questions</span>
+          </li>
+          <li class="flex items-center gap-4 py-4 border-b border-white/5">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <span class="text-white/80">Captures caller, matter and urgency details accurately</span>
+          </li>
+          <li class="flex items-center gap-4 py-4 border-b border-white/5">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <span class="text-white/80">Books consultations and callback slots</span>
+          </li>
+          <li class="flex items-center gap-4 py-4 border-b border-white/5">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <span class="text-white/80">Manages overflow during peak times</span>
+          </li>
+          <li class="flex items-center gap-4 py-4 border-b border-white/5">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <span class="text-white/80">Covers out-of-hours enquiries</span>
+          </li>
+          <li class="flex items-center gap-4 py-4 border-b border-white/5">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <span class="text-white/80">Routes urgent calls to the right person or team</span>
+          </li>
+          <li class="flex items-center gap-4 py-4">
+            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <span class="text-white/80">Pushes structured intake data into Clio workflows</span>
+          </li>
+        </ul>
+        <div class="bg-[#7de8eb]/5 border border-[#7de8eb]/10 rounded-xl p-5 mb-5">
+          <p class="text-white/60 text-sm mb-2">Compatible with legal intake and case management workflows, including:</p>
+          <p class="text-[#7de8eb] font-semibold">Clio Manage &nbsp;·&nbsp; Clio Grow &nbsp;·&nbsp; Custom CRM and shared inbox workflows</p>
         </div>
-    </section>
+        <p class="text-white/40 text-sm italic">WiseCall does not provide legal, financial or professional advice. All advice stays with your team.</p>
+      </div>
+    </div>
+  </section>
 
-    <section class="section video-section">
-        <div class="video-frame">
-            <iframe src="https://share.synthesia.io/embeds/videos/1fe63106-36fb-4cd6-88d5-110dcd0568e1" loading="lazy" title="Synthesia video player - WiseCall for legal and professional services" allowfullscreen allow="encrypted-media; fullscreen; microphone; screen-wake-lock;"></iframe>
+  <!-- SECTION: Enquiry Value Calculator -->
+  <section class="py-20 px-6" id="calculator">
+    <div class="max-w-3xl mx-auto">
+      <div class="motion text-center mb-12" data-anim="fade-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Enquiry Value Calculator</h2>
+        <p class="text-white/60 text-lg">See what missed calls could be costing your firm every month.</p>
+      </div>
+      <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/15 rounded-2xl p-8" data-anim="scale-in">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+          <div class="flex flex-col gap-2">
+            <label class="text-white/80 text-sm font-medium" for="calcCalls">Average calls per day</label>
+            <input type="number" id="calcCalls" value="40" min="0" max="500" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-[#7de8eb]/15 text-white text-base focus:outline-none focus:border-[#7de8eb]/50 transition-colors">
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-white/80 text-sm font-medium" for="calcMissed">Estimated missed call percentage</label>
+            <input type="number" id="calcMissed" value="18" min="0" max="100" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-[#7de8eb]/15 text-white text-base focus:outline-none focus:border-[#7de8eb]/50 transition-colors">
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-white/80 text-sm font-medium" for="calcNewEnquiry">% of missed calls that are new enquiries</label>
+            <input type="number" id="calcNewEnquiry" value="35" min="0" max="100" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-[#7de8eb]/15 text-white text-base focus:outline-none focus:border-[#7de8eb]/50 transition-colors">
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-white/80 text-sm font-medium" for="calcValue">Average value of a new instruction</label>
+            <input type="number" id="calcValue" value="400" min="0" max="10000" step="50" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-[#7de8eb]/15 text-white text-base focus:outline-none focus:border-[#7de8eb]/50 transition-colors">
+          </div>
         </div>
-    </section>
-
-    <!-- Section 1: The Intake Bottleneck -->
-    <section class="section">
-        <div class="section-header">
-            <h2>The Intake Bottleneck</h2>
+        <div class="border-t border-white/10 pt-8">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="text-center">
+              <div class="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Daily Missed Matter Value</div>
+              <div class="text-[#7de8eb] text-3xl font-bold font-variant-numeric" id="resultDaily">£1,008</div>
+            </div>
+            <div class="text-center">
+              <div class="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Monthly Missed Matter Value</div>
+              <div class="text-[#7de8eb] text-4xl font-bold font-variant-numeric" id="resultMonthly">£22,176</div>
+            </div>
+            <div class="text-center">
+              <div class="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Estimated Annual Impact</div>
+              <div class="text-[#7de8eb] text-3xl font-bold font-variant-numeric" id="resultAnnual">£266,112</div>
+            </div>
+          </div>
+          <p class="text-center text-white/40 text-sm mt-6">Use the average value of a new instruction, first-month fee or onboarding revenue to keep the estimate conservative. For many firms, the true lifetime value is materially higher.</p>
         </div>
-        <div class="reality-content">
-            <p>Every legal and professional services firm knows the pattern. The phone rings while fee earners are in meetings, reception is handling existing clients and someone is racing a deadline. By the time the call is returned, the enquiry has moved on.</p>
+      </div>
+    </div>
+  </section>
 
-            <p>New matter enquiries are especially unforgiving. Prospective clients comparing firms want a fast, confident first response. If the call is missed at lunch, after hours or during a busy patch, they rarely wait around.</p>
-
-            <p>Existing clients create a second pressure point. They call for updates, document requests, billing queries and urgent escalations. Those conversations matter, but they can easily crowd out valuable new intake when the front desk is already stretched.</p>
-
-            <p>For firms with multiple departments or offices, consistent call handling becomes harder again. One missed handoff can mean lost instructions, slower response times and less visibility into what demand is actually coming in.</p>
-
-            <p>The result is a firm that looks busy and professional, but still loses opportunities through calls that never reach the right person quickly enough.</p>
+  <!-- SECTION: Use Cases -->
+  <section class="py-20 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="motion text-center mb-12" data-anim="fade-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Built for Every Scenario</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-7 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-right">
+          <div class="w-10 h-10 rounded-xl bg-[#7de8eb]/10 flex items-center justify-center text-[#7de8eb] mb-4">
+            <i data-lucide="user-check" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-3">New Client Intake</h3>
+          <p class="text-white/65 leading-relaxed">WiseCall captures every new enquiry with consistent intake questions, books consultations or callbacks and creates structured records your team can act on immediately in Clio.</p>
         </div>
-    </section>
-
-    <!-- Section 2: What WiseCall Does for Legal and Professional Firms -->
-    <section class="section">
-        <div class="section-header">
-            <h2>What WiseCall Does for Legal and Professional Firms</h2>
-            <p>An AI answering service that supports your intake team and front desk, not replaces them.</p>
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-7 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-left">
+          <div class="w-10 h-10 rounded-xl bg-[#7de8eb]/10 flex items-center justify-center text-[#7de8eb] mb-4">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-3">Existing Client Updates</h3>
+          <p class="text-white/65 leading-relaxed">Billing queries, document chases and progress update calls are handled professionally, with accurate notes routed to the right fee earner, department or shared inbox.</p>
         </div>
-        <div class="feature-list-section">
-            <ul class="feature-list">
-                <li><span class="check">&#10003;</span> Answers every inbound call, day and night</li>
-                <li><span class="check">&#10003;</span> Qualifies new enquiries using your intake questions</li>
-                <li><span class="check">&#10003;</span> Captures caller, matter and urgency details accurately</li>
-                <li><span class="check">&#10003;</span> Books consultations and callback slots</li>
-                <li><span class="check">&#10003;</span> Manages overflow during peak times</li>
-                <li><span class="check">&#10003;</span> Covers out-of-hours enquiries</li>
-                <li><span class="check">&#10003;</span> Routes urgent calls to the right person or team</li>
-                <li><span class="check">&#10003;</span> Pushes structured intake data into Clio workflows</li>
-            </ul>
-            <div class="compatibility">
-                <p>Compatible with legal intake and case management workflows, including:</p>
-                <p class="systems">Clio Manage &nbsp;&bull;&nbsp; Clio Grow &nbsp;&bull;&nbsp; Custom CRM and shared inbox workflows</p>
-            </div>
-            <p class="disclaimer">WiseCall does not provide legal, financial or professional advice. All advice stays with your team.</p>
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-7 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-right">
+          <div class="w-10 h-10 rounded-xl bg-[#7de8eb]/10 flex items-center justify-center text-[#7de8eb] mb-4">
+            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-3">Urgent Call Routing</h3>
+          <p class="text-white/65 leading-relaxed">Time-sensitive matters can be identified early and escalated using your rules, whether that means reaching an on-call solicitor, a duty team or a specific office location.</p>
         </div>
-    </section>
-
-    <!-- Section 3: Enquiry Value Calculator -->
-    <section class="section" id="calculator">
-        <div class="section-header">
-            <h2>Enquiry Value Calculator</h2>
-            <p>See what missed calls could be costing your firm every month.</p>
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-7 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-left">
+          <div class="w-10 h-10 rounded-xl bg-[#7de8eb]/10 flex items-center justify-center text-[#7de8eb] mb-4">
+            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-3">Multi-Department Coverage</h3>
+          <p class="text-white/65 leading-relaxed">Whether you run conveyancing, family, probate, litigation or advisory teams, WiseCall gives every department a consistent first response and clear reporting across the firm.</p>
         </div>
-        <div class="calculator-card">
-            <div class="calc-grid">
-                <div class="calc-input-group">
-                    <label for="calcCalls">Average calls per day</label>
-                    <input type="number" id="calcCalls" value="40" min="0" max="500">
-                </div>
-                <div class="calc-input-group">
-                    <label for="calcMissed">Estimated missed call percentage</label>
-                    <input type="number" id="calcMissed" value="18" min="0" max="100">
-                </div>
-                <div class="calc-input-group">
-                    <label for="calcNewEnquiry">Percentage of missed calls that are new enquiries</label>
-                    <input type="number" id="calcNewEnquiry" value="35" min="0" max="100">
-                </div>
-                <div class="calc-input-group">
-                    <label for="calcValue">Average value of a new instruction</label>
-                    <input type="number" id="calcValue" value="400" min="0" max="10000" step="50">
-                </div>
-            </div>
-            <div class="calc-results">
-                <div class="calc-result-item">
-                    <div class="label">Daily Missed Matter Value</div>
-                    <div class="value" id="resultDaily">&pound;1,008</div>
-                </div>
-                <div class="calc-result-item highlight">
-                    <div class="label">Monthly Missed Matter Value</div>
-                    <div class="value" id="resultMonthly">&pound;22,176</div>
-                </div>
-                <div class="calc-result-item">
-                    <div class="label">Estimated Annual Impact</div>
-                    <div class="value" id="resultAnnual">&pound;266,112</div>
-                </div>
-            </div>
-            <p class="calc-note">Use the average value of a new instruction, first-month fee or onboarding revenue to keep the estimate conservative. For many firms, the true lifetime value is materially higher.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: Compliance & Security -->
+  <section class="py-20 px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="motion text-center mb-12" data-anim="fade-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Compliance and Security</h2>
+        <p class="text-white/60 text-lg">Sensitive client information handled with clear boundaries.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+          <h4 class="text-[#7de8eb] font-semibold mb-2">UK Hosted</h4>
+          <p class="text-white/60 text-sm leading-relaxed">All data is processed and stored on UK-based servers.</p>
         </div>
-    </section>
-
-    <!-- Section 4: Use Cases -->
-    <section class="section">
-        <div class="section-header">
-            <h2>Built for Every Scenario</h2>
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+          <h4 class="text-[#7de8eb] font-semibold mb-2">GDPR Compliant</h4>
+          <p class="text-white/60 text-sm leading-relaxed">Full compliance with UK data protection regulations.</p>
         </div>
-        <div class="use-cases-grid">
-            <div class="use-case-card">
-                <h3>New Client Intake</h3>
-                <p>WiseCall captures every new enquiry with consistent intake questions, books consultations or callbacks and creates structured records your team can act on immediately in Clio.</p>
-            </div>
-            <div class="use-case-card">
-                <h3>Existing Client Updates</h3>
-                <p>Billing queries, document chases and progress update calls are handled professionally, with accurate notes routed to the right fee earner, department or shared inbox.</p>
-            </div>
-            <div class="use-case-card">
-                <h3>Urgent Call Routing</h3>
-                <p>Time-sensitive matters can be identified early and escalated using your rules, whether that means reaching an on-call solicitor, a duty team or a specific office location.</p>
-            </div>
-            <div class="use-case-card">
-                <h3>Multi-Department Coverage</h3>
-                <p>Whether you run conveyancing, family, probate, litigation or advisory teams, WiseCall gives every department a consistent first response and clear reporting across the firm.</p>
-            </div>
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+          <h4 class="text-[#7de8eb] font-semibold mb-2">Configurable Intake Boundaries</h4>
+          <p class="text-white/60 text-sm leading-relaxed">You control what WiseCall can collect, what it must escalate and which enquiries always require a human response.</p>
         </div>
-    </section>
-
-    <!-- Section 5: Compliance & Security -->
-    <section class="section">
-        <div class="section-header">
-            <h2>Compliance and Security</h2>
-            <p>Sensitive client information handled with clear boundaries.</p>
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+          <h4 class="text-[#7de8eb] font-semibold mb-2">Secure Data Processing</h4>
+          <p class="text-white/60 text-sm leading-relaxed">Encrypted communications and secure storage as standard.</p>
         </div>
-        <div class="compliance-grid">
-            <div class="compliance-item">
-                <h4>UK Hosted</h4>
-                <p>All data is processed and stored on UK-based servers.</p>
-            </div>
-            <div class="compliance-item">
-                <h4>GDPR Compliant</h4>
-                <p>Full compliance with UK data protection regulations.</p>
-            </div>
-            <div class="compliance-item">
-                <h4>Configurable Intake Boundaries</h4>
-                <p>You control what WiseCall can collect, what it must escalate and which enquiries always require a human response.</p>
-            </div>
-            <div class="compliance-item">
-                <h4>Secure Data Processing</h4>
-                <p>Encrypted communications and secure storage as standard.</p>
-            </div>
-            <div class="compliance-item">
-                <h4>No Advice Given</h4>
-                <p>WiseCall captures information and routes enquiries. It never gives legal or professional advice.</p>
-            </div>
-            <div class="compliance-item">
-                <h4>Clio-Ready Audit Trail</h4>
-                <p>Structured call notes, recordings and transcripts are available for review and can support consistent intake workflows.</p>
-            </div>
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+          <h4 class="text-[#7de8eb] font-semibold mb-2">No Advice Given</h4>
+          <p class="text-white/60 text-sm leading-relaxed">WiseCall captures information and routes enquiries. It never gives legal or professional advice.</p>
         </div>
-    </section>
-
-    <!-- Section 6: Pilot Programme -->
-    <section class="section">
-        <div class="section-header">
-            <h2>Try It Risk Free</h2>
+        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+          <h4 class="text-[#7de8eb] font-semibold mb-2">Clio-Ready Audit Trail</h4>
+          <p class="text-white/60 text-sm leading-relaxed">Structured call notes, recordings and transcripts are available for review and can support consistent intake workflows.</p>
         </div>
-        <div class="case-study">
-            <h3>7 Day Legal and Professional Pilot</h3>
-            <div class="case-study-metrics">
-                <div class="metric">
-                    <span class="number">7 days</span>
-                    <span class="desc">Full featured trial period</span>
-                </div>
-                <div class="metric">
-                    <span class="number">Clio ready</span>
-                    <span class="desc">Intake flows and routing configured with your team</span>
-                </div>
-                <div class="metric">
-                    <span class="number">Full support</span>
-                    <span class="desc">Dedicated onboarding from our team</span>
-                </div>
-            </div>
-            <p style="color: var(--text-medium); margin: 1.5rem 0 2rem; line-height: 1.7; max-width: 600px; margin-left: auto; margin-right: auto;">See how many calls WiseCall captures, how consistently enquiries are qualified and how quickly your team receives usable intake data. Real call handling from your own firm, not a generic demo.</p>
-            <a href="#" class="primary-btn contact-link" data-inquiry="Legal Pilot Programme" style="display: inline-block;">Start Your 7 Day Pilot</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: Pilot Programme -->
+  <section class="py-20 px-6">
+    <div class="max-w-3xl mx-auto">
+      <div class="motion text-center mb-12" data-anim="fade-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Try It Risk Free</h2>
+      </div>
+      <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-10 text-center" data-anim="scale-in">
+        <h3 class="text-2xl font-bold text-white mb-8">7 Day Legal and Professional Pilot</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+          <div>
+            <div class="text-[#7de8eb] text-2xl font-bold mb-1">7 days</div>
+            <div class="text-white/60 text-sm">Full featured trial period</div>
+          </div>
+          <div>
+            <div class="text-[#7de8eb] text-2xl font-bold mb-1">Clio ready</div>
+            <div class="text-white/60 text-sm">Intake flows and routing configured with your team</div>
+          </div>
+          <div>
+            <div class="text-[#7de8eb] text-2xl font-bold mb-1">Full support</div>
+            <div class="text-white/60 text-sm">Dedicated onboarding from our team</div>
+          </div>
         </div>
-    </section>
+        <p class="text-white/60 leading-relaxed mb-8 max-w-xl mx-auto">See how many calls WiseCall captures, how consistently enquiries are qualified and how quickly your team receives usable intake data. Real call handling from your own firm, not a generic demo.</p>
+        <a href="#" class="mbtn contact-link inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-base shadow-[0_0_24px_rgba(125,232,235,0.3)]" data-inquiry="Legal Pilot Programme">
+          Start Your 7 Day Pilot <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </a>
+      </div>
+    </div>
+  </section>
 
-    <!-- Final CTA -->
-    <section class="cta-section">
-        <div class="cta-content">
-            <h2>Capture More Enquiries. Keep Intake Moving.</h2>
-            <div class="hero-buttons" style="margin-bottom: 1rem;">
-                <a href="#" class="primary-btn contact-link" data-inquiry="Legal Demo">Book a Legal Demo</a>
-                <a href="#" class="secondary-btn contact-link" data-inquiry="Legal Intake Review">Request Intake Review</a>
-            </div>
-            <p class="reassurance">WiseCall works alongside your team. Never in place of them.</p>
+  <!-- FINAL CTA -->
+  <section class="py-24 px-6 text-center" style="background: linear-gradient(180deg, transparent, rgba(125,232,235,0.03));">
+    <div class="max-w-2xl mx-auto">
+      <div class="motion" data-anim="fade-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Capture More Enquiries.<br>Keep Intake Moving.</h2>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+          <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-base shadow-[0_0_32px_rgba(125,232,235,0.3)]" data-inquiry="Legal Demo">
+            Book a Legal Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
+          </a>
+          <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-[#7de8eb]/30 text-white font-semibold text-base hover:bg-white/5 hover:border-[#7de8eb]/60 transition-colors" data-inquiry="Legal Intake Review">
+            Request Intake Review
+          </a>
         </div>
-    </section>
+        <p class="text-white/40 text-sm italic">WiseCall works alongside your team. Never in place of them.</p>
+      </div>
+    </div>
+  </section>
 
-    <!-- Footer -->
-    <footer>
-        <div style="max-width: 1400px; margin: 0 auto; text-align: center;">
-            <a href="index.html" class="logo" style="justify-content: center; margin-bottom: 1rem; display: flex; align-items: center; text-decoration: none;"><img src="owl-logo.png" alt="WiseCall" style="height: 50px; margin-right: 14px;">WiseCall</a>
-            <p style="color: var(--text-medium); max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.7;">AI call handling backed by 20+ years of UK telecoms expertise.</p>
-            <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem;">
-                <a href="index.html" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Home</a>
-                <a href="index.html#features" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Features</a>
-                <a href="index.html#pricing" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">Pricing</a>
-                <a href="index.html#about" style="color: var(--text-medium); text-decoration: none; transition: color 0.3s;">About</a>
-                <a href="#" class="contact-link" data-inquiry="General Contact" style="color: var(--primary); text-decoration: none; font-weight: 600;">Get in Touch</a>
-            </div>
-            <div style="border-top: 1px solid rgba(110, 212, 215, 0.08); padding-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
-                <p>&copy; 2025 WiseCall. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+  <!-- FOOTER -->
+  <footer class="border-t border-[#7de8eb]/8 py-12 px-6">
+    <div class="max-w-7xl mx-auto text-center">
+      <a href="index.html" class="inline-flex items-center gap-2 text-white font-bold text-lg mb-4" style="text-decoration:none;">
+        <img src="owl-logo.png" alt="WiseCall" style="height:46px;">WiseCall
+      </a>
+      <p class="text-white/50 max-w-md mx-auto mb-8 leading-relaxed">AI call handling backed by 20+ years of UK telecoms expertise.</p>
+      <div class="flex flex-wrap justify-center gap-6 mb-8 text-sm text-white/50">
+        <a href="index.html" class="hover:text-[#7de8eb] transition-colors">Home</a>
+        <a href="index.html#features" class="hover:text-[#7de8eb] transition-colors">Features</a>
+        <a href="index.html#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="dental.html" class="hover:text-[#7de8eb] transition-colors">Dental Services</a>
+        <a href="#" class="contact-link text-[#7de8eb] font-semibold" data-inquiry="General Contact">Get in Touch</a>
+      </div>
+      <div class="border-t border-[#7de8eb]/8 pt-6 text-white/30 text-sm">
+        <p>&copy; 2025 WiseCall. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
 
-    <script>
-        // Mobile menu toggle
-        const mobileMenuButton = document.querySelector('.mobile-menu-button');
-        const navLinks = document.querySelector('.nav-links');
+  <script>
+    // Init Lucide icons
+    lucide.createIcons();
 
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenuButton.classList.toggle('active');
-            navLinks.classList.toggle('active');
-        });
+    // Scroll progress
+    const scrollProgress = document.getElementById('scrollProgress');
+    window.addEventListener('scroll', () => {
+      const pct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100;
+      scrollProgress.style.width = pct + '%';
+    }, { passive: true });
 
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenuButton.classList.remove('active');
-                navLinks.classList.remove('active');
-            });
-        });
+    // Header scroll
+    const header = document.getElementById('siteHeader');
+    window.addEventListener('scroll', () => {
+      header.classList.toggle('scrolled', window.scrollY > 50);
+    }, { passive: true });
 
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('nav')) {
-                mobileMenuButton.classList.remove('active');
-                navLinks.classList.remove('active');
-            }
-        });
+    // Mobile menu
+    const menuToggle = document.getElementById('mobileMenuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    menuToggle.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+    document.querySelectorAll('.mobile-link').forEach(l => l.addEventListener('click', () => mobileMenu.classList.remove('open')));
 
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                if (this.getAttribute('href') === '#') return;
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
+    // Scroll animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); observer.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.motion').forEach(el => observer.observe(el));
 
-        // Header scroll effect
-        const header = document.querySelector('header');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
-            }
-        });
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', function(e) {
+        if (this.getAttribute('href') === '#') return;
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
 
-        // Enquiry value calculator
-        const calcCalls = document.getElementById('calcCalls');
-        const calcMissed = document.getElementById('calcMissed');
-        const calcNewEnquiry = document.getElementById('calcNewEnquiry');
-        const calcValue = document.getElementById('calcValue');
-        const resultDaily = document.getElementById('resultDaily');
-        const resultMonthly = document.getElementById('resultMonthly');
-        const resultAnnual = document.getElementById('resultAnnual');
+    // Enquiry Value Calculator
+    const calcCalls = document.getElementById('calcCalls');
+    const calcMissed = document.getElementById('calcMissed');
+    const calcNewEnquiry = document.getElementById('calcNewEnquiry');
+    const calcValue = document.getElementById('calcValue');
+    const resultDaily = document.getElementById('resultDaily');
+    const resultMonthly = document.getElementById('resultMonthly');
+    const resultAnnual = document.getElementById('resultAnnual');
 
-        function calculateValueImpact() {
-            const calls = parseInt(calcCalls.value) || 0;
-            const missedPct = (parseInt(calcMissed.value) || 0) / 100;
-            const newEnquiryPct = (parseInt(calcNewEnquiry.value) || 0) / 100;
-            const matterValue = parseInt(calcValue.value) || 0;
+    function calculateValueImpact() {
+      const calls = parseInt(calcCalls.value) || 0;
+      const missedPct = (parseInt(calcMissed.value) || 0) / 100;
+      const newEnquiryPct = (parseInt(calcNewEnquiry.value) || 0) / 100;
+      const matterValue = parseInt(calcValue.value) || 0;
+      const daily = calls * missedPct * newEnquiryPct * matterValue;
+      const monthly = daily * 22;
+      const annual = monthly * 12;
+      resultDaily.textContent = '£' + Math.round(daily).toLocaleString('en-GB');
+      resultMonthly.textContent = '£' + Math.round(monthly).toLocaleString('en-GB');
+      resultAnnual.textContent = '£' + Math.round(annual).toLocaleString('en-GB');
+    }
 
-            const dailyMissedEnquiries = calls * missedPct * newEnquiryPct;
-            const daily = dailyMissedEnquiries * matterValue;
-            const monthly = daily * 22; // working days
-            const annual = monthly * 12;
+    [calcCalls, calcMissed, calcNewEnquiry, calcValue].forEach(el => el.addEventListener('input', calculateValueImpact));
+    calculateValueImpact();
 
-            resultDaily.textContent = '\u00A3' + Math.round(daily).toLocaleString('en-GB');
-            resultMonthly.textContent = '\u00A3' + Math.round(monthly).toLocaleString('en-GB');
-            resultAnnual.textContent = '\u00A3' + Math.round(annual).toLocaleString('en-GB');
-        }
+    // Contact Modal
+    const modal = document.getElementById('contactModal');
+    const modalClose = document.getElementById('modalClose');
+    const contactForm = document.getElementById('contactForm');
+    const inquiryTypeField = document.getElementById('inquiryType');
 
-        calcCalls.addEventListener('input', calculateValueImpact);
-        calcMissed.addEventListener('input', calculateValueImpact);
-        calcNewEnquiry.addEventListener('input', calculateValueImpact);
-        calcValue.addEventListener('input', calculateValueImpact);
+    document.querySelectorAll('.contact-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        inquiryTypeField.value = link.dataset.inquiry || 'Legal Demo';
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
 
-        // Initial calculation
-        calculateValueImpact();
+    const closeModal = () => { modal.classList.remove('active'); document.body.style.overflow = ''; };
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
 
-        // Contact Modal
-        const modal = document.getElementById('contactModal');
-        const modalClose = document.getElementById('modalClose');
-        const contactForm = document.getElementById('contactForm');
-        const inquiryTypeField = document.getElementById('inquiryType');
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = contactForm.querySelector('.form-submit');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Sending...';
+      submitBtn.disabled = true;
+      try {
+        const res = await fetch(contactForm.action, { method: 'POST', body: new FormData(contactForm), headers: { 'Accept': 'application/json' } });
+        if (res.ok) {
+          submitBtn.textContent = 'Sent!';
+          contactForm.reset();
+          setTimeout(() => { closeModal(); submitBtn.textContent = originalText; submitBtn.disabled = false; }, 1500);
+        } else throw new Error('Failed');
+      } catch {
+        submitBtn.textContent = 'Error, Try Again';
+        submitBtn.disabled = false;
+        setTimeout(() => { submitBtn.textContent = originalText; }, 2000);
+      }
+    });
+  </script>
 
-        document.querySelectorAll('.contact-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const inquiryType = link.dataset.inquiry || 'Legal Demo';
-                inquiryTypeField.value = inquiryType;
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
-        });
 
-        modalClose.addEventListener('click', () => {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        });
 
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('active')) {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
 
-        contactForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = contactForm.querySelector('.form-submit');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Sending...';
-            submitBtn.disabled = true;
-
-            try {
-                const response = await fetch(contactForm.action, {
-                    method: 'POST',
-                    body: new FormData(contactForm),
-                    headers: { 'Accept': 'application/json' }
-                });
-
-                if (response.ok) {
-                    submitBtn.textContent = 'Sent!';
-                    contactForm.reset();
-                    setTimeout(() => {
-                        modal.classList.remove('active');
-                        document.body.style.overflow = '';
-                        submitBtn.textContent = originalText;
-                        submitBtn.disabled = false;
-                    }, 1500);
-                } else {
-                    throw new Error('Failed');
-                }
-            } catch (error) {
-                submitBtn.textContent = 'Error - Try Again';
-                submitBtn.disabled = false;
-                setTimeout(() => {
-                    submitBtn.textContent = originalText;
-                }, 2000);
-            }
-        });
-    </script>
-  </body>
+<!-- WiseCall live chat widget -->
+<script
+  src="https://zgzzpwaqqftmugzpccpm.supabase.co/storage/v1/object/public/wisecall-assets/wisecall-live-chat-widget.js"
+  data-profile-slug="wisecall"
+  data-title="WiseCall"
+  data-subtitle="AI calls, live chat and customer follow-up"
+  data-accent="#7de8eb"
+  data-background="#172929"
+></script>
+<!-- /WiseCall live chat widget -->
+</body>
 </html>

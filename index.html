@@ -22,6 +22,32 @@
 
   <link rel="icon" type="image/png" href="favicon.png">
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "WiseCall",
+    "url": "https://wisecall.io/",
+    "logo": "https://wisecall.io/owl-logo.png",
+    "description": "WiseCall is an AI receptionist and AI voice agent platform for UK businesses."
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "WiseCall",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://wisecall.io/",
+    "description": "AI voice agent for UK businesses. Answers calls, captures details, supports bookings, sends summaries and includes a business phone system foundation.",
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "GBP"
+    }
+  }
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -68,6 +94,26 @@
     /* Pulse dot */
     @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     .pulse-dot { animation: pulse-soft 2.2s ease-in-out infinite; }
+    /* WiseCall voice orb: crisp glossy sphere, soft feathered rim */
+    .orb-stage { position: relative; width: 240px; height: 240px; margin-left: auto; margin-right: auto; display: block; cursor: pointer; }
+    .orb { position: absolute; inset: 0; border-radius: 50%;
+      background:
+        radial-gradient(ellipse 52% 22% at 50% 85%, rgba(206,246,247,0.4) 0%, transparent 72%),
+        radial-gradient(circle at 36% 30%, #f4fffe 0%, #c4f4f5 22%, #7de8eb 46%, #3f9a9d 74%, rgba(45,92,92,0.45) 86%, rgba(23,41,41,0) 94%);
+      box-shadow: 0 0 44px rgba(125, 232, 235, 0.2);
+      animation: orb-float 7s ease-in-out infinite;
+      transition: box-shadow 0.4s ease, filter 0.4s ease; }
+    .orb-swirl { position: absolute; inset: 0; border-radius: 50%;
+      background: radial-gradient(circle at 31% 27%, rgba(255,255,255,0.55) 0%, transparent 30%);
+      mix-blend-mode: screen; filter: blur(3px);
+      animation: orb-spin 24s linear infinite; }
+    .orb-core { position: absolute; inset: 0; border-radius: 50%;
+      background: radial-gradient(circle at 73% 77%, rgba(16,40,40,0.5) 0%, transparent 40%);
+      filter: blur(6px);
+      animation: orb-spin 34s linear infinite reverse; }
+    .orb-stage:hover .orb { box-shadow: 0 0 60px rgba(125, 232, 235, 0.32); filter: brightness(1.05); }
+    @keyframes orb-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+    @keyframes orb-spin { to { transform: rotate(360deg); } }
     /* FAQ */
     details summary { list-style: none; cursor: pointer; }
     details summary::-webkit-details-marker { display: none; }
@@ -102,8 +148,11 @@
         <img src="owl-logo.png" alt="WiseCall" style="height:46px;margin-right:8px;">WiseCall
       </a>
       <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
-        <a href="#how-it-works" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
-        <a href="#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="#live-demo" class="hover:text-[#7de8eb] transition-colors">Try the AI</a>
+        <a href="/how-it-works/" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
+        <a href="/pricing/" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="/industries/" class="hover:text-[#7de8eb] transition-colors">Industries</a>
+        <a href="/compare/ai-receptionist-uk-comparison/" class="hover:text-[#7de8eb] transition-colors">Compare</a>
         <a href="#partners" class="hover:text-[#7de8eb] transition-colors">Partners</a>
         <a href="#faq" class="hover:text-[#7de8eb] transition-colors">FAQ</a>
         <a href="ai-consultancy.html" class="hover:text-[#7de8eb] transition-colors">Consultancy</a>
@@ -120,8 +169,11 @@
     </nav>
     <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 right-0 bg-[#172929]/98 backdrop-blur-xl border-b border-[#7de8eb]/15 shadow-2xl">
       <div class="px-6 py-6 flex flex-col gap-4 text-white">
-        <a href="#how-it-works" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How It Works</a>
-        <a href="#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
+        <a href="#live-demo" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Try the AI</a>
+        <a href="/how-it-works/" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How It Works</a>
+        <a href="/pricing/" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
+        <a href="/industries/" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Industries</a>
+        <a href="/compare/ai-receptionist-uk-comparison/" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Compare</a>
         <a href="#partners" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Partners</a>
         <a href="#faq" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">FAQ</a>
         <a href="ai-consultancy.html" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Consultancy</a>
@@ -265,22 +317,32 @@
   </section>
 
   <!-- ───── LIVE DEMO ───── -->
-  <section class="relative py-20 px-6">
+  <section class="relative py-24 px-6" id="live-demo">
     <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
-    <div class="relative z-10 max-w-3xl mx-auto text-center">
+    <div class="relative z-10 max-w-2xl mx-auto text-center">
       <div class="motion" data-anim="fade-up">
-        <span class="text-sm text-[#7de8eb] font-semibold">Live Demo</span>
+        <span class="inline-flex items-center gap-2 text-sm text-[#7de8eb] font-semibold">
+          <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
+          Live Demo
+        </span>
         <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Hear it for yourself</h2>
-        <p class="text-xl text-white/70 mb-10">Click the button below and speak directly with the WiseCall AI. No setup required.</p>
+        <p class="text-xl text-white/70 mb-12">Call our AI receptionist and speak to it like a customer would. It's the real product, not a recording.</p>
       </div>
-      <div class="motion inline-block" data-anim="scale-in" style="transition-delay:0.1s">
-        <div class="rounded-2xl border border-[#7de8eb]/15 bg-white/5 backdrop-blur-sm p-5 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
-          <iframe
-            src="https://embed.telzino.com/playground?agentId=4102b5b0-9cca-44c9-bc6a-0446884aeabb&name=Voice+Agent&theme=dark&backgroundColor=%23172929&primaryColor=%237DE8EB&accentColor=%237DE8EB"
-            style="width:380px;height:500px;border:none;border-radius:16px;display:block;"
-            allow="microphone"
-          ></iframe>
-        </div>
+
+      <div class="motion" data-anim="scale-in" style="transition-delay:0.1s">
+        <a href="#" class="orb-stage demo-call-link mb-10" aria-label="Call the WiseCall AI demo">
+          <span class="orb">
+            <span class="orb-swirl"></span>
+            <span class="orb-core"></span>
+          </span>
+        </a>
+
+        <a href="#" class="demo-call-link mbtn inline-flex items-center gap-3 px-8 py-4 rounded-full bg-white/5 border border-[#7de8eb]/30 text-white font-bold text-xl tracking-wide hover:bg-white/10 backdrop-blur-sm">
+          <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb]"></i>
+          <span class="demo-number">0113 522 2277</span>
+        </a>
+        <p class="text-white/60 text-sm mt-5">Tap the orb or dial the number from any phone.</p>
+        <p class="text-white/40 text-sm mt-2">Standard UK call &middot; You'll receive an SMS summary afterwards, just like your customers would.</p>
       </div>
     </div>
   </section>
@@ -364,21 +426,21 @@
       </div>
 
       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <a href="dental.html" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.05s">
+        <a href="/industries/dental/" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.05s">
           <div class="text-3xl mb-4">🦷</div>
           <h3 class="text-lg font-semibold text-white mb-2">Dental and Healthcare</h3>
           <p class="text-white/60 text-sm leading-relaxed mb-4">Book appointments 24/7. Free up reception for in-person patients. Handle enquiries and recalls without adding headcount.</p>
           <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors">Find out more &rarr;</span>
         </a>
 
-        <a href="legal.html" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.08s">
+        <a href="/industries/legal/" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.08s">
           <div class="text-3xl mb-4">🏛️</div>
           <h3 class="text-lg font-semibold text-white mb-2">Legal and Professional</h3>
           <p class="text-white/60 text-sm leading-relaxed mb-4">Sound professional from first contact. Qualify enquiries, capture matter details, route urgent calls and support Clio intake workflows.</p>
           <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors">Find out more &rarr;</span>
         </a>
 
-        <a href="property.html" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.11s">
+        <a href="/property" class="motion group block rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.11s">
           <div class="text-3xl mb-4">🏠</div>
           <h3 class="text-lg font-semibold text-white mb-2">Property</h3>
           <p class="text-white/60 text-sm leading-relaxed mb-4">Handle vendor and buyer enquiries, book valuations and manage call volume across lettings and sales without extra staff.</p>
@@ -636,7 +698,7 @@
       </div>
 
       <!-- Steps -->
-      <div class="grid md:grid-cols-4 gap-6 mb-16">
+      <div class="grid md:grid-cols-4 gap-6 mb-12">
         <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.05s">
           <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">1</div>
           <h3 class="text-lg font-semibold text-white mb-2">Apply</h3>
@@ -657,35 +719,6 @@
           <h3 class="text-lg font-semibold text-white mb-2">Earn</h3>
           <p class="text-white/55 text-sm leading-relaxed">Commission paid monthly on cleared funds, alongside a partner statement showing all active accounts and payments. No chasing, no ambiguity.</p>
         </div>
-      </div>
-
-      <!-- Commission cards -->
-      <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-6 mb-10">
-        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.05s">
-          <div class="text-2xl mb-3">💷</div>
-          <h3 class="text-lg font-semibold text-white mb-2">50% on plan fees</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Earn 50% of the monthly plan fee on every active customer you introduce, for the lifetime of that customer. No cap, no sliding scale.</p>
-        </div>
-        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.08s">
-          <div class="text-2xl mb-3">📈</div>
-          <h3 class="text-lg font-semibold text-white mb-2">40% on overage</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Earn 40% of any overage revenue your customers generate beyond their included AI calls. Recurring revenue that grows with your clients.</p>
-        </div>
-        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.11s">
-          <div class="text-2xl mb-3">🔒</div>
-          <h3 class="text-lg font-semibold text-white mb-2">50% profit margins</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Partners enjoy 50% margins on profit, not RRP. Discounting is permitted but comes from your margin. You may charge above RRP and retain the difference.</p>
-        </div>
-        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.14s">
-          <div class="text-2xl mb-3">📅</div>
-          <h3 class="text-lg font-semibold text-white mb-2">12-month customer terms</h3>
-          <p class="text-white/55 text-sm leading-relaxed">WiseCall customers sign 12-month minimum terms. This protects your recurring revenue and reduces churn risk on your commission stream.</p>
-        </div>
-      </div>
-
-      <div class="motion max-w-4xl mx-auto rounded-xl bg-[#7de8eb]/5 border border-[#7de8eb]/15 p-7 text-center mb-8" data-anim="fade-up">
-        <p class="text-white font-semibold text-lg mb-2">With 50% profit margins, a Growth plan customer generates significant recurring commission for you, every month, for as long as they remain a customer.</p>
-        <p class="text-white/50 text-sm">WiseCall bills the end customer directly. You take no credit risk and handle no invoicing.</p>
       </div>
 
       <div class="motion text-center" data-anim="fade-up">
@@ -875,8 +908,10 @@
       </div>
       <p class="text-white/50 max-w-sm mx-auto mb-8 text-sm leading-relaxed">AI-powered business communications. Phone system included. UK-based.</p>
       <div class="flex flex-wrap justify-center gap-6 mb-8 text-sm">
-        <a href="#how-it-works" class="text-white/50 hover:text-[#7de8eb] transition-colors">How It Works</a>
-        <a href="#pricing" class="text-white/50 hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="/how-it-works/" class="text-white/50 hover:text-[#7de8eb] transition-colors">How It Works</a>
+        <a href="/pricing/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="/industries/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Industries</a>
+        <a href="/resources/missed-call-calculator/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Calculator</a>
         <a href="#partners" class="text-white/50 hover:text-[#7de8eb] transition-colors">Partners</a>
         <a href="ai-consultancy.html" class="text-white/50 hover:text-[#7de8eb] transition-colors">Consultancy</a>
         <a href="ai-workshop.html" class="text-white/50 hover:text-[#7de8eb] transition-colors">Workshop</a>
@@ -916,6 +951,17 @@
     document.addEventListener('click', (e) => {
       if (!e.target.closest('nav')) mobileMenu.classList.remove('open');
     });
+
+    // ── Live demo call number ──
+    // Set this to the WiseCall demo agent's Telnyx number (from the OwlNet
+    // portal, AI Agents). Updates the orb and number button everywhere.
+    // Must run before the smooth-scroll binding below so the demo links
+    // are real tel: links by the time anchors are collected.
+    const WISECALL_DEMO_NUMBER = '0113 522 2277';
+
+    const demoTel = 'tel:' + WISECALL_DEMO_NUMBER.replace(/\s+/g, '');
+    document.querySelectorAll('.demo-call-link').forEach(el => { el.href = demoTel; });
+    document.querySelectorAll('.demo-number').forEach(el => { el.textContent = WISECALL_DEMO_NUMBER; });
 
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -1008,5 +1054,20 @@
     }, { threshold: 0.12 });
     motionEls.forEach(el => observer.observe(el));
   </script>
+
+
+
+
+
+<!-- WiseCall live chat widget -->
+<script
+  src="https://zgzzpwaqqftmugzpccpm.supabase.co/storage/v1/object/public/wisecall-assets/wisecall-live-chat-widget.js"
+  data-profile-slug="wisecall"
+  data-title="WiseCall"
+  data-subtitle="AI calls, live chat and customer follow-up"
+  data-accent="#7de8eb"
+  data-background="#172929"
+></script>
+<!-- /WiseCall live chat widget -->
 </body>
 </html>

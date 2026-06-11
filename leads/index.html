@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WiseCall Leads CRM</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e1f1f;
+      --panel: #142b2a;
+      --panel-2: #183433;
+      --line: rgba(125, 232, 235, 0.18);
+      --muted: rgba(238, 247, 247, 0.62);
+      --text: #f4fbfb;
+      --cyan: #7de8eb;
+      --cyan-2: #5dbfc2;
+      --amber: #f7c96b;
+      --red: #ee6b6e;
+      --blue: #72a7ff;
+      --green: #74d99f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 54px 280px minmax(0, 1fr);
+      background:
+        linear-gradient(180deg, rgba(23, 41, 41, 0.98), rgba(14, 31, 31, 1)),
+        radial-gradient(circle at 70% 12%, rgba(125, 232, 235, 0.09), transparent 36%);
+    }
+
+    .rail {
+      background: #101f23;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rail-button,
+    .icon-button {
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.7);
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
+    }
+
+    .rail-button:hover,
+    .icon-button:hover,
+    .rail-button.active {
+      background: rgba(125, 232, 235, 0.1);
+      border-color: var(--line);
+      color: var(--cyan);
+    }
+
+    .sidebar {
+      min-height: 100vh;
+      background: #102523;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+    }
+
+    .nav-scroll {
+      padding: 18px 16px;
+      overflow-y: auto;
+    }
+
+    .nav-title {
+      color: rgba(255, 255, 255, 0.54);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin: 12px 10px 8px;
+    }
+
+    .nav-item {
+      width: 100%;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 9px 10px;
+      color: rgba(255, 255, 255, 0.82);
+      text-decoration: none;
+      border: 0;
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background: rgba(125, 232, 235, 0.12);
+      color: #fff;
+    }
+
+    .badge {
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      margin-left: auto;
+      border-radius: 999px;
+      background: rgba(238, 107, 110, 0.86);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 76px minmax(0, 1fr);
+    }
+
+    .topbar {
+      border-bottom: 1px solid var(--line);
+      background: rgba(20, 43, 42, 0.82);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 0 28px;
+    }
+
+    .search {
+      width: min(520px, 46vw);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      padding: 0 13px;
+    }
+
+    .search input {
+      width: 100%;
+      height: 42px;
+      border: 0;
+      outline: 0;
+      color: #fff;
+      background: transparent;
+    }
+
+    .workspace {
+      min-width: 0;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(360px, 0.88fr) minmax(420px, 1.12fr);
+    }
+
+    .list-pane,
+    .detail-pane {
+      min-width: 0;
+      overflow-y: auto;
+      padding: 28px;
+    }
+
+    .list-pane {
+      border-right: 1px solid var(--line);
+      background: rgba(13, 30, 30, 0.55);
+    }
+
+    .page-title {
+      font-size: clamp(28px, 3vw, 40px);
+      line-height: 1.05;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 22px 0;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.045);
+      border-radius: 8px;
+      padding: 13px;
+      min-height: 76px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin: 0 0 16px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.72);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: rgba(125, 232, 235, 0.16);
+      border-color: var(--line);
+      color: #fff;
+    }
+
+    .lead-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .lead-row {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.052);
+      color: inherit;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .lead-row.active {
+      border-color: rgba(125, 232, 235, 0.72);
+      background: rgba(125, 232, 235, 0.1);
+    }
+
+    .lead-row h3 {
+      margin: 0;
+      color: #fff;
+      font-size: 17px;
+      line-height: 1.25;
+      font-weight: 900;
+    }
+
+    .lead-row p {
+      margin: 7px 0 0;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .row-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.82);
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .chip.hot { color: #2b2110; background: var(--amber); border-color: transparent; }
+    .chip.new { color: #0a2626; background: var(--cyan); border-color: transparent; }
+    .chip.open { color: #102319; background: var(--green); border-color: transparent; }
+    .chip.reply { color: #101a2c; background: var(--blue); border-color: transparent; }
+    .chip.ticket { color: #2b1517; background: var(--red); border-color: transparent; }
+
+    .detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .detail-header h2 {
+      margin: 0;
+      font-size: clamp(25px, 2.5vw, 34px);
+      line-height: 1.08;
+      font-weight: 950;
+    }
+
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 16px 0 22px;
+    }
+
+    .btn {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.045);
+      color: #fff;
+      padding: 9px 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      border-color: transparent;
+      background: linear-gradient(90deg, var(--cyan), var(--cyan-2));
+      color: #0e2424;
+    }
+
+    .btn:hover,
+    .lead-row:hover {
+      border-color: rgba(125, 232, 235, 0.55);
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.045);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .panel h3 {
+      margin: 0 0 13px;
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 11px;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 116px minmax(0, 1fr);
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .field span:first-child {
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 800;
+    }
+
+    .field span:last-child {
+      color: rgba(255, 255, 255, 0.88);
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+
+    .event {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .event-icon {
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: rgba(125, 232, 235, 0.12);
+      color: var(--cyan);
+    }
+
+    .event p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .event time {
+      display: block;
+      margin-top: 3px;
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .reply-box {
+      display: grid;
+      gap: 10px;
+    }
+
+    .reply-box textarea {
+      width: 100%;
+      min-height: 124px;
+      resize: vertical;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      outline: 0;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(420px, calc(100vw - 36px));
+      border: 1px solid rgba(125, 232, 235, 0.4);
+      background: #122928;
+      color: #fff;
+      border-radius: 8px;
+      padding: 13px 15px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 30;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1120px) {
+      .app-shell {
+        grid-template-columns: 54px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-pane {
+        border-top: 1px solid var(--line);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .rail {
+        display: none;
+      }
+
+      .topbar {
+        height: auto;
+        min-height: 72px;
+        align-items: stretch;
+        flex-direction: column;
+        padding: 16px;
+      }
+
+      .search {
+        width: 100%;
+      }
+
+      .list-pane,
+      .detail-pane {
+        padding: 20px 16px;
+      }
+
+      .metric-grid,
+      .section-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field {
+        grid-template-columns: 1fr;
+        gap: 3px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Workspace switcher">
+      <a class="rail-button active" href="../index.html" title="WiseCall"><i data-lucide="infinity" class="w-5 h-5"></i></a>
+      <button class="rail-button" title="Leads"><i data-lucide="users-round" class="w-5 h-5"></i></button>
+      <button class="rail-button" title="Replies"><i data-lucide="mail-check" class="w-5 h-5"></i></button>
+      <button class="rail-button" title="Orders"><i data-lucide="package-check" class="w-5 h-5"></i></button>
+      <button class="rail-button" title="Tickets"><i data-lucide="ticket-check" class="w-5 h-5"></i></button>
+      <button class="rail-button" title="Reports"><i data-lucide="chart-no-axes-combined" class="w-5 h-5"></i></button>
+      <div class="mt-auto"></div>
+      <button class="rail-button" title="Settings"><i data-lucide="settings" class="w-5 h-5"></i></button>
+    </aside>
+
+    <aside class="sidebar" aria-label="CRM navigation">
+      <div class="brand">
+        <img src="../owl-logo.png" alt="WiseCall">
+        <div>
+          <div class="font-black text-lg leading-tight">WiseCall</div>
+          <div class="text-xs muted font-bold">Leads & CRM</div>
+        </div>
+      </div>
+      <div class="nav-scroll">
+        <div class="nav-title">Favorites</div>
+        <button class="nav-item active" data-section="all"><i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Lead Desk</span><span class="badge" id="navLeadBadge">1</span></button>
+        <button class="nav-item" data-section="Reply Needed"><i data-lucide="mail-check" class="w-4 h-4"></i><span>Replies</span><span class="badge" id="navReplyBadge">3</span></button>
+        <button class="nav-item" data-section="Orders"><i data-lucide="package-check" class="w-4 h-4"></i><span>Orders</span><span class="badge" id="navOrderBadge">2</span></button>
+        <button class="nav-item" data-section="Tickets"><i data-lucide="ticket-check" class="w-4 h-4"></i><span>Tickets</span><span class="badge" id="navTicketBadge">4</span></button>
+        <button class="nav-item" data-section="Formspree"><i data-lucide="send" class="w-4 h-4"></i><span>Formspree Inbox</span></button>
+        <button class="nav-item" data-section="Property Demo"><i data-lucide="building-2" class="w-4 h-4"></i><span>Property Demos</span></button>
+
+        <div class="nav-title">Pipeline</div>
+        <button class="nav-item" data-status="New"><i data-lucide="sparkles" class="w-4 h-4"></i><span>New Leads</span></button>
+        <button class="nav-item" data-status="Contacted"><i data-lucide="phone-call" class="w-4 h-4"></i><span>Contacted</span></button>
+        <button class="nav-item" data-status="Demo Booked"><i data-lucide="calendar-check" class="w-4 h-4"></i><span>Demo Booked</span></button>
+        <button class="nav-item" data-status="Won"><i data-lucide="circle-pound-sterling" class="w-4 h-4"></i><span>Won</span></button>
+
+        <div class="nav-title">Admin</div>
+        <button class="nav-item"><i data-lucide="bot" class="w-4 h-4"></i><span>AI Agents</span></button>
+        <button class="nav-item"><i data-lucide="workflow" class="w-4 h-4"></i><span>Automations</span></button>
+        <button class="nav-item"><i data-lucide="shield-check" class="w-4 h-4"></i><span>Access</span></button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <i data-lucide="search" class="w-4 h-4 text-white/50"></i>
+          <input id="searchInput" type="search" placeholder="Search leads, companies, messages...">
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn" id="simulateLead"><i data-lucide="plus" class="w-4 h-4"></i>New lead</button>
+          <button class="icon-button" id="notificationButton" title="Notifications"><i data-lucide="bell" class="w-5 h-5"></i></button>
+          <button class="icon-button" title="Sync"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <section class="list-pane" aria-label="Lead list">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h1 class="page-title">Leads CRM</h1>
+              <p class="muted mt-2">Formspree enquiries, replies, orders and support tickets in one queue.</p>
+            </div>
+            <span class="chip new" id="liveCount">0 live</span>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric"><strong id="metricNew">0</strong><span>New</span></div>
+            <div class="metric"><strong id="metricReplies">0</strong><span>Replies</span></div>
+            <div class="metric"><strong id="metricOrders">0</strong><span>Orders</span></div>
+            <div class="metric"><strong id="metricTickets">0</strong><span>Tickets</span></div>
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="Lead filters">
+            <button class="tab active" data-filter="all">All</button>
+            <button class="tab" data-filter="Formspree">Formspree</button>
+            <button class="tab" data-filter="New">New</button>
+            <button class="tab" data-filter="Property Demo">Property Demo</button>
+            <button class="tab" data-filter="Reply Needed">Reply Needed</button>
+            <button class="tab" data-filter="Orders">Orders</button>
+            <button class="tab" data-filter="Tickets">Tickets</button>
+          </div>
+
+          <div id="leadList" class="lead-list"></div>
+        </section>
+
+        <section class="detail-pane" aria-label="Lead details">
+          <div id="leadDetail"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const storeKey = 'wisecall-leads-crm-v1';
+    if (new URLSearchParams(window.location.search).has('reset')) {
+      localStorage.removeItem(storeKey);
+      history.replaceState(null, '', window.location.pathname);
+    }
+    const defaultLeads = [
+      {
+        id: 'LD-2026-104',
+        company: 'Property Demo Enquiry',
+        contact: 'New Formspree submission',
+        email: 'Pending sync from Formspree email',
+        phone: 'Pending sync',
+        inquiryType: 'Property Demo',
+        source: 'Formspree',
+        received: '04/06/2026 10:42',
+        status: 'New',
+        priority: 'Hot',
+        owner: 'Unassigned',
+        nextAction: 'Reply and book estate agency demo',
+        value: 'Demo opportunity',
+        tags: ['Formspree', 'Property Demo', 'Reply Needed'],
+        message: 'A new Formspree form arrived with inquiry_type set to Property Demo. Add the contact fields from the Formspree email, then reply with a demo booking link and property-sector proof points.',
+        replies: 0,
+        orders: 0,
+        tickets: 0,
+        timeline: [
+          { type: 'send', text: 'Formspree submission received with inquiry_type: Property Demo.', time: '04/06/2026 10:42' },
+          { type: 'bell', text: 'Lead notification created for sales follow-up.', time: '04/06/2026 10:43' }
+        ]
+      },
+      {
+        id: 'LD-2026-103',
+        company: 'Fingertip Main',
+        contact: 'Operations team',
+        email: 'ops@example.com',
+        phone: '01632 960 104',
+        inquiryType: 'Phone System Review',
+        source: 'Referral',
+        received: '04/06/2026 09:18',
+        status: 'Contacted',
+        priority: 'Medium',
+        owner: 'Luke',
+        nextAction: 'Send updated quote',
+        value: 'Growth plan',
+        tags: ['Reply Needed', 'Orders'],
+        message: 'Asked for updated pricing on AI reception and number routing for a multi-site setup.',
+        replies: 1,
+        orders: 1,
+        tickets: 0,
+        timeline: [
+          { type: 'mail-check', text: 'Customer replied asking for quote changes.', time: '04/06/2026 09:31' },
+          { type: 'package-check', text: 'Draft order created for Growth plan.', time: '04/06/2026 09:45' }
+        ]
+      },
+      {
+        id: 'LD-2026-102',
+        company: 'Turner Little BVI',
+        contact: 'Finance director',
+        email: 'finance@example.com',
+        phone: '01632 960 221',
+        inquiryType: 'Consultancy',
+        source: 'Website',
+        received: '03/06/2026 15:02',
+        status: 'Demo Booked',
+        priority: 'High',
+        owner: 'Sales',
+        nextAction: 'Prepare discovery notes',
+        value: 'Consultancy day',
+        tags: ['Replies', 'Tickets'],
+        message: 'Needs a process review before rolling out AI call handling across departments.',
+        replies: 2,
+        orders: 0,
+        tickets: 1,
+        timeline: [
+          { type: 'calendar-check', text: 'Discovery call booked for Friday.', time: '03/06/2026 16:20' },
+          { type: 'ticket-check', text: 'Pre-sales ticket opened for workflow questions.', time: '03/06/2026 16:28' }
+        ]
+      },
+      {
+        id: 'LD-2026-101',
+        company: 'Mori Appointments',
+        contact: 'Practice manager',
+        email: 'manager@example.com',
+        phone: '01632 960 774',
+        inquiryType: 'Dental Demo',
+        source: 'Missed Call Calculator',
+        received: '02/06/2026 11:14',
+        status: 'Won',
+        priority: 'Medium',
+        owner: 'Luke',
+        nextAction: 'Complete onboarding ticket',
+        value: 'Core plan',
+        tags: ['Orders', 'Tickets'],
+        message: 'Wanted better capture of patient enquiries and out-of-hours appointment requests.',
+        replies: 0,
+        orders: 1,
+        tickets: 3,
+        timeline: [
+          { type: 'circle-pound-sterling', text: 'Core plan order created.', time: '02/06/2026 14:50' },
+          { type: 'ticket-check', text: 'Onboarding tickets created for call script, routing and email summary template.', time: '02/06/2026 15:12' }
+        ]
+      }
+    ];
+
+    const state = {
+      leads: loadLeads(),
+      selectedId: null,
+      filter: 'all',
+      query: ''
+    };
+
+    function loadLeads() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(storeKey));
+        return Array.isArray(stored) && stored.length ? stored : defaultLeads;
+      } catch {
+        return defaultLeads;
+      }
+    }
+
+    function saveLeads() {
+      localStorage.setItem(storeKey, JSON.stringify(state.leads));
+    }
+
+    function byId(id) {
+      return state.leads.find((lead) => lead.id === id) || state.leads[0];
+    }
+
+    function computedLead(lead) {
+      return {
+        ...lead,
+        countValue: 1,
+        hasReplyNeeded: lead.tags.includes('Reply Needed') || lead.replies > 0,
+        hasOrders: lead.tags.includes('Orders') || lead.orders > 0,
+        hasTickets: lead.tags.includes('Tickets') || lead.tickets > 0
+      };
+    }
+
+    function filteredLeads() {
+      const query = state.query.trim().toLowerCase();
+      return state.leads.map(computedLead).filter((lead) => {
+        const text = [lead.company, lead.contact, lead.email, lead.inquiryType, lead.source, lead.status, lead.message, lead.tags.join(' ')].join(' ').toLowerCase();
+        const matchesQuery = !query || text.includes(query);
+        let matchesFilter = true;
+        if (state.filter === 'New') matchesFilter = lead.status === 'New';
+        if (state.filter === 'Contacted') matchesFilter = lead.status === 'Contacted';
+        if (state.filter === 'Demo Booked') matchesFilter = lead.status === 'Demo Booked';
+        if (state.filter === 'Won') matchesFilter = lead.status === 'Won';
+        if (state.filter === 'Formspree') matchesFilter = lead.source === 'Formspree';
+        if (state.filter === 'Property Demo') matchesFilter = lead.inquiryType === 'Property Demo';
+        if (state.filter === 'Reply Needed') matchesFilter = lead.hasReplyNeeded;
+        if (state.filter === 'Orders') matchesFilter = lead.hasOrders;
+        if (state.filter === 'Tickets') matchesFilter = lead.hasTickets;
+        return matchesQuery && matchesFilter;
+      });
+    }
+
+    function renderMetrics() {
+      const enriched = state.leads.map(computedLead);
+      const newCount = enriched.filter((lead) => lead.status === 'New').length;
+      const replyCount = enriched.reduce((sum, lead) => sum + lead.replies + (lead.tags.includes('Reply Needed') ? 1 : 0), 0);
+      const orderCount = enriched.reduce((sum, lead) => sum + lead.orders, 0);
+      const ticketCount = enriched.reduce((sum, lead) => sum + lead.tickets, 0);
+
+      document.getElementById('metricNew').textContent = newCount;
+      document.getElementById('metricReplies').textContent = replyCount;
+      document.getElementById('metricOrders').textContent = orderCount;
+      document.getElementById('metricTickets').textContent = ticketCount;
+      document.getElementById('navLeadBadge').textContent = newCount;
+      document.getElementById('navReplyBadge').textContent = replyCount;
+      document.getElementById('navOrderBadge').textContent = orderCount;
+      document.getElementById('navTicketBadge').textContent = ticketCount;
+      document.getElementById('liveCount').textContent = `${state.leads.length} live`;
+    }
+
+    function chipClass(value) {
+      const normalized = value.toLowerCase();
+      if (normalized.includes('hot') || normalized.includes('high')) return 'hot';
+      if (normalized.includes('new')) return 'new';
+      if (normalized.includes('reply') || normalized.includes('contacted')) return 'reply';
+      if (normalized.includes('ticket')) return 'ticket';
+      if (normalized.includes('won') || normalized.includes('booked')) return 'open';
+      return '';
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function iconName(type) {
+      return ['send', 'bell', 'mail-check', 'package-check', 'ticket-check', 'calendar-check', 'circle-pound-sterling'].includes(type) ? type : 'activity';
+    }
+
+    function renderLeadList() {
+      const list = document.getElementById('leadList');
+      const leads = filteredLeads();
+      if (!state.selectedId || !state.leads.some((lead) => lead.id === state.selectedId)) {
+        state.selectedId = leads[0]?.id || state.leads[0]?.id;
+      }
+
+      if (!leads.length) {
+        list.innerHTML = '<div class="panel"><h3>No matching leads</h3><p class="muted text-sm">Clear the search or choose a different filter.</p></div>';
+        return;
+      }
+
+      list.innerHTML = leads.map((lead) => `
+        <button class="lead-row ${lead.id === state.selectedId ? 'active' : ''}" data-id="${escapeHtml(lead.id)}">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3>${escapeHtml(lead.company)}</h3>
+              <p>${escapeHtml(lead.inquiryType)} - ${escapeHtml(lead.source)} - ${escapeHtml(lead.received)}</p>
+            </div>
+            <span class="chip ${chipClass(lead.priority)}">${escapeHtml(lead.priority)}</span>
+          </div>
+          <p>${escapeHtml(lead.message)}</p>
+          <div class="row-meta">
+            <span class="chip ${chipClass(lead.status)}">${escapeHtml(lead.status)}</span>
+            ${lead.tags.slice(0, 3).map((tag) => `<span class="chip ${chipClass(tag)}">${escapeHtml(tag)}</span>`).join('')}
+          </div>
+        </button>
+      `).join('');
+
+      list.querySelectorAll('.lead-row').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.selectedId = button.dataset.id;
+          render();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const detail = document.getElementById('leadDetail');
+      const lead = computedLead(byId(state.selectedId));
+      if (!lead) {
+        detail.innerHTML = '';
+        return;
+      }
+
+      detail.innerHTML = `
+        <div class="detail-header">
+          <div>
+            <div class="row-meta mb-3">
+              <span class="chip ${chipClass(lead.status)}">${escapeHtml(lead.status)}</span>
+              <span class="chip ${chipClass(lead.inquiryType)}">${escapeHtml(lead.inquiryType)}</span>
+              <span class="chip">${escapeHtml(lead.id)}</span>
+            </div>
+            <h2>${escapeHtml(lead.company)}</h2>
+            <p class="muted mt-2">${escapeHtml(lead.contact)} - ${escapeHtml(lead.nextAction)}</p>
+          </div>
+          <button class="icon-button" id="markRead" title="Mark contacted"><i data-lucide="check-check" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="action-row">
+          <button class="btn primary" id="replyLead"><i data-lucide="reply" class="w-4 h-4"></i>Reply</button>
+          <button class="btn" id="bookDemo"><i data-lucide="calendar-plus" class="w-4 h-4"></i>Book Demo</button>
+          <button class="btn" id="createOrder"><i data-lucide="package-plus" class="w-4 h-4"></i>Create Order</button>
+          <button class="btn" id="createTicket"><i data-lucide="ticket-plus" class="w-4 h-4"></i>Create Ticket</button>
+        </div>
+
+        <div class="section-grid">
+          <div class="panel">
+            <h3>Lead Details</h3>
+            <div class="field-grid">
+              <div class="field"><span>Source</span><span>${escapeHtml(lead.source)}</span></div>
+              <div class="field"><span>Email</span><span>${escapeHtml(lead.email)}</span></div>
+              <div class="field"><span>Phone</span><span>${escapeHtml(lead.phone)}</span></div>
+              <div class="field"><span>Owner</span><span>${escapeHtml(lead.owner)}</span></div>
+              <div class="field"><span>Value</span><span>${escapeHtml(lead.value)}</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Notifications</h3>
+            <div class="field-grid">
+              <div class="field"><span>Replies</span><span>${lead.replies}</span></div>
+              <div class="field"><span>Orders</span><span>${lead.orders}</span></div>
+              <div class="field"><span>Tickets</span><span>${lead.tickets}</span></div>
+              <div class="field"><span>Received</span><span>${escapeHtml(lead.received)}</span></div>
+              <div class="field"><span>Priority</span><span>${escapeHtml(lead.priority)}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel mb-4">
+          <h3>Submission Message</h3>
+          <p class="muted text-sm leading-relaxed">${escapeHtml(lead.message)}</p>
+        </div>
+
+        <div class="section-grid">
+          <div class="panel">
+            <h3>Activity</h3>
+            <div class="timeline">
+              ${lead.timeline.map((event) => `
+                <div class="event">
+                  <span class="event-icon"><i data-lucide="${iconName(event.type)}" class="w-4 h-4"></i></span>
+                  <div><p>${escapeHtml(event.text)}</p><time>${escapeHtml(event.time)}</time></div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Reply Draft</h3>
+            <div class="reply-box">
+              <textarea id="replyText">Hi, thanks for getting in touch about a Property Demo. We can show how WiseCall captures valuation, viewing, landlord and tenant enquiries, then routes them to the right branch contact. Are you free for a 15-minute demo this week?</textarea>
+              <button class="btn primary" id="sendReply"><i data-lucide="send" class="w-4 h-4"></i>Save Reply</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('replyLead').addEventListener('click', () => focusReply());
+      document.getElementById('sendReply').addEventListener('click', () => updateLead(lead.id, 'reply'));
+      document.getElementById('bookDemo').addEventListener('click', () => updateLead(lead.id, 'demo'));
+      document.getElementById('createOrder').addEventListener('click', () => updateLead(lead.id, 'order'));
+      document.getElementById('createTicket').addEventListener('click', () => updateLead(lead.id, 'ticket'));
+      document.getElementById('markRead').addEventListener('click', () => updateLead(lead.id, 'contacted'));
+    }
+
+    function updateLead(id, action) {
+      const lead = state.leads.find((item) => item.id === id);
+      if (!lead) return;
+      const now = new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      if (action === 'reply') {
+        lead.replies += 1;
+        lead.status = 'Contacted';
+        lead.tags = [...new Set(lead.tags.filter((tag) => tag !== 'Reply Needed').concat('Replies'))];
+        lead.timeline.unshift({ type: 'mail-check', text: 'Reply saved against the lead.', time: now });
+        toast('Reply saved and lead marked contacted.');
+      }
+
+      if (action === 'demo') {
+        lead.status = 'Demo Booked';
+        lead.nextAction = 'Prepare demo agenda';
+        lead.timeline.unshift({ type: 'calendar-check', text: 'Demo booking step added.', time: now });
+        toast('Demo step added to the lead.');
+      }
+
+      if (action === 'order') {
+        lead.orders += 1;
+        lead.tags = [...new Set(lead.tags.concat('Orders'))];
+        lead.timeline.unshift({ type: 'package-check', text: 'Order notification created.', time: now });
+        toast('Order notification created.');
+      }
+
+      if (action === 'ticket') {
+        lead.tickets += 1;
+        lead.tags = [...new Set(lead.tags.concat('Tickets'))];
+        lead.timeline.unshift({ type: 'ticket-check', text: 'Support ticket opened from CRM.', time: now });
+        toast('Ticket created for this lead.');
+      }
+
+      if (action === 'contacted') {
+        lead.status = lead.status === 'New' ? 'Contacted' : lead.status;
+        lead.timeline.unshift({ type: 'check-check', text: 'Lead reviewed by sales.', time: now });
+        toast('Lead reviewed.');
+      }
+
+      saveLeads();
+      render();
+    }
+
+    function focusReply() {
+      const textarea = document.getElementById('replyText');
+      textarea?.focus();
+      textarea?.setSelectionRange(textarea.value.length, textarea.value.length);
+    }
+
+    function toast(message) {
+      const toastEl = document.getElementById('toast');
+      toastEl.textContent = message;
+      toastEl.classList.add('show');
+      window.clearTimeout(toastEl.timer);
+      toastEl.timer = window.setTimeout(() => toastEl.classList.remove('show'), 2400);
+    }
+
+    function simulateLead() {
+      const nextNumber = 105 + state.leads.filter((lead) => lead.id.startsWith('LD-2026-')).length;
+      const now = new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const lead = {
+        id: `LD-2026-${nextNumber}`,
+        company: 'New Website Enquiry',
+        contact: 'Incoming form contact',
+        email: 'Pending sync from Formspree email',
+        phone: 'Pending sync',
+        inquiryType: 'General Demo',
+        source: 'Formspree',
+        received: now,
+        status: 'New',
+        priority: 'Medium',
+        owner: 'Unassigned',
+        nextAction: 'Review submission and reply',
+        value: 'Unqualified',
+        tags: ['Formspree', 'Reply Needed'],
+        message: 'New demo enquiry created from the CRM test button.',
+        replies: 0,
+        orders: 0,
+        tickets: 0,
+        timeline: [{ type: 'send', text: 'Formspree-style lead created.', time: now }]
+      };
+      state.leads.unshift(lead);
+      state.selectedId = lead.id;
+      saveLeads();
+      render();
+      toast('New lead added to the queue.');
+    }
+
+    function bindEvents() {
+      document.getElementById('searchInput').addEventListener('input', (event) => {
+        state.query = event.target.value;
+        render();
+      });
+
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach((item) => item.classList.remove('active'));
+          tab.classList.add('active');
+          state.filter = tab.dataset.filter;
+          render();
+        });
+      });
+
+      document.querySelectorAll('.nav-item[data-section], .nav-item[data-status]').forEach((item) => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.nav-item').forEach((nav) => nav.classList.remove('active'));
+          item.classList.add('active');
+          state.filter = item.dataset.status || item.dataset.section || 'all';
+          document.querySelectorAll('.tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.filter === state.filter));
+          if (!document.querySelector('.tab.active')) {
+            document.querySelector('.tab[data-filter="all"]').classList.add('active');
+          }
+          render();
+        });
+      });
+
+      document.getElementById('simulateLead').addEventListener('click', simulateLead);
+      document.getElementById('notificationButton').addEventListener('click', () => {
+        const newCount = state.leads.filter((lead) => lead.status === 'New').length;
+        const replyCount = state.leads.reduce((sum, lead) => sum + lead.replies + (lead.tags.includes('Reply Needed') ? 1 : 0), 0);
+        toast(`${newCount} new lead notification${newCount === 1 ? '' : 's'}, ${replyCount} reply item${replyCount === 1 ? '' : 's'} waiting.`);
+      });
+    }
+
+    function render() {
+      renderMetrics();
+      renderLeadList();
+      renderDetail();
+      lucide.createIcons();
+    }
+
+    bindEvents();
+    render();
+  </script>
+
+
+
+
+
+<!-- WiseCall live chat widget -->
+<script
+  src="https://zgzzpwaqqftmugzpccpm.supabase.co/storage/v1/object/public/wisecall-assets/wisecall-live-chat-widget.js"
+  data-profile-slug="wisecall"
+  data-title="WiseCall"
+  data-subtitle="AI calls, live chat and customer follow-up"
+  data-accent="#7de8eb"
+  data-background="#172929"
+></script>
+<!-- /WiseCall live chat widget -->
+</body>
+</html>

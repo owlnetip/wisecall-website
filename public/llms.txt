@@ -1,0 +1,27 @@
+# WiseCall
+
+WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It answers phone calls, qualifies enquiries, captures structured details, supports booking and escalation workflows, and provides call summaries and transcripts.
+
+## Key pages
+
+- Homepage: https://wisecall.io/
+- How WiseCall works: https://wisecall.io/how-it-works/
+- Pricing: https://wisecall.io/pricing/
+- Integrations: https://wisecall.io/integrations/
+- Case studies: https://wisecall.io/case-studies/
+- Industries hub: https://wisecall.io/industries/
+- Dental practices: https://wisecall.io/industries/dental/
+- Legal and professional services: https://wisecall.io/industries/legal/
+- Estate agents: https://wisecall.io/industries/estate-agents/
+- AI receptionist UK comparison: https://wisecall.io/compare/ai-receptionist-uk-comparison/
+- Missed call calculator: https://wisecall.io/resources/missed-call-calculator/
+- Call transcript guide: https://wisecall.io/resources/call-transcript-guide/
+- Missed calls guide: https://wisecall.io/blog/missed-calls-cost-uk-businesses/
+
+## Important positioning
+
+- WiseCall is for UK businesses.
+- WiseCall combines AI call answering with a business phone system foundation.
+- WiseCall is useful for missed call recovery, out-of-hours call handling, structured caller summaries and team routing.
+- Industry pages include dental practices, law firms and estate agents in the first implementation pass.
+- Case studies, benchmark reports and transcript-derived content should only use verified, anonymised or approved customer data.

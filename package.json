@@ -6,7 +6,11 @@
   "description": "AI-powered answering service for UK businesses",
   "scripts": {
     "dev": "vite",
+    "generate:seo": "node scripts/generate-seo-pages.mjs",
+    "inject:chat-widget": "node scripts/inject-live-chat-widget.mjs",
+    "prebuild": "npm run generate:seo && npm run inject:chat-widget",
     "build": "vite build",
+    "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
     "serve": "npx serve ."
