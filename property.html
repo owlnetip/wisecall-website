@@ -247,7 +247,7 @@
 
           <a href="#" class="demo-call-link mbtn inline-flex items-center gap-3 px-7 py-3.5 rounded-full bg-white/5 border border-[#7de8eb]/30 text-white font-bold text-lg tracking-wide hover:bg-white/10 backdrop-blur-sm">
             <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="demo-number">0113 522 2277</span>
+            <span class="demo-number">+44 20 0000 0000</span>
           </a>
           <p class="text-white/55 text-sm mt-4">Tap the orb or dial the number from any phone.</p>
           <p class="text-white/40 text-xs mt-3 leading-relaxed">
@@ -631,7 +631,7 @@
     // portal, AI Agents). Updates the orb and number button everywhere.
     // Must run before the smooth-scroll binding below so the demo links
     // are real tel: links by the time anchors are collected.
-    const WISECALL_DEMO_NUMBER = '0113 522 2277';
+    const WISECALL_DEMO_NUMBER = '+44 20 0000 0000';
 
     const demoTel = 'tel:' + WISECALL_DEMO_NUMBER.replace(/\s+/g, '');
     document.querySelectorAll('.demo-call-link').forEach(el => { el.href = demoTel; });
@@ -740,6 +740,7 @@
     }, { threshold: 0.12 });
     motionEls.forEach(el => observer.observe(el));
   </script>
+
 
 
 
