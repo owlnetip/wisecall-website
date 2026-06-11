@@ -4,21 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WiseCall for Legal and Professional Services | AI Receptionist for UK Firms</title>
-  <meta name="description" content="AI answering service for UK law firms and professional services. Never miss a new enquiry. Qualify callers, capture matter details, route urgent calls and support Clio workflows 24/7.">
-  <meta name="keywords" content="AI receptionist for law firms, legal answering service UK, Clio integration, legal intake automation, professional services call handling">
+  <meta name="description" content="AI answering service for UK law firms and professional services. Qualify new enquiries, capture matter details, route urgent calls and support your team 24/7. Try the Legal AI live, no signup required.">
+  <meta name="keywords" content="AI receptionist for law firms, legal answering service UK, new matter intake automation, Clio intake, solicitor call handling">
   <meta name="author" content="WiseCall">
   <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://wisecall.io/legal">
+
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://wisecall.io/legal">
-  <meta property="og:title" content="WiseCall for Legal and Professional Services | Never Miss Another Enquiry">
-  <meta property="og:description" content="AI call handling built for UK law firms and professional services. Captures new enquiries, routes urgent calls and supports Clio workflows 24/7.">
+  <meta property="og:title" content="WiseCall for Legal and Professional Services | Never Miss a New Matter">
+  <meta property="og:description" content="AI call handling built for UK law firms. Qualifies enquiries, captures matter details and supports Clio intake 24/7. Try the Legal AI live.">
   <meta property="og:image" content="https://wisecall.io/og-image.jpg">
+
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://wisecall.io/legal">
-  <meta name="twitter:title" content="WiseCall for Legal and Professional Services | Never Miss Another Enquiry">
-  <meta name="twitter:description" content="AI call handling built for UK law firms and professional services. Captures new enquiries, routes urgent calls and supports Clio workflows 24/7.">
-  <meta name="twitter:image" content="https://wisecall.io/og-image.jpg">
+  <meta name="twitter:title" content="WiseCall for Legal and Professional Services">
+  <meta name="twitter:description" content="AI call handling built for UK law firms. Try the Legal AI live, no signup required.">
+
   <link rel="icon" type="image/png" href="favicon.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "WiseCall for Legal and Professional Services",
+    "provider": { "@type": "Organization", "name": "WiseCall", "url": "https://wisecall.io/" },
+    "serviceType": "AI receptionist and call handling for UK law firms and professional services",
+    "areaServed": "GB"
+  }
+  </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
@@ -35,6 +48,7 @@
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
+    /* Scroll animations */
     .motion { opacity: 0; will-change: transform, opacity; transition-property: opacity, transform; transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1); }
     .motion[data-anim="fade-up"] { transform: translateY(20px); transition-duration: 0.75s; }
     .motion[data-anim="fade-right"] { transform: translateX(-20px); transition-duration: 0.7s; }
@@ -42,29 +56,63 @@
     .motion[data-anim="scale-in"] { transform: scale(0.95); transition-duration: 0.65s; }
     .motion[data-anim="fade"] { transition-duration: 1s; }
     .motion.in-view { opacity: 1; transform: translate(0, 0) scale(1); }
-    .mbtn { transition: transform 0.18s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.25s, border-color 0.25s; }
+    /* Button hover */
+    .mbtn { transition: transform 0.18s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.25s, border-color 0.25s, background-color 0.25s; }
     .mbtn:hover { transform: translateY(-2px); }
     .mbtn:active { transform: translateY(0) scale(0.98); }
+    /* Header */
     header.scrolled { background: rgba(23, 41, 41, 0.95); box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
+    /* Scroll progress */
     .scroll-progress { position: fixed; top: 0; left: 0; height: 3px; z-index: 60; background: linear-gradient(90deg, #7de8eb, #5dbfc2); width: 0%; transition: width 0.12s linear; }
+    /* Scrollbar */
     ::-webkit-scrollbar { width: 10px; }
     ::-webkit-scrollbar-track { background: #0f1f1f; }
     ::-webkit-scrollbar-thumb { background: rgba(125, 232, 235, 0.18); border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(125, 232, 235, 0.32); }
+    /* Mobile menu */
     .mobile-menu { transform: translateY(-100%); transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1); }
     .mobile-menu.open { transform: translateY(0); }
+    /* Pulse dot */
+    @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+    .pulse-dot { animation: pulse-soft 2.2s ease-in-out infinite; }
+    /* WiseCall voice orb: crisp glossy sphere, soft feathered rim */
+    .orb-stage { position: relative; width: 240px; height: 240px; margin-left: auto; margin-right: auto; display: block; cursor: pointer; }
+    .orb { position: absolute; inset: 0; border-radius: 50%;
+      background:
+        radial-gradient(ellipse 52% 22% at 50% 85%, rgba(206,246,247,0.4) 0%, transparent 72%),
+        radial-gradient(circle at 36% 30%, #f4fffe 0%, #c4f4f5 22%, #7de8eb 46%, #3f9a9d 74%, rgba(45,92,92,0.45) 86%, rgba(23,41,41,0) 94%);
+      box-shadow: 0 0 44px rgba(125, 232, 235, 0.2);
+      animation: orb-float 7s ease-in-out infinite;
+      transition: box-shadow 0.4s ease, filter 0.4s ease; }
+    .orb-swirl { position: absolute; inset: 0; border-radius: 50%;
+      background: radial-gradient(circle at 31% 27%, rgba(255,255,255,0.55) 0%, transparent 30%);
+      mix-blend-mode: screen; filter: blur(3px);
+      animation: orb-spin 24s linear infinite; }
+    .orb-core { position: absolute; inset: 0; border-radius: 50%;
+      background: radial-gradient(circle at 73% 77%, rgba(16,40,40,0.5) 0%, transparent 40%);
+      filter: blur(6px);
+      animation: orb-spin 34s linear infinite reverse; }
+    .orb-stage:hover .orb { box-shadow: 0 0 60px rgba(125, 232, 235, 0.32); filter: brightness(1.05); }
+    @keyframes orb-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+    @keyframes orb-spin { to { transform: rotate(360deg); } }
+    /* Video */
+    .video-frame { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 1.25rem; border: 1px solid rgba(125, 232, 235, 0.15); box-shadow: 0 24px 60px rgba(0,0,0,0.35); background: rgba(0,0,0,0.18); }
+    .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    /* Modal */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 1.5rem; }
     .modal-overlay.active { display: flex; }
+    /* Stat number font */
+    .stat-num { font-variant-numeric: tabular-nums; }
     [data-lucide] { width: 1em; height: 1em; }
-    .video-frame { position: relative; overflow: hidden; aspect-ratio: 1920 / 1080; border-radius: 1.25rem; border: 1px solid rgba(125, 232, 235, 0.12); box-shadow: 0 24px 60px rgba(0,0,0,0.28); background: rgba(0,0,0,0.18); }
-    .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button { opacity: 1; }
   </style>
 
   <script>
     tailwind.config = {
-      theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } }
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] }
+        }
+      }
     };
   </script>
 </head>
@@ -72,39 +120,23 @@
 <body class="min-h-screen bg-[#172929] overflow-x-hidden">
   <div class="scroll-progress" id="scrollProgress"></div>
 
-  <!-- CONTACT MODAL -->
-  <div class="modal-overlay" id="contactModal">
-    <div class="w-full max-w-lg rounded-2xl bg-[#1a3535] border border-[#7de8eb]/20 p-8 relative shadow-2xl">
-      <button id="modalClose" class="absolute top-4 right-4 w-9 h-9 rounded-lg border border-[#7de8eb]/20 text-white/60 flex items-center justify-center hover:text-white hover:border-[#7de8eb]/40 transition-colors text-xl leading-none">&times;</button>
-      <h3 class="text-2xl font-bold text-white mb-1">Book a Legal Demo</h3>
-      <p class="text-white/60 text-sm mb-6">Fill in your details and we'll arrange a personalised demo for your firm.</p>
-      <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST" class="flex flex-col gap-4">
-        <input type="hidden" id="inquiryType" name="inquiry_type" value="Legal Demo">
-        <input type="text" id="name" name="name" placeholder="Your name" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
-        <input type="email" id="email" name="email" placeholder="your@email.com" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
-        <input type="tel" id="phone" name="phone" placeholder="Your phone number" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
-        <input type="text" id="firm" name="firm_name" placeholder="Your firm name" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
-        <textarea id="message" name="message" rows="3" placeholder="Tell us about your intake process" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors resize-none"></textarea>
-        <button type="submit" class="form-submit mbtn w-full py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)]">Request Demo</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- HEADER -->
+  <!-- ───── HEADER ───── -->
   <header id="siteHeader" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#172929]/70 border-b border-[#7de8eb]/10 transition-all duration-300">
     <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
-      <a href="index.html" class="flex items-center gap-2 text-white font-bold text-lg" style="text-decoration:none;">
+      <a href="/" class="flex items-center gap-3 text-white font-bold text-lg" style="text-decoration:none;">
         <img src="owl-logo.png" alt="WiseCall" style="height:46px;margin-right:8px;">WiseCall
       </a>
       <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
-        <a href="index.html" class="hover:text-[#7de8eb] transition-colors">Home</a>
-        <a href="index.html#features" class="hover:text-[#7de8eb] transition-colors">Features</a>
-        <a href="index.html#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="/#how-it-works" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
+        <a href="/#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="/#industries" class="hover:text-[#7de8eb] transition-colors">Industries</a>
+        <a href="#live-demo" class="hover:text-[#7de8eb] transition-colors">Try the AI</a>
         <a href="#calculator" class="hover:text-[#7de8eb] transition-colors">Calculator</a>
-        <a href="dental.html" class="hover:text-[#7de8eb] transition-colors">Dental</a>
+        <a href="#faq" class="hover:text-[#7de8eb] transition-colors">FAQ</a>
+        <a href="#" class="contact-link hover:text-[#7de8eb] transition-colors" data-inquiry="Legal - General Contact">Contact</a>
       </div>
       <div class="flex items-center gap-3">
-        <a href="#" class="mbtn contact-link hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]" data-inquiry="Legal Demo">
+        <a href="#" class="mbtn contact-link hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]" data-inquiry="Legal Demo Request">
           Book a Demo <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </a>
         <button id="mobileMenuToggle" aria-label="Open menu" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
@@ -114,303 +146,472 @@
     </nav>
     <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 right-0 bg-[#172929]/98 backdrop-blur-xl border-b border-[#7de8eb]/15 shadow-2xl">
       <div class="px-6 py-6 flex flex-col gap-4 text-white">
-        <a href="index.html" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Home</a>
-        <a href="index.html#features" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Features</a>
-        <a href="index.html#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
+        <a href="/#how-it-works" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How It Works</a>
+        <a href="/#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
+        <a href="/#industries" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Industries</a>
+        <a href="#live-demo" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Try the AI</a>
         <a href="#calculator" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Calculator</a>
-        <a href="dental.html" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Dental</a>
-        <a href="#" class="mbtn contact-link mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold" data-inquiry="Legal Demo">
+        <a href="#faq" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">FAQ</a>
+        <a href="#" class="contact-link py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link" data-inquiry="Legal - General Contact">Contact</a>
+        <a href="#" class="mbtn contact-link mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold" data-inquiry="Legal Demo Request">
           Book a Demo <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- HERO -->
-  <section class="pt-40 pb-24 px-6 flex flex-col items-center text-center">
-    <div class="max-w-4xl mx-auto">
-      <div class="motion mb-4" data-anim="fade-up">
-        <span class="inline-block px-4 py-1.5 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/20 text-[#7de8eb] text-sm font-medium">Built for UK law firms and professional services</span>
+  <!-- ───── CONTACT MODAL ───── -->
+  <div class="modal-overlay" id="contactModal">
+    <div class="w-full max-w-lg rounded-2xl bg-[#1a3535] border border-[#7de8eb]/20 p-8 relative shadow-2xl">
+      <button id="modalClose" class="absolute top-4 right-4 w-9 h-9 rounded-lg border border-[#7de8eb]/20 text-white/60 flex items-center justify-center hover:text-white hover:border-[#7de8eb]/40 transition-colors text-xl">&times;</button>
+      <h3 class="text-2xl font-bold text-white mb-1">Book a Legal Demo</h3>
+      <p class="text-white/60 text-sm mb-6">Tell us about your firm and we will come back within one business day.</p>
+      <form id="contactForm" action="https://formspree.io/f/mwvvvlwp" method="POST" class="flex flex-col gap-4">
+        <input type="hidden" id="inquiryType" name="inquiry_type" value="Legal Demo Request">
+        <input type="text" id="name" name="name" placeholder="Your name" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <input type="email" id="email" name="email" placeholder="your@email.com" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <input type="tel" id="phone" name="phone" placeholder="Your phone number" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <input type="text" id="firm" name="firm_name" placeholder="Firm name (optional)" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+        <textarea id="message" name="message" rows="3" placeholder="Which departments? Do you use Clio?" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors resize-none"></textarea>
+        <button type="submit" class="form-submit mbtn w-full py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)]">Request Demo</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ───── HERO + LIVE LEGAL AI DEMO ───── -->
+  <section class="relative min-h-screen flex items-center overflow-hidden px-6 pt-28 pb-16" id="live-demo">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#172929] via-[#1a3535] to-[#172929]"></div>
+    <div class="absolute top-24 left-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
+    <div class="absolute bottom-16 right-1/4 w-80 h-80 bg-[#7de8eb] rounded-full blur-[120px] opacity-15 pointer-events-none"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Left: copy -->
+      <div>
+        <div class="motion inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-8" data-anim="fade-up">
+          <span class="text-base">⚖️</span>
+          <span class="text-sm text-white/80">WiseCall for Law Firms &amp; Professional Services</span>
+        </div>
+
+        <h1 class="motion text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" data-anim="fade-up" style="transition-delay:0.05s">
+          Never miss another<br>
+          <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">new matter enquiry.</span>
+        </h1>
+
+        <p class="motion text-xl text-white/70 leading-relaxed mb-10 max-w-xl" data-anim="fade-up" style="transition-delay:0.1s">
+          WiseCall answers every call, qualifies new enquiries, captures matter details, routes urgent calls and supports your team, 24 hours a day.
+        </p>
+
+        <div class="motion flex flex-col sm:flex-row gap-4 mb-10" data-anim="fade-up" style="transition-delay:0.18s">
+          <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Legal Demo Request">
+            Book a Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
+          </a>
+          <a href="#calculator" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
+            Missed Enquiry Calculator
+          </a>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="motion grid grid-cols-2 sm:grid-cols-4 gap-3" data-anim="fade-up" style="transition-delay:0.22s">
+          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
+            <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-xs text-white/70">24/7 Availability</span>
+          </div>
+          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
+            <i data-lucide="clipboard-check" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-xs text-white/70">Qualifies Enquiries</span>
+          </div>
+          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
+            <i data-lucide="map-pin" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-xs text-white/70">UK-Based</span>
+          </div>
+          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
+            <i data-lucide="shield-check" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="text-xs text-white/70">GDPR Compliant</span>
+          </div>
+        </div>
       </div>
-      <h1 class="motion text-5xl md:text-6xl font-extrabold leading-tight tracking-tight text-white mb-6" data-anim="fade-up">
-        Never Miss Another<br><span class="text-[#7de8eb]">New Matter Enquiry</span>
-      </h1>
-      <p class="motion text-xl text-white/65 max-w-2xl mx-auto mb-10 leading-relaxed" data-anim="fade-up">
-        WiseCall answers every call, qualifies new enquiries, captures matter details, routes urgent calls and supports your team 24/7.
-      </p>
-      <div class="motion flex flex-col sm:flex-row gap-4 justify-center" data-anim="fade-up">
-        <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-base shadow-[0_0_32px_rgba(125,232,235,0.3)] hover:shadow-[0_0_48px_rgba(125,232,235,0.5)]" data-inquiry="Legal Demo">
-          Book a Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
-        </a>
-        <a href="#calculator" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-[#7de8eb]/30 text-white font-semibold text-base hover:bg-white/5 hover:border-[#7de8eb]/60 transition-colors">
-          Calculate Missed Enquiry Value <i data-lucide="calculator" class="w-5 h-5"></i>
-        </a>
+
+      <!-- Right: live voice demo -->
+      <div class="motion" data-anim="fade-left" style="transition-delay:0.1s">
+        <div class="max-w-md mx-auto text-center">
+          <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#7de8eb]/10 mb-6">
+            <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
+            <span class="text-xs font-bold text-[#7de8eb] uppercase tracking-wider">Live demo &middot; No signup</span>
+          </span>
+          <h3 class="font-bold text-white text-lg mb-1">Talk to the Legal AI</h3>
+          <p class="text-white/55 text-sm mb-6">Call it like a prospective client would.</p>
+
+          <a href="#" class="orb-stage demo-call-link mb-8" aria-label="Call the WiseCall Legal AI demo">
+            <span class="orb">
+              <span class="orb-swirl"></span>
+              <span class="orb-core"></span>
+            </span>
+          </a>
+
+          <a href="#" class="demo-call-link mbtn inline-flex items-center gap-3 px-7 py-3.5 rounded-full bg-white/5 border border-[#7de8eb]/30 text-white font-bold text-lg tracking-wide hover:bg-white/10 backdrop-blur-sm">
+            <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb]"></i>
+            <span class="demo-number">+44 20 0000 0000</span>
+          </a>
+          <p class="text-white/55 text-sm mt-4">Tap the orb or dial the number from any phone.</p>
+          <p class="text-white/40 text-xs mt-3 leading-relaxed">
+            Standard UK call &middot; You'll get an SMS summary afterwards, the same follow-up your callers receive.
+          </p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- VIDEO -->
-  <section class="pb-20 px-6">
-    <div class="max-w-4xl mx-auto">
-      <div class="motion video-frame" data-anim="scale-in">
+  <!-- ───── VIDEO ───── -->
+  <section class="relative py-20 px-6 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
+    <div class="relative z-10 max-w-4xl mx-auto">
+      <div class="motion text-center mb-10" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Watch</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">See WiseCall in action</h2>
+        <p class="text-xl text-white/70 max-w-2xl mx-auto">A two-minute look at how WiseCall handles enquiries for legal and professional firms.</p>
+      </div>
+      <div class="motion video-frame" data-anim="scale-in" style="transition-delay:0.1s">
         <iframe src="https://share.synthesia.io/embeds/videos/1fe63106-36fb-4cd6-88d5-110dcd0568e1" loading="lazy" title="Synthesia video player - WiseCall for legal and professional services" allowfullscreen allow="encrypted-media; fullscreen; microphone; screen-wake-lock;"></iframe>
       </div>
     </div>
   </section>
 
-  <!-- SECTION: The Intake Bottleneck -->
-  <section class="py-20 px-6">
-    <div class="max-w-4xl mx-auto">
-      <div class="motion text-center mb-12" data-anim="fade-up">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">The Intake Bottleneck</h2>
+  <!-- ───── THE PROBLEM ───── -->
+  <section class="relative py-24 px-6 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/30 to-[#172929] pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">The Intake Bottleneck</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Busy doesn't mean responsive</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">The phone rings while fee earners are in meetings, reception is handling existing clients and someone is racing a deadline. By the time the call is returned, the enquiry has moved on.</p>
       </div>
-      <div class="motion space-y-5 text-white/70 text-lg leading-relaxed" data-anim="fade-up">
-        <p>Every legal and professional services firm knows the pattern. The phone rings while fee earners are in meetings, reception is handling existing clients and someone is racing a deadline. By the time the call is returned, the enquiry has moved on.</p>
-        <p>New matter enquiries are especially unforgiving. <strong class="text-white font-semibold">Prospective clients comparing firms want a fast, confident first response.</strong> If the call is missed at lunch, after hours or during a busy patch, they rarely wait around.</p>
-        <p>Existing clients create a second pressure point. They call for updates, document requests, billing queries and urgent escalations. Those conversations matter, but they can easily crowd out valuable new intake when the front desk is already stretched.</p>
-        <p>For firms with multiple departments or offices, consistent call handling becomes harder again. One missed handoff can mean lost instructions, slower response times and less visibility into what demand is actually coming in.</p>
-        <p>The result is a firm that looks busy and professional, but still loses opportunities through calls that never reach the right person quickly enough.</p>
+
+      <div class="grid md:grid-cols-3 gap-6 mb-12">
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4">
+            <i data-lucide="timer" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">New matters are unforgiving</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Prospective clients comparing firms want a fast, confident first response. If the call is missed at lunch, after hours or during a busy patch, they rarely wait around.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4">
+            <i data-lucide="phone-incoming" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Volume crowds out value</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Existing clients call for updates, document requests, billing queries and urgent escalations. Those matter, but they easily crowd out valuable new intake when the front desk is stretched.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4">
+            <i data-lucide="git-branch" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Departments drift apart</h3>
+          <p class="text-white/60 text-sm leading-relaxed">For firms with multiple departments or offices, consistent call handling is harder. One missed handoff can mean lost instructions, slower response times and less visibility into demand.</p>
+        </div>
       </div>
+
+      <p class="motion text-center text-white/55 max-w-2xl mx-auto" data-anim="fade-up">The result: a firm that looks busy and professional, but still loses opportunities through calls that never reach the right person quickly enough.</p>
     </div>
   </section>
 
-  <!-- SECTION: What WiseCall Does -->
-  <section class="py-20 px-6">
-    <div class="max-w-3xl mx-auto">
-      <div class="motion text-center mb-12" data-anim="fade-up">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">What WiseCall Does for Legal and Professional Firms</h2>
-        <p class="text-white/60 text-lg">An AI answering service that supports your intake team and front desk, not replaces them.</p>
+  <!-- ───── WHAT WISECALL DOES ───── -->
+  <section class="relative py-24 px-6 overflow-hidden">
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">What WiseCall Does</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">An AI receptionist built around intake</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">It supports your intake team and front desk, never in place of them. WiseCall never gives legal, financial or professional advice. All advice stays with your team.</p>
       </div>
-      <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-8" data-anim="scale-in">
-        <ul class="space-y-0 mb-8">
-          <li class="flex items-center gap-4 py-4 border-b border-white/5">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
-            <span class="text-white/80">Answers every inbound call, day and night</span>
-          </li>
-          <li class="flex items-center gap-4 py-4 border-b border-white/5">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
-            <span class="text-white/80">Qualifies new enquiries using your intake questions</span>
-          </li>
-          <li class="flex items-center gap-4 py-4 border-b border-white/5">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
-            <span class="text-white/80">Captures caller, matter and urgency details accurately</span>
-          </li>
-          <li class="flex items-center gap-4 py-4 border-b border-white/5">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
-            <span class="text-white/80">Books consultations and callback slots</span>
-          </li>
-          <li class="flex items-center gap-4 py-4 border-b border-white/5">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
-            <span class="text-white/80">Manages overflow during peak times</span>
-          </li>
-          <li class="flex items-center gap-4 py-4 border-b border-white/5">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
-            <span class="text-white/80">Covers out-of-hours enquiries</span>
-          </li>
-          <li class="flex items-center gap-4 py-4 border-b border-white/5">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
-            <span class="text-white/80">Routes urgent calls to the right person or team</span>
-          </li>
-          <li class="flex items-center gap-4 py-4">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb]"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
-            <span class="text-white/80">Pushes structured intake data into Clio workflows</span>
-          </li>
-        </ul>
-        <div class="bg-[#7de8eb]/5 border border-[#7de8eb]/10 rounded-xl p-5 mb-5">
-          <p class="text-white/60 text-sm mb-2">Compatible with legal intake and case management workflows, including:</p>
-          <p class="text-[#7de8eb] font-semibold">Clio Manage &nbsp;·&nbsp; Clio Grow &nbsp;·&nbsp; Custom CRM and shared inbox workflows</p>
-        </div>
-        <p class="text-white/40 text-sm italic">WiseCall does not provide legal, financial or professional advice. All advice stays with your team.</p>
-      </div>
-    </div>
-  </section>
 
-  <!-- SECTION: Enquiry Value Calculator -->
-  <section class="py-20 px-6" id="calculator">
-    <div class="max-w-3xl mx-auto">
-      <div class="motion text-center mb-12" data-anim="fade-up">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Enquiry Value Calculator</h2>
-        <p class="text-white/60 text-lg">See what missed calls could be costing your firm every month.</p>
-      </div>
-      <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/15 rounded-2xl p-8" data-anim="scale-in">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
-          <div class="flex flex-col gap-2">
-            <label class="text-white/80 text-sm font-medium" for="calcCalls">Average calls per day</label>
-            <input type="number" id="calcCalls" value="40" min="0" max="500" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-[#7de8eb]/15 text-white text-base focus:outline-none focus:border-[#7de8eb]/50 transition-colors">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="phone-call" class="w-6 h-6 text-[#7de8eb]"></i>
           </div>
-          <div class="flex flex-col gap-2">
-            <label class="text-white/80 text-sm font-medium" for="calcMissed">Estimated missed call percentage</label>
-            <input type="number" id="calcMissed" value="18" min="0" max="100" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-[#7de8eb]/15 text-white text-base focus:outline-none focus:border-[#7de8eb]/50 transition-colors">
-          </div>
-          <div class="flex flex-col gap-2">
-            <label class="text-white/80 text-sm font-medium" for="calcNewEnquiry">% of missed calls that are new enquiries</label>
-            <input type="number" id="calcNewEnquiry" value="35" min="0" max="100" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-[#7de8eb]/15 text-white text-base focus:outline-none focus:border-[#7de8eb]/50 transition-colors">
-          </div>
-          <div class="flex flex-col gap-2">
-            <label class="text-white/80 text-sm font-medium" for="calcValue">Average value of a new instruction</label>
-            <input type="number" id="calcValue" value="400" min="0" max="10000" step="50" class="w-full px-4 py-3 rounded-xl bg-black/30 border border-[#7de8eb]/15 text-white text-base focus:outline-none focus:border-[#7de8eb]/50 transition-colors">
-          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Every call answered</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Day, night, lunchtime rush or weekend. Full-time cover, out-of-hours only, or overflow when the front desk is busy. All included on every plan.</p>
         </div>
-        <div class="border-t border-white/10 pt-8">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div class="text-center">
-              <div class="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Daily Missed Matter Value</div>
-              <div class="text-[#7de8eb] text-3xl font-bold font-variant-numeric" id="resultDaily">£1,008</div>
-            </div>
-            <div class="text-center">
-              <div class="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Monthly Missed Matter Value</div>
-              <div class="text-[#7de8eb] text-4xl font-bold font-variant-numeric" id="resultMonthly">£22,176</div>
-            </div>
-            <div class="text-center">
-              <div class="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Estimated Annual Impact</div>
-              <div class="text-[#7de8eb] text-3xl font-bold font-variant-numeric" id="resultAnnual">£266,112</div>
-            </div>
+
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="clipboard-check" class="w-6 h-6 text-[#7de8eb]"></i>
           </div>
-          <p class="text-center text-white/40 text-sm mt-6">Use the average value of a new instruction, first-month fee or onboarding revenue to keep the estimate conservative. For many firms, the true lifetime value is materially higher.</p>
+          <h3 class="text-xl font-semibold text-white mb-2">New enquiries qualified</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Uses your own intake questions to qualify new enquiries consistently, then books consultations and callback slots straight into your workflow.</p>
+        </div>
+
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="file-text" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Accurate matter capture</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Caller, matter and urgency details captured in a structured format and delivered where your team needs them. No scribbled notes, no missed detail.</p>
+        </div>
+
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="siren" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Urgent calls routed</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Time-sensitive matters are identified early and escalated using your rules, whether that means an on-call solicitor, a duty team or a specific office.</p>
+        </div>
+
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.17s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="plug" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Clio-ready intake</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Pushes structured intake data into Clio Manage and Clio Grow workflows, as well as custom CRM and shared-inbox setups. Designed to fit how your firm already works.</p>
+        </div>
+
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.2s">
+          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
+            <i data-lucide="smartphone" class="w-6 h-6 text-[#7de8eb]"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Complete phone system included</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Business numbers, staff extensions and apps for iOS, Android and desktop on every plan. No separate telecoms contract to manage.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SECTION: Use Cases -->
-  <section class="py-20 px-6">
-    <div class="max-w-5xl mx-auto">
+  <!-- ───── CALCULATOR ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="calculator">
+    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-96 h-96 bg-[#7de8eb] rounded-full blur-[160px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-4xl mx-auto">
       <div class="motion text-center mb-12" data-anim="fade-up">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Built for Every Scenario</h2>
+        <span class="text-sm text-[#7de8eb] font-semibold">Enquiry Value Calculator</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">What are missed calls costing you?</h2>
+        <p class="text-xl text-white/70 max-w-2xl mx-auto">Use the value of a new instruction, first-month fee or onboarding revenue to keep the estimate conservative. For many firms the true lifetime value is materially higher.</p>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-7 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-right">
-          <div class="w-10 h-10 rounded-xl bg-[#7de8eb]/10 flex items-center justify-center text-[#7de8eb] mb-4">
-            <i data-lucide="user-check" class="w-5 h-5"></i>
+
+      <div class="motion rounded-2xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/15 p-8 md:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.4)]" data-anim="scale-in">
+        <div class="grid sm:grid-cols-2 gap-5 mb-8">
+          <div class="flex flex-col gap-2">
+            <label for="calcCalls" class="text-sm font-medium text-white/85">Average calls per day</label>
+            <input type="number" id="calcCalls" value="40" min="0" max="500" class="w-full rounded-lg bg-[#172929]/60 border border-[#7de8eb]/20 text-white px-4 py-3 text-base focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
           </div>
-          <h3 class="text-lg font-bold text-white mb-3">New Client Intake</h3>
-          <p class="text-white/65 leading-relaxed">WiseCall captures every new enquiry with consistent intake questions, books consultations or callbacks and creates structured records your team can act on immediately in Clio.</p>
+          <div class="flex flex-col gap-2">
+            <label for="calcMissed" class="text-sm font-medium text-white/85">Estimated missed call percentage</label>
+            <input type="number" id="calcMissed" value="18" min="0" max="100" class="w-full rounded-lg bg-[#172929]/60 border border-[#7de8eb]/20 text-white px-4 py-3 text-base focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="calcNewEnquiry" class="text-sm font-medium text-white/85">% of missed calls that are new enquiries</label>
+            <input type="number" id="calcNewEnquiry" value="35" min="0" max="100" class="w-full rounded-lg bg-[#172929]/60 border border-[#7de8eb]/20 text-white px-4 py-3 text-base focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="calcValue" class="text-sm font-medium text-white/85">Average value of a new instruction (&pound;)</label>
+            <input type="number" id="calcValue" value="400" min="0" max="10000" step="50" class="w-full rounded-lg bg-[#172929]/60 border border-[#7de8eb]/20 text-white px-4 py-3 text-base focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
+          </div>
         </div>
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-7 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-left">
-          <div class="w-10 h-10 rounded-xl bg-[#7de8eb]/10 flex items-center justify-center text-[#7de8eb] mb-4">
-            <i data-lucide="message-circle" class="w-5 h-5"></i>
+
+        <div class="grid sm:grid-cols-3 gap-5 pt-8 border-t border-[#7de8eb]/15">
+          <div class="rounded-xl bg-[#172929]/50 border border-[#7de8eb]/10 p-5 text-center">
+            <div class="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Daily missed matter value</div>
+            <div class="text-3xl font-bold text-[#7de8eb] stat-num" id="resultDaily">&pound;1,008</div>
           </div>
-          <h3 class="text-lg font-bold text-white mb-3">Existing Client Updates</h3>
-          <p class="text-white/65 leading-relaxed">Billing queries, document chases and progress update calls are handled professionally, with accurate notes routed to the right fee earner, department or shared inbox.</p>
+          <div class="rounded-xl bg-[#7de8eb]/[0.08] border border-[#7de8eb]/30 p-5 text-center shadow-[0_0_30px_rgba(125,232,235,0.12)]">
+            <div class="text-white/60 text-xs font-medium uppercase tracking-wider mb-2">Monthly missed matter value</div>
+            <div class="text-4xl font-bold text-[#7de8eb] stat-num" id="resultMonthly">&pound;22,176</div>
+          </div>
+          <div class="rounded-xl bg-[#172929]/50 border border-[#7de8eb]/10 p-5 text-center">
+            <div class="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Estimated annual impact</div>
+            <div class="text-3xl font-bold text-[#7de8eb] stat-num" id="resultAnnual">&pound;266,112</div>
+          </div>
         </div>
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-7 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-right">
-          <div class="w-10 h-10 rounded-xl bg-[#7de8eb]/10 flex items-center justify-center text-[#7de8eb] mb-4">
-            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-          </div>
-          <h3 class="text-lg font-bold text-white mb-3">Urgent Call Routing</h3>
-          <p class="text-white/65 leading-relaxed">Time-sensitive matters can be identified early and escalated using your rules, whether that means reaching an on-call solicitor, a duty team or a specific office location.</p>
+        <p class="text-center text-white/45 text-sm mt-6">Based on 22 working days per month. Every WiseCall plan costs a fraction of one recovered instruction.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── USE CASES ───── -->
+  <section class="relative py-24 px-6 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/30 to-[#172929] pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Use Cases</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Built for every scenario</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-7 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" style="transition-delay:0.05s">
+          <div class="text-3xl mb-4">📋</div>
+          <h3 class="text-xl font-semibold text-white mb-2">New client intake</h3>
+          <p class="text-white/60 text-sm leading-relaxed">WiseCall captures every new enquiry with consistent intake questions, books consultations or callbacks and creates structured records your team can act on immediately in Clio.</p>
         </div>
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-7 hover:border-[#7de8eb]/25 transition-colors" data-anim="fade-left">
-          <div class="w-10 h-10 rounded-xl bg-[#7de8eb]/10 flex items-center justify-center text-[#7de8eb] mb-4">
-            <i data-lucide="layout-grid" class="w-5 h-5"></i>
-          </div>
-          <h3 class="text-lg font-bold text-white mb-3">Multi-Department Coverage</h3>
-          <p class="text-white/65 leading-relaxed">Whether you run conveyancing, family, probate, litigation or advisory teams, WiseCall gives every department a consistent first response and clear reporting across the firm.</p>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-7 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="text-3xl mb-4">💬</div>
+          <h3 class="text-xl font-semibold text-white mb-2">Existing client updates</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Billing queries, document chases and progress update calls are handled professionally, with accurate notes routed to the right fee earner, department or shared inbox.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-7 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" style="transition-delay:0.11s">
+          <div class="text-3xl mb-4">🚨</div>
+          <h3 class="text-xl font-semibold text-white mb-2">Urgent call routing</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Time-sensitive matters can be identified early and escalated using your rules, whether that means reaching an on-call solicitor, a duty team or a specific office location.</p>
+        </div>
+        <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-7 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="text-3xl mb-4">🏛️</div>
+          <h3 class="text-xl font-semibold text-white mb-2">Multi-department coverage</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Whether you run conveyancing, family, probate, litigation or advisory teams, WiseCall gives every department a consistent first response and clear reporting across the firm.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SECTION: Compliance & Security -->
-  <section class="py-20 px-6">
-    <div class="max-w-4xl mx-auto">
-      <div class="motion text-center mb-12" data-anim="fade-up">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Compliance and Security</h2>
-        <p class="text-white/60 text-lg">Sensitive client information handled with clear boundaries.</p>
+  <!-- ───── COMPLIANCE ───── -->
+  <section class="relative py-24 px-6 overflow-hidden">
+    <div class="relative z-10 max-w-5xl mx-auto">
+      <div class="motion text-center mb-14" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Trust and Compliance</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Sensitive client information, clear boundaries</h2>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.05s">
           <h4 class="text-[#7de8eb] font-semibold mb-2">UK Hosted</h4>
-          <p class="text-white/60 text-sm leading-relaxed">All data is processed and stored on UK-based servers.</p>
+          <p class="text-white/55 text-sm leading-relaxed">All data is processed and stored on UK-based infrastructure.</p>
         </div>
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.08s">
           <h4 class="text-[#7de8eb] font-semibold mb-2">GDPR Compliant</h4>
-          <p class="text-white/60 text-sm leading-relaxed">Full compliance with UK data protection regulations.</p>
+          <p class="text-white/55 text-sm leading-relaxed">Full compliance with UK data protection regulations.</p>
         </div>
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.11s">
           <h4 class="text-[#7de8eb] font-semibold mb-2">Configurable Intake Boundaries</h4>
-          <p class="text-white/60 text-sm leading-relaxed">You control what WiseCall can collect, what it must escalate and which enquiries always require a human response.</p>
+          <p class="text-white/55 text-sm leading-relaxed">You control what WiseCall can collect, what it must escalate and which enquiries always require a human response.</p>
         </div>
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.14s">
           <h4 class="text-[#7de8eb] font-semibold mb-2">Secure Data Processing</h4>
-          <p class="text-white/60 text-sm leading-relaxed">Encrypted communications and secure storage as standard.</p>
+          <p class="text-white/55 text-sm leading-relaxed">Encrypted communications and secure storage as standard.</p>
         </div>
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.17s">
           <h4 class="text-[#7de8eb] font-semibold mb-2">No Advice Given</h4>
-          <p class="text-white/60 text-sm leading-relaxed">WiseCall captures information and routes enquiries. It never gives legal or professional advice.</p>
+          <p class="text-white/55 text-sm leading-relaxed">WiseCall captures information and routes enquiries. It never gives legal or professional advice.</p>
         </div>
-        <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-xl p-6 text-center" data-anim="fade-up">
+        <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.2s">
           <h4 class="text-[#7de8eb] font-semibold mb-2">Clio-Ready Audit Trail</h4>
-          <p class="text-white/60 text-sm leading-relaxed">Structured call notes, recordings and transcripts are available for review and can support consistent intake workflows.</p>
+          <p class="text-white/55 text-sm leading-relaxed">Structured call notes, recordings and transcripts available for review, supporting consistent intake workflows.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SECTION: Pilot Programme -->
-  <section class="py-20 px-6">
-    <div class="max-w-3xl mx-auto">
-      <div class="motion text-center mb-12" data-anim="fade-up">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Try It Risk Free</h2>
-      </div>
-      <div class="motion bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 rounded-2xl p-10 text-center" data-anim="scale-in">
-        <h3 class="text-2xl font-bold text-white mb-8">7 Day Legal and Professional Pilot</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+  <!-- ───── PILOT PROGRAMME ───── -->
+  <section class="relative py-24 px-6 overflow-hidden">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-4xl mx-auto">
+      <div class="motion rounded-2xl bg-gradient-to-br from-[#7de8eb]/[0.08] to-transparent border border-[#7de8eb]/30 p-10 md:p-12 text-center shadow-[0_0_50px_rgba(125,232,235,0.12)]" data-anim="scale-in">
+        <span class="inline-block px-4 py-1.5 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-bold uppercase tracking-wider mb-6">Try it risk free</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-8">7 Day Legal &amp; Professional Pilot</h2>
+        <div class="grid sm:grid-cols-3 gap-6 mb-8">
           <div>
-            <div class="text-[#7de8eb] text-2xl font-bold mb-1">7 days</div>
+            <div class="text-3xl font-bold text-[#7de8eb] stat-num mb-1">7 days</div>
             <div class="text-white/60 text-sm">Full featured trial period</div>
           </div>
           <div>
-            <div class="text-[#7de8eb] text-2xl font-bold mb-1">Clio ready</div>
+            <div class="text-3xl font-bold text-[#7de8eb] stat-num mb-1">Clio ready</div>
             <div class="text-white/60 text-sm">Intake flows and routing configured with your team</div>
           </div>
           <div>
-            <div class="text-[#7de8eb] text-2xl font-bold mb-1">Full support</div>
+            <div class="text-3xl font-bold text-[#7de8eb] stat-num mb-1">Full support</div>
             <div class="text-white/60 text-sm">Dedicated onboarding from our team</div>
           </div>
         </div>
-        <p class="text-white/60 leading-relaxed mb-8 max-w-xl mx-auto">See how many calls WiseCall captures, how consistently enquiries are qualified and how quickly your team receives usable intake data. Real call handling from your own firm, not a generic demo.</p>
-        <a href="#" class="mbtn contact-link inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-base shadow-[0_0_24px_rgba(125,232,235,0.3)]" data-inquiry="Legal Pilot Programme">
+        <p class="text-white/65 leading-relaxed max-w-2xl mx-auto mb-8">See how many calls WiseCall captures, how consistently enquiries are qualified and how quickly your team receives usable intake data. Real call handling from your own firm, not a generic demo.</p>
+        <a href="#" class="mbtn contact-link inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Legal Pilot Programme">
           Start Your 7 Day Pilot <i data-lucide="arrow-right" class="w-5 h-5"></i>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- FINAL CTA -->
-  <section class="py-24 px-6 text-center" style="background: linear-gradient(180deg, transparent, rgba(125,232,235,0.03));">
-    <div class="max-w-2xl mx-auto">
-      <div class="motion" data-anim="fade-up">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Capture More Enquiries.<br>Keep Intake Moving.</h2>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-base shadow-[0_0_32px_rgba(125,232,235,0.3)]" data-inquiry="Legal Demo">
-            Book a Legal Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
-          </a>
-          <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-[#7de8eb]/30 text-white font-semibold text-base hover:bg-white/5 hover:border-[#7de8eb]/60 transition-colors" data-inquiry="Legal Intake Review">
-            Request Intake Review
-          </a>
-        </div>
-        <p class="text-white/40 text-sm italic">WiseCall works alongside your team. Never in place of them.</p>
+  <!-- ───── FAQ ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="faq">
+    <div class="relative z-10 max-w-3xl mx-auto">
+      <div class="motion text-center mb-14" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">FAQ</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Legal questions, answered</h2>
+      </div>
+
+      <div class="motion flex flex-col gap-3" data-anim="fade-up" style="transition-delay:0.05s">
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer" style="list-style:none;">
+            Does the AI give legal advice?
+            <i data-lucide="chevron-down" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 transition-transform group-open:rotate-180"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">No. WiseCall captures information, qualifies enquiries and routes calls only. It never provides legal, financial or professional advice. Anything requiring advice is escalated straight to your team.</div>
+        </details>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer" style="list-style:none;">
+            Does it push intake into Clio?
+            <i data-lucide="chevron-down" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 transition-transform group-open:rotate-180"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. WiseCall is designed to push structured intake data into Clio Manage and Clio Grow, as well as custom CRM and shared-inbox workflows. We confirm the exact setup for your firm during onboarding.</div>
+        </details>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer" style="list-style:none;">
+            How are urgent or time-sensitive matters handled?
+            <i data-lucide="chevron-down" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 transition-transform group-open:rotate-180"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">You define what counts as urgent. WiseCall identifies time-sensitive matters early and escalates them using your rules, to an on-call solicitor, a duty team or a specific office. Everything else is logged with a full summary.</div>
+        </details>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer" style="list-style:none;">
+            Can we keep our existing firm number?
+            <i data-lucide="chevron-down" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 transition-transform group-open:rotate-180"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. In most cases your existing number can be ported to WiseCall, and every plan includes a complete phone system with extensions and mobile apps for your team. We confirm what's possible for your number during onboarding.</div>
+        </details>
+        <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
+          <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer" style="list-style:none;">
+            Is the demo on this page the real product?
+            <i data-lucide="chevron-down" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 transition-transform group-open:rotate-180"></i>
+          </summary>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. The orb at the top of this page calls a live WiseCall voice agent, not a recording. Your production agent is trained on your firm's details: departments, intake questions, routing rules and escalation contacts.</div>
+        </details>
       </div>
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <footer class="border-t border-[#7de8eb]/8 py-12 px-6">
-    <div class="max-w-7xl mx-auto text-center">
-      <a href="index.html" class="inline-flex items-center gap-2 text-white font-bold text-lg mb-4" style="text-decoration:none;">
-        <img src="owl-logo.png" alt="WiseCall" style="height:46px;">WiseCall
-      </a>
-      <p class="text-white/50 max-w-md mx-auto mb-8 leading-relaxed">AI call handling backed by 20+ years of UK telecoms expertise.</p>
-      <div class="flex flex-wrap justify-center gap-6 mb-8 text-sm text-white/50">
-        <a href="index.html" class="hover:text-[#7de8eb] transition-colors">Home</a>
-        <a href="index.html#features" class="hover:text-[#7de8eb] transition-colors">Features</a>
-        <a href="index.html#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
-        <a href="dental.html" class="hover:text-[#7de8eb] transition-colors">Dental Services</a>
-        <a href="#" class="contact-link text-[#7de8eb] font-semibold" data-inquiry="General Contact">Get in Touch</a>
+  <!-- ───── FINAL CTA ───── -->
+  <section class="relative py-24 px-6 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535] to-[#172929] pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#7de8eb] rounded-full blur-[200px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-3xl mx-auto text-center">
+      <div class="motion" data-anim="fade-up">
+        <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">Capture more enquiries. Keep intake moving.</h2>
+        <p class="text-xl text-white/70 mb-10 leading-relaxed">Book a legal demo and we'll show you exactly how WiseCall would handle your firm's calls, using your own intake scenarios.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+          <a href="#" class="mbtn contact-link inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Legal Demo Request">
+            Book a Legal Demo <i data-lucide="arrow-right" class="w-5 h-5"></i>
+          </a>
+          <a href="#live-demo" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
+            Talk to the AI First
+          </a>
+        </div>
+        <p class="text-white/40 text-sm">WiseCall works alongside your team. Never in place of them.</p>
       </div>
-      <div class="border-t border-[#7de8eb]/8 pt-6 text-white/30 text-sm">
-        <p>&copy; 2025 WiseCall. All rights reserved.</p>
+    </div>
+  </section>
+
+  <!-- ───── FOOTER ───── -->
+  <footer class="relative border-t border-[#7de8eb]/10 py-14 px-6">
+    <div class="max-w-7xl mx-auto text-center">
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <img src="owl-logo.png" alt="WiseCall" class="h-10">
+        <span class="text-white font-bold text-xl">WiseCall</span>
+      </div>
+      <p class="text-white/50 max-w-sm mx-auto mb-8 text-sm leading-relaxed">AI-powered business communications. Phone system included. UK-based.</p>
+      <div class="flex flex-wrap justify-center gap-6 mb-8 text-sm">
+        <a href="/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Home</a>
+        <a href="/#how-it-works" class="text-white/50 hover:text-[#7de8eb] transition-colors">How It Works</a>
+        <a href="/#pricing" class="text-white/50 hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="/#industries" class="text-white/50 hover:text-[#7de8eb] transition-colors">Industries</a>
+        <a href="#calculator" class="text-white/50 hover:text-[#7de8eb] transition-colors">Calculator</a>
+        <a href="#" class="contact-link text-[#7de8eb] font-semibold hover:text-white transition-colors" data-inquiry="Legal - General Contact">Get in Touch</a>
+      </div>
+      <div class="border-t border-[#7de8eb]/8 pt-6 text-white/30 text-xs">
+        <p>&copy; 2026 WiseCall. All rights reserved.</p>
       </div>
     </div>
   </footer>
@@ -419,42 +620,49 @@
     // Init Lucide icons
     lucide.createIcons();
 
-    // Scroll progress
+    // Scroll progress bar
     const scrollProgress = document.getElementById('scrollProgress');
     window.addEventListener('scroll', () => {
-      const pct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100;
+      const pct = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
       scrollProgress.style.width = pct + '%';
-    }, { passive: true });
+    });
 
-    // Header scroll
-    const header = document.getElementById('siteHeader');
+    // Header scroll class
+    const siteHeader = document.getElementById('siteHeader');
     window.addEventListener('scroll', () => {
-      header.classList.toggle('scrolled', window.scrollY > 50);
-    }, { passive: true });
+      siteHeader.classList.toggle('scrolled', window.scrollY > 50);
+    });
 
     // Mobile menu
-    const menuToggle = document.getElementById('mobileMenuToggle');
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
     const mobileMenu = document.getElementById('mobileMenu');
-    menuToggle.addEventListener('click', () => mobileMenu.classList.toggle('open'));
-    document.querySelectorAll('.mobile-link').forEach(l => l.addEventListener('click', () => mobileMenu.classList.remove('open')));
+    mobileMenuToggle.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+    document.querySelectorAll('.mobile-link').forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.remove('open'));
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('nav')) mobileMenu.classList.remove('open');
+    });
 
-    // Scroll animations
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); observer.unobserve(e.target); } });
-    }, { threshold: 0.12 });
-    document.querySelectorAll('.motion').forEach(el => observer.observe(el));
+    // ── Live demo call number ──
+    // Set this to the WiseCall demo agent's Telnyx number once it is live.
+    const WISECALL_DEMO_NUMBER = '+44 20 0000 0000';
+    const demoTel = 'tel:' + WISECALL_DEMO_NUMBER.replace(/\s+/g, '');
+    document.querySelectorAll('.demo-call-link').forEach(el => { el.href = demoTel; });
+    document.querySelectorAll('.demo-number').forEach(el => { el.textContent = WISECALL_DEMO_NUMBER; });
 
-    // Smooth scroll
-    document.querySelectorAll('a[href^="#"]').forEach(a => {
-      a.addEventListener('click', function(e) {
-        if (this.getAttribute('href') === '#') return;
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href === '#') return;
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
+        const target = document.querySelector(href);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
 
-    // Enquiry Value Calculator
+    // Enquiry value calculator
     const calcCalls = document.getElementById('calcCalls');
     const calcMissed = document.getElementById('calcMissed');
     const calcNewEnquiry = document.getElementById('calcNewEnquiry');
@@ -463,23 +671,27 @@
     const resultMonthly = document.getElementById('resultMonthly');
     const resultAnnual = document.getElementById('resultAnnual');
 
-    function calculateValueImpact() {
+    function calculateEnquiryValue() {
       const calls = parseInt(calcCalls.value) || 0;
       const missedPct = (parseInt(calcMissed.value) || 0) / 100;
       const newEnquiryPct = (parseInt(calcNewEnquiry.value) || 0) / 100;
-      const matterValue = parseInt(calcValue.value) || 0;
-      const daily = calls * missedPct * newEnquiryPct * matterValue;
-      const monthly = daily * 22;
+      const instructionValue = parseInt(calcValue.value) || 0;
+
+      const daily = calls * missedPct * newEnquiryPct * instructionValue;
+      const monthly = daily * 22; // working days
       const annual = monthly * 12;
+
       resultDaily.textContent = '£' + Math.round(daily).toLocaleString('en-GB');
       resultMonthly.textContent = '£' + Math.round(monthly).toLocaleString('en-GB');
       resultAnnual.textContent = '£' + Math.round(annual).toLocaleString('en-GB');
     }
 
-    [calcCalls, calcMissed, calcNewEnquiry, calcValue].forEach(el => el.addEventListener('input', calculateValueImpact));
-    calculateValueImpact();
+    [calcCalls, calcMissed, calcNewEnquiry, calcValue].forEach(input => {
+      input.addEventListener('input', calculateEnquiryValue);
+    });
+    calculateEnquiryValue();
 
-    // Contact Modal
+    // Contact / Demo Modal
     const modal = document.getElementById('contactModal');
     const modalClose = document.getElementById('modalClose');
     const contactForm = document.getElementById('contactForm');
@@ -488,16 +700,20 @@
     document.querySelectorAll('.contact-link').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        inquiryTypeField.value = link.dataset.inquiry || 'Legal Demo';
+        inquiryTypeField.value = link.dataset.inquiry || 'Legal Demo Request';
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
       });
     });
 
-    const closeModal = () => { modal.classList.remove('active'); document.body.style.overflow = ''; };
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
     modalClose.addEventListener('click', closeModal);
-    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
 
     contactForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -505,27 +721,39 @@
       const originalText = submitBtn.textContent;
       submitBtn.textContent = 'Sending...';
       submitBtn.disabled = true;
+
       try {
-        const res = await fetch(contactForm.action, { method: 'POST', body: new FormData(contactForm), headers: { 'Accept': 'application/json' } });
-        if (res.ok) {
+        const response = await fetch(contactForm.action, {
+          method: 'POST',
+          body: new FormData(contactForm),
+          headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
           submitBtn.textContent = 'Sent!';
           contactForm.reset();
           setTimeout(() => { closeModal(); submitBtn.textContent = originalText; submitBtn.disabled = false; }, 1500);
-        } else throw new Error('Failed');
+        } else {
+          throw new Error('Failed');
+        }
       } catch {
         submitBtn.textContent = 'Error, Try Again';
         submitBtn.disabled = false;
         setTimeout(() => { submitBtn.textContent = originalText; }, 2000);
       }
     });
+
+    // Scroll animations (IntersectionObserver)
+    const motionEls = document.querySelectorAll('.motion');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    motionEls.forEach(el => observer.observe(el));
   </script>
-
-
-
-
-
-
-
 
 
 <!-- WiseCall live chat widget -->
