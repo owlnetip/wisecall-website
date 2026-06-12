@@ -235,8 +235,8 @@
             <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
             <span class="text-xs font-bold text-[#7de8eb] uppercase tracking-wider">Live demo &middot; No signup</span>
           </span>
-          <h3 class="font-bold text-white text-lg mb-1">Talk to the Property AI</h3>
-          <p class="text-white/55 text-sm mb-6">Call it like a vendor, landlord, buyer or tenant would.</p>
+          <h3 class="font-bold text-white text-lg mb-1">Talk to WiseCall</h3>
+          <p class="text-white/55 text-sm mb-6">Choose the property demo when Ava asks which industry you want to test.</p>
 
           <a href="#" class="orb-stage demo-call-link mb-8" aria-label="Call the WiseCall Property AI demo">
             <span class="orb">
@@ -247,11 +247,11 @@
 
           <a href="#" class="demo-call-link mbtn inline-flex items-center gap-3 px-7 py-3.5 rounded-full bg-white/5 border border-[#7de8eb]/30 text-white font-bold text-lg tracking-wide hover:bg-white/10 backdrop-blur-sm">
             <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="demo-number">+44 20 0000 0000</span>
+            <span class="demo-number">+44 113 522 2277</span>
           </a>
           <p class="text-white/55 text-sm mt-4">Tap the orb or dial the number from any phone.</p>
           <p class="text-white/40 text-xs mt-3 leading-relaxed">
-            Standard UK call &middot; You'll get an SMS summary afterwards, the same follow-up your callers receive.
+            Try it like a vendor, landlord, buyer or tenant would.
           </p>
         </div>
       </div>
@@ -631,7 +631,7 @@
     // portal, AI Agents). Updates the orb and number button everywhere.
     // Must run before the smooth-scroll binding below so the demo links
     // are real tel: links by the time anchors are collected.
-    const WISECALL_DEMO_NUMBER = '+44 20 0000 0000';
+    const WISECALL_DEMO_NUMBER = '+44 113 522 2277';
 
     const demoTel = 'tel:' + WISECALL_DEMO_NUMBER.replace(/\s+/g, '');
     document.querySelectorAll('.demo-call-link').forEach(el => { el.href = demoTel; });
@@ -749,15 +749,5 @@
 
 
 
-<!-- WiseCall live chat widget -->
-<script
-  src="https://zgzzpwaqqftmugzpccpm.supabase.co/storage/v1/object/public/wisecall-assets/wisecall-live-chat-widget.js"
-  data-profile-slug="wisecall"
-  data-title="WiseCall"
-  data-subtitle="AI calls, live chat and customer follow-up"
-  data-accent="#7de8eb"
-  data-background="#172929"
-></script>
-<!-- /WiseCall live chat widget -->
 </body>
 </html>

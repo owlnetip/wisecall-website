@@ -235,8 +235,8 @@
             <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
             <span class="text-xs font-bold text-[#7de8eb] uppercase tracking-wider">Live demo &middot; No signup</span>
           </span>
-          <h3 class="font-bold text-white text-lg mb-1">Talk to the Dental AI</h3>
-          <p class="text-white/55 text-sm mb-6">Enter your mobile and the AI calls you.</p>
+          <h3 class="font-bold text-white text-lg mb-1">Talk to WiseCall</h3>
+          <p class="text-white/55 text-sm mb-6">Choose the dental demo when Ava asks which industry you want to test.</p>
 
           <form id="demoCallbackForm" class="flex flex-col items-center" novalidate>
             <button type="submit" class="orb-stage mb-8" aria-label="Start a callback from the WiseCall Website Assistant">
@@ -254,7 +254,7 @@
           </form>
           <p id="demoCallbackStatus" class="min-h-[1.25rem] text-white/55 text-sm mt-4" aria-live="polite">Tap the orb or enter your mobile number.</p>
           <p class="text-white/40 text-xs mt-3 leading-relaxed">
-            The WiseCall Website Assistant calls you back and sends an SMS summary afterwards.
+            Prefer to dial in? <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white">+44 113 522 2277</a>.
           </p>
         </div>
       </div>
@@ -663,7 +663,7 @@
 
       demoCallbackButton.disabled = true;
       demoCallbackButton.textContent = 'Calling...';
-      setDemoCallbackStatus('Starting your call with the WiseCall Website Assistant...', 'idle');
+      setDemoCallbackStatus('Starting your multi-industry WiseCall demo...', 'idle');
 
       try {
         const response = await fetch(WISECALL_DEMO_CALLBACK_ENDPOINT, {
@@ -673,7 +673,7 @@
             phone,
             profile_slug: 'wisecall',
             agent_name: 'WiseCall Website Assistant',
-            source: 'wisecall_dental_page'
+            source: 'wisecall_multi_industry_demo'
           })
         });
         const result = await response.json().catch(() => ({}));
@@ -682,7 +682,7 @@
           throw new Error(result.error || 'Could not start the demo call.');
         }
 
-        setDemoCallbackStatus(result.message || 'The WiseCall Website Assistant is calling now.', 'success');
+        setDemoCallbackStatus(result.message || 'The WiseCall demo agent is calling now.', 'success');
       } catch (error) {
         setDemoCallbackStatus(error.message || 'Could not start the demo call. Please try again.', 'error');
       } finally {
@@ -795,15 +795,5 @@
     motionEls.forEach(el => observer.observe(el));
   </script>
 
-<!-- WiseCall live chat widget -->
-<script
-  src="https://zgzzpwaqqftmugzpccpm.supabase.co/storage/v1/object/public/wisecall-assets/wisecall-live-chat-widget.js"
-  data-profile-slug="wisecall"
-  data-title="WiseCall"
-  data-subtitle="AI calls, live chat and customer follow-up"
-  data-accent="#7de8eb"
-  data-background="#172929"
-></script>
-<!-- /WiseCall live chat widget -->
 </body>
 </html>
