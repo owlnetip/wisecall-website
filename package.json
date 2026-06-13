@@ -8,7 +8,7 @@
     "dev": "vite",
     "generate:seo": "node scripts/generate-seo-pages.mjs",
     "inject:chat-widget": "node scripts/inject-live-chat-widget.mjs",
-    "prebuild": "npm run generate:seo && npm run inject:chat-widget",
+    "prebuild": "npm run generate:seo",
     "build": "vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
