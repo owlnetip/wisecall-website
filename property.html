@@ -77,6 +77,7 @@
     .pulse-dot { animation: pulse-soft 2.2s ease-in-out infinite; }
     /* WiseCall voice orb: crisp glossy sphere, soft feathered rim */
     .orb-stage { position: relative; width: 240px; height: 240px; margin-left: auto; margin-right: auto; display: block; cursor: pointer; border: 0; padding: 0; background: transparent; }
+    .orb-stage.is-static { cursor: default; pointer-events: none; }
     .orb { position: absolute; inset: 0; border-radius: 50%;
       background:
         radial-gradient(ellipse 52% 22% at 50% 85%, rgba(206,246,247,0.4) 0%, transparent 72%),
@@ -239,12 +240,12 @@
           <p class="text-white/55 text-sm mb-6">Enter your mobile and say "property" when Ava asks.</p>
 
           <form id="demoCallbackForm" class="flex flex-col items-center" novalidate>
-            <button type="submit" class="orb-stage mb-8" aria-label="Start a callback from the WiseCall Website Assistant">
+            <div class="orb-stage is-static mb-8" aria-hidden="true">
               <span class="orb">
                 <span class="orb-swirl"></span>
                 <span class="orb-core"></span>
               </span>
-            </button>
+            </div>
 
             <div class="w-full max-w-sm flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 backdrop-blur-sm focus-within:border-[#7de8eb]/70 focus-within:bg-white/10 transition-colors">
               <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
@@ -252,7 +253,7 @@
               <button id="demoCallbackButton" type="submit" class="shrink-0 rounded-full bg-[#7de8eb] px-4 py-2 text-[#172929] text-sm font-bold hover:bg-[#9cf1f3] transition-colors">Call me</button>
             </div>
           </form>
-          <p id="demoCallbackStatus" class="min-h-[1.25rem] text-white/55 text-sm mt-4" aria-live="polite">Tap the orb or enter mobile.</p>
+          <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-4" aria-live="polite"></p>
           <p class="text-white/40 text-xs mt-3 leading-relaxed">
             Prefer to dial in? <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white">+44 113 522 2277</a>.
           </p>
@@ -640,6 +641,7 @@
 
     function setDemoCallbackStatus(message, state = 'idle') {
       demoCallbackStatus.textContent = message;
+      demoCallbackStatus.classList.toggle('hidden', !message);
       demoCallbackStatus.classList.toggle('text-[#7de8eb]', state === 'success');
       demoCallbackStatus.classList.toggle('text-red-200', state === 'error');
       demoCallbackStatus.classList.toggle('text-white/55', state !== 'success' && state !== 'error');
