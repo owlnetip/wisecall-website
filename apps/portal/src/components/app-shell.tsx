@@ -4,7 +4,7 @@ import { Bot, LayoutDashboard, ShieldCheck, Sparkles } from "lucide-react";
 const nav = [
   { href: "/", label: "Home", icon: Sparkles },
   { href: "/demo/new", label: "Demo", icon: Bot },
-  { href: "/dashboard", label: "Customer", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Agents", icon: LayoutDashboard },
   { href: "/admin", label: "Admin", icon: ShieldCheck },
 ];
 
