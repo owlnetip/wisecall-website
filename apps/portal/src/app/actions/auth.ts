@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAppBaseUrl } from "@/lib/env";
 
 export type AuthState = { error?: string; message?: string };
 
@@ -48,7 +49,14 @@ export async function signUpAction(
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  // Send confirmation links to the WiseCall portal explicitly, so they don't
+  // fall back to the shared project's Site URL (owlnet.io). Requires this URL to
+  // be in the Supabase redirect allowlist.
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: `${getAppBaseUrl()}/dashboard` },
+  });
 
   if (error) {
     return { error: error.message };
