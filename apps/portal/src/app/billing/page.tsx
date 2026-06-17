@@ -6,7 +6,7 @@ import { StartTrialButton } from "./start-trial-button";
 
 const PERKS = [
   "AI receptionist, 24/7",
-  "Complete phone system",
+  "Pay only for the calls you use",
   "Call summaries & data capture",
   "Escalation & call routing",
 ];
@@ -64,6 +64,11 @@ export default async function BillingPage() {
             </li>
           ))}
         </ul>
+
+        <p className="mb-5 text-center text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+          A full phone system and staff extensions are available on our Core,
+          Growth and Pro plans.
+        </p>
 
         <StartTrialButton />
       </div>
