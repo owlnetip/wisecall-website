@@ -17,6 +17,8 @@ type ProfileRow = {
   telnyx_number: string | null;
   is_active: boolean | null;
   system_prompt: string | null;
+  greeting: string | null;
+  business_context: string | null;
   timezone: string | null;
   metadata: Record<string, unknown> | null;
 };
@@ -125,6 +127,18 @@ function readKnowledgeFields(row: ProfileRow): KnowledgeFields {
   };
 }
 
+// Website: prefer the portal field, then the live runtime's context_urls list.
+function readWebsite(row: ProfileRow): string {
+  const explicit = row.metadata?.website;
+  if (typeof explicit === "string" && explicit) return explicit;
+  const urls = row.metadata?.context_urls;
+  if (Array.isArray(urls)) {
+    const first = urls.find((u) => typeof u === "string" && u);
+    if (typeof first === "string") return first;
+  }
+  return "";
+}
+
 function mapProfile(row: ProfileRow): Assistant {
   const routing = readRouting(row);
   return {
@@ -136,15 +150,18 @@ function mapProfile(row: ProfileRow): Assistant {
     status: row.is_active ? "Live" : "Setup",
     receptionistName: row.receptionist_name || row.profile_name || "",
     prompt: row.system_prompt || "",
-    website: meta(row, "website"),
+    website: readWebsite(row),
     timezone: row.timezone || "Europe/London",
     fallbackEmail: meta(row, "fallback_email"),
     transferNumber: meta(row, "transfer_number"),
     defaultEmail: readDefaultEmail(row),
     contacts: readContacts(row),
-    greeting: meta(row, "greeting"),
+    // Greeting & business knowledge are columns the live runtime reads
+    // (settings.js greeting, prompt.js business_context); fall back to legacy
+    // metadata for portal-created agents that only have the metadata copy.
+    greeting: row.greeting || meta(row, "greeting"),
     voice: meta(row, "voice") || "Gemma",
-    knowledge: meta(row, "knowledge"),
+    knowledge: row.business_context || meta(row, "knowledge") || meta(row, "company_context"),
     knowledgeFields: readKnowledgeFields(row),
     calls: 0,
     cost: "GBP 0.00",
@@ -166,7 +183,7 @@ export async function getAgentsForUser(userId: string): Promise<Assistant[] | nu
   const { data, error } = await supabase
     .from("wisecall_profiles")
     .select(
-      "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, timezone, metadata",
+      "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, business_context, timezone, metadata",
     )
     .eq("metadata->>owner_id", userId)
     .order("created_at", { ascending: false });
@@ -258,7 +275,7 @@ function mapCallRow(row: CallRow): CallLog {
 }
 
 const PROFILE_SELECT =
-  "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, timezone, metadata";
+  "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, business_context, timezone, metadata";
 
 const CALL_SELECT =
   "id, profile_id, profile_name, caller_id, summary, outcome, transcript, started_at, finished_at, created_at";

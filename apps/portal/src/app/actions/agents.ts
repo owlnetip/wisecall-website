@@ -102,6 +102,8 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
       clinic_name: input.businessName,
       receptionist_name: input.name,
       system_prompt: input.prompt,
+      greeting: input.greeting ?? "",
+      business_context: input.knowledge ?? "",
       timezone: input.timezone ?? "Europe/London",
       is_active: false,
       metadata: {
@@ -188,6 +190,11 @@ export async function updateAgent(
   if (patch.timezone !== undefined) update.timezone = patch.timezone;
   if (patch.phoneNumber !== undefined) update.telnyx_number = patch.phoneNumber;
   if (patch.prompt !== undefined) update.system_prompt = patch.prompt;
+  // Greeting and knowledge are columns the live runtime reads (greeting,
+  // business_context). Write the column so edits reach the phone agent; the
+  // metadata copies above stay mirrored for backward compatibility.
+  if (patch.greeting !== undefined) update.greeting = patch.greeting;
+  if (patch.knowledge !== undefined) update.business_context = patch.knowledge;
   if (patch.status !== undefined) update.is_active = patch.status === "Live";
 
   // Belt-and-braces ownership filter for customers; admins may edit any agent.
