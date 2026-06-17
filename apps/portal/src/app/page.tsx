@@ -234,8 +234,8 @@ function LoginForm() {
                 Call
               </span>
             </div>
-            <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>
-              Intelligent call handling
+            <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.72)" }}>
+              {isSignup ? "Create your account" : "Sign in to your account"}
             </p>
           </div>
 
