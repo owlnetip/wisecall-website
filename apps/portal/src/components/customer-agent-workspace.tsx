@@ -1,37 +1,142 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import {
   ArrowLeft,
-  BookOpen,
   Bot,
   Check,
   ChevronRight,
   CirclePlus,
-  CreditCard,
   Grid2X2,
+  Hand,
   History,
-  KeyRound,
-  Library,
+  Loader2,
+  LogOut,
   Mail,
   MessageSquareText,
   MoreHorizontal,
   Phone,
+  Play,
   Plus,
   Save,
   Search,
-  Settings2,
+  ShieldCheck,
   Sparkles,
+  Trash2,
   UserRound,
-  UsersRound,
+  Users,
+  Volume2,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { signOutAction } from "@/app/actions/auth";
+import {
+  createAgent,
+  provisionNumber,
+  testVoice,
+  updateAgent,
+} from "@/app/actions/agents";
+import type { CallLog } from "@/lib/agents";
 
-type View = "home" | "assistants" | "detail";
-type DetailTab = "behaviour" | "technical";
+type View = "home" | "assistants" | "detail" | "calls";
+type DetailTab = "behaviour" | "routing" | "technical";
 
-type Assistant = {
+// Provider-agnostic call routing. The portal stays the same whichever telco
+// stack wins — only `provider` and the per-provider fields differ. Persisted in
+// metadata.routing on wisecall_profiles.
+export type RoutingProvider = "telnyx" | "mor_openai";
+export type RoutingStatus = "unprovisioned" | "pending" | "live";
+export type AgentRouting = {
+  provider: RoutingProvider | null;
+  number: string; // E.164 DDI, "" while unprovisioned
+  status: RoutingStatus;
+  // Telnyx pipeline (DDI → Telnyx → Deepgram/Cartesia)
+  telnyxApplicationId?: string;
+  // MOR SIP → OpenAI Realtime
+  sipRoute?: string;
+  openaiVoice?: string;
+};
+
+// One routing contact: a person/queue that keywords can route to. A contact can
+// take a live transfer (phone), an emailed summary (email), or both. Persisted in
+// metadata.routing_contacts; phone contacts are also mirrored to the legacy
+// transfer_routes so the existing call pipeline keeps working.
+export type RoutingContact = {
+  id: string;
+  name: string;
+  phone: string; // mobile / DDI, E.164
+  email: string;
+  keywords: string[];
+  transfer: boolean; // route the live call to phone
+  notify: boolean; // email a summary
+  useDefaultEmail: boolean; // when notifying, send to the agent's pooled inbox
+};
+
+// Business knowledge captured as friendly, labelled sections instead of one
+// freeform box. Stored structured (metadata.knowledge_fields) and also composed
+// into the plain `knowledge` text the voice agent reads.
+export type KnowledgeFields = {
+  openingHours?: string;
+  address?: string;
+  services?: string;
+  pricing?: string;
+  payments?: string;
+  other?: string;
+};
+
+export const knowledgeSections: {
+  key: keyof KnowledgeFields;
+  label: string;
+  placeholder: string;
+}[] = [
+  {
+    key: "openingHours",
+    label: "Opening hours",
+    placeholder: "Mon–Fri 9am–5:30pm, Sat 9am–1pm, closed Sunday",
+  },
+  {
+    key: "address",
+    label: "Address & parking",
+    placeholder: "12 High Street, Leeds LS1 4AB. Parking on-site / pay & display nearby.",
+  },
+  {
+    key: "services",
+    label: "Services & treatments",
+    placeholder: "Check-ups, hygiene, whitening, implants, Invisalign, emergency appointments",
+  },
+  {
+    key: "pricing",
+    label: "Pricing",
+    placeholder: "New patient exam £xx, hygiene £xx, emergency appointment £xx",
+  },
+  {
+    key: "payments",
+    label: "Payments, insurance & registration",
+    placeholder: "NHS & private patients welcome. New patients accepted. Card & finance plans taken.",
+  },
+  {
+    key: "other",
+    label: "Anything else",
+    placeholder: "Any other FAQs the receptionist should be able to answer.",
+  },
+];
+
+// Turns the labelled sections into the plain knowledge text the agent reads.
+export function composeKnowledge(fields: KnowledgeFields): string {
+  return knowledgeSections
+    .map((section) => {
+      const value = (fields[section.key] ?? "").trim();
+      return value ? `${section.label}:\n${value}` : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function hasKnowledgeFields(fields?: KnowledgeFields): boolean {
+  return Boolean(fields && Object.values(fields).some((v) => (v ?? "").trim()));
+}
+
+export type Assistant = {
   id: string;
   name: string;
   businessName: string;
@@ -40,15 +145,35 @@ type Assistant = {
   status: "Live" | "Setup" | "Review";
   receptionistName: string;
   prompt: string;
+  greeting: string;
+  voice: string;
+  knowledge: string;
+  knowledgeFields?: KnowledgeFields;
   website: string;
   timezone: string;
   fallbackEmail: string;
   transferNumber: string;
+  defaultEmail: string; // pooled inbox used when a contact opts for "send to default"
+  contacts: RoutingContact[];
   calls: number;
   cost: string;
+  routing: AgentRouting;
+  ownerEmail?: string; // admin view only — which customer owns this agent
 };
 
-const initialAssistants: Assistant[] = [
+// The voices we offer today — Cartesia's latest model. Labels are what the
+// customer sees; the real Cartesia voice ids are mapped server-side (env) so
+// they never reach the browser.
+export const cartesiaVoices: { id: string; label: string; blurb: string }[] = [
+  { id: "Gemma", label: "Gemma", blurb: "Warm British female" },
+  { id: "Hugo", label: "Hugo", blurb: "Friendly British male" },
+  { id: "Archie", label: "Archie", blurb: "Bright, upbeat male" },
+  { id: "Victoria", label: "Victoria", blurb: "Polished, professional female" },
+  { id: "Benedict", label: "Benedict", blurb: "Calm, reassuring male" },
+  { id: "Julia", label: "Julia", blurb: "Clear, approachable female" },
+];
+
+export const demoAssistants: Assistant[] = [
   {
     id: "sophie-dental",
     name: "Sophie",
@@ -59,12 +184,40 @@ const initialAssistants: Assistant[] = [
     receptionistName: "Sophie",
     prompt:
       "Answer as Sophie from RinseDental. Help with new patient enquiries, appointments, emergency questions and cancellations. Ask for name, phone number and preferred appointment time before escalating.",
+    greeting: "Hello, thanks for calling RinseDental, you're through to Sophie. How can I help you today?",
+    voice: "Gemma",
+    knowledge:
+      "Opening hours: Mon-Fri 8:30am-5:30pm, Sat 9am-1pm. We're a private and NHS dental practice in Leeds. New patients welcome. We offer check-ups, hygiene, whitening, implants and emergency appointments. Parking available on-site.",
     website: "https://rinsedental.example",
     timezone: "Europe/London",
     fallbackEmail: "reception@rinsedental.example",
     transferNumber: "+44 113 522 1606",
+    defaultEmail: "info@rinsedental.example",
+    contacts: [
+      {
+        id: "emergencies",
+        name: "On-call dentist",
+        phone: "+44 113 522 1606",
+        email: "",
+        keywords: ["emergency", "severe pain", "swelling", "knocked out", "bleeding"],
+        transfer: true,
+        notify: false,
+        useDefaultEmail: false,
+      },
+      {
+        id: "reception",
+        name: "Reception",
+        phone: "",
+        email: "reception@rinsedental.example",
+        keywords: ["appointment", "booking", "cancel", "reschedule"],
+        transfer: false,
+        notify: true,
+        useDefaultEmail: false,
+      },
+    ],
     calls: 14,
     cost: "GBP 0.21",
+    routing: { provider: "telnyx", number: "+44 113 522 1606", status: "live" },
   },
   {
     id: "maya-property",
@@ -76,12 +229,30 @@ const initialAssistants: Assistant[] = [
     receptionistName: "Maya",
     prompt:
       "Answer as Maya from The Home Cloud. Identify whether the caller is a tenant, landlord, buyer or seller. Capture valuation leads and maintenance details clearly.",
+    greeting: "Hi, you've reached The Home Cloud, this is Maya. How can I help?",
+    voice: "Victoria",
+    knowledge:
+      "We're an estate and lettings agency. We handle sales, rentals, valuations and property management. Free valuations can be booked over the phone. Office hours Mon-Fri 9am-6pm, Sat 10am-2pm.",
     website: "https://thehomecloud.example",
     timezone: "Europe/London",
     fallbackEmail: "hello@thehomecloud.example",
     transferNumber: "+44 113 522 1666",
+    defaultEmail: "info@thehomecloud.example",
+    contacts: [
+      {
+        id: "maintenance",
+        name: "Maintenance team",
+        phone: "+44 113 522 1666",
+        email: "repairs@thehomecloud.example",
+        keywords: ["maintenance", "repair", "leak", "boiler", "locked out"],
+        transfer: true,
+        notify: true,
+        useDefaultEmail: false,
+      },
+    ],
     calls: 11,
     cost: "GBP 0.18",
+    routing: { provider: "telnyx", number: "+44 113 522 1666", status: "live" },
   },
   {
     id: "leo-legal",
@@ -93,113 +264,223 @@ const initialAssistants: Assistant[] = [
     receptionistName: "Leo",
     prompt:
       "Answer as Leo from Northline Legal. Capture the matter type, urgency, name and contact details. Do not give legal advice.",
+    greeting: "Good afternoon, Northline Legal, Leo speaking. How can I help you today?",
+    voice: "Benedict",
+    knowledge:
+      "We're a law firm covering conveyancing, family law, wills & probate and dispute resolution. We can't give legal advice over the phone but can book an initial consultation. Office hours Mon-Fri 9am-5:30pm.",
     website: "https://northlinelegal.example",
     timezone: "Europe/London",
     fallbackEmail: "intake@northlinelegal.example",
     transferNumber: "+44 113 522 2277",
+    defaultEmail: "info@northlinelegal.example",
+    contacts: [
+      {
+        id: "intake",
+        name: "Intake team",
+        phone: "",
+        email: "",
+        keywords: ["new matter", "enquiry", "consultation"],
+        transfer: false,
+        notify: true,
+        useDefaultEmail: true,
+      },
+    ],
     calls: 0,
     cost: "GBP 0.00",
+    routing: { provider: null, number: "", status: "unprovisioned" },
   },
 ];
 
-const navSections = [
+// Only the sections that actually work today. We'll add Knowledge Base, Phone
+// Numbers, Payments etc. back as each one is wired up.
+const navItems: { view: View; label: string; icon: LucideIcon }[] = [
+  { view: "home", label: "Home", icon: Grid2X2 },
+  { view: "assistants", label: "Assistants", icon: Bot },
+  { view: "calls", label: "Call History", icon: History },
+];
+
+// Agent templates. For now there's one — a general Receptionist. Future
+// templates (Dental, Property, Legal, integration-specific) slot in here and
+// the create flow picks them up automatically.
+export type AgentTemplate = {
+  id: string;
+  label: string;
+  description: string;
+  industry: string;
+  available: boolean;
+  buildPrompt: (business: string, receptionist: string) => string;
+  buildGreeting: (business: string, receptionist: string) => string;
+  // Optional starter content seeded onto the agent at creation time.
+  defaultKnowledgeFields?: KnowledgeFields;
+  defaultContacts?: () => RoutingContact[];
+};
+
+export const agentTemplates: AgentTemplate[] = [
   {
-    title: "",
-    items: [{ view: "home" as const, label: "Home", icon: Grid2X2 }],
+    id: "receptionist",
+    label: "Receptionist",
+    description: "Friendly general receptionist — answers FAQs, takes messages and transfers urgent calls.",
+    industry: "General",
+    available: true,
+    buildPrompt: (business, receptionist) => {
+      const who = receptionist || "the receptionist";
+      const biz = business || "the business";
+      return [
+        `You are ${who}, the friendly virtual receptionist for ${biz}.`,
+        "",
+        "Greet every caller warmly and professionally, and find out how you can help.",
+        "",
+        "You can:",
+        `- Answer common questions about ${biz} (opening hours, location, services and pricing).`,
+        "- Take a message — always capture the caller's name, phone number and the reason for their call.",
+        "- Note appointment or callback requests and pass them to the team.",
+        "- Transfer urgent calls to a team member when needed.",
+        "",
+        "Always be polite, concise and reassuring. If you don't know an answer, take a message and let the caller know someone will get back to them shortly. Confirm the caller's name and number before ending the call.",
+      ].join("\n");
+    },
+    buildGreeting: (business, receptionist) => {
+      const who = receptionist || "the receptionist";
+      const biz = business || "the business";
+      return `Hi, thanks for calling ${biz}, you're through to ${who}. How can I help you today?`;
+    },
   },
   {
-    title: "Contents",
-    items: [
-      { view: "assistants" as const, label: "Assistants", icon: Bot },
-      { view: "assistants" as const, label: "Knowledge Base", icon: Library },
-      { view: "assistants" as const, label: "Phone Numbers", icon: Phone },
-      { view: "home" as const, label: "Call History", icon: History },
+    id: "dentally",
+    label: "Dental practice (Dentally)",
+    description:
+      "Dental receptionist with Dentally booking built in — looks up patients, registers new ones, books, reschedules and cancels appointments, and handles emergencies.",
+    industry: "Dental",
+    available: true,
+    buildPrompt: (business, receptionist) => {
+      const who = receptionist || "the receptionist";
+      const biz = business || "the practice";
+      return [
+        `You are ${who}, a warm, professional AI receptionist for ${biz}, a dental practice. Your job is to help patients book, reschedule, or cancel appointments and answer questions about the practice.`,
+        "",
+        "OPENING HOURS: [Add the practice opening hours here]",
+        "PRACTITIONER(S): [Add the dentist / hygienist names here]",
+        "",
+        "CALL FLOW",
+        "",
+        "Step 1 - Identify the caller",
+        "Use the resolve_patient result from the start of the call.",
+        "- If a single patient was found: greet by first name.",
+        "- If disambiguation_required: ask for date of birth, then call resolve_patient again with phone + date_of_birth.",
+        "- If phone + DOB still does not match a single record: ask for first and last name, then call resolve_patient again with phone + firstname + lastname + date_of_birth.",
+        "- If no record is found and the caller confirms they are a new patient: collect firstname, lastname, date_of_birth and title, then call resolve_patient again with create_if_not_found=true.",
+        "",
+        "Step 2 - Understand what they need",
+        '- "book" / "make an appointment" -> booking flow',
+        '- "reschedule" / "change" -> reschedule flow',
+        '- "cancel" -> cancellation flow',
+        "- a question about the practice (hours, location, treatments, pricing, NHS vs private) -> answer it, then ask if they would like to book.",
+        "",
+        "Step 3a - Booking",
+        "1. Call get_appointment_reasons and offer the options.",
+        "2. Ask what date and time suits them.",
+        "3. Call get_availability for that date.",
+        "4. Offer up to 3 slots.",
+        "5. Once the caller confirms a slot you already offered, call create_appointment exactly once using patient_id from resolve_patient and the exact slot details from get_availability (especially start_time, practitioner_id and reason_id).",
+        "6. Only after create_appointment returns success may you say the appointment is booked.",
+        "",
+        "Step 3b - Reschedule",
+        "1. Call get_patient_appointments to find their booking.",
+        "2. Follow the booking flow to find a new slot.",
+        "3. Cancel the old appointment, then create the new one.",
+        "",
+        "Step 3c - Cancellation",
+        "1. Call get_patient_appointments.",
+        "2. Confirm the details and ask them to confirm cancellation.",
+        "3. Call cancel_appointment only after they confirm.",
+        "",
+        "DENTAL EMERGENCIES",
+        "- If the caller describes severe pain, swelling, bleeding, trauma or a knocked-out tooth, treat it as urgent: capture their name and number and follow the practice's emergency process (transfer or take an urgent message).",
+        "",
+        "RULES",
+        "- Always confirm appointment details before booking or cancelling.",
+        "- Never tell the caller they are booked unless create_appointment succeeds.",
+        "- Never tell the caller they are cancelled unless cancel_appointment succeeds.",
+        "- Do not re-run get_availability after the caller has confirmed an offered slot unless searching a different date or time.",
+        "- Keep responses short because this is a phone call.",
+        "- If there is no availability, apologise and offer the next available day.",
+      ].join("\n");
+    },
+    buildGreeting: (business, receptionist) => {
+      const who = receptionist || "the receptionist";
+      const biz = business || "the practice";
+      return `Hi, thanks for calling ${biz}, you're through to ${who}. Are you calling to book, change or cancel an appointment, or is it something else?`;
+    },
+    defaultContacts: () => [
+      {
+        id: crypto.randomUUID(),
+        name: "Dental emergencies",
+        phone: "",
+        email: "",
+        keywords: [
+          "emergency",
+          "severe pain",
+          "swelling",
+          "bleeding",
+          "knocked out",
+          "trauma",
+          "abscess",
+        ],
+        transfer: true,
+        notify: false,
+        useDefaultEmail: false,
+      },
     ],
   },
-  {
-    title: "Admin",
-    items: [
-      { view: "home" as const, label: "Payments", icon: CreditCard },
-      { view: "home" as const, label: "API Keys", icon: KeyRound },
-      { view: "home" as const, label: "Users", icon: UsersRound },
-    ],
-  },
 ];
 
-const abilityRows = [
-  {
-    icon: MessageSquareText,
-    title: "Answer Questions",
-    body: "Answer FAQs from the knowledge base.",
-    enabled: true,
-  },
-  {
-    icon: Phone,
-    title: "Transfer Calls",
-    body: "Forward calls to your team or phone numbers.",
-    enabled: true,
-  },
-  {
-    icon: Mail,
-    title: "Send Email",
-    body: "Send call summaries and follow-up details.",
-    enabled: false,
-  },
-  {
-    icon: Sparkles,
-    title: "Custom Prompt / Instructions",
-    body: "Control behaviour, tone and edge cases.",
-    enabled: true,
-    prompt: true,
-  },
-  {
-    icon: MessageSquareText,
-    title: "Send SMS",
-    body: "Text callers with confirmations or links.",
-    enabled: false,
-  },
-  {
-    icon: BookOpen,
-    title: "Book Appointments",
-    body: "Connect a booking flow for callers.",
-    enabled: false,
-  },
-  {
-    icon: Settings2,
-    title: "Webhooks",
-    body: "Send events into CRM and automation tools.",
-    enabled: false,
-  },
-];
-
-export function CustomerAgentWorkspace() {
-  const [assistants, setAssistants] = useState(initialAssistants);
-  const [selectedId, setSelectedId] = useState(initialAssistants[0].id);
+export function CustomerAgentWorkspace({
+  initialAssistants,
+  callLogs = [],
+  userEmail,
+  isAdmin = false,
+  adminMode = false,
+  trial,
+}: {
+  initialAssistants?: Assistant[];
+  callLogs?: CallLog[];
+  userEmail?: string;
+  isAdmin?: boolean;
+  adminMode?: boolean; // rendered on /admin with every customer's agents
+  trial?: { used: number; cap: number; blocked: boolean }; // free-trial call usage
+}) {
+  const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
+  // A real customer with no agents yet has an empty list — don't assume [0] exists.
+  const [selectedId, setSelectedId] = useState(
+    (initialAssistants ?? demoAssistants)[0]?.id ?? "",
+  );
   const [view, setView] = useState<View>("assistants");
   const [detailTab, setDetailTab] = useState<DetailTab>("behaviour");
   const [searchTerm, setSearchTerm] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
+  const [greetingOpen, setGreetingOpen] = useState(false);
+  const [editAbility, setEditAbility] = useState<"knowledge" | "transfer" | null>(null);
   const [newAssistantName, setNewAssistantName] = useState("");
+  const [newBusinessName, setNewBusinessName] = useState("");
+  const [newTemplateId, setNewTemplateId] = useState(agentTemplates[0].id);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [selectedCall, setSelectedCall] = useState<CallLog | null>(null);
+  const [provisionError, setProvisionError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [isCreating, startCreate] = useTransition();
+  const [isProvisioning, startProvision] = useTransition();
 
   const selectedAssistant =
     assistants.find((assistant) => assistant.id === selectedId) ?? assistants[0];
 
   const filteredAssistants = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
-
-    if (!query) {
-      return assistants;
-    }
-
+    if (!query) return assistants;
     return assistants.filter((assistant) =>
-      [
-        assistant.name,
-        assistant.businessName,
-        assistant.industry,
-        assistant.phoneNumber,
-      ]
+      [assistant.name, assistant.businessName, assistant.industry, assistant.phoneNumber]
         .join(" ")
         .toLowerCase()
         .includes(query),
@@ -209,119 +490,262 @@ export function CustomerAgentWorkspace() {
   const totalCalls = assistants.reduce((total, assistant) => total + assistant.calls, 0);
 
   function updateSelected(patch: Partial<Assistant>) {
-    setAssistants((currentAssistants) =>
-      currentAssistants.map((assistant) =>
-        assistant.id === selectedAssistant.id ? { ...assistant, ...patch } : assistant,
-      ),
+    setAssistants((current) =>
+      current.map((a) => (a.id === selectedAssistant.id ? { ...a, ...patch } : a)),
     );
   }
 
   function createAssistant() {
-    const cleanName = newAssistantName.trim() || "New Assistant";
-    const id = `${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
-    const assistant: Assistant = {
-      id,
-      name: cleanName,
-      businessName: "New business",
-      industry: "General",
-      phoneNumber: "Number pending",
-      status: "Setup",
-      receptionistName: cleanName,
-      prompt:
-        "Answer calls clearly, capture the caller's details and route anything urgent to the team.",
-      website: "",
-      timezone: "Europe/London",
-      fallbackEmail: "",
-      transferNumber: "",
-      calls: 0,
-      cost: "GBP 0.00",
-    };
-
-    setAssistants((currentAssistants) => [assistant, ...currentAssistants]);
-    setSelectedId(id);
-    setView("detail");
-    setDetailTab("behaviour");
-    setCreateOpen(false);
-    setNewAssistantName("");
+    const template =
+      agentTemplates.find((t) => t.id === newTemplateId) ?? agentTemplates[0];
+    const receptionist = newAssistantName.trim() || "Receptionist";
+    const business = newBusinessName.trim() || "New business";
+    const prompt = template.buildPrompt(business, receptionist);
+    const greeting = template.buildGreeting(business, receptionist);
+    const voice = cartesiaVoices[0].id;
+    const knowledgeFields = template.defaultKnowledgeFields ?? {};
+    const knowledge = composeKnowledge(knowledgeFields);
+    const contacts = template.defaultContacts?.() ?? [];
+    setCreateError(null);
+    startCreate(async () => {
+      const result = await createAgent({
+        name: receptionist,
+        businessName: business,
+        industry: template.industry,
+        prompt,
+        greeting,
+        voice,
+        knowledge,
+        knowledgeFields,
+        contacts,
+      });
+      if (!result.ok || !result.id) {
+        setCreateError(result.error ?? "Could not create the assistant.");
+        return;
+      }
+      const assistant: Assistant = {
+        id: result.id,
+        name: receptionist,
+        businessName: business,
+        industry: template.industry,
+        phoneNumber: "Number pending",
+        status: "Setup",
+        receptionistName: receptionist,
+        prompt,
+        greeting,
+        voice,
+        knowledge,
+        knowledgeFields,
+        defaultEmail: "",
+        contacts,
+        website: "",
+        timezone: "Europe/London",
+        fallbackEmail: "",
+        transferNumber: "",
+        calls: 0,
+        cost: "GBP 0.00",
+        routing: { provider: null, number: "", status: "unprovisioned" },
+      };
+      setAssistants((current) => [assistant, ...current]);
+      setSelectedId(result.id);
+      setView("detail");
+      setDetailTab("behaviour");
+      setCreateOpen(false);
+      setNewAssistantName("");
+      setNewBusinessName("");
+      setNewTemplateId(agentTemplates[0].id);
+    });
   }
 
   function save() {
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 1600);
+    setSaveError(null);
+    startTransition(async () => {
+      const result = await updateAgent(selectedAssistant.id, {
+        name: selectedAssistant.name,
+        businessName: selectedAssistant.businessName,
+        industry: selectedAssistant.industry,
+        phoneNumber: selectedAssistant.phoneNumber,
+        timezone: selectedAssistant.timezone,
+        prompt: selectedAssistant.prompt,
+        greeting: selectedAssistant.greeting,
+        voice: selectedAssistant.voice,
+        knowledge: selectedAssistant.knowledge,
+        knowledgeFields: selectedAssistant.knowledgeFields,
+        defaultEmail: selectedAssistant.defaultEmail,
+        contacts: selectedAssistant.contacts,
+        website: selectedAssistant.website,
+        fallbackEmail: selectedAssistant.fallbackEmail,
+        transferNumber: selectedAssistant.transferNumber,
+        status: selectedAssistant.status,
+      });
+      if (result.ok) {
+        setSaved(true);
+        window.setTimeout(() => setSaved(false), 1600);
+      } else {
+        setSaveError(result.error ?? "Save failed.");
+      }
+    });
+  }
+
+  function provision() {
+    setProvisionError(null);
+    startProvision(async () => {
+      const result = await provisionNumber(selectedAssistant.id);
+      if (result.ok && result.routing) {
+        updateSelected({
+          routing: result.routing,
+          phoneNumber: result.routing.number || "Number pending",
+          status: result.routing.status === "live" ? "Live" : "Setup",
+        });
+      } else {
+        setProvisionError(result.error ?? "Could not assign a number yet.");
+      }
+    });
+  }
+
+  function isNavActive(item: { view: View; label: string }): boolean {
+    if (item.label === "Assistants") return view === "assistants" || view === "detail";
+    if (item.label === "Call History") return view === "calls";
+    if (item.label === "Home") return view === "home";
+    return false;
   }
 
   return (
     <div className="min-h-screen bg-[#e9efed] px-0 py-0 text-[#111716] lg:px-6 lg:py-6">
+      {trial ? (
+        <div className="mx-auto mb-3 max-w-[1540px] px-4 lg:px-0">
+          <div
+            className={`flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold ${
+              trial.blocked
+                ? "bg-[#fdecec] text-[#9b1c1c]"
+                : "bg-[#eefbfb] text-[#0e4b4d]"
+            }`}
+          >
+            <span>
+              {trial.blocked
+                ? `Free trial limit reached — ${trial.used}/${trial.cap} calls used. Add a plan to keep taking calls.`
+                : `Free trial: ${trial.used}/${trial.cap} AI calls used.`}
+            </span>
+            {trial.blocked ? (
+              <a
+                href="/billing"
+                className="flex-shrink-0 rounded-lg bg-[#9b1c1c] px-3 py-1.5 text-xs font-bold text-white"
+              >
+                Choose a plan
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <div className="mx-auto flex min-h-screen max-w-[1540px] overflow-hidden bg-white shadow-[0_24px_90px_rgba(17,23,22,0.14)] lg:min-h-[calc(100vh-48px)] lg:rounded-[22px] lg:border lg:border-black/10">
-        <aside className="hidden w-[280px] flex-shrink-0 flex-col border-r border-black/10 bg-[#f7f8f7] md:flex">
-          <div className="flex h-[72px] items-center px-8">
-            <span className="text-2xl font-black tracking-normal">
-              Wise<span className="text-[#148b8e]">Call</span>
+        {/* Sidebar */}
+        <aside className="hidden w-[280px] flex-shrink-0 flex-col bg-gradient-to-b from-[#172929] to-[#0e1b1b] md:flex">
+          <div className="flex h-[72px] items-center gap-3 px-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/owl-logo.png" alt="" className="h-8 w-8 object-contain" />
+            <span className="text-2xl font-black tracking-normal text-white">
+              Wise<span className="text-[#7de8eb]">Call</span>
             </span>
           </div>
-          <nav className="flex-1 space-y-8 px-5 py-6">
-            {navSections.map((section) => (
-              <div key={section.title || "home"} className="space-y-2">
-                {section.title && (
-                  <p className="px-4 text-sm font-semibold text-[#7a8582]">{section.title}</p>
-                )}
-                {section.items.map((item) => (
-                  <button
-                    type="button"
-                    key={`${section.title}-${item.label}`}
-                    onClick={() => {
-                      setView(item.view);
-                      if (item.label === "Assistants") {
-                        setView("assistants");
-                      }
-                    }}
-                    className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-bold transition ${
-                      (item.label === "Assistants" && view !== "home") ||
-                      (item.label === "Home" && view === "home")
-                        ? "bg-[#eaeeee] text-[#111716]"
-                        : "text-[#5e6966] hover:bg-[#eef2f1] hover:text-[#111716]"
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            ))}
+
+          <nav className="flex-1 space-y-1 px-4 py-4">
+            {navItems.map((item) => {
+              const active = isNavActive(item);
+              return (
+                <button
+                  type="button"
+                  key={item.label}
+                  onClick={() => setView(item.view)}
+                  className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold transition ${
+                    active
+                      ? "bg-[#7de8eb]/10 text-white"
+                      : "text-[#94b4b2] hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-1 h-[calc(100%-8px)] w-0.5 rounded-r-full bg-[#7de8eb]" />
+                  )}
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  {item.label}
+                </button>
+              );
+            })}
+
+            {adminMode ? (
+              <a
+                href="/dashboard"
+                className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+              >
+                <Grid2X2 className="h-5 w-5 flex-shrink-0" />
+                My dashboard
+              </a>
+            ) : (
+              isAdmin && (
+                <a
+                  href="/admin"
+                  className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                >
+                  <ShieldCheck className="h-5 w-5 flex-shrink-0" />
+                  Admin
+                </a>
+              )
+            )}
           </nav>
-          <div className="m-5 rounded-[18px] border border-black/10 bg-white p-5 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#ddfbfc] text-[#148b8e]">
-              <UserRound className="h-6 w-6" />
+
+          <div className="m-4 rounded-[18px] bg-[#1a3535] p-5 text-center">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#7de8eb]/20 text-[#7de8eb]">
+              <UserRound className="h-5 w-5" />
             </div>
-            <p className="text-sm font-bold">Need setup help?</p>
+            <p className="text-sm font-bold text-white">Need setup help?</p>
             <button
               type="button"
-              className="mt-3 rounded-lg border border-black/10 px-4 py-2 text-sm font-bold text-[#148b8e] transition hover:bg-[#f7f8f7]"
+              className="mt-3 rounded-lg bg-[#7de8eb] px-4 py-2 text-sm font-bold text-[#0e1b1b] transition hover:bg-[#5de0e5]"
             >
               Book support
             </button>
           </div>
         </aside>
 
+        {/* Main */}
         <main className="min-w-0 flex-1 bg-white">
           <header className="flex h-[72px] items-center justify-between border-b border-black/10 px-5 lg:px-8">
             <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-[#7a8582]">
               <span>Home</span>
-              {view !== "home" && (
+              {(view === "assistants" || view === "detail") && (
                 <>
                   <ChevronRight className="h-4 w-4" />
                   <span>Assistants</span>
                 </>
               )}
+              {view === "calls" && (
+                <>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>Call History</span>
+                </>
+              )}
               {view === "detail" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
-                  <span className="truncate">{selectedAssistant.name}</span>
+                  <span className="truncate text-[#111716]">{selectedAssistant.name}</span>
                 </>
               )}
             </div>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-sm font-black">
-              LT
+            <div className="flex items-center gap-3">
+              {userEmail && (
+                <span className="hidden text-sm text-[#7a8582] sm:block">{userEmail}</span>
+              )}
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-[#f2f4f3] text-sm font-black">
+                {userEmail ? userEmail[0].toUpperCase() : "?"}
+              </div>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </form>
             </div>
           </header>
 
@@ -334,10 +758,11 @@ export function CustomerAgentWorkspace() {
               />
             )}
 
-            {view === "assistants" && (
+            {(view === "assistants") && (
               <AssistantsList
                 assistants={filteredAssistants}
                 searchTerm={searchTerm}
+                adminMode={adminMode}
                 onSearch={setSearchTerm}
                 onCreate={() => setCreateOpen(true)}
                 onOpen={(assistantId) => {
@@ -353,12 +778,36 @@ export function CustomerAgentWorkspace() {
                 assistant={selectedAssistant}
                 tab={detailTab}
                 saved={saved}
+                isPending={isPending}
+                saveError={saveError}
+                isProvisioning={isProvisioning}
+                provisionError={provisionError}
                 onBack={() => setView("assistants")}
                 onTabChange={setDetailTab}
                 onChange={updateSelected}
                 onPrompt={() => setPromptOpen(true)}
+                onGreeting={() => setGreetingOpen(true)}
+                onAbility={(key) => {
+                  // First time editing structured knowledge: fold any legacy
+                  // freeform text into the "Anything else" section so it isn't lost.
+                  if (
+                    key === "knowledge" &&
+                    !hasKnowledgeFields(selectedAssistant.knowledgeFields) &&
+                    selectedAssistant.knowledge.trim()
+                  ) {
+                    updateSelected({
+                      knowledgeFields: { other: selectedAssistant.knowledge },
+                    });
+                  }
+                  setEditAbility(key);
+                }}
                 onSave={save}
+                onProvision={provision}
               />
+            )}
+
+            {view === "calls" && (
+              <CallHistory callLogs={callLogs} onOpen={(log) => setSelectedCall(log)} />
             )}
           </div>
         </main>
@@ -366,9 +815,18 @@ export function CustomerAgentWorkspace() {
 
       {createOpen && (
         <CreateAssistantModal
-          value={newAssistantName}
-          onChange={setNewAssistantName}
-          onClose={() => setCreateOpen(false)}
+          name={newAssistantName}
+          businessName={newBusinessName}
+          templateId={newTemplateId}
+          isCreating={isCreating}
+          error={createError}
+          onNameChange={setNewAssistantName}
+          onBusinessChange={setNewBusinessName}
+          onTemplateChange={setNewTemplateId}
+          onClose={() => {
+            setCreateOpen(false);
+            setCreateError(null);
+          }}
           onCreate={createAssistant}
         />
       )}
@@ -383,6 +841,55 @@ export function CustomerAgentWorkspace() {
             setPromptOpen(false);
           }}
         />
+      )}
+
+      {greetingOpen && (
+        <GreetingModal
+          assistant={selectedAssistant}
+          onChange={(patch) => updateSelected(patch)}
+          onClose={() => setGreetingOpen(false)}
+          onSave={() => {
+            save();
+            setGreetingOpen(false);
+          }}
+        />
+      )}
+
+      {editAbility === "knowledge" && (
+        <KnowledgeModal
+          assistant={selectedAssistant}
+          onChange={(fields) =>
+            updateSelected({
+              knowledgeFields: fields,
+              knowledge: composeKnowledge(fields),
+            })
+          }
+          onClose={() => setEditAbility(null)}
+          onSave={() => {
+            save();
+            setEditAbility(null);
+          }}
+        />
+      )}
+
+      {editAbility === "transfer" && (
+        <AbilityEditorModal
+          title="Transfer Calls"
+          subtitle={`Where ${selectedAssistant.name} forwards urgent calls`}
+          label="Transfer number"
+          placeholder="+44 113 522 1606"
+          value={selectedAssistant.transferNumber}
+          onChange={(value) => updateSelected({ transferNumber: value })}
+          onClose={() => setEditAbility(null)}
+          onSave={() => {
+            save();
+            setEditAbility(null);
+          }}
+        />
+      )}
+
+      {selectedCall && (
+        <CallDetailModal log={selectedCall} onClose={() => setSelectedCall(null)} />
       )}
     </div>
   );
@@ -414,52 +921,39 @@ function HomeOverview({
         </button>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.8fr_1fr]">
-        <section className="rounded-[18px] border border-black/10 bg-white">
-          <div className="grid border-b border-black/10 sm:grid-cols-[1fr_120px_120px]">
-            <div className="p-6">
-              <h2 className="text-2xl font-black">Call History</h2>
-              <p className="mt-1 text-[#7a8582]">June 2026</p>
-            </div>
-            <StatCell label="Calls" value={totalCalls} />
-            <StatCell label="Agents" value={assistants} />
+      <section className="rounded-[18px] border border-black/10 bg-white">
+        <div className="grid border-b border-black/10 sm:grid-cols-[1fr_120px_120px]">
+          <div className="p-6">
+            <h2 className="text-2xl font-black">Call History</h2>
+            <p className="mt-1 text-[#7a8582]">June 2026</p>
           </div>
-          <div className="h-[280px] p-6">
-            <div className="relative h-full overflow-hidden rounded-lg bg-[#f7f8f7]">
-              <svg viewBox="0 0 640 220" className="h-full w-full">
-                <path
-                  d="M30 176 C140 176 214 176 300 176 C342 176 350 128 382 128 C416 128 408 176 432 176 C462 176 448 66 480 56"
-                  fill="none"
-                  stroke="#41c9ce"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M30 176 C140 176 214 176 300 176 C342 176 350 128 382 128 C416 128 408 176 432 176 C462 176 448 66 480 56 L480 205 L30 205 Z"
-                  fill="url(#chartFill)"
-                />
-                <defs>
-                  <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#41c9ce" stopOpacity="0.24" />
-                    <stop offset="100%" stopColor="#41c9ce" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+          <StatCell label="Calls" value={totalCalls} />
+          <StatCell label="Agents" value={assistants} />
+        </div>
+        <div className="h-[280px] p-6">
+          <div className="relative h-full overflow-hidden rounded-lg bg-[#f7f8f7]">
+            <svg viewBox="0 0 640 220" className="h-full w-full">
+              <path
+                d="M30 176 C140 176 214 176 300 176 C342 176 350 128 382 128 C416 128 408 176 432 176 C462 176 448 66 480 56"
+                fill="none"
+                stroke="#41c9ce"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+              <path
+                d="M30 176 C140 176 214 176 300 176 C342 176 350 128 382 128 C416 128 408 176 432 176 C462 176 448 66 480 56 L480 205 L30 205 Z"
+                fill="url(#chartFill)"
+              />
+              <defs>
+                <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#41c9ce" stopOpacity="0.24" />
+                  <stop offset="100%" stopColor="#41c9ce" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
-        </section>
-
-        <section className="rounded-[18px] border border-black/10 bg-white p-6">
-          <h2 className="text-2xl font-black">Credit</h2>
-          <p className="mt-1 text-[#7a8582]">Available balance</p>
-          <div className="mx-auto mt-10 flex h-44 w-44 items-center justify-center rounded-full border-[14px] border-[#e3e8e6] border-t-[#41c9ce]">
-            <div className="text-center">
-              <p className="text-3xl font-black">GBP 99</p>
-              <p className="mt-1 text-sm text-[#7a8582]">available</p>
-            </div>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
@@ -467,12 +961,14 @@ function HomeOverview({
 function AssistantsList({
   assistants,
   searchTerm,
+  adminMode = false,
   onSearch,
   onCreate,
   onOpen,
 }: {
   assistants: Assistant[];
   searchTerm: string;
+  adminMode?: boolean;
   onSearch: (value: string) => void;
   onCreate: () => void;
   onOpen: (assistantId: string) => void;
@@ -481,8 +977,12 @@ function AssistantsList({
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-4xl font-black">Assistants</h1>
-          <p className="mt-2 text-[#66716e]">Create and manage the agents on your account.</p>
+          <h1 className="text-4xl font-black">{adminMode ? "All agents" : "Assistants"}</h1>
+          <p className="mt-2 text-[#66716e]">
+            {adminMode
+              ? "Every WiseCall agent across all customers. Open any to edit."
+              : "Create and manage the agents on your account."}
+          </p>
         </div>
         <button
           type="button"
@@ -505,9 +1005,16 @@ function AssistantsList({
       </label>
 
       <section className="overflow-hidden rounded-[18px] border border-black/10 bg-white">
-        <div className="grid grid-cols-[1fr_210px_130px_70px] border-b border-black/10 bg-[#fbfcfc] px-5 py-4 text-sm font-bold text-[#66716e] max-md:hidden">
+        <div
+          className={`grid border-b border-black/10 bg-[#fbfcfc] px-5 py-4 text-sm font-bold text-[#66716e] max-md:hidden ${
+            adminMode
+              ? "grid-cols-[1fr_190px_180px_120px_60px]"
+              : "grid-cols-[1fr_210px_130px_70px]"
+          }`}
+        >
           <span>Name</span>
           <span>Phone Number</span>
+          {adminMode && <span>Owner</span>}
           <span>Status</span>
           <span />
         </div>
@@ -518,7 +1025,11 @@ function AssistantsList({
                 type="button"
                 key={assistant.id}
                 onClick={() => onOpen(assistant.id)}
-                className="grid w-full gap-4 px-5 py-5 text-left transition hover:bg-[#f7f8f7] md:grid-cols-[1fr_210px_130px_70px]"
+                className={`grid w-full gap-4 px-5 py-5 text-left transition hover:bg-[#f7f8f7] ${
+                  adminMode
+                    ? "md:grid-cols-[1fr_190px_180px_120px_60px]"
+                    : "md:grid-cols-[1fr_210px_130px_70px]"
+                }`}
               >
                 <span>
                   <span className="block font-black">{assistant.name}</span>
@@ -527,6 +1038,11 @@ function AssistantsList({
                   </span>
                 </span>
                 <span className="font-mono text-sm text-[#66716e]">{assistant.phoneNumber}</span>
+                {adminMode && (
+                  <span className="truncate text-sm text-[#66716e]">
+                    {assistant.ownerEmail ?? "Unassigned"}
+                  </span>
+                )}
                 <span>
                   <StatusPill status={assistant.status} />
                 </span>
@@ -548,20 +1064,34 @@ function AssistantDetail({
   assistant,
   tab,
   saved,
+  isPending,
+  saveError,
+  isProvisioning,
+  provisionError,
   onBack,
   onTabChange,
   onChange,
   onPrompt,
+  onGreeting,
+  onAbility,
   onSave,
+  onProvision,
 }: {
   assistant: Assistant;
   tab: DetailTab;
   saved: boolean;
+  isPending: boolean;
+  saveError: string | null;
+  isProvisioning: boolean;
+  provisionError: string | null;
   onBack: () => void;
   onTabChange: (tab: DetailTab) => void;
   onChange: (patch: Partial<Assistant>) => void;
   onPrompt: () => void;
+  onGreeting: () => void;
+  onAbility: (key: "knowledge" | "transfer") => void;
   onSave: () => void;
+  onProvision: () => void;
 }) {
   return (
     <div className="mx-auto max-w-5xl">
@@ -586,8 +1116,15 @@ function AssistantDetail({
         </button>
       </div>
 
+      <RoutingCard
+        routing={assistant.routing}
+        isProvisioning={isProvisioning}
+        error={provisionError}
+        onProvision={onProvision}
+      />
+
       <div className="mb-8 flex border-b border-black/10">
-        {(["behaviour", "technical"] as DetailTab[]).map((item) => (
+        {(["behaviour", "routing", "technical"] as DetailTab[]).map((item) => (
           <button
             type="button"
             key={item}
@@ -621,28 +1158,78 @@ function AssistantDetail({
             </span>
           </button>
 
+          <button
+            type="button"
+            onClick={onGreeting}
+            className="flex w-full items-center justify-between gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4 text-left transition hover:bg-[#f7f8f7]"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <Hand className="h-5 w-5 flex-shrink-0 text-[#148b8e]" />
+              <span className="min-w-0">
+                <span className="block font-black">Greeting message</span>
+                <span className="mt-1 block truncate text-sm text-[#7a8582]">
+                  {assistant.greeting || "The first thing callers hear when they connect."}
+                </span>
+              </span>
+            </span>
+            <ChevronRight className="h-5 w-5 flex-shrink-0 text-[#7a8582]" />
+          </button>
+
+          <div className="pt-2">
+            <p className="mb-3 px-1 text-sm font-bold text-[#7a8582]">Voice</p>
+            <VoicePicker
+              selected={assistant.voice}
+              greeting={assistant.greeting}
+              onSelect={(voice) => onChange({ voice })}
+            />
+          </div>
+
           <div className="pt-2">
             <p className="mb-3 px-1 text-sm font-bold text-[#7a8582]">Abilities</p>
             <div className="space-y-3">
-              {abilityRows.slice(0, 3).map((row) => (
-                <AbilityRow key={row.title} {...row} />
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-4">
-            <p className="mb-3 px-1 text-sm font-bold text-[#7a8582]">Advanced Abilities</p>
-            <div className="space-y-3">
-              {abilityRows.slice(3).map((row) => (
-                <AbilityRow
-                  key={row.title}
-                  {...row}
-                  onClick={row.prompt ? onPrompt : undefined}
-                />
-              ))}
+              <AbilityRow
+                icon={MessageSquareText}
+                title="Answer Questions"
+                body={
+                  assistant.knowledge.trim()
+                    ? truncate(assistant.knowledge, 70)
+                    : "Add FAQs and business info for callers."
+                }
+                enabled={Boolean(assistant.knowledge.trim())}
+                onClick={() => onAbility("knowledge")}
+              />
+              <AbilityRow
+                icon={Phone}
+                title="Transfer Calls"
+                body={
+                  assistant.transferNumber.trim()
+                    ? `Forwards urgent calls to ${assistant.transferNumber}`
+                    : "Add a number to forward urgent calls."
+                }
+                enabled={Boolean(assistant.transferNumber.trim())}
+                onClick={() => onAbility("transfer")}
+              />
+              <AbilityRow
+                icon={Sparkles}
+                title="Custom Prompt / Instructions"
+                body="Control behaviour, tone and edge cases."
+                enabled
+                onClick={onPrompt}
+              />
             </div>
           </div>
         </div>
+      ) : tab === "routing" ? (
+        <RoutingTab
+          contacts={assistant.contacts}
+          defaultEmail={assistant.defaultEmail}
+          saved={saved}
+          isPending={isPending}
+          saveError={saveError}
+          onChange={(contacts) => onChange({ contacts })}
+          onDefaultEmailChange={(defaultEmail) => onChange({ defaultEmail })}
+          onSave={onSave}
+        />
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
           <Field
@@ -689,14 +1276,533 @@ function AssistantDetail({
             <button
               type="button"
               onClick={onSave}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+              disabled={isPending}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
             >
               {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-              {saved ? "Saved" : "Save changes"}
+              {isPending ? "Saving…" : saved ? "Saved" : "Save changes"}
             </button>
+            {saveError && (
+              <p className="mt-2 text-sm text-red-600">{saveError}</p>
+            )}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function RoutingTab({
+  contacts,
+  defaultEmail,
+  saved,
+  isPending,
+  saveError,
+  onChange,
+  onDefaultEmailChange,
+  onSave,
+}: {
+  contacts: RoutingContact[];
+  defaultEmail: string;
+  saved: boolean;
+  isPending: boolean;
+  saveError: string | null;
+  onChange: (contacts: RoutingContact[]) => void;
+  onDefaultEmailChange: (value: string) => void;
+  onSave: () => void;
+}) {
+  function update(id: string, patch: Partial<RoutingContact>) {
+    onChange(contacts.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }
+  function remove(id: string) {
+    onChange(contacts.filter((c) => c.id !== id));
+  }
+  function add() {
+    onChange([
+      ...contacts,
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        phone: "",
+        email: "",
+        keywords: [],
+        transfer: true,
+        notify: false,
+        useDefaultEmail: false,
+      },
+    ]);
+  }
+
+  return (
+    <div>
+      <div className="mb-5 flex items-start gap-3 rounded-[14px] border border-black/10 bg-[#fbfcfc] px-5 py-4">
+        <Users className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#148b8e]" />
+        <p className="text-sm text-[#66716e]">
+          Add the people or teams calls should reach. When a caller mentions any of a
+          contact&apos;s keywords, the agent transfers them to that number and/or emails a
+          summary.
+        </p>
+      </div>
+
+      <div className="mb-6 rounded-[14px] border border-black/10 bg-white p-5">
+        <span className="flex items-center gap-2 text-sm font-black">
+          <Mail className="h-4 w-4 text-[#148b8e]" />
+          Default routing inbox
+        </span>
+        <p className="mt-1 mb-3 text-sm text-[#7a8582]">
+          A pooled address summaries fall back to — used by any contact set to “send to
+          default”, and when no specific contact matches.
+        </p>
+        <input
+          value={defaultEmail}
+          onChange={(event) => onDefaultEmailChange(event.target.value)}
+          placeholder="info@yourbusiness.co.uk"
+          className="h-12 w-full max-w-md rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+        />
+      </div>
+
+      {contacts.length > 0 ? (
+        <div className="space-y-4">
+          {contacts.map((contact) => (
+            <ContactCard
+              key={contact.id}
+              contact={contact}
+              defaultEmail={defaultEmail}
+              onChange={(patch) => update(contact.id, patch)}
+              onRemove={() => remove(contact.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[14px] border border-dashed border-black/15 bg-white px-5 py-10 text-center text-[#66716e]">
+          No routing contacts yet. Add your first one below.
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={add}
+        className="mt-4 inline-flex items-center gap-2 rounded-lg border border-dashed border-black/20 px-5 py-3 text-sm font-black text-[#148b8e] transition hover:bg-[#f7f8f7]"
+      >
+        <Plus className="h-4 w-4" />
+        Add contact
+      </button>
+
+      <div className="mt-8 border-t border-black/10 pt-6">
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={isPending}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+        >
+          {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+          {isPending ? "Saving…" : saved ? "Saved" : "Save routing"}
+        </button>
+        {saveError && <p className="mt-2 text-sm text-red-600">{saveError}</p>}
+      </div>
+    </div>
+  );
+}
+
+function ContactCard({
+  contact,
+  defaultEmail,
+  onChange,
+  onRemove,
+}: {
+  contact: RoutingContact;
+  defaultEmail: string;
+  onChange: (patch: Partial<RoutingContact>) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-[14px] border border-black/10 bg-white p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <span className="flex items-center gap-2 font-black">
+          <UserRound className="h-4 w-4 text-[#148b8e]" />
+          {contact.name.trim() || "New contact"}
+        </span>
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Remove contact"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#fdeaea] hover:text-[#c0392b]"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Name" value={contact.name} onChange={(v) => onChange({ name: v })} />
+        <Field
+          label="Mobile / DDI"
+          value={contact.phone}
+          onChange={(v) => onChange({ phone: v })}
+        />
+        <div className="sm:col-span-2">
+          <span className="mb-2 block text-sm font-black">Email</span>
+          {contact.useDefaultEmail ? (
+            <div className="flex h-12 items-center rounded-lg border border-dashed border-black/15 bg-[#fbfcfc] px-4 text-sm text-[#66716e]">
+              Summaries go to the default inbox
+              {defaultEmail ? ` · ${defaultEmail}` : ""}
+            </div>
+          ) : (
+            <input
+              value={contact.email}
+              onChange={(event) => onChange({ email: event.target.value })}
+              placeholder="name@business.co.uk"
+              className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+            />
+          )}
+          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm text-[#66716e]">
+            <input
+              type="checkbox"
+              checked={contact.useDefaultEmail}
+              onChange={(event) => onChange({ useDefaultEmail: event.target.checked })}
+              className="h-4 w-4 rounded border-black/30 accent-[#148b8e]"
+            />
+            Send to default inbox instead
+          </label>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <span className="mb-2 block text-sm font-black">Keywords</span>
+        <KeywordInput
+          keywords={contact.keywords}
+          onChange={(keywords) => onChange({ keywords })}
+        />
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <RouteToggle
+          active={contact.transfer}
+          icon={Phone}
+          label="Transfer call"
+          onClick={() => onChange({ transfer: !contact.transfer })}
+        />
+        <RouteToggle
+          active={contact.notify}
+          icon={Mail}
+          label="Email summary"
+          onClick={() => onChange({ notify: !contact.notify })}
+        />
+      </div>
+    </div>
+  );
+}
+
+function RouteToggle({
+  active,
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${
+        active
+          ? "border-[#148b8e] bg-[#e6fbfc] text-[#0f6f72]"
+          : "border-black/15 bg-white text-[#7a8582] hover:bg-[#f7f8f7]"
+      }`}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+      {active && <Check className="h-3.5 w-3.5" />}
+    </button>
+  );
+}
+
+function KeywordInput({
+  keywords,
+  onChange,
+}: {
+  keywords: string[];
+  onChange: (keywords: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+
+  function commit(value: string) {
+    const next = value.replace(/,/g, "").trim();
+    if (!next) {
+      setDraft("");
+      return;
+    }
+    if (!keywords.some((k) => k.toLowerCase() === next.toLowerCase())) {
+      onChange([...keywords, next]);
+    }
+    setDraft("");
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-black/15 bg-white px-3 py-2.5 focus-within:border-[#111716]">
+      {keywords.map((keyword) => (
+        <span
+          key={keyword}
+          className="inline-flex items-center gap-1.5 rounded-full bg-[#eef1f0] px-3 py-1 text-sm font-bold"
+        >
+          {keyword}
+          <button
+            type="button"
+            onClick={() => onChange(keywords.filter((k) => k !== keyword))}
+            aria-label={`Remove ${keyword}`}
+            className="text-[#7a8582] transition hover:text-[#111716]"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </span>
+      ))}
+      <input
+        value={draft}
+        onChange={(event) => {
+          const value = event.target.value;
+          if (value.endsWith(",")) commit(value);
+          else setDraft(value);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commit(draft);
+          } else if (event.key === "Backspace" && !draft && keywords.length) {
+            onChange(keywords.slice(0, -1));
+          }
+        }}
+        onBlur={() => commit(draft)}
+        placeholder={keywords.length ? "Add another…" : "Type a keyword and press Enter"}
+        className="min-w-[150px] flex-1 bg-transparent text-sm outline-none placeholder:text-[#9aa4a1]"
+      />
+    </div>
+  );
+}
+
+function formatWhen(iso: string): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function CallHistory({
+  callLogs,
+  onOpen,
+}: {
+  callLogs: CallLog[];
+  onOpen: (log: CallLog) => void;
+}) {
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-4xl font-black">Call History</h1>
+        <p className="mt-2 text-[#66716e]">
+          {callLogs.length} call{callLogs.length !== 1 ? "s" : ""} handled by your agents.
+        </p>
+      </div>
+
+      <section className="overflow-hidden rounded-[18px] border border-black/10 bg-white">
+        <div className="grid grid-cols-[1fr_200px_130px_80px] border-b border-black/10 bg-[#fbfcfc] px-5 py-4 text-sm font-bold text-[#66716e] max-md:hidden">
+          <span>Caller</span>
+          <span>Summary</span>
+          <span>Outcome</span>
+          <span>Length</span>
+        </div>
+        {callLogs.length > 0 ? (
+          <div className="divide-y divide-black/10">
+            {callLogs.map((log) => (
+              <button
+                type="button"
+                key={log.id}
+                onClick={() => onOpen(log)}
+                className="grid w-full gap-4 px-5 py-4 text-left transition hover:bg-[#f7f8f7] md:grid-cols-[1fr_200px_130px_80px]"
+              >
+                <span>
+                  <span className="block font-black">{log.caller}</span>
+                  <span className="mt-1 block text-xs text-[#66716e]">
+                    {formatWhen(log.startedAt)}
+                  </span>
+                </span>
+                <span className="truncate text-sm text-[#66716e]">{log.summary || "—"}</span>
+                <span className="text-sm text-[#66716e]">{log.outcome || "—"}</span>
+                <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="px-5 py-16 text-center text-[#66716e]">No calls yet.</div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function CallDetailModal({ log, onClose }: { log: CallLog; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+      <div className="flex h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-black/10 px-7 py-5">
+          <div>
+            <h2 className="text-xl font-black">{log.caller}</h2>
+            <p className="mt-1 text-sm text-[#66716e]">
+              {formatWhen(log.startedAt)} · {log.durationLabel}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="space-y-5 overflow-y-auto px-7 py-6">
+          {log.outcome && (
+            <div>
+              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[#7a8582]">
+                Outcome
+              </p>
+              <p className="text-sm">{log.outcome}</p>
+            </div>
+          )}
+          {log.summary && (
+            <div>
+              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[#7a8582]">
+                Summary
+              </p>
+              <p className="text-sm leading-relaxed">{log.summary}</p>
+            </div>
+          )}
+          {log.transcript && (
+            <div>
+              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a8582]">
+                Transcript
+              </p>
+              <TranscriptView transcript={log.transcript} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type TranscriptTurn = { speaker: "agent" | "caller"; text: string };
+
+// Transcripts are stored line-by-line as "assistant: …" / "user: …". Parse into
+// turns so we can colour each speaker. Lines without a known prefix are folded
+// into the previous turn.
+function parseTranscript(raw: string): TranscriptTurn[] {
+  const turns: TranscriptTurn[] = [];
+  for (const line of raw.split(/\r?\n/)) {
+    const text = line.trim();
+    if (!text) continue;
+    const match = text.match(/^(assistant|agent|ai|bot|user|caller|customer|human)\s*:\s*(.*)$/i);
+    if (match) {
+      const role = match[1].toLowerCase();
+      const speaker = ["user", "caller", "customer", "human"].includes(role)
+        ? "caller"
+        : "agent";
+      turns.push({ speaker, text: match[2] });
+    } else if (turns.length > 0) {
+      turns[turns.length - 1].text += ` ${text}`;
+    } else {
+      turns.push({ speaker: "agent", text });
+    }
+  }
+  return turns;
+}
+
+function TranscriptView({ transcript }: { transcript: string }) {
+  const turns = parseTranscript(transcript);
+  return (
+    <div className="space-y-2.5 rounded-lg bg-[#f7f8f7] p-4">
+      {turns.map((turn, index) => {
+        const isCaller = turn.speaker === "caller";
+        return (
+          <div key={index} className={`flex ${isCaller ? "justify-end" : "justify-start"}`}>
+            <div
+              className={`max-w-[82%] rounded-2xl px-4 py-2.5 ${
+                isCaller
+                  ? "rounded-br-sm bg-[#172929] text-white"
+                  : "rounded-bl-sm bg-[#e6fbfc] text-[#111716]"
+              }`}
+            >
+              <p
+                className={`mb-0.5 text-[11px] font-black uppercase tracking-wide ${
+                  isCaller ? "text-[#7de8eb]" : "text-[#148b8e]"
+                }`}
+              >
+                {isCaller ? "Caller" : "Agent"}
+              </p>
+              <p className="text-sm leading-relaxed">{turn.text}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function RoutingCard({
+  routing,
+  isProvisioning,
+  error,
+  onProvision,
+}: {
+  routing: AgentRouting;
+  isProvisioning: boolean;
+  error: string | null;
+  onProvision: () => void;
+}) {
+  const live = routing.status === "live";
+  const pending = routing.status === "pending";
+  const dot = live ? "bg-[#16a66a]" : pending ? "bg-[#d9920a]" : "bg-[#9aa4a1]";
+  const heading = live
+    ? routing.number
+    : pending
+      ? "Number requested — setting up"
+      : "No phone number assigned yet";
+  const sub = live
+    ? "Live and answering calls"
+    : pending
+      ? "We're provisioning the line for this agent."
+      : "Assign a number to put this agent on a phone line.";
+
+  return (
+    <div className="mb-8 rounded-[14px] border border-black/10 bg-[#fbfcfc] px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Phone className="h-5 w-5 text-[#148b8e]" />
+          <div>
+            <p className="flex items-center gap-2 font-black">
+              <span className={`h-2 w-2 rounded-full ${dot}`} />
+              {heading}
+            </p>
+            <p className="mt-0.5 text-sm text-[#66716e]">{sub}</p>
+          </div>
+        </div>
+        {!live && (
+          <button
+            type="button"
+            onClick={onProvision}
+            disabled={isProvisioning || pending}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+          >
+            {isProvisioning ? "Assigning…" : "Assign number"}
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-3 text-sm text-[#a3791b]">{error}</p>}
     </div>
   );
 }
@@ -740,13 +1846,25 @@ function AbilityRow({
 }
 
 function CreateAssistantModal({
-  value,
-  onChange,
+  name,
+  businessName,
+  templateId,
+  isCreating,
+  error,
+  onNameChange,
+  onBusinessChange,
+  onTemplateChange,
   onClose,
   onCreate,
 }: {
-  value: string;
-  onChange: (value: string) => void;
+  name: string;
+  businessName: string;
+  templateId: string;
+  isCreating: boolean;
+  error: string | null;
+  onNameChange: (value: string) => void;
+  onBusinessChange: (value: string) => void;
+  onTemplateChange: (value: string) => void;
   onClose: () => void;
   onCreate: () => void;
 }) {
@@ -764,21 +1882,72 @@ function CreateAssistantModal({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <Field label="Name" value={value} onChange={onChange} autoFocus />
+
+        <p className="mb-3 text-sm font-bold text-[#7a8582]">Start from a template</p>
+        <div className="mb-6 space-y-3">
+          {agentTemplates.map((template) => {
+            const selected = template.id === templateId;
+            return (
+              <button
+                type="button"
+                key={template.id}
+                disabled={!template.available}
+                onClick={() => onTemplateChange(template.id)}
+                className={`flex w-full items-start gap-3 rounded-[14px] border px-5 py-4 text-left transition ${
+                  selected
+                    ? "border-[#148b8e] bg-[#e6fbfc]"
+                    : "border-black/10 bg-white hover:bg-[#f7f8f7]"
+                } ${template.available ? "" : "cursor-not-allowed opacity-50"}`}
+              >
+                <span
+                  className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
+                    selected ? "border-[#148b8e] bg-[#148b8e]" : "border-black/20"
+                  }`}
+                >
+                  {selected && <Check className="h-3.5 w-3.5 text-white" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-black">{template.label}</span>
+                  <span className="mt-1 block text-sm text-[#66716e]">
+                    {template.description}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+          <p className="px-1 text-xs text-[#9aa4a1]">
+            More industry &amp; integration templates coming soon.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Receptionist name"
+            value={name}
+            onChange={onNameChange}
+            autoFocus
+          />
+          <Field label="Business name" value={businessName} onChange={onBusinessChange} />
+        </div>
+
+        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
+            disabled={isCreating}
+            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9] disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onCreate}
-            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+            disabled={isCreating}
+            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
           >
-            Create Assistant
+            {isCreating ? "Creating…" : "Create Assistant"}
           </button>
         </div>
       </div>
@@ -829,6 +1998,342 @@ function PromptModal({
           onChange={(event) => onChange(event.target.value)}
           className="min-h-0 flex-1 resize-none border-0 px-7 py-6 text-base leading-7 outline-none"
         />
+        <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Lets the customer pick a Cartesia voice and hear a sample. The sample reads
+// the agent's own greeting, so they preview exactly what callers will hear. All
+// synthesis happens server-side (testVoice); we just play the returned mp3.
+function VoicePicker({
+  selected,
+  greeting,
+  onSelect,
+}: {
+  selected: string;
+  greeting: string;
+  onSelect: (voice: string) => void;
+}) {
+  const [loadingVoice, setLoadingVoice] = useState<string | null>(null);
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [, startTest] = useTransition();
+
+  function stop() {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPlayingVoice(null);
+  }
+
+  function test(voice: string) {
+    setError(null);
+    stop();
+    setLoadingVoice(voice);
+    startTest(async () => {
+      const result = await testVoice(voice, greeting);
+      setLoadingVoice(null);
+      if (!result.ok || !result.audio) {
+        setError(result.error ?? "Could not play this voice.");
+        return;
+      }
+      const audio = new Audio(
+        `data:${result.mime ?? "audio/mpeg"};base64,${result.audio}`,
+      );
+      audioRef.current = audio;
+      setPlayingVoice(voice);
+      audio.onended = () => setPlayingVoice(null);
+      audio.onerror = () => {
+        setError("Could not play this voice.");
+        setPlayingVoice(null);
+      };
+      void audio.play().catch(() => {
+        setError("Could not play this voice.");
+        setPlayingVoice(null);
+      });
+    });
+  }
+
+  return (
+    <div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {cartesiaVoices.map((voice) => {
+          const isSelected = voice.id === selected;
+          const isLoading = loadingVoice === voice.id;
+          const isPlaying = playingVoice === voice.id;
+          return (
+            <div
+              key={voice.id}
+              className={`flex items-center gap-2 rounded-[14px] border px-4 py-3 transition ${
+                isSelected ? "border-[#148b8e] bg-[#e6fbfc]" : "border-black/10 bg-white"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => onSelect(voice.id)}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              >
+                <span
+                  className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
+                    isSelected ? "border-[#148b8e] bg-[#148b8e]" : "border-black/20"
+                  }`}
+                >
+                  {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-black">{voice.label}</span>
+                  <span className="mt-0.5 block truncate text-xs text-[#7a8582]">
+                    {voice.blurb}
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => (isPlaying ? stop() : test(voice.id))}
+                disabled={isLoading}
+                aria-label={isPlaying ? `Stop ${voice.label}` : `Test ${voice.label}`}
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-black/10 bg-white text-[#148b8e] transition hover:bg-[#f2f4f3] disabled:opacity-60"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isPlaying ? (
+                  <Volume2 className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      {error && <p className="mt-3 text-sm text-[#a3791b]">{error}</p>}
+      <p className="mt-3 px-1 text-xs text-[#9aa4a1]">
+        Tap a name to choose the voice, or the play button to hear it read this
+        agent&apos;s greeting.
+      </p>
+    </div>
+  );
+}
+
+function truncate(value: string, max: number): string {
+  const clean = value.replace(/\s+/g, " ").trim();
+  return clean.length > max ? `${clean.slice(0, max)}…` : clean;
+}
+
+// A small, reusable editor used by the clickable ability rows (Answer Questions,
+// Transfer Calls). Single-line by default, or a textarea when `multiline`.
+function AbilityEditorModal({
+  title,
+  subtitle,
+  label,
+  placeholder,
+  value,
+  multiline = false,
+  onChange,
+  onClose,
+  onSave,
+}: {
+  title: string;
+  subtitle: string;
+  label: string;
+  placeholder?: string;
+  value: string;
+  multiline?: boolean;
+  onChange: (value: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-black/10 px-7 py-5">
+          <div>
+            <h2 className="text-2xl font-black">{title}</h2>
+            <p className="mt-1 text-sm text-[#66716e]">{subtitle}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="px-7 py-6">
+          <span className="mb-2 block text-sm font-black">{label}</span>
+          {multiline ? (
+            <textarea
+              value={value}
+              autoFocus
+              onChange={(event) => onChange(event.target.value)}
+              placeholder={placeholder}
+              className="min-h-[180px] w-full resize-none rounded-lg border border-black/15 bg-white px-4 py-3 text-base leading-7 outline-none transition focus:border-[#111716]"
+            />
+          ) : (
+            <input
+              value={value}
+              autoFocus
+              onChange={(event) => onChange(event.target.value)}
+              placeholder={placeholder}
+              className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+            />
+          )}
+        </div>
+        <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Friendly, sectioned editor for the agent's business knowledge. Each labelled
+// box prompts the user (opening hours, address, pricing…) instead of one blank
+// freeform field.
+function KnowledgeModal({
+  assistant,
+  onChange,
+  onClose,
+  onSave,
+}: {
+  assistant: Assistant;
+  onChange: (fields: KnowledgeFields) => void;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const fields = assistant.knowledgeFields ?? {};
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+      <div className="flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-black/10 px-7 py-5">
+          <div>
+            <h2 className="text-2xl font-black">Answer Questions</h2>
+            <p className="mt-1 text-sm text-[#66716e]">
+              Fill in what {assistant.name} should be able to tell callers. Leave any section
+              blank if it doesn&apos;t apply.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-7 py-6">
+          {knowledgeSections.map((section) => (
+            <label key={section.key} className="block">
+              <span className="mb-2 block text-sm font-black">{section.label}</span>
+              <textarea
+                value={fields[section.key] ?? ""}
+                onChange={(event) =>
+                  onChange({ ...fields, [section.key]: event.target.value })
+                }
+                placeholder={section.placeholder}
+                rows={section.key === "other" ? 3 : 2}
+                className="w-full resize-none rounded-lg border border-black/15 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-[#111716] placeholder:text-[#9aa4a1]"
+              />
+            </label>
+          ))}
+        </div>
+        <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GreetingModal({
+  assistant,
+  onChange,
+  onClose,
+  onSave,
+}: {
+  assistant: Assistant;
+  onChange: (patch: Partial<Assistant>) => void;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-black/10 px-7 py-5">
+          <div>
+            <h2 className="text-2xl font-black">Greeting message</h2>
+            <p className="mt-1 text-sm text-[#66716e]">
+              The first thing callers hear when {assistant.name} answers.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="px-7 py-6">
+          <textarea
+            value={assistant.greeting}
+            autoFocus
+            onChange={(event) => onChange({ greeting: event.target.value })}
+            placeholder="Hi, thanks for calling. How can I help you today?"
+            className="min-h-[140px] w-full resize-none rounded-lg border border-black/15 bg-white px-4 py-3 text-base leading-7 outline-none transition focus:border-[#111716]"
+          />
+          <p className="mt-3 text-xs text-[#9aa4a1]">
+            Keep it short and natural — one or two sentences works best on the phone.
+          </p>
+        </div>
         <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
           <button
             type="button"

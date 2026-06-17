@@ -1,0 +1,123 @@
+import type Stripe from "stripe";
+import { getStripe, getStripeWebhookSecret } from "@/lib/stripe";
+import { getServiceSupabase } from "@/lib/supabase";
+
+// Stripe webhooks need the Node runtime + the raw request body to verify the
+// signature, so don't let Next parse/cache it.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function unixToIso(secs: number | null | undefined): string | null {
+  return typeof secs === "number" ? new Date(secs * 1000).toISOString() : null;
+}
+
+function periodEnd(sub: Stripe.Subscription): string | null {
+  // API versions differ on where the period end lives (subscription-level vs
+  // per-item). Prefer the item, fall back to the top-level field.
+  const item = sub.items?.data?.[0] as { current_period_end?: number } | undefined;
+  const top = (sub as unknown as { current_period_end?: number }).current_period_end;
+  return unixToIso(item?.current_period_end ?? top);
+}
+
+// Resolves which auth user a subscription belongs to: the owner_id we stamped on
+// subscription metadata at checkout, else the existing billing row for the customer.
+async function resolveOwnerId(
+  sub: Stripe.Subscription,
+  service: ReturnType<typeof getServiceSupabase>,
+): Promise<string | null> {
+  const fromMeta = sub.metadata?.owner_id;
+  if (fromMeta) return fromMeta;
+
+  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+  if (!customerId || !service) return null;
+
+  const { data } = await service
+    .from("wisecall_billing")
+    .select("user_id")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  return (data?.user_id as string | undefined) ?? null;
+}
+
+async function upsertFromSubscription(sub: Stripe.Subscription) {
+  const service = getServiceSupabase();
+  if (!service) return;
+
+  const userId = await resolveOwnerId(sub, service);
+  if (!userId) {
+    console.error("stripe webhook: could not resolve owner for subscription", sub.id);
+    return;
+  }
+
+  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+
+  await service.from("wisecall_billing").upsert(
+    {
+      user_id: userId,
+      stripe_customer_id: customerId ?? null,
+      subscription_id: sub.id,
+      plan: sub.metadata?.plan ?? "payg",
+      status: sub.status,
+      trial_end: unixToIso(sub.trial_end),
+      current_period_end: periodEnd(sub),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+}
+
+export async function POST(req: Request) {
+  const stripe = getStripe();
+  const secret = getStripeWebhookSecret();
+  if (!stripe || !secret) {
+    return new Response("Billing not configured", { status: 500 });
+  }
+
+  const signature = req.headers.get("stripe-signature");
+  if (!signature) return new Response("Missing signature", { status: 400 });
+
+  const body = await req.text();
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(body, signature, secret);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "invalid";
+    console.error("stripe webhook signature verification failed:", message);
+    return new Response(`Webhook Error: ${message}`, { status: 400 });
+  }
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const subId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id;
+        if (subId) {
+          const sub = await stripe.subscriptions.retrieve(subId);
+          await upsertFromSubscription(sub);
+        }
+        break;
+      }
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        await upsertFromSubscription(event.data.object as Stripe.Subscription);
+        break;
+      }
+      default:
+        // Ignore everything else.
+        break;
+    }
+  } catch (err) {
+    console.error("stripe webhook handler error:", err);
+    return new Response("Handler error", { status: 500 });
+  }
+
+  return new Response(JSON.stringify({ received: true }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
