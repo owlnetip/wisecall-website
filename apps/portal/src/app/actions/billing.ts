@@ -5,18 +5,24 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
 import {
   getStripe,
-  paygLineItems,
+  lineItemsForPlan,
+  planHasTrial,
+  isPlanId,
+  type PlanId,
   TRIAL_DAYS,
   TRIAL_CALL_CAP,
 } from "@/lib/stripe";
 
 export type CheckoutResult = { ok: boolean; url?: string; error?: string };
 
-// Starts the 7-day PAYG free trial. Finds-or-creates the customer's Stripe
-// customer, persists it on wisecall_billing, then opens a Checkout Session that
-// collects a card (required, even during the trial) and applies 20% VAT. The
-// subscription itself is recorded by the Stripe webhook once checkout completes.
-export async function startTrialCheckout(): Promise<CheckoutResult> {
+// Starts Stripe Checkout for the chosen plan. PAYG = 7-day free trial (card
+// required); Core/Growth/Pro charge immediately, monthly. Finds-or-creates the
+// Stripe customer and reuses it (so an upgrade attaches to the same customer).
+// The subscription is recorded by the webhook once checkout completes; the
+// webhook also cancels any prior subscription so an upgrade doesn't double-bill.
+export async function startCheckout(planInput: string): Promise<CheckoutResult> {
+  const plan: PlanId = isPlanId(planInput) ? planInput : "payg";
+
   const auth = await createSupabaseServerClient();
   const {
     data: { user },
@@ -47,7 +53,7 @@ export async function startTrialCheckout(): Promise<CheckoutResult> {
       {
         user_id: user.id,
         stripe_customer_id: customerId,
-        plan: "payg",
+        plan,
         trial_call_cap: TRIAL_CALL_CAP,
         updated_at: new Date().toISOString(),
       },
@@ -55,20 +61,25 @@ export async function startTrialCheckout(): Promise<CheckoutResult> {
     );
   }
 
+  const trial = planHasTrial(plan);
   const baseUrl = getAppBaseUrl();
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
-    line_items: paygLineItems(),
-    payment_method_collection: "always", // card on file even during the free trial
+    line_items: lineItemsForPlan(plan),
+    payment_method_collection: "always",
     allow_promotion_codes: true,
     billing_address_collection: "required",
     subscription_data: {
-      trial_period_days: TRIAL_DAYS,
-      trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
-      metadata: { owner_id: user.id, plan: "payg" },
+      ...(trial
+        ? {
+            trial_period_days: TRIAL_DAYS,
+            trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
+          }
+        : {}),
+      metadata: { owner_id: user.id, plan },
     },
-    metadata: { owner_id: user.id, plan: "payg" },
+    metadata: { owner_id: user.id, plan },
     success_url: `${baseUrl}/dashboard`,
     cancel_url: `${baseUrl}/billing`,
   });

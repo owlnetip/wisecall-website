@@ -66,6 +66,44 @@ async function upsertFromSubscription(sub: Stripe.Subscription) {
   );
 }
 
+// On a new checkout (e.g. upgrading from PAYG to a paid plan), cancel the
+// customer's other live subscriptions so they aren't billed twice. Best-effort:
+// needs the Stripe key to allow Subscriptions write — logs and continues if not.
+async function cancelOtherSubscriptions(
+  stripe: Stripe,
+  customerId: string | null | undefined,
+  keepId: string,
+) {
+  if (!customerId) return;
+  try {
+    const subs = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 20,
+    });
+    for (const s of subs.data) {
+      if (s.id === keepId) continue;
+      if (s.status === "active" || s.status === "trialing" || s.status === "past_due") {
+        try {
+          await stripe.subscriptions.cancel(s.id);
+          console.log("stripe webhook: cancelled superseded subscription", s.id);
+        } catch (err) {
+          console.error(
+            "stripe webhook: could not cancel old subscription",
+            s.id,
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }
+    }
+  } catch (err) {
+    console.error(
+      "stripe webhook: list subscriptions failed",
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
 export async function POST(req: Request) {
   const stripe = getStripe();
   const secret = getStripeWebhookSecret();
@@ -98,6 +136,9 @@ export async function POST(req: Request) {
         if (subId) {
           const sub = await stripe.subscriptions.retrieve(subId);
           await upsertFromSubscription(sub);
+          const customerId =
+            typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+          await cancelOtherSubscriptions(stripe, customerId, sub.id);
         }
         break;
       }

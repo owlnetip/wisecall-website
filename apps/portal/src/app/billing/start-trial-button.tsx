@@ -1,16 +1,26 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { startTrialCheckout } from "@/app/actions/billing";
+import { startCheckout } from "@/app/actions/billing";
 
-export function StartTrialButton() {
+// Single checkout button for any plan. PAYG opens the 7-day trial; Core/Growth/Pro
+// charge immediately. Redirects to Stripe Checkout on click.
+export function PlanCheckoutButton({
+  plan,
+  label,
+  variant = "primary",
+}: {
+  plan: string;
+  label: string;
+  variant?: "primary" | "secondary";
+}) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   function go() {
     setError(null);
     startTransition(async () => {
-      const res = await startTrialCheckout();
+      const res = await startCheckout(plan);
       if (res.ok && res.url) {
         window.location.href = res.url;
       } else {
@@ -19,23 +29,29 @@ export function StartTrialButton() {
     });
   }
 
+  const style =
+    variant === "primary"
+      ? { background: "#7de8eb", color: "#0c1717" }
+      : {
+          background: "transparent",
+          color: "#7de8eb",
+          border: "1.5px solid rgba(125,232,235,0.4)",
+        };
+
   return (
-    <div className="space-y-3">
+    <div>
       <button
         type="button"
         onClick={go}
         disabled={pending}
-        className="w-full rounded-xl px-4 py-3 text-sm font-bold transition-opacity duration-150 disabled:opacity-60"
-        style={{ background: "#7de8eb", color: "#0c1717" }}
+        className="w-full rounded-xl px-4 py-2.5 text-sm font-bold transition-opacity duration-150 disabled:opacity-60"
+        style={style}
       >
-        {pending ? "Starting…" : "Start 7-day free trial"}
+        {pending ? "Starting…" : label}
       </button>
-      <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-        Card required. You won&apos;t be charged during the trial — cancel anytime.
-      </p>
       {error ? (
         <div
-          className="rounded-lg px-3 py-2 text-xs font-medium"
+          className="mt-2 rounded-lg px-3 py-2 text-xs font-medium"
           style={{ background: "rgba(255,90,90,0.12)", color: "#ff9b9b" }}
         >
           {error}
