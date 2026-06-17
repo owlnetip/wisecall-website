@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
-import { PlanCheckoutButton } from "./start-trial-button";
+import { PlanCheckoutButton, ManageSubscriptionButton } from "./start-trial-button";
 
 type Plan = {
   id: "core" | "growth" | "pro";
@@ -70,6 +70,7 @@ export default async function BillingPage() {
               You&apos;re currently on{" "}
               <strong>{currentPlan === "payg" ? "Pay As You Go" : (currentPlan ?? "a plan")}</strong>
               . Switching cancels your current subscription.{" "}
+              <ManageSubscriptionButton />{" "}·{" "}
               <a href="/dashboard" className="underline">Back to dashboard</a>
             </p>
           ) : null}

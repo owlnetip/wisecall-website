@@ -70,6 +70,7 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
     payment_method_collection: "always",
     allow_promotion_codes: true,
     billing_address_collection: "required",
+    phone_number_collection: { enabled: true }, // captured for the trial-ending SMS
     subscription_data: {
       ...(trial
         ? {
@@ -86,4 +87,43 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
 
   if (!session.url) return { ok: false, error: "Could not start checkout." };
   return { ok: true, url: session.url };
+}
+
+// Opens the Stripe Customer Portal so a customer can cancel or change their
+// subscription (e.g. before the trial converts). Requires the Customer Portal to
+// be enabled in the Stripe dashboard.
+export async function openCustomerPortal(): Promise<CheckoutResult> {
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const stripe = getStripe();
+  if (!stripe) return { ok: false, error: "Billing isn't switched on yet." };
+
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const { data: row } = await service
+    .from("wisecall_billing")
+    .select("stripe_customer_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const customerId = row?.stripe_customer_id as string | undefined;
+  if (!customerId) return { ok: false, error: "No subscription found." };
+
+  try {
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${getAppBaseUrl()}/dashboard`,
+    });
+    return { ok: true, url: portal.url };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Could not open the billing portal.",
+    };
+  }
 }

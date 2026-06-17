@@ -1,6 +1,8 @@
 import type Stripe from "stripe";
 import { getStripe, getStripeWebhookSecret } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
+import { getAppBaseUrl } from "@/lib/env";
+import { sendEmail, sendSms } from "@/lib/notify";
 
 // Stripe webhooks need the Node runtime + the raw request body to verify the
 // signature, so don't let Next parse/cache it.
@@ -104,6 +106,50 @@ async function cancelOtherSubscriptions(
   }
 }
 
+// Stripe fires customer.subscription.trial_will_end ~3 days before a trial ends.
+// We email + SMS the customer so they're never surprise-charged (cuts refunds /
+// disputes) with a link to the customer portal to cancel or change plan.
+async function sendTrialEndingReminder(stripe: Stripe, sub: Stripe.Subscription) {
+  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+  if (!customerId) return;
+
+  let email: string | null = null;
+  let phone: string | null = null;
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!("deleted" in customer && customer.deleted)) {
+      email = (customer as Stripe.Customer).email ?? null;
+      phone = (customer as Stripe.Customer).phone ?? null;
+    }
+  } catch (err) {
+    console.error("trial_will_end: customer retrieve failed", err instanceof Error ? err.message : err);
+  }
+
+  const endDate = sub.trial_end
+    ? new Date(sub.trial_end * 1000).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "soon";
+  const manageUrl = `${getAppBaseUrl()}/billing`;
+
+  await sendEmail(
+    email,
+    "Your WiseCall free trial ends soon",
+    `<p>Hi,</p>
+     <p>Your WiseCall free trial ends on <strong>${endDate}</strong>. After that your card will be
+     charged <strong>£10/month + 65p per AI call</strong> (plus VAT) unless you cancel.</p>
+     <p>Happy to continue? There's nothing to do. Want to stop or change plan?
+     <a href="${manageUrl}">Manage your subscription here</a>.</p>
+     <p>— WiseCall</p>`,
+  );
+  await sendSms(
+    phone,
+    `WiseCall: your free trial ends ${endDate}. You'll then be billed £10/mo + 65p/call unless you cancel: ${manageUrl}`,
+  );
+}
+
 export async function POST(req: Request) {
   const stripe = getStripe();
   const secret = getStripeWebhookSecret();
@@ -146,6 +192,10 @@ export async function POST(req: Request) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         await upsertFromSubscription(event.data.object as Stripe.Subscription);
+        break;
+      }
+      case "customer.subscription.trial_will_end": {
+        await sendTrialEndingReminder(stripe, event.data.object as Stripe.Subscription);
         break;
       }
       default:

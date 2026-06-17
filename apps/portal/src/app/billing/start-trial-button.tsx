@@ -1,7 +1,39 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { startCheckout } from "@/app/actions/billing";
+import { startCheckout, openCustomerPortal } from "@/app/actions/billing";
+
+// Opens the Stripe Customer Portal (manage / cancel subscription).
+export function ManageSubscriptionButton() {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function go() {
+    setError(null);
+    startTransition(async () => {
+      const res = await openCustomerPortal();
+      if (res.ok && res.url) {
+        window.location.href = res.url;
+      } else {
+        setError(res.error ?? "Couldn't open the billing portal.");
+      }
+    });
+  }
+
+  return (
+    <span>
+      <button
+        type="button"
+        onClick={go}
+        disabled={pending}
+        className="underline disabled:opacity-60"
+      >
+        {pending ? "Opening…" : "Manage or cancel your subscription"}
+      </button>
+      {error ? <span className="ml-2 text-[#ff9b9b]">{error}</span> : null}
+    </span>
+  );
+}
 
 // Single checkout button for any plan. PAYG opens the 7-day trial; Core/Growth/Pro
 // charge immediately. Redirects to Stripe Checkout on click.
