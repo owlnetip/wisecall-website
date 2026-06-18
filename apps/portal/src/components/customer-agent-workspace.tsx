@@ -1791,6 +1791,15 @@ function RoutingCard({
             <p className="mt-0.5 text-sm text-[#66716e]">{sub}</p>
           </div>
         </div>
+        {live && (
+          <a
+            href={`tel:${routing.number.replace(/[^\d+]/g, "")}`}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#7de8eb] px-4 py-2.5 text-sm font-black text-[#0c1717] transition hover:opacity-90"
+          >
+            <Phone className="h-4 w-4" />
+            Call to test
+          </a>
+        )}
         {!live && (
           <button
             type="button"
