@@ -70,6 +70,41 @@ export async function signUpAction(
   redirect("/dashboard");
 }
 
+// Sends a password-reset email. The branded Reset Password template links to
+// /auth/confirm?token_hash=...&type=recovery&next=/update-password, which
+// establishes a recovery session, then the user sets a new password.
+export async function resetPassword(email: string): Promise<AuthState> {
+  const trimmed = email.trim();
+  if (!trimmed) {
+    return { error: "Enter your email above first, then tap Forgot password." };
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+    redirectTo: `${getAppBaseUrl()}/auth/confirm?next=/update-password`,
+  });
+  if (error) {
+    return { error: error.message };
+  }
+  return { message: "Check your email for a link to reset your password." };
+}
+
+// Sets a new password for the (recovery-)authenticated user.
+export async function updatePassword(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 8) {
+    return { error: "Password must be at least 8 characters." };
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    return { error: error.message };
+  }
+  redirect("/dashboard");
+}
+
 export async function signOutAction() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();

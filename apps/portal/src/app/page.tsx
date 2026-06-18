@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useActionState, useEffect, useRef, useState } from "react";
+import { Suspense, useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
-import { authAction, type AuthState } from "@/app/actions/auth";
+import { authAction, resetPassword, type AuthState } from "@/app/actions/auth";
 
 interface OwlProps {
   eyeOffset: { x: number; y: number };
@@ -134,6 +134,8 @@ function LoginForm() {
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [resetState, setResetState] = useState<AuthState>({});
+  const [resetPending, startReset] = useTransition();
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
   const [blinking, setBlinking] = useState(false);
@@ -284,12 +286,16 @@ function LoginForm() {
                 </label>
                 <button
                   type="button"
-                  className="text-xs font-medium transition-colors duration-150"
+                  disabled={resetPending}
+                  onClick={() =>
+                    startReset(async () => setResetState(await resetPassword(email)))
+                  }
+                  className="text-xs font-medium transition-colors duration-150 disabled:opacity-50"
                   style={{ color: "#7de8eb", opacity: 0.8 }}
                   onMouseEnter={(e) => ((e.target as HTMLElement).style.opacity = "1")}
                   onMouseLeave={(e) => ((e.target as HTMLElement).style.opacity = "0.8")}
                 >
-                  Forgot password?
+                  {resetPending ? "Sending…" : "Forgot password?"}
                 </button>
               </div>
               <input
@@ -340,6 +346,18 @@ function LoginForm() {
                 style={{ background: "rgba(125,232,235,0.12)", color: "#7de8eb", border: "1px solid rgba(125,232,235,0.25)" }}
               >
                 {state.message}
+              </p>
+            )}
+            {(resetState.message || resetState.error) && (
+              <p
+                className="rounded-lg px-3 py-2 text-xs font-medium"
+                style={
+                  resetState.error
+                    ? { background: "rgba(255,99,99,0.12)", color: "#ff9b9b", border: "1px solid rgba(255,99,99,0.25)" }
+                    : { background: "rgba(125,232,235,0.12)", color: "#7de8eb", border: "1px solid rgba(125,232,235,0.25)" }
+                }
+              >
+                {resetState.error || resetState.message}
               </p>
             )}
 
