@@ -139,6 +139,20 @@ function readWebsite(row: ProfileRow): string {
   return "";
 }
 
+// Per-day office hours (metadata.office_hours). Only valid open/close days kept.
+function readOfficeHours(row: ProfileRow): Record<string, { open: string; close: string }> | undefined {
+  const raw = row.metadata?.office_hours;
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: Record<string, { open: string; close: string }> = {};
+  for (const [day, value] of Object.entries(raw as Record<string, unknown>)) {
+    const v = (value ?? {}) as Record<string, unknown>;
+    if (typeof v.open === "string" && typeof v.close === "string") {
+      out[day] = { open: v.open, close: v.close };
+    }
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 function mapProfile(row: ProfileRow): Assistant {
   const routing = readRouting(row);
   return {
@@ -166,6 +180,7 @@ function mapProfile(row: ProfileRow): Assistant {
     calls: 0,
     cost: "GBP 0.00",
     routing,
+    officeHours: readOfficeHours(row),
   };
 }
 

@@ -9,6 +9,7 @@ import { isAdmin } from "@/lib/admin";
 import type {
   AgentRouting,
   KnowledgeFields,
+  OfficeHours,
   RoutingContact,
 } from "@/components/customer-agent-workspace";
 
@@ -28,6 +29,7 @@ export type AgentPatch = {
   transferNumber?: string;
   defaultEmail?: string;
   contacts?: RoutingContact[];
+  officeHours?: OfficeHours;
   status?: "Live" | "Setup" | "Review";
 };
 
@@ -183,6 +185,10 @@ export async function updateAgent(
     nextMetadata.routing_contacts = patch.contacts;
     // …mirrored into the legacy structure the live pipeline already reads.
     nextMetadata.transfer_routes = toTransferRoutes(patch.contacts);
+  }
+  if (patch.officeHours !== undefined) {
+    // Per-day open/close the runtime reads for after-hours mode (metadata.office_hours).
+    nextMetadata.office_hours = patch.officeHours;
   }
 
   const update: Record<string, unknown> = { metadata: nextMetadata };

@@ -37,6 +37,7 @@ import {
   updateAgent,
 } from "@/app/actions/agents";
 import type { CallLog } from "@/lib/agents";
+import { OfficeHoursCard } from "./office-hours-card";
 
 type View = "home" | "assistants" | "detail" | "calls";
 type DetailTab = "behaviour" | "routing" | "technical";
@@ -158,8 +159,14 @@ export type Assistant = {
   calls: number;
   cost: string;
   routing: AgentRouting;
+  officeHours?: OfficeHours;
   ownerEmail?: string; // admin view only — which customer owns this agent
 };
+
+// Per-day office hours. Only OPEN days are present; a missing day = closed.
+// Keys are mon,tue,wed,thu,fri,sat,sun. The runtime reads metadata.office_hours
+// to switch the agent into after-hours message-taking mode when closed.
+export type OfficeHours = Record<string, { open: string; close: string }>;
 
 // The voices we offer today — Cartesia's latest model. Labels are what the
 // customer sees; the real Cartesia voice ids are mapped server-side (env) so
@@ -1121,6 +1128,12 @@ function AssistantDetail({
         isProvisioning={isProvisioning}
         error={provisionError}
         onProvision={onProvision}
+      />
+
+      <OfficeHoursCard
+        agentId={assistant.id}
+        initial={assistant.officeHours}
+        timezone={assistant.timezone}
       />
 
       <div className="mb-8 flex border-b border-black/10">
