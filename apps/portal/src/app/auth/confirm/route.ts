@@ -1,10 +1,14 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
-import { NextResponse, type NextRequest } from "next/server";
+import { redirect } from "next/navigation";
+import { type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 // Handles email-link auth (password recovery, email confirmation) via the
 // token_hash flow — works across devices (no PKCE verifier needed). The branded
 // email templates link here with ?token_hash=...&type=...&next=...
+//
+// IMPORTANT: use next/navigation `redirect()` (not NextResponse.redirect) so the
+// session cookies set by verifyOtp are preserved on the redirect response.
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
@@ -15,9 +19,9 @@ export async function GET(request: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (!error) {
-      return NextResponse.redirect(new URL(next, request.url));
+      redirect(next);
     }
   }
 
-  return NextResponse.redirect(new URL("/?error=auth_link_expired", request.url));
+  redirect("/?error=auth_link_expired");
 }
