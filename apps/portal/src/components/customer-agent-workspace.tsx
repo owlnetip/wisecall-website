@@ -37,6 +37,7 @@ import {
   updateAgent,
 } from "@/app/actions/agents";
 import type { CallLog } from "@/lib/agents";
+import { AgentTestCall } from "./agent-test-call";
 
 type View = "home" | "assistants" | "detail" | "calls";
 type DetailTab = "behaviour" | "routing" | "technical";
@@ -1115,6 +1116,8 @@ function AssistantDetail({
           <MoreHorizontal className="h-5 w-5" />
         </button>
       </div>
+
+      <AgentTestCall agentId={assistant.id} />
 
       <RoutingCard
         routing={assistant.routing}
