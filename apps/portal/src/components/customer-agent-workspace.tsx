@@ -7,6 +7,7 @@ import {
   Check,
   ChevronRight,
   CirclePlus,
+  CreditCard,
   Grid2X2,
   Hand,
   History,
@@ -677,6 +678,16 @@ export function CustomerAgentWorkspace({
                 </button>
               );
             })}
+
+            {!adminMode && (
+              <a
+                href="/billing"
+                className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+              >
+                <CreditCard className="h-5 w-5 flex-shrink-0" />
+                Billing & plan
+              </a>
+            )}
 
             {adminMode ? (
               <a
