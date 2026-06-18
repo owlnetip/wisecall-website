@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { updateAgent } from "@/app/actions/agents";
 import type { OfficeHours } from "./customer-agent-workspace";
 
-const DAYS: { key: string; label: string }[] = [
+export const OFFICE_DAYS: { key: string; label: string }[] = [
   { key: "mon", label: "Monday" },
   { key: "tue", label: "Tuesday" },
   { key: "wed", label: "Wednesday" },
@@ -13,6 +13,69 @@ const DAYS: { key: string; label: string }[] = [
   { key: "sat", label: "Saturday" },
   { key: "sun", label: "Sunday" },
 ];
+
+// Controlled 7-day open/close grid. Reused by the card (saves itself) and the
+// setup wizard (collects into the new-agent draft). Parent owns the value.
+export function OfficeHoursGrid({
+  hours,
+  onChange,
+}: {
+  hours: OfficeHours;
+  onChange: (next: OfficeHours) => void;
+}) {
+  function toggle(day: string, open: boolean) {
+    const next = { ...hours };
+    if (open) next[day] = next[day] ?? { open: "09:00", close: "17:00" };
+    else delete next[day];
+    onChange(next);
+  }
+  function setTime(day: string, field: "open" | "close", value: string) {
+    onChange({
+      ...hours,
+      [day]: { ...(hours[day] ?? { open: "09:00", close: "17:00" }), [field]: value },
+    });
+  }
+  return (
+    <div className="space-y-2">
+      {OFFICE_DAYS.map(({ key, label }) => {
+        const day = hours[key];
+        const isOpen = Boolean(day);
+        return (
+          <div key={key} className="flex items-center gap-3">
+            <label className="flex w-32 items-center gap-2 text-sm font-bold text-[#111716]">
+              <input
+                type="checkbox"
+                checked={isOpen}
+                onChange={(e) => toggle(key, e.target.checked)}
+                className="accent-[#148b8e]"
+              />
+              {label}
+            </label>
+            {isOpen ? (
+              <div className="flex items-center gap-2 text-sm">
+                <input
+                  type="time"
+                  value={day!.open}
+                  onChange={(e) => setTime(key, "open", e.target.value)}
+                  className="rounded border border-black/10 px-2 py-1 text-[#111716]"
+                />
+                <span className="text-[#66716e]">to</span>
+                <input
+                  type="time"
+                  value={day!.close}
+                  onChange={(e) => setTime(key, "close", e.target.value)}
+                  className="rounded border border-black/10 px-2 py-1 text-[#111716]"
+                />
+              </div>
+            ) : (
+              <span className="text-sm text-[#9aa5a2]">Closed</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function OfficeHoursCard({
   agentId,
@@ -27,20 +90,6 @@ export function OfficeHoursCard({
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  function toggle(day: string, open: boolean) {
-    setHours((h) => {
-      const next = { ...h };
-      if (open) next[day] = next[day] ?? { open: "09:00", close: "17:00" };
-      else delete next[day];
-      return next;
-    });
-  }
-  function setTime(day: string, field: "open" | "close", value: string) {
-    setHours((h) => ({
-      ...h,
-      [day]: { ...(h[day] ?? { open: "09:00", close: "17:00" }), [field]: value },
-    }));
-  }
   function save() {
     setMsg(null);
     start(async () => {
@@ -69,43 +118,8 @@ export function OfficeHoursCard({
         </button>
       </div>
 
-      <div className="mt-4 space-y-2">
-        {DAYS.map(({ key, label }) => {
-          const day = hours[key];
-          const isOpen = Boolean(day);
-          return (
-            <div key={key} className="flex items-center gap-3">
-              <label className="flex w-32 items-center gap-2 text-sm font-bold text-[#111716]">
-                <input
-                  type="checkbox"
-                  checked={isOpen}
-                  onChange={(e) => toggle(key, e.target.checked)}
-                  className="accent-[#148b8e]"
-                />
-                {label}
-              </label>
-              {isOpen ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <input
-                    type="time"
-                    value={day!.open}
-                    onChange={(e) => setTime(key, "open", e.target.value)}
-                    className="rounded border border-black/10 px-2 py-1 text-[#111716]"
-                  />
-                  <span className="text-[#66716e]">to</span>
-                  <input
-                    type="time"
-                    value={day!.close}
-                    onChange={(e) => setTime(key, "close", e.target.value)}
-                    className="rounded border border-black/10 px-2 py-1 text-[#111716]"
-                  />
-                </div>
-              ) : (
-                <span className="text-sm text-[#9aa5a2]">Closed</span>
-              )}
-            </div>
-          );
-        })}
+      <div className="mt-4">
+        <OfficeHoursGrid hours={hours} onChange={setHours} />
       </div>
 
       {msg && (

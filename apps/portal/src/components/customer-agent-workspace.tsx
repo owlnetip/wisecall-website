@@ -39,6 +39,8 @@ import {
 } from "@/app/actions/agents";
 import type { CallLog } from "@/lib/agents";
 import { OfficeHoursCard } from "./office-hours-card";
+import { SetupWizard, type WizardResult } from "./setup-wizard";
+import type { AgentDraft } from "@/app/actions/wizard";
 
 type View = "home" | "assistants" | "detail" | "calls";
 type DetailTab = "behaviour" | "routing" | "technical";
@@ -466,6 +468,7 @@ export function CustomerAgentWorkspace({
   const [detailTab, setDetailTab] = useState<DetailTab>("behaviour");
   const [searchTerm, setSearchTerm] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const [greetingOpen, setGreetingOpen] = useState(false);
   const [editAbility, setEditAbility] = useState<"knowledge" | "transfer" | null>(null);
@@ -563,6 +566,65 @@ export function CustomerAgentWorkspace({
       setNewBusinessName("");
       setNewTemplateId(agentTemplates[0].id);
     });
+  }
+
+  // AI setup wizard finish: create the drafted agent, then apply the fields
+  // createAgent doesn't take (website + office hours), and open it for review.
+  async function createFromDraft(draft: AgentDraft): Promise<WizardResult> {
+    const voice = cartesiaVoices[0].id;
+    const result = await createAgent({
+      name: draft.receptionistName || "Receptionist",
+      businessName: draft.businessName || "New business",
+      industry: draft.industry || "General",
+      prompt: draft.prompt,
+      greeting: draft.greeting,
+      voice,
+      knowledge: draft.knowledge,
+      knowledgeFields: draft.knowledgeFields,
+      contacts: [],
+    });
+    if (!result.ok || !result.id) {
+      return { ok: false, error: result.error ?? "Could not create the assistant." };
+    }
+
+    const hasHours = Object.keys(draft.officeHours ?? {}).length > 0;
+    if (draft.website || hasHours) {
+      await updateAgent(result.id, {
+        website: draft.website,
+        officeHours: draft.officeHours,
+      });
+    }
+
+    const assistant: Assistant = {
+      id: result.id,
+      name: draft.receptionistName || "Receptionist",
+      businessName: draft.businessName || "New business",
+      industry: draft.industry || "General",
+      phoneNumber: "Number pending",
+      status: "Setup",
+      receptionistName: draft.receptionistName || "Receptionist",
+      prompt: draft.prompt,
+      greeting: draft.greeting,
+      voice,
+      knowledge: draft.knowledge,
+      knowledgeFields: draft.knowledgeFields,
+      defaultEmail: "",
+      contacts: [],
+      website: draft.website,
+      timezone: "Europe/London",
+      fallbackEmail: "",
+      transferNumber: "",
+      officeHours: hasHours ? draft.officeHours : undefined,
+      calls: 0,
+      cost: "GBP 0.00",
+      routing: { provider: null, number: "", status: "unprovisioned" },
+    };
+    setAssistants((current) => [assistant, ...current]);
+    setSelectedId(result.id);
+    setView("detail");
+    setDetailTab("behaviour");
+    setWizardOpen(false);
+    return { ok: true, id: result.id };
   }
 
   function save() {
@@ -782,7 +844,7 @@ export function CustomerAgentWorkspace({
                 searchTerm={searchTerm}
                 adminMode={adminMode}
                 onSearch={setSearchTerm}
-                onCreate={() => setCreateOpen(true)}
+                onCreate={() => setWizardOpen(true)}
                 onOpen={(assistantId) => {
                   setSelectedId(assistantId);
                   setView("detail");
@@ -830,6 +892,17 @@ export function CustomerAgentWorkspace({
           </div>
         </main>
       </div>
+
+      {wizardOpen && (
+        <SetupWizard
+          onClose={() => setWizardOpen(false)}
+          onSubmit={createFromDraft}
+          onManual={() => {
+            setWizardOpen(false);
+            setCreateOpen(true);
+          }}
+        />
+      )}
 
       {createOpen && (
         <CreateAssistantModal
