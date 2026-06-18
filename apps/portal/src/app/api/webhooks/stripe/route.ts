@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { getStripe, getStripeWebhookSecret } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
-import { sendEmail, sendSms } from "@/lib/notify";
+import { notifyTrialEnding } from "@/lib/notify";
 
 // Stripe webhooks need the Node runtime + the raw request body to verify the
 // signature, so don't let Next parse/cache it.
@@ -134,20 +134,7 @@ async function sendTrialEndingReminder(stripe: Stripe, sub: Stripe.Subscription)
     : "soon";
   const manageUrl = `${getAppBaseUrl()}/billing`;
 
-  await sendEmail(
-    email,
-    "Your WiseCall free trial ends soon",
-    `<p>Hi,</p>
-     <p>Your WiseCall free trial ends on <strong>${endDate}</strong>. After that your card will be
-     charged <strong>£10/month + 65p per AI call</strong> (plus VAT) unless you cancel.</p>
-     <p>Happy to continue? There's nothing to do. Want to stop or change plan?
-     <a href="${manageUrl}">Manage your subscription here</a>.</p>
-     <p>— WiseCall</p>`,
-  );
-  await sendSms(
-    phone,
-    `WiseCall: your free trial ends ${endDate}. You'll then be billed £10/mo + 65p/call unless you cancel: ${manageUrl}`,
-  );
+  await notifyTrialEnding({ email, phone, endDate, manageUrl });
 }
 
 export async function POST(req: Request) {
