@@ -21,7 +21,13 @@ export async function GET(request: NextRequest) {
     if (!error) {
       redirect(next);
     }
+    console.error("auth/confirm verifyOtp failed", {
+      type,
+      message: error.message,
+      code: (error as { code?: string }).code,
+    });
+    redirect(`/?error=auth&reason=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/?error=auth_link_expired");
+  redirect("/?error=auth&reason=missing_token_or_type");
 }
