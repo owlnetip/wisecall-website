@@ -87,9 +87,10 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
   const url = normaliseUrl(websiteInput);
   if (!url) return { ok: false, error: "That doesn't look like a valid website address." };
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // Accept either name so the key set in Vercel works whichever it's called.
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_WISECASE;
   if (!apiKey) {
-    return { ok: false, error: "AI setup isn't switched on yet (missing ANTHROPIC_API_KEY)." };
+    return { ok: false, error: "AI setup isn't switched on yet (missing Claude API key)." };
   }
 
   let siteText: string;
