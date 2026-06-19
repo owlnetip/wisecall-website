@@ -19,14 +19,14 @@ export function getStripeWebhookSecret(): string | null {
 }
 
 // ── WiseCall live billing config (account acct_1TiwraF6ZlidDG7d, GBP) ──────────
-// Pay As You Go: £10/mo base + £0.65/call metered, 20% UK VAT (exclusive).
+// Pay As You Go: £10/mo base + £0.85/call metered, 20% UK VAT (exclusive).
 // Override via env for test-mode duplicates during local development.
 export const VAT_RATE = process.env.STRIPE_VAT_RATE || "txr_1Tj5YzF6ZlidDG7dypciEivC";
 
 export const PAYG_BASE_PRICE =
   process.env.STRIPE_PAYG_BASE_PRICE || "price_1Tj5TeF6ZlidDG7d7Xl9hOa2"; // £10/mo
 export const PAYG_PER_CALL_PRICE =
-  process.env.STRIPE_PAYG_PER_CALL_PRICE || "price_1Tjhy9F6ZlidDG7dgukgaTRc"; // £0.65/call (metered, "WiseCall AI Call Usage" product)
+  process.env.STRIPE_PAYG_PER_CALL_PRICE || "price_1Tk3vkF6ZlidDG7d4FA1utES"; // £0.85/call (metered, "WiseCall AI Call Usage" product). Was 65p price_1Tjhy9F6ZlidDG7dgukgaTRc.
 
 export const TRIAL_DAYS = 7;
 export const TRIAL_CALL_CAP = 20;
