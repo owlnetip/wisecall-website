@@ -52,10 +52,14 @@ export async function signUpAction(
   // Send confirmation links to the WiseCall portal explicitly, so they don't
   // fall back to the shared project's Site URL (owlnet.io). Requires this URL to
   // be in the Supabase redirect allowlist.
+  // Route the confirmation link through /auth/confirm so the PKCE ?code is
+  // exchanged for a session (cookies set) before landing on the dashboard.
+  // Pointing emailRedirectTo straight at /dashboard left the code unexchanged,
+  // so the user arrived unauthenticated and was bounced to the login page.
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${getAppBaseUrl()}/dashboard` },
+    options: { emailRedirectTo: `${getAppBaseUrl()}/auth/confirm?next=/dashboard` },
   });
 
   if (error) {
