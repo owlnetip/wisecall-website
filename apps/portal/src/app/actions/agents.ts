@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
-import { getDemoCallbackEndpoint } from "@/lib/env";
 import { isAdmin } from "@/lib/admin";
 import type {
   AgentRouting,
@@ -213,62 +212,6 @@ export async function updateAgent(
 
   revalidatePath("/dashboard");
   return { ok: true };
-}
-
-export type TestCallResult = { ok: boolean; message?: string; error?: string };
-
-// Rings the tester's mobile and connects them to THIS agent (by its slug) so the
-// owner can test the live agent without dialling its number. Same demo-callback
-// endpoint as the public /try page, but authenticated + per-agent.
-export async function startAgentTestCall(
-  agentId: string,
-  phone: string,
-): Promise<TestCallResult> {
-  const auth = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await auth.auth.getUser();
-  if (!user) return { ok: false, error: "Not signed in." };
-  if (!phone.trim()) return { ok: false, error: "Enter a mobile number to call." };
-
-  const service = getServiceSupabase();
-  if (!service) return { ok: false, error: "Server not configured." };
-
-  const { data: row } = await service
-    .from("wisecall_profiles")
-    .select("slug, profile_name, metadata")
-    .eq("id", agentId)
-    .maybeSingle();
-  if (!row) return { ok: false, error: "Agent not found." };
-
-  const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
-  if (metadata.owner_id !== user.id && !isAdmin(user)) {
-    return { ok: false, error: "You don't have access to this agent." };
-  }
-  if (!row.slug) return { ok: false, error: "This agent has no routing slug yet." };
-
-  try {
-    const res = await fetch(getDemoCallbackEndpoint(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone: phone.trim(),
-        profile_slug: row.slug,
-        agent_name: row.profile_name || "WiseCall agent",
-        source: "portal_test",
-      }),
-    });
-    const result = await res.json().catch(() => ({}));
-    if (!res.ok || result.ok === false) {
-      return { ok: false, error: result.error || "Could not start the test call." };
-    }
-    return { ok: true, message: "Calling you now — answer to test this agent." };
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Could not start the test call.",
-    };
-  }
 }
 
 export type TestVoiceResult = {
