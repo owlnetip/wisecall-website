@@ -191,6 +191,9 @@ export async function updateAgent(
     nextMetadata.office_hours = patch.officeHours;
   }
   if (patch.outOfHoursMessage !== undefined) {
+    // Mirror in metadata for the portal; the live runtime reads the
+    // after_hours_message column (settings.js after-hours greeting), so the
+    // column write below is what actually reaches the phone agent.
     nextMetadata.out_of_hours_message = patch.outOfHoursMessage;
   }
 
@@ -205,6 +208,9 @@ export async function updateAgent(
   // metadata copies above stay mirrored for backward compatibility.
   if (patch.greeting !== undefined) update.greeting = patch.greeting;
   if (patch.knowledge !== undefined) update.business_context = patch.knowledge;
+  // After-hours message is a column the live runtime reads (settings.js greeting,
+  // prompt.js after-hours section). Write it so edits reach the phone agent.
+  if (patch.outOfHoursMessage !== undefined) update.after_hours_message = patch.outOfHoursMessage;
   if (patch.status !== undefined) update.is_active = patch.status === "Live";
 
   // Belt-and-braces ownership filter for customers; admins may edit any agent.

@@ -18,6 +18,7 @@ type ProfileRow = {
   is_active: boolean | null;
   system_prompt: string | null;
   greeting: string | null;
+  after_hours_message: string | null;
   business_context: string | null;
   timezone: string | null;
   metadata: Record<string, unknown> | null;
@@ -181,7 +182,8 @@ function mapProfile(row: ProfileRow): Assistant {
     cost: "GBP 0.00",
     routing,
     officeHours: readOfficeHours(row),
-    outOfHoursMessage: meta(row, "out_of_hours_message") || undefined,
+    // Prefer the column the runtime reads; fall back to the legacy metadata copy.
+    outOfHoursMessage: row.after_hours_message || meta(row, "out_of_hours_message") || undefined,
   };
 }
 
@@ -199,7 +201,7 @@ export async function getAgentsForUser(userId: string): Promise<Assistant[] | nu
   const { data, error } = await supabase
     .from("wisecall_profiles")
     .select(
-      "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, business_context, timezone, metadata",
+      "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, after_hours_message, business_context, timezone, metadata",
     )
     .eq("metadata->>owner_id", userId)
     .order("created_at", { ascending: false });
@@ -291,7 +293,7 @@ function mapCallRow(row: CallRow): CallLog {
 }
 
 const PROFILE_SELECT =
-  "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, business_context, timezone, metadata";
+  "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, after_hours_message, business_context, timezone, metadata";
 
 const CALL_SELECT =
   "id, profile_id, profile_name, caller_id, summary, outcome, transcript, started_at, finished_at, created_at";

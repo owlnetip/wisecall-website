@@ -1,0 +1,133 @@
+// contactMemory.js — deploy to /opt/wisecall-edge/src/lib/contactMemory.js
+// Requires: SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in .env
+// Call lookupContact() before the AI session starts; upsertContact() after it ends.
+
+const { createClient } = require("@supabase/supabase-js");
+
+function getSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
+
+// Normalise a caller-ID number to E.164-ish for consistent matching.
+function normalisePhone(raw) {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d+]/g, "");
+  // Telnyx UK numbers arrive as +44… — keep as-is.
+  return digits || null;
+}
+
+// Pre-call: look up the contact and return their history so the agent can
+// greet them by name and reference previous conversations.
+async function lookupContact(profileId, rawPhone) {
+  const phone = normalisePhone(rawPhone);
+  if (!phone || !profileId) return null;
+  const sb = getSupabase();
+  if (!sb) return null;
+  try {
+    const { data } = await sb
+      .from("wisecall_contacts")
+      .select("id, name, call_count, last_seen, ai_summary, notes")
+      .eq("profile_id", profileId)
+      .eq("phone", phone)
+      .maybeSingle();
+    return data ?? null;
+  } catch (err) {
+    console.error("[contactMemory] lookupContact error:", err.message);
+    return null;
+  }
+}
+
+// Build the context block to prepend to the system prompt when we recognise the caller.
+function buildContextBlock(contact) {
+  if (!contact) return null;
+  const lines = ["[CALLER MEMORY]"];
+  if (contact.name) lines.push(`Name: ${contact.name}`);
+  lines.push(`Previous calls: ${contact.call_count}`);
+  if (contact.last_seen) {
+    const d = new Date(contact.last_seen);
+    lines.push(
+      `Last contact: ${d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`,
+    );
+  }
+  if (contact.ai_summary) lines.push(`History: ${contact.ai_summary}`);
+  if (contact.notes) lines.push(`Notes: ${contact.notes}`);
+  lines.push(
+    "Use this to greet them by name (if known) and acknowledge their history naturally — don't read it out verbatim.",
+  );
+  return lines.join("\n");
+}
+
+// Post-call: create or update the contact row and link the call log.
+// summary = AI-generated one-liner from the call transcript (pass from saveCallLog).
+async function upsertContact(profileId, { phone: rawPhone, name, aiSummary, callLogId }) {
+  const phone = normalisePhone(rawPhone);
+  if (!phone || !profileId) return null;
+  const sb = getSupabase();
+  if (!sb) return null;
+
+  try {
+    // Try to find an existing contact for this profile+phone.
+    const { data: existing } = await sb
+      .from("wisecall_contacts")
+      .select("id, call_count, name")
+      .eq("profile_id", profileId)
+      .eq("phone", phone)
+      .maybeSingle();
+
+    const now = new Date().toISOString();
+
+    if (existing) {
+      const patch = {
+        last_seen: now,
+        updated_at: now,
+        call_count: (existing.call_count ?? 0) + 1,
+      };
+      // Only overwrite name/summary if the new value is non-empty.
+      if (name && !existing.name) patch.name = name;
+      if (aiSummary) patch.ai_summary = aiSummary;
+
+      await sb.from("wisecall_contacts").update(patch).eq("id", existing.id);
+
+      if (callLogId) {
+        await sb
+          .from("wisecall_call_logs")
+          .update({ contact_id: existing.id })
+          .eq("id", callLogId);
+      }
+      return existing.id;
+    } else {
+      const insert = {
+        profile_id: profileId,
+        phone,
+        name: name || null,
+        ai_summary: aiSummary || null,
+        call_count: 1,
+        first_seen: now,
+        last_seen: now,
+        created_at: now,
+        updated_at: now,
+      };
+      const { data: created } = await sb
+        .from("wisecall_contacts")
+        .insert(insert)
+        .select("id")
+        .single();
+
+      if (created?.id && callLogId) {
+        await sb
+          .from("wisecall_call_logs")
+          .update({ contact_id: created.id })
+          .eq("id", callLogId);
+      }
+      return created?.id ?? null;
+    }
+  } catch (err) {
+    console.error("[contactMemory] upsertContact error:", err.message);
+    return null;
+  }
+}
+
+module.exports = { lookupContact, buildContextBlock, upsertContact, normalisePhone };
