@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
+import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe";
 import { PlanCheckoutButton, ManageSubscriptionButton } from "./start-trial-button";
 
 type Plan = {
@@ -65,13 +66,25 @@ function Tick() {
   );
 }
 
+function checkoutLabel(
+  planId: Plan["id"],
+  currentPlan: string | null,
+  status: string | null | undefined,
+  hasPlan: boolean,
+): string {
+  if (currentPlan === planId) {
+    return status === "trialing" ? "Current trial" : "Current plan";
+  }
+  return hasPlan ? "Switch to this plan" : "Start free trial";
+}
+
 export default async function BillingPage() {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/?redirect=/billing");
+  if (!user) redirect("/?redirect=/billing&signup=1");
 
   // This page doubles as the upgrade screen, so we do NOT redirect active users away.
   const billing = await getBillingForUser(user.id);
@@ -89,38 +102,26 @@ export default async function BillingPage() {
             Every plan includes the AI receptionist, a complete phone system and UK outbound calling.
             Prices exclude VAT, billed monthly on a 12-month term.
           </p>
+          <p
+            className="mx-auto mt-4 max-w-2xl rounded-xl px-4 py-3 text-xs leading-relaxed"
+            style={{ background: "rgba(125,232,235,0.08)", color: "rgba(125,232,235,0.9)", border: "1px solid rgba(125,232,235,0.2)" }}
+          >
+            <strong>7-day free trial on every plan</strong> — try the full product with up to{" "}
+            <strong>{TRIAL_CALL_CAP} AI calls</strong>. Card required; billing starts after{" "}
+            {TRIAL_DAYS} days unless you cancel.
+          </p>
           {hasPlan ? (
             <p className="mt-3 text-xs" style={{ color: "rgba(125,232,235,0.85)" }}>
-              You&apos;re currently on{" "}
-              <strong>{currentPlan === "payg" ? "Pay As You Go" : (currentPlan ?? "a plan")}</strong>.
+              You&apos;re currently on <strong>{planDisplayName(currentPlan)}</strong>.
               Switching cancels your current subscription. <ManageSubscriptionButton /> ·{" "}
-              <a href="/dashboard" className="underline">Back to dashboard</a>
+              <a href="/dashboard" className="underline">
+                Back to dashboard
+              </a>
             </p>
           ) : null}
         </div>
 
-        {/* PAYG — quick-start free trial, surfaced first */}
-        <div
-          className="mx-auto mt-8 max-w-3xl rounded-2xl p-5"
-          style={{ background: "#1b2e2e", border: "1px solid rgba(255,255,255,0.08)" }}
-        >
-          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-            <div>
-              <h3 className="text-base font-semibold">Just want to try it? Start free.</h3>
-              <p className="mt-1 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Pay As You Go — <strong>£10/month + 85p per AI call</strong>, with a 7-day free trial (up to
-                20 calls). No bundled phone system or extensions. The plans below work out cheaper per call at
-                volume.
-              </p>
-            </div>
-            <div className="w-full sm:w-48 shrink-0">
-              <PlanCheckoutButton plan="payg" label="Start free trial" variant="secondary" />
-            </div>
-          </div>
-        </div>
-
-        {/* Monthly plans */}
-        <div className="mt-6 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
           {PLANS.map((plan) => (
             <div
               key={plan.id}
@@ -145,10 +146,12 @@ export default async function BillingPage() {
 
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-3xl font-bold">{plan.price}</span>
-                <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>/month</span>
+                <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  /month
+                </span>
               </div>
               <p className="mt-1 text-[11px] uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>
-                excl. VAT · 12-month term
+                excl. VAT · 12-month term · {TRIAL_DAYS}-day free trial
               </p>
 
               {/* Headline metrics */}
@@ -164,7 +167,7 @@ export default async function BillingPage() {
               <div className="mt-5">
                 <PlanCheckoutButton
                   plan={plan.id}
-                  label={currentPlan === plan.id ? "Current plan" : "Subscribe"}
+                  label={checkoutLabel(plan.id, currentPlan, billing?.status, hasPlan)}
                   variant={plan.popular ? "primary" : "secondary"}
                 />
               </div>

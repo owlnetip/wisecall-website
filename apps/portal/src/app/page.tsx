@@ -126,8 +126,13 @@ function Owl({ eyeOffset, passwordFocused, blinking }: OwlProps) {
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const redirectParam = searchParams.get("redirect");
+  const wantsSignup = searchParams.get("signup") === "1" || redirectParam === "/billing";
+  const redirectTo =
+    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
+      : "/dashboard";
+  const [mode, setMode] = useState<"signin" | "signup">(wantsSignup ? "signup" : "signin");
   const [state, formAction, isPending] = useActionState<AuthState, FormData>(
     authAction,
     {},
@@ -141,6 +146,7 @@ function LoginForm() {
   const [blinking, setBlinking] = useState(false);
   const owlContainerRef = useRef<HTMLDivElement>(null);
   const isSignup = mode === "signup";
+  const formRedirect = isSignup ? "/billing" : redirectTo;
 
   // Eye tracking
   useEffect(() => {
@@ -237,13 +243,19 @@ function LoginForm() {
               </span>
             </div>
             <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.72)" }}>
-              {isSignup ? "Create your account" : "Sign in to your account"}
+              {isSignup ? "Start your 7-day free trial" : "Sign in to your account"}
             </p>
+            {isSignup ? (
+              <p className="mt-2 text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
+                Create an account, pick a plan, and try the full WiseCall product — up to 20 AI calls
+                during your trial. Card required.
+              </p>
+            ) : null}
           </div>
 
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="intent" value={mode} />
-            <input type="hidden" name="redirect" value={redirectTo} />
+            <input type="hidden" name="redirect" value={formRedirect} />
             {/* Email */}
             <div className="space-y-1.5">
               <label
@@ -400,7 +412,7 @@ function LoginForm() {
                   {isSignup ? "Creating account…" : "Signing in…"}
                 </span>
               ) : isSignup ? (
-                "Create account"
+                "Create account & choose plan"
               ) : (
                 "Sign in"
               )}
@@ -427,7 +439,7 @@ function LoginForm() {
               onMouseEnter={(e) => ((e.target as HTMLElement).style.textDecoration = "underline")}
               onMouseLeave={(e) => ((e.target as HTMLElement).style.textDecoration = "none")}
             >
-              {isSignup ? "Sign in" : "Sign up free"}
+              {isSignup ? "Sign in" : "Start free trial"}
             </button>
           </p>
         </div>

@@ -53,13 +53,11 @@ export async function signUpAction(
   // fall back to the shared project's Site URL (owlnet.io). Requires this URL to
   // be in the Supabase redirect allowlist.
   // Route the confirmation link through /auth/confirm so the PKCE ?code is
-  // exchanged for a session (cookies set) before landing on the dashboard.
-  // Pointing emailRedirectTo straight at /dashboard left the code unexchanged,
-  // so the user arrived unauthenticated and was bounced to the login page.
+  // exchanged for a session (cookies set) before landing on billing to pick a plan.
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${getAppBaseUrl()}/auth/confirm?next=/dashboard` },
+    options: { emailRedirectTo: `${getAppBaseUrl()}/auth/confirm?next=/billing` },
   });
 
   if (error) {
@@ -68,10 +66,10 @@ export async function signUpAction(
 
   // If email confirmation is on, there's no active session yet.
   if (!data.session) {
-    return { message: "Check your inbox to confirm your email, then sign in." };
+    return { message: "Check your inbox to confirm your email, then choose your plan." };
   }
 
-  redirect("/dashboard");
+  redirect("/billing");
 }
 
 // Sends a password-reset email. The branded Reset Password template links to

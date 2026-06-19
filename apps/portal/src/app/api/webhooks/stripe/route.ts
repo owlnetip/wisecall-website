@@ -58,7 +58,7 @@ async function upsertFromSubscription(sub: Stripe.Subscription) {
       user_id: userId,
       stripe_customer_id: customerId ?? null,
       subscription_id: sub.id,
-      plan: sub.metadata?.plan ?? "payg",
+      plan: sub.metadata?.plan ?? "core",
       status: sub.status,
       trial_end: unixToIso(sub.trial_end),
       current_period_end: periodEnd(sub),
@@ -68,9 +68,9 @@ async function upsertFromSubscription(sub: Stripe.Subscription) {
   );
 }
 
-// On a new checkout (e.g. upgrading from PAYG to a paid plan), cancel the
-// customer's other live subscriptions so they aren't billed twice. Best-effort:
-// needs the Stripe key to allow Subscriptions write — logs and continues if not.
+// On a new checkout (e.g. switching plans), cancel the customer's other live
+// subscriptions so they aren't billed twice. Best-effort: needs the Stripe key
+// to allow Subscriptions write — logs and continues if not.
 async function cancelOtherSubscriptions(
   stripe: Stripe,
   customerId: string | null | undefined,

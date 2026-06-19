@@ -35,8 +35,8 @@ export function ManageSubscriptionButton() {
   );
 }
 
-// Single checkout button for any plan. PAYG opens the 7-day trial; Core/Growth/Pro
-// charge immediately. Redirects to Stripe Checkout on click.
+// Single checkout button for any plan. Every plan opens a 7-day free trial in
+// Stripe Checkout. Redirects to Stripe on click.
 export function PlanCheckoutButton({
   plan,
   label,

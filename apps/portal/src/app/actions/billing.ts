@@ -15,13 +15,13 @@ import {
 
 export type CheckoutResult = { ok: boolean; url?: string; error?: string };
 
-// Starts Stripe Checkout for the chosen plan. PAYG = 7-day free trial (card
-// required); Core/Growth/Pro charge immediately, monthly. Finds-or-creates the
+// Starts Stripe Checkout for the chosen plan. Every plan includes a 7-day free
+// trial (card required; 20 AI-call cap enforced in-app). Finds-or-creates the
 // Stripe customer and reuses it (so an upgrade attaches to the same customer).
 // The subscription is recorded by the webhook once checkout completes; the
 // webhook also cancels any prior subscription so an upgrade doesn't double-bill.
 export async function startCheckout(planInput: string): Promise<CheckoutResult> {
-  const plan: PlanId = isPlanId(planInput) ? planInput : "payg";
+  const plan: PlanId = isPlanId(planInput) ? planInput : "core";
 
   const auth = await createSupabaseServerClient();
   const {
