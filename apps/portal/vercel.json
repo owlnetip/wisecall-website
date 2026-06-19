@@ -1,4 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["lhr1"]
+  "regions": ["lhr1"],
+  "redirects": [
+    {
+      "source": "/signup",
+      "destination": "/?signup=1&redirect=/billing",
+      "permanent": false
+    }
+  ]
 }
