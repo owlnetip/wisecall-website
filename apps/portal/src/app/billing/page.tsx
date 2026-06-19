@@ -99,8 +99,28 @@ export default async function BillingPage() {
           ) : null}
         </div>
 
+        {/* PAYG — quick-start free trial, surfaced first */}
+        <div
+          className="mx-auto mt-8 max-w-3xl rounded-2xl p-5"
+          style={{ background: "#1b2e2e", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+            <div>
+              <h3 className="text-base font-semibold">Just want to try it? Start free.</h3>
+              <p className="mt-1 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                Pay As You Go — <strong>£10/month + 85p per AI call</strong>, with a 7-day free trial (up to
+                20 calls). No bundled phone system or extensions. The plans below work out cheaper per call at
+                volume.
+              </p>
+            </div>
+            <div className="w-full sm:w-48 shrink-0">
+              <PlanCheckoutButton plan="payg" label="Start free trial" variant="secondary" />
+            </div>
+          </div>
+        </div>
+
         {/* Monthly plans */}
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
+        <div className="mt-6 grid gap-5 md:grid-cols-3">
           {PLANS.map((plan) => (
             <div
               key={plan.id}
@@ -160,26 +180,6 @@ export default async function BillingPage() {
               </ul>
             </div>
           ))}
-        </div>
-
-        {/* PAYG — secondary option */}
-        <div
-          className="mx-auto mt-6 max-w-3xl rounded-2xl p-5"
-          style={{ background: "#1b2e2e", border: "1px solid rgba(255,255,255,0.08)" }}
-        >
-          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-            <div>
-              <h3 className="text-base font-semibold">Just need AI call answering?</h3>
-              <p className="mt-1 text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Pay As You Go — <strong>£10/month + 85p per AI call</strong>. No bundled phone system or
-                extensions. Includes a 7-day free trial (up to 20 calls). Plans work out cheaper per call
-                at volume.
-              </p>
-            </div>
-            <div className="w-full sm:w-48 shrink-0">
-              <PlanCheckoutButton plan="payg" label="Start free trial" variant="secondary" />
-            </div>
-          </div>
         </div>
       </div>
     </main>
