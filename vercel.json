@@ -10,6 +10,31 @@
       "source": "/care-homes",
       "destination": "/industries/care-homes/",
       "permanent": true
+    },
+    {
+      "source": "/terms-of-service",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/terms-and-conditions",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/tos",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy-policy",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-notice",
+      "destination": "/privacy-policy",
+      "permanent": true
     }
   ],
   "headers": [
