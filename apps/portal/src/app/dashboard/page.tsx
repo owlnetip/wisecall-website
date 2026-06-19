@@ -67,7 +67,10 @@ export default async function DashboardPage() {
       initialAssistants={enriched ?? undefined}
       callLogs={callLogs}
       userEmail={impersonatingEmail ?? user.email}
-      isAdmin={admin}
+      // While impersonating, render the customer's own chrome (no Admin link) so
+      // it's a faithful view of what they see. The billing-gate bypass above
+      // still uses the real `admin` flag, not this prop.
+      isAdmin={impersonateId ? false : admin}
       trial={trial ?? undefined}
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
     />
