@@ -459,6 +459,7 @@ export function CustomerAgentWorkspace({
   isAdmin = false,
   adminMode = false,
   trial,
+  planName,
   impersonating,
 }: {
   initialAssistants?: Assistant[];
@@ -468,6 +469,7 @@ export function CustomerAgentWorkspace({
   isAdmin?: boolean;
   adminMode?: boolean; // rendered on /admin with every customer's agents
   trial?: { used: number; cap: number; blocked: boolean }; // free-trial call usage
+  planName?: string; // subscription plan label (Core / Growth / Pro)
   impersonating?: { email: string }; // admin viewing as this customer
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
@@ -1012,6 +1014,7 @@ export function CustomerAgentWorkspace({
                 onSave={save}
                 onProvision={provision}
                 adminMode={adminMode}
+                planName={planName}
               />
             )}
 
@@ -1354,6 +1357,7 @@ function AssistantDetail({
   onSave,
   onProvision,
   adminMode = false,
+  planName,
 }: {
   assistant: Assistant;
   tab: DetailTab;
@@ -1371,6 +1375,7 @@ function AssistantDetail({
   onSave: () => void;
   onProvision: () => void;
   adminMode?: boolean;
+  planName?: string;
 }) {
   return (
     <div className="mx-auto max-w-5xl">
@@ -1443,21 +1448,21 @@ function AssistantDetail({
 
       {tab === "behaviour" ? (
         <div className="space-y-4">
-          <button
-            type="button"
+          <a
+            href="/billing"
             className="flex w-full items-center justify-between rounded-[14px] border border-black/10 bg-white px-5 py-4 text-left transition hover:bg-[#f7f8f7]"
           >
             <span className="flex items-center gap-3">
               <Bot className="h-5 w-5 text-[#148b8e]" />
-              <span className="font-black">Essentials</span>
+              <span className="font-black">Plan</span>
             </span>
             <span className="flex items-center gap-3">
               <span className="rounded-full border border-black/10 px-3 py-1 text-sm font-bold">
-                {assistant.name}
+                {planName ?? "Choose plan"}
               </span>
               <ChevronRight className="h-5 w-5 text-[#7a8582]" />
             </span>
-          </button>
+          </a>
 
           <button
             type="button"
