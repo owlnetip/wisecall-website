@@ -84,7 +84,7 @@ export default async function BillingPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/signup");
+  if (!user) redirect("/?signup=1&redirect=/billing");
 
   // This page doubles as the upgrade screen, so we do NOT redirect active users away.
   const billing = await getBillingForUser(user.id);

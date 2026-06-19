@@ -32,6 +32,16 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  // Clean trial entry URL — works even if /signup page route isn't deployed yet.
+  if (pathname === "/signup") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/";
+    redirectUrl.searchParams.set("signup", "1");
+    redirectUrl.searchParams.set("redirect", "/billing");
+    return NextResponse.redirect(redirectUrl);
+  }
+
   const isProtected = PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
