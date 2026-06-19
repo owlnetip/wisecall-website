@@ -14,6 +14,7 @@ import {
   Loader2,
   LogOut,
   Mail,
+  Menu,
   MessageSquareText,
   MoreHorizontal,
   Phone,
@@ -469,6 +470,7 @@ export function CustomerAgentWorkspace({
   const [searchTerm, setSearchTerm] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const [greetingOpen, setGreetingOpen] = useState(false);
   const [editAbility, setEditAbility] = useState<"knowledge" | "transfer" | null>(null);
@@ -708,6 +710,80 @@ export function CustomerAgentWorkspace({
         </div>
       ) : null}
       <div className="mx-auto flex min-h-screen max-w-[1920px] overflow-hidden bg-white shadow-[0_24px_90px_rgba(17,23,22,0.14)] lg:min-h-[calc(100vh-48px)] lg:rounded-[22px] lg:border lg:border-black/10">
+        {/* Mobile nav drawer */}
+        {mobileNavOpen && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setMobileNavOpen(false)}
+            />
+            <aside className="absolute left-0 top-0 flex h-full w-[270px] flex-col bg-gradient-to-b from-[#172929] to-[#0e1b1b]">
+              <div className="flex h-[72px] items-center justify-between pl-6 pr-3">
+                <span className="text-2xl font-black tracking-normal text-white">
+                  Wise<span className="text-[#7de8eb]">Call</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMobileNavOpen(false)}
+                  aria-label="Close menu"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <nav className="flex-1 space-y-1 px-4 py-4">
+                {navItems.map((item) => {
+                  const active = isNavActive(item);
+                  return (
+                    <button
+                      type="button"
+                      key={item.label}
+                      onClick={() => {
+                        setView(item.view);
+                        setMobileNavOpen(false);
+                      }}
+                      className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold transition ${
+                        active ? "bg-[#7de8eb]/10 text-white" : "text-[#94b4b2] hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+                {!adminMode && (
+                  <a
+                    href="/billing"
+                    className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                  >
+                    <CreditCard className="h-5 w-5 flex-shrink-0" />
+                    Billing & plan
+                  </a>
+                )}
+                {adminMode ? (
+                  <a
+                    href="/dashboard"
+                    className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                  >
+                    <Grid2X2 className="h-5 w-5 flex-shrink-0" />
+                    My dashboard
+                  </a>
+                ) : (
+                  isAdmin && (
+                    <a
+                      href="/admin"
+                      className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                    >
+                      <ShieldCheck className="h-5 w-5 flex-shrink-0" />
+                      Admin
+                    </a>
+                  )
+                )}
+              </nav>
+            </aside>
+          </div>
+        )}
+
         {/* Sidebar */}
         <aside className="hidden w-[280px] flex-shrink-0 flex-col bg-gradient-to-b from-[#172929] to-[#0e1b1b] md:flex">
           <div className="flex h-[72px] items-center gap-3 px-6">
@@ -790,6 +866,14 @@ export function CustomerAgentWorkspace({
         <main className="min-w-0 flex-1 bg-white">
           <header className="flex h-[72px] items-center justify-between border-b border-black/10 px-5 lg:px-8">
             <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-[#7a8582]">
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(true)}
+                aria-label="Open menu"
+                className="-ml-1 mr-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-[#111716] transition hover:bg-[#f2f4f3] md:hidden"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
               <span>Home</span>
               {(view === "assistants" || view === "detail") && (
                 <>
