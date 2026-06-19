@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
-const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/?signup=1&redirect=/billing';
+const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/signup';
 
 const MOBILE_CSS = `    .mobile-menu { transform: translateY(-100%); opacity: 0; visibility: hidden; pointer-events: none; transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.2s ease, visibility 0s linear 0.35s; }
     .mobile-menu.open { transform: translateY(0); opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }`;

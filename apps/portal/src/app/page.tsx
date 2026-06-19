@@ -4,6 +4,15 @@ import { Suspense, useActionState, useEffect, useRef, useState, useTransition } 
 import { useSearchParams } from "next/navigation";
 import { authAction, resetPassword, type AuthState } from "@/app/actions/auth";
 
+function resolveAuthMode(params: URLSearchParams): "signin" | "signup" {
+  if (params.get("signin") === "1") return "signin";
+  if (params.get("signup") === "1") return "signup";
+  const redirect = params.get("redirect");
+  if (redirect === "/billing") return "signup";
+  if (redirect === "/dashboard" || redirect?.startsWith("/admin")) return "signin";
+  return "signup";
+}
+
 interface OwlProps {
   eyeOffset: { x: number; y: number };
   passwordFocused: boolean;
@@ -127,12 +136,11 @@ function Owl({ eyeOffset, passwordFocused, blinking }: OwlProps) {
 function LoginForm() {
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
-  const wantsSignup = searchParams.get("signup") === "1" || redirectParam === "/billing";
   const redirectTo =
     redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
       ? redirectParam
       : "/dashboard";
-  const [mode, setMode] = useState<"signin" | "signup">(wantsSignup ? "signup" : "signin");
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [state, formAction, isPending] = useActionState<AuthState, FormData>(
     authAction,
     {},
@@ -147,6 +155,12 @@ function LoginForm() {
   const owlContainerRef = useRef<HTMLDivElement>(null);
   const isSignup = mode === "signup";
   const formRedirect = isSignup ? "/billing" : redirectTo;
+
+  // Sync sign-in vs sign-up from the URL once search params are available (and if
+  // they change). useState alone can miss ?signup=1 on the first client render.
+  useEffect(() => {
+    setMode(resolveAuthMode(searchParams));
+  }, [searchParams]);
 
   // Eye tracking
   useEffect(() => {
