@@ -52,6 +52,10 @@ async function upsertFromSubscription(sub: Stripe.Subscription) {
   }
 
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+  const notificationPhone = await fetchStripeCustomerPhone(
+    getStripe(),
+    customerId,
+  );
 
   await service.from("wisecall_billing").upsert(
     {
@@ -62,10 +66,29 @@ async function upsertFromSubscription(sub: Stripe.Subscription) {
       status: sub.status,
       trial_end: unixToIso(sub.trial_end),
       current_period_end: periodEnd(sub),
+      ...(notificationPhone ? { notification_phone: notificationPhone } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },
   );
+}
+
+async function fetchStripeCustomerPhone(
+  stripe: ReturnType<typeof getStripe>,
+  customerId: string | null | undefined,
+): Promise<string | null> {
+  if (!stripe || !customerId) return null;
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if ("deleted" in customer && customer.deleted) return null;
+    return (customer as Stripe.Customer).phone ?? null;
+  } catch (err) {
+    console.error(
+      "stripe webhook: customer phone lookup failed",
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
 }
 
 // On a new checkout (e.g. switching plans), cancel the customer's other live
@@ -123,6 +146,15 @@ async function sendTrialEndingReminder(stripe: Stripe, sub: Stripe.Subscription)
     }
   } catch (err) {
     console.error("trial_will_end: customer retrieve failed", err instanceof Error ? err.message : err);
+  }
+
+  const userId = await resolveOwnerId(sub, getServiceSupabase());
+  if (userId && phone) {
+    const service = getServiceSupabase();
+    await service
+      ?.from("wisecall_billing")
+      .update({ notification_phone: phone, updated_at: new Date().toISOString() })
+      .eq("user_id", userId);
   }
 
   const endDate = sub.trial_end
