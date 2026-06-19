@@ -141,7 +141,7 @@ function header() {
       <a href="/resources/missed-call-calculator/" class="hover:text-[#7de8eb]">Calculator</a>
       <a href="/blog/missed-calls-cost-uk-businesses/" class="hover:text-[#7de8eb]">Resources</a>
     </div>
-    <a href="#demo" class="btn btn-primary px-5 py-2.5 text-sm">Book a Demo <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+    <a href="https://app.wisecall.io" class="btn btn-primary px-5 py-2.5 text-sm">Start Free Trial <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
   </nav>
 </header>`;
 }
@@ -185,7 +185,7 @@ function hero({ eyebrow, h1, lead, cta = 'Book a Free Demo', secondary = 'Calcul
       <h1 class="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-7">${h1}</h1>
       <p class="text-xl md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-9">${esc(lead)}</p>
       <div class="flex flex-col sm:flex-row gap-4">
-        <a href="#demo" class="btn btn-primary px-8 py-4">${esc(cta)} <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
+        <a href="https://app.wisecall.io" class="btn btn-primary px-8 py-4">${esc(cta)} <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
         <a href="/resources/missed-call-calculator/" class="btn btn-secondary px-8 py-4">${esc(secondary)}</a>
       </div>
     </div>
@@ -228,7 +228,7 @@ function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free de
     <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8">${esc(text)}</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="mailto:${site.email}?subject=WiseCall demo request" class="btn btn-primary px-8 py-4">Book a Free 15-Minute Demo</a>
+      <a href="https://app.wisecall.io" class="btn btn-primary px-8 py-4">Start Free Trial</a>
       <a href="/how-it-works/" class="btn btn-secondary px-8 py-4">See how WiseCall works</a>
     </div>
     <p class="text-white/45 text-sm mt-6">Tracking TODO: demo_booking_click and form_submission conversion events should be connected in GA4 once IDs are available.</p>
@@ -324,7 +324,7 @@ function renderIndustryPage(industry) {
     eyebrow: industry.keyword,
     h1: `${esc(industry.h1)} <span class="text-[#7de8eb]">for UK businesses</span>`,
     lead: industry.heroLead,
-    cta: industry.slug === 'estate-agents' ? 'Book a Demo for Your Agency' : `Book a Demo for Your ${industry.singular}`,
+    cta: 'Start Your Free Trial',
     secondary: 'Calculate missed calls',
   })}
 ${trustStrip()}
