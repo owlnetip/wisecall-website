@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { AuthForm } from "@/components/auth-form";
 
-// Clean entry point for marketing "Start Free Trial" CTAs.
 export default function SignupPage() {
-  redirect("/?signup=1&redirect=/billing");
+  return <AuthForm mode="signup" />;
 }

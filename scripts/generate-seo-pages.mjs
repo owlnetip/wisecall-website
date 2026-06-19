@@ -11,7 +11,7 @@ import {
   trustSignals,
 } from './seo-content.mjs';
 
-const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/?signup=1&redirect=/billing';
+const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/signup';
 
 const out = new URL('../', import.meta.url);
 const publicOut = new URL('../public/', import.meta.url);
