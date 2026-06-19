@@ -683,7 +683,7 @@ export function CustomerAgentWorkspace({
   return (
     <div className="min-h-screen bg-[#e9efed] px-0 py-0 text-[#111716] lg:px-6 lg:py-6">
       {trial ? (
-        <div className="mx-auto mb-3 max-w-[1540px] px-4 lg:px-0">
+        <div className="mx-auto mb-3 max-w-[1920px] px-4 lg:px-0">
           <div
             className={`flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold ${
               trial.blocked
@@ -707,7 +707,7 @@ export function CustomerAgentWorkspace({
           </div>
         </div>
       ) : null}
-      <div className="mx-auto flex min-h-screen max-w-[1540px] overflow-hidden bg-white shadow-[0_24px_90px_rgba(17,23,22,0.14)] lg:min-h-[calc(100vh-48px)] lg:rounded-[22px] lg:border lg:border-black/10">
+      <div className="mx-auto flex min-h-screen max-w-[1920px] overflow-hidden bg-white shadow-[0_24px_90px_rgba(17,23,22,0.14)] lg:min-h-[calc(100vh-48px)] lg:rounded-[22px] lg:border lg:border-black/10">
         {/* Sidebar */}
         <aside className="hidden w-[280px] flex-shrink-0 flex-col bg-gradient-to-b from-[#172929] to-[#0e1b1b] md:flex">
           <div className="flex h-[72px] items-center gap-3 px-6">

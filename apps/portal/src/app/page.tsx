@@ -186,7 +186,7 @@ function LoginForm() {
 
   return (
     <div
-      className="size-full min-h-screen flex items-center justify-center relative overflow-hidden"
+      className="w-full min-h-screen flex items-center justify-center relative overflow-x-hidden overflow-y-auto py-8"
       style={{ background: "#172929" }}
     >
       {/* Subtle radial glow behind owl/card */}
@@ -435,13 +435,13 @@ function LoginForm() {
         {/* Footer */}
         <p className="text-center text-xs mt-4" style={{ color: "rgba(255,255,255,0.2)" }}>
           By signing in, you agree to our{" "}
-          <span className="underline cursor-pointer" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <a href="https://wisecall.io/terms" target="_blank" rel="noopener" className="underline" style={{ color: "rgba(255,255,255,0.35)" }}>
             Terms
-          </span>{" "}
+          </a>{" "}
           and{" "}
-          <span className="underline cursor-pointer" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <a href="https://wisecall.io/privacy-policy" target="_blank" rel="noopener" className="underline" style={{ color: "rgba(255,255,255,0.35)" }}>
             Privacy Policy
-          </span>
+          </a>
         </p>
       </div>
 
