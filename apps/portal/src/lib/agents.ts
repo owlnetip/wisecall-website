@@ -326,6 +326,7 @@ export async function getAllAgents(): Promise<Assistant[] | null> {
     const ownerId = row.metadata?.owner_id as string | undefined;
     return {
       ...agent,
+      ownerId: ownerId ?? undefined,
       ownerEmail: ownerId ? emailById[ownerId] ?? "Unassigned" : "Unassigned",
     };
   });

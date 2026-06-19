@@ -42,6 +42,7 @@ import type { CallLog } from "@/lib/agents";
 import { OfficeHoursCard } from "./office-hours-card";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
+import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 
 type View = "home" | "assistants" | "detail" | "calls";
 type DetailTab = "behaviour" | "routing" | "technical";
@@ -165,6 +166,7 @@ export type Assistant = {
   routing: AgentRouting;
   officeHours?: OfficeHours;
   ownerEmail?: string; // admin view only — which customer owns this agent
+  ownerId?: string; // admin view only — owner's auth user id (for "log in as")
 };
 
 // Per-day office hours. Only OPEN days are present; a missing day = closed.
@@ -452,6 +454,7 @@ export function CustomerAgentWorkspace({
   isAdmin = false,
   adminMode = false,
   trial,
+  impersonating,
 }: {
   initialAssistants?: Assistant[];
   callLogs?: CallLog[];
@@ -459,6 +462,7 @@ export function CustomerAgentWorkspace({
   isAdmin?: boolean;
   adminMode?: boolean; // rendered on /admin with every customer's agents
   trial?: { used: number; cap: number; blocked: boolean }; // free-trial call usage
+  impersonating?: { email: string }; // admin viewing as this customer
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
   // A real customer with no agents yet has an empty list — don't assume [0] exists.
@@ -684,6 +688,21 @@ export function CustomerAgentWorkspace({
 
   return (
     <div className="min-h-screen bg-[#e9efed] px-0 py-0 text-[#111716] lg:px-6 lg:py-6">
+      {impersonating ? (
+        <div className="mx-auto mb-3 flex max-w-[1920px] flex-wrap items-center justify-between gap-3 rounded-xl bg-[#7a2e2e] px-4 py-2.5 text-sm font-semibold text-white">
+          <span>
+            👁 Viewing as <strong>{impersonating.email}</strong> — changes you make apply to this customer&apos;s account.
+          </span>
+          <form action={stopImpersonating}>
+            <button
+              type="submit"
+              className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-white/25"
+            >
+              Exit customer view
+            </button>
+          </form>
+        </div>
+      ) : null}
       {trial ? (
         <div className="mx-auto mb-3 max-w-[1920px] px-4 lg:px-0">
           <div
@@ -979,6 +998,7 @@ export function CustomerAgentWorkspace({
                 }}
                 onSave={save}
                 onProvision={provision}
+                adminMode={adminMode}
               />
             )}
 
@@ -1316,6 +1336,7 @@ function AssistantDetail({
   onAbility,
   onSave,
   onProvision,
+  adminMode = false,
 }: {
   assistant: Assistant;
   tab: DetailTab;
@@ -1332,6 +1353,7 @@ function AssistantDetail({
   onAbility: (key: "knowledge" | "transfer") => void;
   onSave: () => void;
   onProvision: () => void;
+  adminMode?: boolean;
 }) {
   return (
     <div className="mx-auto max-w-5xl">
@@ -1347,13 +1369,27 @@ function AssistantDetail({
           </button>
           <h1 className="text-2xl font-black sm:text-4xl">Edit &apos;{assistant.name}&apos;</h1>
         </div>
-        <button
-          type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-[#f2f4f3]"
-          aria-label="More actions"
-        >
-          <MoreHorizontal className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {adminMode && assistant.ownerId ? (
+            <form action={impersonateUser.bind(null, assistant.ownerId)}>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#263130]"
+                title={`Open ${assistant.ownerEmail ?? "this customer"}'s account`}
+              >
+                <LogOut className="h-4 w-4 rotate-180" />
+                Log in as {assistant.ownerEmail ?? "owner"}
+              </button>
+            </form>
+          ) : null}
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-[#f2f4f3]"
+            aria-label="More actions"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <RoutingCard

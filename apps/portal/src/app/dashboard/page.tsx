@@ -1,9 +1,12 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getServiceSupabase } from "@/lib/supabase";
 import { getAgentsForUser, getCallLogsForUser } from "@/lib/agents";
 import { getBillingForUser, hasActiveAccess, getTrialUsage } from "@/lib/billing";
 import { isAdmin } from "@/lib/admin";
+import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -16,18 +19,37 @@ export default async function DashboardPage() {
     redirect("/?redirect=/dashboard");
   }
 
-  // Billing gate: a customer must be trialing/active before they can configure
-  // an agent. Admins bypass (they manage every customer's agents).
   const admin = isAdmin(user);
-  const billing = await getBillingForUser(user.id);
+
+  // Admin "view as customer": only honoured when the real signed-in user is an
+  // admin, so a forged cookie does nothing for a normal customer.
+  const impersonateId = admin
+    ? (await cookies()).get(IMPERSONATE_COOKIE)?.value
+    : undefined;
+  const effectiveUserId = impersonateId || user.id;
+
+  let impersonatingEmail: string | undefined;
+  if (impersonateId) {
+    try {
+      const svc = getServiceSupabase();
+      const { data } = (await svc?.auth.admin.getUserById(impersonateId)) ?? { data: null };
+      impersonatingEmail = data?.user?.email ?? impersonateId;
+    } catch {
+      impersonatingEmail = impersonateId;
+    }
+  }
+
+  // Billing gate: a real customer must be trialing/active before they can
+  // configure an agent. Admins bypass (incl. while viewing as a customer).
+  const billing = await getBillingForUser(effectiveUserId);
   if (!admin && !hasActiveAccess(billing)) {
     redirect("/billing");
   }
 
   const [agents, callLogs, trial] = await Promise.all([
-    getAgentsForUser(user.id),
-    getCallLogsForUser(user.id),
-    getTrialUsage(user.id, billing),
+    getAgentsForUser(effectiveUserId),
+    getCallLogsForUser(effectiveUserId),
+    getTrialUsage(effectiveUserId, billing),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.
@@ -44,9 +66,10 @@ export default async function DashboardPage() {
     <CustomerAgentWorkspace
       initialAssistants={enriched ?? undefined}
       callLogs={callLogs}
-      userEmail={user.email}
+      userEmail={impersonatingEmail ?? user.email}
       isAdmin={admin}
       trial={trial ?? undefined}
+      impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
     />
   );
 }
