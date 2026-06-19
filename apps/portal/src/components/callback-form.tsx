@@ -47,20 +47,22 @@ export function CallbackForm({ source }: { source: string }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="flex items-center gap-3 rounded-lg border border-accent/25 bg-white/5 px-4 py-3 focus-within:border-accent/70">
-        <Phone className="h-5 w-5 flex-shrink-0 text-accent" />
-        <input
-          name="phone"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="Mobile number"
-          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-white/35"
-          required
-        />
+      <div className="flex flex-col gap-3 rounded-lg border border-accent/25 bg-white/5 px-4 py-3 focus-within:border-accent/70 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <Phone className="h-5 w-5 flex-shrink-0 text-accent" />
+          <input
+            name="phone"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="Mobile number"
+            className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-white/35"
+            required
+          />
+        </div>
         <button
           type="submit"
           disabled={status.state === "loading"}
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-accent px-4 text-sm font-bold text-[#172929] transition hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-65"
+          className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-accent px-4 text-sm font-bold text-[#172929] transition hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-65 sm:w-auto"
         >
           {status.state === "loading" ? (
             <Loader2 className="h-4 w-4 animate-spin" />

@@ -41,8 +41,8 @@ export function OfficeHoursGrid({
         const day = hours[key];
         const isOpen = Boolean(day);
         return (
-          <div key={key} className="flex items-center gap-3">
-            <label className="flex w-32 items-center gap-2 text-sm font-bold text-[#111716]">
+          <div key={key} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <label className="flex w-full items-center gap-2 text-sm font-bold text-[#111716] sm:w-32">
               <input
                 type="checkbox"
                 checked={isOpen}
@@ -52,7 +52,7 @@ export function OfficeHoursGrid({
               {label}
             </label>
             {isOpen ? (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm sm:pl-0">
                 <input
                   type="time"
                   value={day!.open}

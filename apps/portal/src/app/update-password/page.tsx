@@ -9,7 +9,7 @@ export default function UpdatePasswordPage() {
 
   return (
     <main
-      className="min-h-screen w-full flex items-center justify-center px-4"
+      className="min-h-screen w-full flex items-center justify-center overflow-x-hidden overflow-y-auto px-4 py-8"
       style={{ background: "#172929" }}
     >
       <div className="w-full max-w-sm rounded-2xl px-8 pt-8 pb-8" style={{ background: "#1f3535" }}>

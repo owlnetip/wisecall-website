@@ -687,7 +687,7 @@ export function CustomerAgentWorkspace({
       {trial ? (
         <div className="mx-auto mb-3 max-w-[1920px] px-4 lg:px-0">
           <div
-            className={`flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold ${
+            className={`flex flex-col gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold sm:flex-row sm:items-center sm:justify-between ${
               trial.blocked
                 ? "bg-[#fdecec] text-[#9b1c1c]"
                 : "bg-[#eefbfb] text-[#0e4b4d]"
@@ -780,6 +780,18 @@ export function CustomerAgentWorkspace({
                   )
                 )}
               </nav>
+              <div className="mx-4 mb-4 rounded-[18px] bg-[#1a3535] p-5 text-center">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#7de8eb]/20 text-[#7de8eb]">
+                  <UserRound className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-bold text-white">Need setup help?</p>
+                <button
+                  type="button"
+                  className="mt-3 rounded-lg bg-[#7de8eb] px-4 py-2 text-sm font-bold text-[#0e1b1b] transition hover:bg-[#5de0e5]"
+                >
+                  Book support
+                </button>
+              </div>
             </aside>
           </div>
         )}
@@ -865,7 +877,7 @@ export function CustomerAgentWorkspace({
         {/* Main */}
         <main className="min-w-0 flex-1 bg-white">
           <header className="flex h-[72px] items-center justify-between border-b border-black/10 px-5 lg:px-8">
-            <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-[#7a8582]">
+            <div className="flex min-w-0 max-w-[calc(100vw-7rem)] items-center gap-2 overflow-x-auto whitespace-nowrap text-sm font-semibold text-[#7a8582] sm:max-w-none">
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
@@ -1133,6 +1145,20 @@ function HomeOverview({
   );
 }
 
+const MODAL_OVERLAY =
+  "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/35 p-4";
+const MODAL_PANEL =
+  "flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl";
+
+function MobileField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] font-bold uppercase tracking-wide text-[#9aa5a2]">{label}</span>
+      {children}
+    </div>
+  );
+}
+
 function AssistantsList({
   assistants,
   searchTerm,
@@ -1194,39 +1220,78 @@ function AssistantsList({
           <span />
         </div>
         {assistants.length > 0 ? (
-          <div className="divide-y divide-black/10">
-            {assistants.map((assistant) => (
-              <button
-                type="button"
-                key={assistant.id}
-                onClick={() => onOpen(assistant.id)}
-                className={`grid w-full gap-4 px-5 py-5 text-left transition hover:bg-[#f7f8f7] ${
-                  adminMode
-                    ? "md:grid-cols-[1fr_190px_180px_120px_60px]"
-                    : "md:grid-cols-[1fr_210px_130px_70px]"
-                }`}
-              >
-                <span>
-                  <span className="block font-black">{assistant.name}</span>
-                  <span className="mt-1 block text-sm text-[#66716e]">
-                    {assistant.businessName} - {assistant.industry}
+          <>
+            {/* Mobile: labelled cards */}
+            <div className="divide-y divide-black/10 md:hidden">
+              {assistants.map((assistant) => (
+                <button
+                  type="button"
+                  key={assistant.id}
+                  onClick={() => onOpen(assistant.id)}
+                  className="flex w-full flex-col gap-3 px-4 py-4 text-left transition hover:bg-[#f7f8f7]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span>
+                      <span className="block font-black">{assistant.name}</span>
+                      <span className="mt-1 block text-sm text-[#66716e]">
+                        {assistant.businessName} - {assistant.industry}
+                      </span>
+                    </span>
+                    <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-[#7a8582]" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <MobileField label="Phone">
+                      <span className="font-mono text-sm text-[#66716e]">{assistant.phoneNumber}</span>
+                    </MobileField>
+                    {adminMode ? (
+                      <MobileField label="Owner">
+                        <span className="truncate text-sm text-[#66716e]">
+                          {assistant.ownerEmail ?? "Unassigned"}
+                        </span>
+                      </MobileField>
+                    ) : null}
+                    <MobileField label="Status">
+                      <StatusPill status={assistant.status} />
+                    </MobileField>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {/* Desktop: table rows */}
+            <div className="hidden divide-y divide-black/10 md:block">
+              {assistants.map((assistant) => (
+                <button
+                  type="button"
+                  key={assistant.id}
+                  onClick={() => onOpen(assistant.id)}
+                  className={`grid w-full gap-4 px-5 py-5 text-left transition hover:bg-[#f7f8f7] ${
+                    adminMode
+                      ? "grid-cols-[1fr_190px_180px_120px_60px]"
+                      : "grid-cols-[1fr_210px_130px_70px]"
+                  }`}
+                >
+                  <span>
+                    <span className="block font-black">{assistant.name}</span>
+                    <span className="mt-1 block text-sm text-[#66716e]">
+                      {assistant.businessName} - {assistant.industry}
+                    </span>
                   </span>
-                </span>
-                <span className="font-mono text-sm text-[#66716e]">{assistant.phoneNumber}</span>
-                {adminMode && (
-                  <span className="truncate text-sm text-[#66716e]">
-                    {assistant.ownerEmail ?? "Unassigned"}
+                  <span className="font-mono text-sm text-[#66716e]">{assistant.phoneNumber}</span>
+                  {adminMode && (
+                    <span className="truncate text-sm text-[#66716e]">
+                      {assistant.ownerEmail ?? "Unassigned"}
+                    </span>
+                  )}
+                  <span>
+                    <StatusPill status={assistant.status} />
                   </span>
-                )}
-                <span>
-                  <StatusPill status={assistant.status} />
-                </span>
-                <span className="flex items-center justify-end">
-                  <ChevronRight className="h-5 w-5 text-[#7a8582]" />
-                </span>
-              </button>
-            ))}
-          </div>
+                  <span className="flex items-center justify-end">
+                    <ChevronRight className="h-5 w-5 text-[#7a8582]" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="px-5 py-16 text-center text-[#66716e]">No assistants found</div>
         )}
@@ -1280,7 +1345,7 @@ function AssistantDetail({
             <ArrowLeft className="h-4 w-4" />
             Assistants
           </button>
-          <h1 className="text-4xl font-black">Edit &apos;{assistant.name}&apos;</h1>
+          <h1 className="text-2xl font-black sm:text-4xl">Edit &apos;{assistant.name}&apos;</h1>
         </div>
         <button
           type="button"
@@ -1784,7 +1849,7 @@ function CallHistory({
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-4xl font-black">Call History</h1>
+        <h1 className="text-2xl font-black sm:text-4xl">Call History</h1>
         <p className="mt-2 text-[#66716e]">
           {callLogs.length} call{callLogs.length !== 1 ? "s" : ""} handled by your agents.
         </p>
@@ -1798,26 +1863,52 @@ function CallHistory({
           <span>Length</span>
         </div>
         {callLogs.length > 0 ? (
-          <div className="divide-y divide-black/10">
-            {callLogs.map((log) => (
-              <button
-                type="button"
-                key={log.id}
-                onClick={() => onOpen(log)}
-                className="grid w-full gap-4 px-5 py-4 text-left transition hover:bg-[#f7f8f7] md:grid-cols-[1fr_200px_130px_80px]"
-              >
-                <span>
-                  <span className="block font-black">{log.caller}</span>
-                  <span className="mt-1 block text-xs text-[#66716e]">
-                    {formatWhen(log.startedAt)}
+          <>
+            <div className="divide-y divide-black/10 md:hidden">
+              {callLogs.map((log) => (
+                <button
+                  type="button"
+                  key={log.id}
+                  onClick={() => onOpen(log)}
+                  className="flex w-full flex-col gap-3 px-4 py-4 text-left transition hover:bg-[#f7f8f7]"
+                >
+                  <div>
+                    <span className="block font-black">{log.caller}</span>
+                    <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
+                  </div>
+                  <MobileField label="Summary">
+                    <span className="text-sm text-[#66716e]">{log.summary || "—"}</span>
+                  </MobileField>
+                  <div className="grid grid-cols-2 gap-3">
+                    <MobileField label="Outcome">
+                      <span className="text-sm text-[#66716e]">{log.outcome || "—"}</span>
+                    </MobileField>
+                    <MobileField label="Length">
+                      <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
+                    </MobileField>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="hidden divide-y divide-black/10 md:block">
+              {callLogs.map((log) => (
+                <button
+                  type="button"
+                  key={log.id}
+                  onClick={() => onOpen(log)}
+                  className="grid w-full grid-cols-[1fr_200px_130px_80px] gap-4 px-5 py-4 text-left transition hover:bg-[#f7f8f7]"
+                >
+                  <span>
+                    <span className="block font-black">{log.caller}</span>
+                    <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
                   </span>
-                </span>
-                <span className="truncate text-sm text-[#66716e]">{log.summary || "—"}</span>
-                <span className="text-sm text-[#66716e]">{log.outcome || "—"}</span>
-                <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
-              </button>
-            ))}
-          </div>
+                  <span className="truncate text-sm text-[#66716e]">{log.summary || "—"}</span>
+                  <span className="text-sm text-[#66716e]">{log.outcome || "—"}</span>
+                  <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
+                </button>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="px-5 py-16 text-center text-[#66716e]">No calls yet.</div>
         )}
@@ -1828,8 +1919,8 @@ function CallHistory({
 
 function CallDetailModal({ log, onClose }: { log: CallLog; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="flex h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+    <div className={MODAL_OVERLAY}>
+      <div className={`${MODAL_PANEL} max-w-2xl`}>
         <div className="flex items-start justify-between border-b border-black/10 px-7 py-5">
           <div>
             <h2 className="text-xl font-black">{log.caller}</h2>
@@ -2059,8 +2150,8 @@ function CreateAssistantModal({
   onCreate: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="w-full max-w-xl rounded-[18px] bg-white p-7 shadow-2xl">
+    <div className={MODAL_OVERLAY}>
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-[18px] bg-white p-5 shadow-2xl sm:p-7">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h2 className="text-2xl font-black">Create Assistant</h2>
           <button
@@ -2157,8 +2248,8 @@ function PromptModal({
   onSave: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
-      <div className="flex h-[78vh] w-full max-w-4xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+    <div className={MODAL_OVERLAY}>
+      <div className={`${MODAL_PANEL} max-w-4xl`}>
         <div className="flex items-center justify-between border-b border-black/10 px-7 py-5">
           <div>
             <h2 className="text-2xl font-black">Custom Prompts</h2>
@@ -2353,8 +2444,8 @@ function AbilityEditorModal({
   onSave: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
-      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+    <div className={MODAL_OVERLAY}>
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[18px] bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-black/10 px-7 py-5">
           <div>
             <h2 className="text-2xl font-black">{title}</h2>
@@ -2426,8 +2517,8 @@ function KnowledgeModal({
 }) {
   const fields = assistant.knowledgeFields ?? {};
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
-      <div className="flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+    <div className={MODAL_OVERLAY}>
+      <div className={`${MODAL_PANEL} max-w-2xl`}>
         <div className="flex items-start justify-between border-b border-black/10 px-7 py-5">
           <div>
             <h2 className="text-2xl font-black">Answer Questions</h2>
@@ -2494,8 +2585,8 @@ function GreetingModal({
   onSave: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
-      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl">
+    <div className={MODAL_OVERLAY}>
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[18px] bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-black/10 px-7 py-5">
           <div>
             <h2 className="text-2xl font-black">Greeting message</h2>

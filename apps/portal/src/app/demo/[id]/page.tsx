@@ -34,7 +34,7 @@ export default async function DemoPage({
               <Bot className="h-4 w-4" />
               {demo.industry} assistant
             </div>
-            <h1 className="text-5xl font-black leading-tight text-white md:text-6xl">
+            <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
               Test the WiseCall agent for {demo.business_name}.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">

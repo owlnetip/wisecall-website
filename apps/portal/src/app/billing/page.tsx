@@ -92,8 +92,24 @@ export default async function BillingPage() {
   const currentPlan = billing?.plan ?? null;
 
   return (
-    <main className="min-h-screen w-full px-4 py-10 text-white" style={{ background: "#172929" }}>
+    <main className="min-h-screen w-full px-4 py-6 text-white sm:py-10" style={{ background: "#172929" }}>
       <div className="mx-auto max-w-6xl">
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+          <a
+            href="/"
+            className="text-sm font-semibold transition hover:text-[#7de8eb]"
+            style={{ color: "rgba(255,255,255,0.55)" }}
+          >
+            ← Back to sign in
+          </a>
+          <a
+            href="/dashboard"
+            className="text-sm font-semibold transition hover:text-[#7de8eb]"
+            style={{ color: "rgba(255,255,255,0.55)" }}
+          >
+            Dashboard
+          </a>
+        </div>
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">
             Choose your <span style={{ color: "#7de8eb" }}>WiseCall</span> plan
@@ -111,13 +127,20 @@ export default async function BillingPage() {
             {TRIAL_DAYS} days unless you cancel.
           </p>
           {hasPlan ? (
-            <p className="mt-3 text-xs" style={{ color: "rgba(125,232,235,0.85)" }}>
-              You&apos;re currently on <strong>{planDisplayName(currentPlan)}</strong>.
-              Switching cancels your current subscription. <ManageSubscriptionButton /> ·{" "}
+            <div
+              className="mt-3 flex flex-col items-center gap-2 text-xs sm:flex-row sm:flex-wrap sm:justify-center"
+              style={{ color: "rgba(125,232,235,0.85)" }}
+            >
+              <span>
+                You&apos;re currently on <strong>{planDisplayName(currentPlan)}</strong>.
+              </span>
+              <span className="hidden sm:inline">·</span>
+              <span>Switching cancels your current subscription.</span>
+              <ManageSubscriptionButton />
               <a href="/dashboard" className="underline">
                 Back to dashboard
               </a>
-            </p>
+            </div>
           ) : null}
         </div>
 
