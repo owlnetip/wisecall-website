@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAgentsForUser, getCallLogsForUser } from "@/lib/agents";
 import { getBillingForUser, hasActiveAccess, getTrialUsage } from "@/lib/billing";
+import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
 import { isAdmin } from "@/lib/admin";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
@@ -75,6 +76,7 @@ export default async function DashboardPage() {
       // still uses the real `admin` flag, not this prop.
       isAdmin={impersonateId ? false : admin}
       trial={trial ?? undefined}
+      planName={billing?.plan ? planDisplayName(billing.plan) : undefined}
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
     />
   );
