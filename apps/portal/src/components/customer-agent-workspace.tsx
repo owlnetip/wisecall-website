@@ -39,12 +39,14 @@ import {
   updateAgent,
 } from "@/app/actions/agents";
 import type { CallLog } from "@/lib/agents";
+import type { Contact } from "@/lib/contacts";
 import { OfficeHoursCard } from "./office-hours-card";
+import { ContactsView } from "./contacts-view";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 
-type View = "home" | "assistants" | "detail" | "calls";
+type View = "home" | "assistants" | "detail" | "calls" | "contacts";
 type DetailTab = "behaviour" | "routing" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -165,6 +167,7 @@ export type Assistant = {
   cost: string;
   routing: AgentRouting;
   officeHours?: OfficeHours;
+  outOfHoursMessage?: string;
   ownerEmail?: string; // admin view only — which customer owns this agent
   ownerId?: string; // admin view only — owner's auth user id (for "log in as")
 };
@@ -310,6 +313,7 @@ const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "home", label: "Home", icon: Grid2X2 },
   { view: "assistants", label: "Assistants", icon: Bot },
   { view: "calls", label: "Call History", icon: History },
+  { view: "contacts", label: "Contacts", icon: Users },
 ];
 
 // Agent templates. For now there's one — a general Receptionist. Future
@@ -450,6 +454,7 @@ export const agentTemplates: AgentTemplate[] = [
 export function CustomerAgentWorkspace({
   initialAssistants,
   callLogs = [],
+  contacts = [],
   userEmail,
   isAdmin = false,
   adminMode = false,
@@ -458,6 +463,7 @@ export function CustomerAgentWorkspace({
 }: {
   initialAssistants?: Assistant[];
   callLogs?: CallLog[];
+  contacts?: Contact[];
   userEmail?: string;
   isAdmin?: boolean;
   adminMode?: boolean; // rendered on /admin with every customer's agents
@@ -683,6 +689,7 @@ export function CustomerAgentWorkspace({
     if (item.label === "Assistants") return view === "assistants" || view === "detail";
     if (item.label === "Call History") return view === "calls";
     if (item.label === "Home") return view === "home";
+    if (item.label === "Contacts") return view === "contacts";
     return false;
   }
 
@@ -918,6 +925,12 @@ export function CustomerAgentWorkspace({
                   <span>Call History</span>
                 </>
               )}
+              {view === "contacts" && (
+                <>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>Contacts</span>
+                </>
+              )}
               {view === "detail" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -1004,6 +1017,10 @@ export function CustomerAgentWorkspace({
 
             {view === "calls" && (
               <CallHistory callLogs={callLogs} onOpen={(log) => setSelectedCall(log)} />
+            )}
+
+            {view === "contacts" && (
+              <ContactsView contacts={contacts} callLogs={callLogs} />
             )}
           </div>
         </main>
@@ -1402,6 +1419,8 @@ function AssistantDetail({
       <OfficeHoursCard
         agentId={assistant.id}
         initial={assistant.officeHours}
+        initialMessage={assistant.outOfHoursMessage}
+        businessName={assistant.businessName}
         timezone={assistant.timezone}
       />
 

@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAgentsForUser, getCallLogsForUser } from "@/lib/agents";
 import { getBillingForUser, hasActiveAccess, getTrialUsage } from "@/lib/billing";
+import { getContactsForUser } from "@/lib/contacts";
 import { isAdmin } from "@/lib/admin";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
 
@@ -46,9 +47,10 @@ export default async function DashboardPage() {
     redirect("/billing");
   }
 
-  const [agents, callLogs, trial] = await Promise.all([
+  const [agents, callLogs, contacts, trial] = await Promise.all([
     getAgentsForUser(effectiveUserId),
     getCallLogsForUser(effectiveUserId),
+    getContactsForUser(effectiveUserId),
     getTrialUsage(effectiveUserId, billing),
   ]);
 
@@ -66,6 +68,7 @@ export default async function DashboardPage() {
     <CustomerAgentWorkspace
       initialAssistants={enriched ?? undefined}
       callLogs={callLogs}
+      contacts={contacts}
       userEmail={impersonatingEmail ?? user.email}
       // While impersonating, render the customer's own chrome (no Admin link) so
       // it's a faithful view of what they see. The billing-gate bypass above

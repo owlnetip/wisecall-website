@@ -181,6 +181,7 @@ function mapProfile(row: ProfileRow): Assistant {
     cost: "GBP 0.00",
     routing,
     officeHours: readOfficeHours(row),
+    outOfHoursMessage: meta(row, "out_of_hours_message") || undefined,
   };
 }
 

@@ -29,6 +29,7 @@ export type AgentPatch = {
   defaultEmail?: string;
   contacts?: RoutingContact[];
   officeHours?: OfficeHours;
+  outOfHoursMessage?: string;
   status?: "Live" | "Setup" | "Review";
 };
 
@@ -188,6 +189,9 @@ export async function updateAgent(
   if (patch.officeHours !== undefined) {
     // Per-day open/close the runtime reads for after-hours mode (metadata.office_hours).
     nextMetadata.office_hours = patch.officeHours;
+  }
+  if (patch.outOfHoursMessage !== undefined) {
+    nextMetadata.out_of_hours_message = patch.outOfHoursMessage;
   }
 
   const update: Record<string, unknown> = { metadata: nextMetadata };

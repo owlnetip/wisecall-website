@@ -77,23 +77,35 @@ export function OfficeHoursGrid({
   );
 }
 
+function defaultOutOfHoursMessage(businessName?: string) {
+  const name = businessName?.trim() || "us";
+  return `Thank you for calling ${name}. We're currently closed, but I'd be happy to take a message or help you with anything I can right now. How can I help you today?`;
+}
+
 export function OfficeHoursCard({
   agentId,
   initial,
+  initialMessage,
+  businessName,
   timezone,
 }: {
   agentId: string;
   initial?: OfficeHours;
+  initialMessage?: string;
+  businessName?: string;
   timezone?: string;
 }) {
   const [hours, setHours] = useState<OfficeHours>(initial ?? {});
+  const [message, setMessage] = useState(initialMessage ?? "");
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const hasHours = Object.keys(hours).length > 0;
 
   function save() {
     setMsg(null);
     start(async () => {
-      const r = await updateAgent(agentId, { officeHours: hours });
+      const r = await updateAgent(agentId, { officeHours: hours, outOfHoursMessage: message });
       setMsg(r.ok ? { ok: true, text: "Office hours saved." } : { ok: false, text: r.error ?? "Couldn't save." });
     });
   }
@@ -104,7 +116,7 @@ export function OfficeHoursCard({
         <div>
           <p className="font-black text-[#111716]">Office hours</p>
           <p className="text-sm text-[#66716e]">
-            Outside these hours the agent takes a detailed message and emails it — no transfers or bookings.
+            Set when your business is open. Outside these hours the agent uses the message below instead of its normal behaviour.
             {timezone ? ` Times in ${timezone}.` : ""} Leave all days closed to disable.
           </p>
         </div>
@@ -114,13 +126,31 @@ export function OfficeHoursCard({
           disabled={pending}
           className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
         >
-          {pending ? "Saving…" : "Save hours"}
+          {pending ? "Saving…" : "Save"}
         </button>
       </div>
 
       <div className="mt-4">
         <OfficeHoursGrid hours={hours} onChange={setHours} />
       </div>
+
+      {hasHours && (
+        <div className="mt-5 border-t border-black/5 pt-4">
+          <label className="mb-1 block text-sm font-bold text-[#111716]">
+            Out-of-hours message
+          </label>
+          <p className="mb-2 text-xs text-[#66716e]">
+            What the agent says when a call comes in outside your opening hours. You can still offer bookings, take messages, or anything else — the agent will follow whatever you write here.
+          </p>
+          <textarea
+            rows={4}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={defaultOutOfHoursMessage(businessName)}
+            className="w-full rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2 text-sm text-[#111716] placeholder:text-[#9aa5a2] focus:outline-none focus:ring-2 focus:ring-[#148b8e]/40"
+          />
+        </div>
+      )}
 
       {msg && (
         <p className={`mt-3 text-sm font-medium ${msg.ok ? "text-[#148b8e]" : "text-red-600"}`} aria-live="polite">
