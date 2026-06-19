@@ -1,0 +1,5 @@
+# Minimal Supabase config for deploying edge functions.
+# See: https://supabase.com/docs/guides/functions/deploy
+
+[functions.wisecall-trial-cap-reached]
+verify_jwt = false
