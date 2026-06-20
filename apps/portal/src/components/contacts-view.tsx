@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Phone, Mail, Search, MessageSquareText, History, ChevronRight } from "lucide-react";
+import { Phone, Mail, Search, MessageSquareText, History } from "lucide-react";
 import type { Contact } from "@/lib/contacts";
 import type { CallLog } from "@/lib/agents";
 import { updateContactNotes } from "@/app/actions/contacts";
@@ -101,9 +101,16 @@ function ContactDetail({
     setSaveError(null);
   }
 
-  const relatedCalls = callLogs.filter(
-    (l) => contact.phone && l.caller && l.caller.replace(/\s/g, "") === contact.phone.replace(/\s/g, ""),
-  );
+  // Match interactions across channels: phone calls (caller = number) and emails
+  // (caller = email address). One timeline per contact.
+  const phoneKey = contact.phone.replace(/\s/g, "");
+  const emailKey = contact.email.toLowerCase();
+  const relatedCalls = callLogs.filter((l) => {
+    const caller = (l.caller || "").trim();
+    if (phoneKey && caller.replace(/\s/g, "") === phoneKey) return true;
+    if (emailKey && caller.toLowerCase() === emailKey) return true;
+    return false;
+  });
 
   const displayName = contact.name || contact.phone || contact.email || "Unknown caller";
 
@@ -148,7 +155,12 @@ function ContactDetail({
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Total calls", value: contact.callCount },
+            {
+              label: "Interactions",
+              value: `${contact.callCount} call${contact.callCount !== 1 ? "s" : ""}${
+                contact.emailCount ? `, ${contact.emailCount} email${contact.emailCount !== 1 ? "s" : ""}` : ""
+              }`,
+            },
             { label: "First contact", value: absoluteDate(contact.firstSeen) },
             { label: "Last contact", value: relativeDate(contact.lastSeen) },
           ].map(({ label, value }) => (

@@ -168,6 +168,8 @@ export type Assistant = {
   routing: AgentRouting;
   officeHours?: OfficeHours;
   outOfHoursMessage?: string;
+  emailAddress?: string; // forwarding address for the email channel
+  emailChannelEnabled?: boolean;
   ownerEmail?: string; // admin view only — which customer owns this agent
   ownerId?: string; // admin view only — owner's auth user id (for "log in as")
 };
@@ -1429,6 +1431,8 @@ function AssistantDetail({
         timezone={assistant.timezone}
       />
 
+      {assistant.emailAddress ? <EmailChannelCard address={assistant.emailAddress} /> : null}
+
       <div className="mb-8 flex border-b border-black/10">
         {(["behaviour", "routing", "technical"] as DetailTab[]).map((item) => (
           <button
@@ -2081,6 +2085,50 @@ function TranscriptView({ transcript }: { transcript: string }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function EmailChannelCard({ address }: { address: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard?.writeText(address).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      },
+      () => {},
+    );
+  }
+  return (
+    <div className="mb-8 rounded-[14px] border border-black/10 bg-white px-5 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 font-black text-[#111716]">
+            <Mail className="h-4 w-4 text-[#148b8e]" />
+            Email channel
+          </p>
+          <p className="mt-1 max-w-xl text-sm text-[#66716e]">
+            Forward your business inbox to the address below and the agent will reply to emails just
+            like it answers calls — using the same knowledge, and logging every contact.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <code className="flex-1 truncate rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2 text-sm font-semibold text-[#111716]">
+          {address}
+        </code>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-[#9aa5a2]">
+        Set up a forwarding rule in your email provider (Gmail, Outlook, etc.) to this address.
+      </p>
     </div>
   );
 }

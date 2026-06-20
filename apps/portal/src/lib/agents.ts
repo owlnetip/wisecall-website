@@ -8,6 +8,28 @@ import type {
   RoutingStatus,
 } from "@/components/customer-agent-workspace";
 
+// The subdomain the email channel listens on. Must match the edge function's
+// WISECALL_EMAIL_INBOUND_DOMAIN (wisecall-email-inbound).
+const EMAIL_INBOUND_DOMAIN = "in.wisecall.io";
+
+function emailSlug(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
+// The forwarding address for an agent's email channel. Deterministic from the
+// profile id (no stored field needed); the inbound function resolves the agent by
+// the trailing short id. Mirrors agentEmailAddress() in wisecall-email-inbound.
+function agentEmailAddress(row: ProfileRow): string {
+  const name = row.business_name || row.clinic_name || row.profile_name || "agent";
+  const slug = emailSlug(name) || "agent";
+  const shortId = row.id.replace(/-/g, "").slice(0, 8);
+  return `${slug}-${shortId}@${EMAIL_INBOUND_DOMAIN}`;
+}
+
 type ProfileRow = {
   id: string;
   profile_name: string | null;
@@ -184,6 +206,8 @@ function mapProfile(row: ProfileRow): Assistant {
     officeHours: readOfficeHours(row),
     // Prefer the column the runtime reads; fall back to the legacy metadata copy.
     outOfHoursMessage: row.after_hours_message || meta(row, "out_of_hours_message") || undefined,
+    emailAddress: agentEmailAddress(row),
+    emailChannelEnabled: row.metadata?.email_channel_enabled === true,
   };
 }
 
