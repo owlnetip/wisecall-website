@@ -9,6 +9,8 @@ import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
 import { isAdmin } from "@/lib/admin";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
+import { getInsightsForUser } from "@/lib/insights";
+import { isAnalysisConfigured } from "@/lib/call-analysis";
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -50,11 +52,13 @@ export default async function DashboardPage() {
 
   const emailChannel = getEmailChannelUsage(billing, hasActiveAccess(billing));
 
-  const [agents, callLogs, contacts, trial] = await Promise.all([
+  const [agents, callLogs, contacts, trial, insights] = await Promise.all([
     getAgentsForUser(effectiveUserId),
     getCallLogsForUser(effectiveUserId),
     getContactsForUser(effectiveUserId),
     getTrialUsage(effectiveUserId, billing),
+    // Default range matches the AI Insights view's default ("Last 7 days").
+    getInsightsForUser(effectiveUserId, "7d"),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.
@@ -81,6 +85,8 @@ export default async function DashboardPage() {
       planName={billing?.plan ? planDisplayName(billing.plan) : undefined}
       emailChannel={emailChannel}
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
+      initialInsights={insights}
+      analysisEnabled={isAnalysisConfigured()}
     />
   );
 }
