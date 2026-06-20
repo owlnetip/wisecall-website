@@ -11,6 +11,7 @@ import {
   Grid2X2,
   Hand,
   History,
+  Layers,
   Loader2,
   LogOut,
   Mail,
@@ -48,7 +49,7 @@ import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 
-type View = "home" | "assistants" | "detail" | "calls" | "contacts";
+type View = "home" | "assistants" | "detail" | "calls" | "contacts" | "channels";
 type DetailTab = "behaviour" | "routing" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -392,11 +393,108 @@ function SupportOwl() {
   );
 }
 
+// The Channels hub: one place to see and enable every way an agent can talk to
+// customers. Phone is included; Email is the first paid add-on; WhatsApp + SMS
+// land here as they ship. Reuses Cursor's email billing data + checkout button.
+function ChannelsHub({ emailChannel }: { emailChannel?: EmailChannelUsage }) {
+  return (
+    <div className="mx-auto max-w-3xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-black text-[#111716]">Channels</h1>
+        <p className="mt-1 text-sm text-[#66716e]">
+          One agent, every channel. Add a way for customers to reach you and the same AI handles it —
+          logging every conversation to Contacts.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {/* Phone — always included */}
+        <div className="flex items-center gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+            <Phone className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-black text-[#111716]">Phone</p>
+            <p className="text-sm text-[#66716e]">Your AI receptionist answers and routes calls.</p>
+          </div>
+          <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+            Included
+          </span>
+        </div>
+
+        {/* Email — first paid add-on */}
+        <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+            <Mail className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-black text-[#111716]">Email</p>
+            <p className="text-sm text-[#66716e]">
+              Forward your inbox — the same agent replies to emails and logs every contact.
+            </p>
+          </div>
+          {emailChannel?.enabled ? (
+            <div className="flex flex-shrink-0 items-center gap-3">
+              <span className="text-xs font-semibold text-[#66716e]">
+                {emailChannel.used}/{emailChannel.allowance} replies used
+                {emailChannel.overage > 0 ? ` · ${emailChannel.overage} overage` : ""}
+              </span>
+              <span className="rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+                Active
+              </span>
+            </div>
+          ) : emailChannel?.canPurchase ? (
+            <div className="flex flex-shrink-0 flex-col items-end gap-1">
+              <span className="text-xs font-semibold text-[#66716e]">
+                £{emailChannel.monthlyPriceGbp}/mo · {emailChannel.allowance} replies incl.
+              </span>
+              <EmailChannelCheckoutButton />
+            </div>
+          ) : (
+            <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
+              Start a plan to add
+            </span>
+          )}
+        </div>
+
+        {/* WhatsApp — coming soon */}
+        <div className="flex items-center gap-4 rounded-[14px] border border-dashed border-black/10 bg-[#fafbfb] px-5 py-4">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#f2f4f3] text-[#9aa5a2]">
+            <MessageSquareText className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-black text-[#111716]">WhatsApp</p>
+            <p className="text-sm text-[#66716e]">Let customers message your business on WhatsApp.</p>
+          </div>
+          <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
+            Coming soon
+          </span>
+        </div>
+
+        {/* SMS — coming soon */}
+        <div className="flex items-center gap-4 rounded-[14px] border border-dashed border-black/10 bg-[#fafbfb] px-5 py-4">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#f2f4f3] text-[#9aa5a2]">
+            <MessageSquareText className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-black text-[#111716]">SMS</p>
+            <p className="text-sm text-[#66716e]">Two-way texts, handled and logged like every other channel.</p>
+          </div>
+          <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
+            Coming soon
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "home", label: "Home", icon: Grid2X2 },
   { view: "assistants", label: "Assistants", icon: Bot },
   { view: "calls", label: "Call History", icon: History },
   { view: "contacts", label: "Contacts", icon: Users },
+  { view: "channels", label: "Channels", icon: Layers },
 ];
 
 // Agent templates. For now there's one — a general Receptionist. Future
@@ -777,6 +875,7 @@ export function CustomerAgentWorkspace({
     if (item.label === "Call History") return view === "calls";
     if (item.label === "Home") return view === "home";
     if (item.label === "Contacts") return view === "contacts";
+    if (item.label === "Channels") return view === "channels";
     return false;
   }
 
@@ -1014,6 +1113,12 @@ export function CustomerAgentWorkspace({
                   <span>Contacts</span>
                 </>
               )}
+              {view === "channels" && (
+                <>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>Channels</span>
+                </>
+              )}
               {view === "detail" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -1107,6 +1212,8 @@ export function CustomerAgentWorkspace({
             {view === "contacts" && (
               <ContactsView contacts={contacts} callLogs={callLogs} />
             )}
+
+            {view === "channels" && <ChannelsHub emailChannel={emailChannel} />}
           </div>
         </main>
       </div>
