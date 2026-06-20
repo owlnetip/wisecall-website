@@ -94,6 +94,41 @@ function extractEmail(payload: any) {
   };
 }
 
+// Strip the quoted reply chain (Gmail/Outlook) so the agent only reads the new
+// message. Conservative: if stripping would leave nothing, keep the original.
+function stripQuotedReply(body: string): string {
+  if (!body) return body;
+  let text = body;
+
+  // Gmail attribution can wrap across lines ("On <date> <name> <\nemail> wrote:")
+  // so match with the `s` flag (dot spans newlines), non-greedy up to "wrote:".
+  const gmail = text.search(/\n\s*On\s[\s\S]{0,200}?\bwrote:/i);
+  if (gmail !== -1) text = text.slice(0, gmail);
+
+  // Line-anchored markers for Outlook / forwards / signatures.
+  const lines = text.split(/\r?\n/);
+  const cutMarkers = [
+    /^-{2,}\s*Original Message\s*-{2,}/i,
+    /^_{5,}/,
+    /^From:\s.+/i,
+    /^Sent from my /i,
+  ];
+  let cut = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    if (cutMarkers.some((re) => re.test(lines[i].trim()))) {
+      cut = i;
+      break;
+    }
+  }
+  let kept = lines.slice(0, cut);
+  // Drop any trailing quoted (">") lines and trailing blanks.
+  while (kept.length && (kept[kept.length - 1].trim().startsWith(">") || kept[kept.length - 1].trim() === "")) {
+    kept.pop();
+  }
+  const result = kept.join("\n").trim();
+  return result || body.trim();
+}
+
 async function callClaude(systemPrompt: string, userMessage: string): Promise<string> {
   const key = Deno.env.get("CLAUDE_API_WISECASE");
   if (!key) throw new Error("CLAUDE_API_WISECASE not configured");
@@ -189,6 +224,32 @@ Deno.serve(async (req) => {
   }
 
   const email = extractEmail(payload);
+
+  // Resend's email.received webhook only carries METADATA — the body, headers and
+  // attachments must be fetched separately via the Receiving API using email_id.
+  // Needs a key with read access (RESEND_INBOUND_API_KEY); the send-only key 401s.
+  const emailId = payload?.data?.email_id || payload?.data?.id || "";
+  if (emailId && !email.text && !email.html) {
+    try {
+      const readKey =
+        Deno.env.get("RESEND_INBOUND_API_KEY") ||
+        Deno.env.get("wisecal_api_key") ||
+        Deno.env.get("RESEND_API_KEY");
+      const r = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
+        headers: { Authorization: `Bearer ${readKey}` },
+      });
+      if (r.ok) {
+        const full = await r.json();
+        email.text = full.text || email.text;
+        email.html = full.html || email.html;
+        if (!email.messageId && full.message_id) email.messageId = full.message_id;
+      } else {
+        console.error(`[wisecall-email-inbound] body fetch ${r.status}: ${(await r.text()).slice(0, 200)}`);
+      }
+    } catch (e) {
+      console.error("[wisecall-email-inbound] body fetch error:", (e as Error).message);
+    }
+  }
   if (!email.from.email || email.to.length === 0) {
     // Nothing actionable (e.g. a delivery/test ping) — ack so Resend stops retrying.
     return json({ ok: true, skipped: "no from/to" });
@@ -256,7 +317,8 @@ Deno.serve(async (req) => {
     .filter(Boolean)
     .join("\n");
 
-  const incoming = email.text || email.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const rawBody = email.text || email.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const incoming = stripQuotedReply(rawBody);
   const userMessage = `The customer (${email.from.name || email.from.email}) emailed:\n\nSubject: ${email.subject}\n\n${incoming}`;
 
   let replyText: string;
