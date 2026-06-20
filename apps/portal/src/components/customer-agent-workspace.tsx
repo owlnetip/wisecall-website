@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   ArrowLeft,
   Bot,
@@ -313,6 +313,85 @@ export const demoAssistants: Assistant[] = [
 
 // Only the sections that actually work today. We'll add Knowledge Base, Phone
 // Numbers, Payments etc. back as each one is wired up.
+// A small, lively version of the login-page owl for the "Need setup help?" card.
+// Idle-bobs, blinks on a random cadence, and peeks/wiggles on hover.
+function SupportOwl() {
+  const [blinking, setBlinking] = useState(false);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    const loop = () => {
+      const delay = 2500 + Math.random() * 3500;
+      t = setTimeout(() => {
+        setBlinking(true);
+        setTimeout(() => {
+          setBlinking(false);
+          loop();
+        }, 160);
+      }, delay);
+    };
+    loop();
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="support-owl mx-auto mb-3 flex h-14 w-14 items-center justify-center">
+      <svg viewBox="0 0 120 140" width="54" height="63" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* wings (flap on hover) */}
+        <g className="owl-wing-l">
+          <ellipse cx="26" cy="108" rx="14" ry="26" fill="#1f3535" transform="rotate(-10 26 108)" />
+          <ellipse cx="24" cy="106" rx="9" ry="19" fill="#2a4545" transform="rotate(-10 24 106)" />
+        </g>
+        <g className="owl-wing-r">
+          <ellipse cx="94" cy="108" rx="14" ry="26" fill="#1f3535" transform="rotate(10 94 108)" />
+          <ellipse cx="96" cy="106" rx="9" ry="19" fill="#2a4545" transform="rotate(10 96 106)" />
+        </g>
+        {/* body */}
+        <ellipse cx="60" cy="104" rx="36" ry="38" fill="#1f3535" />
+        <ellipse cx="60" cy="112" rx="26" ry="28" fill="#2a4545" />
+        {/* ear tufts */}
+        <ellipse cx="42" cy="56" rx="7" ry="12" fill="#1f3535" transform="rotate(-16 42 56)" />
+        <ellipse cx="78" cy="56" rx="7" ry="12" fill="#1f3535" transform="rotate(16 78 56)" />
+        {/* head */}
+        <circle cx="60" cy="72" r="32" fill="#1f3535" />
+        <circle cx="60" cy="72" r="28" fill="#2a4545" />
+        <circle cx="46" cy="70" r="12" fill="#172929" />
+        <circle cx="74" cy="70" r="12" fill="#172929" />
+        <circle cx="46" cy="70" r="10" fill="#ffffff" />
+        <circle cx="74" cy="70" r="10" fill="#ffffff" />
+        <circle cx="46" cy="70" r="6" fill="#7de8eb" />
+        <circle cx="74" cy="70" r="6" fill="#7de8eb" />
+        {!blinking ? (
+          <>
+            <circle cx="46" cy="70" r="3.2" fill="#172929" />
+            <circle cx="74" cy="70" r="3.2" fill="#172929" />
+            <circle cx="47.5" cy="67.8" r="1.1" fill="white" opacity="0.85" />
+            <circle cx="75.5" cy="67.8" r="1.1" fill="white" opacity="0.85" />
+          </>
+        ) : (
+          <>
+            <ellipse cx="46" cy="70" rx="10" ry="1.5" fill="#2a4545" />
+            <ellipse cx="74" cy="70" rx="10" ry="1.5" fill="#2a4545" />
+          </>
+        )}
+        {/* beak */}
+        <path d="M60 79 L56 86 L64 86 Z" fill="#7de8eb" stroke="#7de8eb" strokeWidth="3.5" strokeLinejoin="round" opacity="0.9" />
+        <path d="M60 83.5 L56 86 L64 86 Z" fill="#4db8bb" stroke="#4db8bb" strokeWidth="3.5" strokeLinejoin="round" />
+      </svg>
+      <style>{`
+        @keyframes owlBob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
+        @keyframes owlFlapL { 0%,100% { transform: rotate(0deg) } 50% { transform: rotate(-14deg) } }
+        @keyframes owlFlapR { 0%,100% { transform: rotate(0deg) } 50% { transform: rotate(14deg) } }
+        .support-owl svg { animation: owlBob 3s ease-in-out infinite; transition: transform .3s cubic-bezier(0.34,1.56,0.64,1); cursor: pointer; }
+        .support-owl:hover svg { transform: scale(1.1) rotate(-4deg); }
+        .support-owl .owl-wing-l { transform-origin: 26px 90px; }
+        .support-owl .owl-wing-r { transform-origin: 94px 90px; }
+        .support-owl:hover .owl-wing-l { animation: owlFlapL .35s ease-in-out infinite; }
+        .support-owl:hover .owl-wing-r { animation: owlFlapR .35s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
+}
+
 const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "home", label: "Home", icon: Grid2X2 },
   { view: "assistants", label: "Assistants", icon: Bot },
@@ -815,9 +894,7 @@ export function CustomerAgentWorkspace({
                 )}
               </nav>
               <div className="mx-4 mb-4 rounded-[18px] bg-[#1a3535] p-5 text-center">
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#7de8eb]/20 text-[#7de8eb]">
-                  <UserRound className="h-5 w-5" />
-                </div>
+                <SupportOwl />
                 <p className="text-sm font-bold text-white">Need setup help?</p>
                 <button
                   type="button"
@@ -895,9 +972,7 @@ export function CustomerAgentWorkspace({
           </nav>
 
           <div className="m-4 rounded-[18px] bg-[#1a3535] p-5 text-center">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#7de8eb]/20 text-[#7de8eb]">
-              <UserRound className="h-5 w-5" />
-            </div>
+            <SupportOwl />
             <p className="text-sm font-bold text-white">Need setup help?</p>
             <button
               type="button"
