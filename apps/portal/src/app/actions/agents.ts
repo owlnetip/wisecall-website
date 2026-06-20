@@ -11,6 +11,10 @@ import type {
   OfficeHours,
   RoutingContact,
 } from "@/components/customer-agent-workspace";
+import {
+  type IntegrationWebhook,
+  serializeIntegrationWebhooks,
+} from "@/lib/integration-webhooks";
 
 export type AgentPatch = {
   name?: string;
@@ -31,6 +35,7 @@ export type AgentPatch = {
   officeHours?: OfficeHours;
   outOfHoursMessage?: string;
   status?: "Live" | "Setup" | "Review";
+  integrationWebhooks?: IntegrationWebhook[];
 };
 
 // Builds the legacy transfer_routes object (keyed route → { label, phone,
@@ -195,6 +200,10 @@ export async function updateAgent(
     // after_hours_message column (settings.js after-hours greeting), so the
     // column write below is what actually reaches the phone agent.
     nextMetadata.out_of_hours_message = patch.outOfHoursMessage;
+  }
+  if (patch.integrationWebhooks !== undefined) {
+    // Custom before/during/after call webhooks (integrationWebhooks.runtime.js).
+    nextMetadata.integration_webhooks = serializeIntegrationWebhooks(patch.integrationWebhooks);
   }
 
   const update: Record<string, unknown> = { metadata: nextMetadata };

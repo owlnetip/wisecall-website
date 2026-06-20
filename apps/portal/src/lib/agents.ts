@@ -7,6 +7,7 @@ import type {
   RoutingProvider,
   RoutingStatus,
 } from "@/components/customer-agent-workspace";
+import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
 
 // The subdomain the email channel listens on. Must match the edge function's
 // WISECALL_EMAIL_INBOUND_DOMAIN (wisecall-email-inbound).
@@ -208,6 +209,7 @@ function mapProfile(row: ProfileRow): Assistant {
     outOfHoursMessage: row.after_hours_message || meta(row, "out_of_hours_message") || undefined,
     emailAddress: agentEmailAddress(row),
     emailChannelEnabled: row.metadata?.email_channel_enabled === true,
+    integrationWebhooks: readIntegrationWebhooks(row.metadata),
   };
 }
 
