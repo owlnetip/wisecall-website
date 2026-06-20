@@ -45,6 +45,7 @@ import type { CallLog } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
 import { OfficeHoursCard } from "./office-hours-card";
 import { ContactsView } from "./contacts-view";
+import { RaiseTicketModal } from "./raise-ticket-modal";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
@@ -666,6 +667,7 @@ export function CustomerAgentWorkspace({
   const [createOpen, setCreateOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [ticketOpen, setTicketOpen] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const [greetingOpen, setGreetingOpen] = useState(false);
   const [editAbility, setEditAbility] = useState<"knowledge" | "transfer" | null>(null);
@@ -997,6 +999,10 @@ export function CustomerAgentWorkspace({
                 <p className="text-sm font-bold text-white">Need setup help?</p>
                 <button
                   type="button"
+                  onClick={() => {
+                    setMobileNavOpen(false);
+                    setTicketOpen(true);
+                  }}
                   className="mt-3 rounded-lg bg-[#7de8eb] px-4 py-2 text-sm font-bold text-[#0e1b1b] transition hover:bg-[#5de0e5]"
                 >
                   Raise a ticket
@@ -1075,6 +1081,7 @@ export function CustomerAgentWorkspace({
             <p className="text-sm font-bold text-white">Need setup help?</p>
             <button
               type="button"
+              onClick={() => setTicketOpen(true)}
               className="mt-3 rounded-lg bg-[#7de8eb] px-4 py-2 text-sm font-bold text-[#0e1b1b] transition hover:bg-[#5de0e5]"
             >
               Raise a ticket
@@ -1217,6 +1224,8 @@ export function CustomerAgentWorkspace({
           </div>
         </main>
       </div>
+
+      {ticketOpen && <RaiseTicketModal onClose={() => setTicketOpen(false)} />}
 
       {wizardOpen && (
         <SetupWizard
