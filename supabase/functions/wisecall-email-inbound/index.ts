@@ -6,13 +6,32 @@
 // memory), send the reply via Resend (threaded), and log it to the Contacts view
 // — one source of truth across phone + email.
 //
-// Auth: Resend webhook URL must include ?secret=<WISECALL_EMAIL_WEBHOOK_SECRET>.
+// Auth: Resend webhook URL must include ?secret=<WISECALL_EMAIL_INBOUND_SECRET>.
+//
+// ⚠️ RESEND QUIRKS — read before editing (these cost real debugging time):
+//
+//   1. The email.received webhook is METADATA ONLY (to/from/subject/email_id/
+//      message_id). It does NOT include the body, html, headers or attachments.
+//      You MUST fetch them separately:  GET https://api.resend.com/emails/
+//      receiving/{email_id}  → response has { text, html, headers }.
+//      (Resend docs index lives at resend.com/docs/llms.txt; the human URLs 404.)
+//
+//   2. That retrieval needs a READ-CAPABLE Resend key. The shared RESEND_API_KEY
+//      is restricted to SENDING and returns 401 "This API key is restricted to
+//      only send emails". Use a Full-access key — here the `wisecal_api_key`
+//      secret. Read-key precedence: RESEND_INBOUND_API_KEY || wisecal_api_key ||
+//      RESEND_API_KEY. Do NOT "simplify" this back to RESEND_API_KEY.
+//
+//   3. The webhook is delivered AT-LEAST-ONCE and retries when this handler is
+//      slow, so it WILL fire twice and the agent replied twice. We dedupe on
+//      email_id via wisecall_email_processed (claimed atomically before any send).
 //
 // Secrets used (already configured in this project):
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   RESEND_API_KEY
+//   wisecal_api_key  (Full-access Resend key — used to READ inbound bodies)
+//   RESEND_API_KEY   (send-only — used for the outbound reply)
 //   CLAUDE_API_WISECASE                  (Anthropic key)
-//   WISECALL_EMAIL_WEBHOOK_SECRET        (shared secret in the webhook URL)
+//   WISECALL_EMAIL_INBOUND_SECRET        (shared secret in the webhook URL)
 //   WISECALL_EMAIL_INBOUND_DOMAIN        (optional; default "in.wisecall.io")
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -258,6 +277,21 @@ Deno.serve(async (req) => {
   // Resolve the agent from the in.wisecall.io recipient.
   const recipient = email.to.find((a) => a.endsWith(`@${INBOUND_DOMAIN}`));
   if (!recipient) return json({ ok: true, skipped: "not an inbound-domain recipient" });
+
+  // Idempotency guard: Resend delivers email.received at-least-once and retries
+  // when this handler is slow (body fetch + LLM + send = seconds), so it fires
+  // twice and the agent replied twice. Claim the email_id atomically BEFORE the
+  // send; a PK conflict means it's a duplicate delivery → skip. Other DB errors
+  // fail-open so a transient hiccup never blocks a genuine reply.
+  if (emailId) {
+    const { error: dupErr } = await supabase
+      .from("wisecall_email_processed")
+      .insert({ email_id: emailId });
+    if (dupErr) {
+      if (dupErr.code === "23505") return json({ ok: true, skipped: "duplicate delivery" });
+      console.error("[wisecall-email-inbound] dedup insert:", dupErr.message);
+    }
+  }
 
   const localPart = recipient.split("@")[0];
   const token = localPart.split("-").pop() || localPart; // trailing shortid
