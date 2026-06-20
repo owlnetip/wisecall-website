@@ -32,8 +32,9 @@ export const GROWTH_PRICE = process.env.STRIPE_GROWTH_PRICE || "price_1Tj5TbF6Zl
 export const PRO_PRICE = process.env.STRIPE_PRO_PRICE || "price_1Tj5TdF6ZlidDG7d4Asvpqsa"; // £699/mo
 
 // Email channel add-on — £79/mo, 100 AI replies included, £0.75 overage (tracked in-app).
+// Live product prod_Uk0P7OfRlBAgo8, price price_1TkWOtF6ZlidDG7dU36EdYop (excl. VAT).
 export const EMAIL_CHANNEL_PRICE =
-  process.env.STRIPE_EMAIL_CHANNEL_PRICE || "price_REPLACE_WITH_LIVE_EMAIL_CHANNEL";
+  process.env.STRIPE_EMAIL_CHANNEL_PRICE || "price_1TkWOtF6ZlidDG7dU36EdYop";
 export const EMAIL_CHANNEL_MONTHLY_GBP = 79;
 export const EMAIL_INCLUDED_REPLIES = 100;
 export const EMAIL_OVERAGE_GBP = 0.75;

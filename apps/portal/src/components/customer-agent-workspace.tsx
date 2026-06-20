@@ -999,7 +999,7 @@ export function CustomerAgentWorkspace({
                   type="button"
                   className="mt-3 rounded-lg bg-[#7de8eb] px-4 py-2 text-sm font-bold text-[#0e1b1b] transition hover:bg-[#5de0e5]"
                 >
-                  Book support
+                  Raise a ticket
                 </button>
               </div>
             </aside>
@@ -1077,7 +1077,7 @@ export function CustomerAgentWorkspace({
               type="button"
               className="mt-3 rounded-lg bg-[#7de8eb] px-4 py-2 text-sm font-bold text-[#0e1b1b] transition hover:bg-[#5de0e5]"
             >
-              Book support
+              Raise a ticket
             </button>
           </div>
         </aside>
