@@ -4,7 +4,7 @@ import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAgentsForUser, getCallLogsForUser } from "@/lib/agents";
-import { getBillingForUser, hasActiveAccess, getTrialUsage } from "@/lib/billing";
+import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage } from "@/lib/billing";
 import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
 import { isAdmin } from "@/lib/admin";
@@ -48,6 +48,8 @@ export default async function DashboardPage() {
     redirect("/billing");
   }
 
+  const emailChannel = getEmailChannelUsage(billing, hasActiveAccess(billing));
+
   const [agents, callLogs, contacts, trial] = await Promise.all([
     getAgentsForUser(effectiveUserId),
     getCallLogsForUser(effectiveUserId),
@@ -77,6 +79,7 @@ export default async function DashboardPage() {
       isAdmin={impersonateId ? false : admin}
       trial={trial ?? undefined}
       planName={billing?.plan ? planDisplayName(billing.plan) : undefined}
+      emailChannel={emailChannel}
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
     />
   );

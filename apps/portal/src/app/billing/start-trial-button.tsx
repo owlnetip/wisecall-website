@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { startCheckout, openCustomerPortal } from "@/app/actions/billing";
+import { startCheckout, openCustomerPortal, startEmailChannelCheckout } from "@/app/actions/billing";
 
 // Opens the Stripe Customer Portal (manage / cancel subscription).
 export function ManageSubscriptionButton() {
@@ -80,6 +80,45 @@ export function PlanCheckoutButton({
         style={style}
       >
         {pending ? "Starting…" : label}
+      </button>
+      {error ? (
+        <div
+          className="mt-2 rounded-lg px-3 py-2 text-xs font-medium"
+          style={{ background: "rgba(255,90,90,0.12)", color: "#ff9b9b" }}
+        >
+          {error}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function EmailChannelCheckoutButton() {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function go() {
+    setError(null);
+    startTransition(async () => {
+      const res = await startEmailChannelCheckout();
+      if (res.ok && res.url) {
+        window.location.href = res.url;
+      } else {
+        setError(res.error ?? "Something went wrong. Please try again.");
+      }
+    });
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={go}
+        disabled={pending}
+        className="rounded-xl px-5 py-2.5 text-sm font-bold transition-opacity disabled:opacity-60"
+        style={{ background: "#7de8eb", color: "#0c1717" }}
+      >
+        {pending ? "Starting…" : "Add Email channel — £79/mo"}
       </button>
       {error ? (
         <div

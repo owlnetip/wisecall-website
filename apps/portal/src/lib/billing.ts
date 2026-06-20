@@ -1,5 +1,10 @@
 import { getServiceSupabase } from "@/lib/supabase";
-import { TRIAL_CALL_CAP } from "@/lib/stripe";
+import {
+  TRIAL_CALL_CAP,
+  EMAIL_INCLUDED_REPLIES,
+  EMAIL_OVERAGE_GBP,
+  EMAIL_CHANNEL_MONTHLY_GBP,
+} from "@/lib/stripe";
 
 export type Billing = {
   userId: string;
@@ -10,6 +15,12 @@ export type Billing = {
   trialEnd: string | null;
   currentPeriodEnd: string | null;
   trialCallCap: number;
+  emailChannelEnabled: boolean;
+  emailChannelStatus: string | null;
+  emailMonthlyAllowance: number;
+  emailUsedPeriod: number;
+  emailOveragePeriod: number;
+  emailPeriodEnd: string | null;
 };
 
 type BillingRow = {
@@ -21,7 +32,16 @@ type BillingRow = {
   trial_end: string | null;
   current_period_end: string | null;
   trial_call_cap: number | null;
+  email_channel_enabled: boolean | null;
+  email_channel_status: string | null;
+  email_monthly_allowance: number | null;
+  email_used_period: number | null;
+  email_overage_period: number | null;
+  email_period_end: string | null;
 };
+
+const BILLING_SELECT =
+  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end";
 
 function mapBilling(row: BillingRow): Billing {
   return {
@@ -33,6 +53,12 @@ function mapBilling(row: BillingRow): Billing {
     trialEnd: row.trial_end,
     currentPeriodEnd: row.current_period_end,
     trialCallCap: row.trial_call_cap ?? TRIAL_CALL_CAP,
+    emailChannelEnabled: row.email_channel_enabled === true,
+    emailChannelStatus: row.email_channel_status,
+    emailMonthlyAllowance: row.email_monthly_allowance ?? EMAIL_INCLUDED_REPLIES,
+    emailUsedPeriod: row.email_used_period ?? 0,
+    emailOveragePeriod: row.email_overage_period ?? 0,
+    emailPeriodEnd: row.email_period_end,
   };
 }
 
@@ -44,9 +70,7 @@ export async function getBillingForUser(userId: string): Promise<Billing | null>
 
   const { data, error } = await supabase
     .from("wisecall_billing")
-    .select(
-      "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap",
-    )
+    .select(BILLING_SELECT)
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -60,6 +84,39 @@ export async function getBillingForUser(userId: string): Promise<Billing | null>
 // A customer can reach the dashboard / configure agents while trialing or active.
 export function hasActiveAccess(billing: Billing | null): boolean {
   return billing?.status === "trialing" || billing?.status === "active";
+}
+
+export function hasEmailChannelAccess(billing: Billing | null): boolean {
+  return (
+    billing?.emailChannelEnabled === true &&
+    billing.emailChannelStatus === "active"
+  );
+}
+
+export type EmailChannelUsage = {
+  enabled: boolean;
+  used: number;
+  allowance: number;
+  overage: number;
+  monthlyPriceGbp: number;
+  overagePriceGbp: number;
+  canPurchase: boolean;
+};
+
+export function getEmailChannelUsage(
+  billing: Billing | null,
+  hasPlan: boolean,
+): EmailChannelUsage {
+  const allowance = billing?.emailMonthlyAllowance ?? EMAIL_INCLUDED_REPLIES;
+  return {
+    enabled: hasEmailChannelAccess(billing),
+    used: billing?.emailUsedPeriod ?? 0,
+    allowance,
+    overage: billing?.emailOveragePeriod ?? 0,
+    monthlyPriceGbp: EMAIL_CHANNEL_MONTHLY_GBP,
+    overagePriceGbp: EMAIL_OVERAGE_GBP,
+    canPurchase: hasPlan && !hasEmailChannelAccess(billing),
+  };
 }
 
 export type TrialUsage = { used: number; cap: number; blocked: boolean };
@@ -91,4 +148,25 @@ export async function getTrialUsage(
 
   const used = count ?? 0;
   return { used, cap, blocked: used >= cap };
+}
+
+// Mirror email_channel_enabled onto every agent profile for the owner (runtime reads metadata).
+export async function syncEmailChannelProfiles(ownerId: string, enabled: boolean): Promise<void> {
+  const supabase = getServiceSupabase();
+  if (!supabase) return;
+
+  const { data: profiles } = await supabase
+    .from("wisecall_profiles")
+    .select("id, metadata")
+    .eq("metadata->>owner_id", ownerId);
+
+  for (const row of profiles ?? []) {
+    const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
+    await supabase
+      .from("wisecall_profiles")
+      .update({
+        metadata: { ...metadata, email_channel_enabled: enabled },
+      })
+      .eq("id", row.id as string);
+  }
 }

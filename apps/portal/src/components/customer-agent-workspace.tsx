@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
+import { EmailChannelCheckoutButton } from "@/app/billing/start-trial-button";
+import type { EmailChannelUsage } from "@/lib/billing";
 import {
   createAgent,
   provisionNumber,
@@ -462,6 +464,7 @@ export function CustomerAgentWorkspace({
   adminMode = false,
   trial,
   planName,
+  emailChannel,
   impersonating,
 }: {
   initialAssistants?: Assistant[];
@@ -472,6 +475,7 @@ export function CustomerAgentWorkspace({
   adminMode?: boolean; // rendered on /admin with every customer's agents
   trial?: { used: number; cap: number; blocked: boolean }; // free-trial call usage
   planName?: string; // subscription plan label (Core / Growth / Pro)
+  emailChannel?: EmailChannelUsage;
   impersonating?: { email: string }; // admin viewing as this customer
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
@@ -1017,6 +1021,7 @@ export function CustomerAgentWorkspace({
                 onProvision={provision}
                 adminMode={adminMode}
                 planName={planName}
+                emailChannel={emailChannel}
               />
             )}
 
@@ -1360,6 +1365,7 @@ function AssistantDetail({
   onProvision,
   adminMode = false,
   planName,
+  emailChannel,
 }: {
   assistant: Assistant;
   tab: DetailTab;
@@ -1378,6 +1384,7 @@ function AssistantDetail({
   onProvision: () => void;
   adminMode?: boolean;
   planName?: string;
+  emailChannel?: EmailChannelUsage;
 }) {
   return (
     <div className="mx-auto max-w-5xl">
@@ -1431,7 +1438,20 @@ function AssistantDetail({
         timezone={assistant.timezone}
       />
 
-      {assistant.emailAddress ? <EmailChannelCard address={assistant.emailAddress} /> : null}
+      {emailChannel?.enabled && assistant.emailAddress ? (
+        <EmailChannelCard
+          address={assistant.emailAddress}
+          used={emailChannel.used}
+          allowance={emailChannel.allowance}
+          overage={emailChannel.overage}
+        />
+      ) : emailChannel?.canPurchase && !adminMode ? (
+        <EmailChannelUpsell
+          monthlyPrice={emailChannel.monthlyPriceGbp}
+          allowance={emailChannel.allowance}
+          overagePrice={emailChannel.overagePriceGbp}
+        />
+      ) : null}
 
       <div className="mb-8 flex border-b border-black/10">
         {(["behaviour", "routing", "technical"] as DetailTab[]).map((item) => (
@@ -2089,7 +2109,17 @@ function TranscriptView({ transcript }: { transcript: string }) {
   );
 }
 
-function EmailChannelCard({ address }: { address: string }) {
+function EmailChannelCard({
+  address,
+  used,
+  allowance,
+  overage,
+}: {
+  address: string;
+  used: number;
+  allowance: number;
+  overage: number;
+}) {
   const [copied, setCopied] = useState(false);
   function copy() {
     navigator.clipboard?.writeText(address).then(
@@ -2112,6 +2142,10 @@ function EmailChannelCard({ address }: { address: string }) {
             Forward your business inbox to the address below and the agent will reply to emails just
             like it answers calls — using the same knowledge, and logging every contact.
           </p>
+          <p className="mt-2 text-xs font-semibold text-[#148b8e]">
+            {used}/{allowance} AI replies this period
+            {overage > 0 ? ` · ${overage} overage` : ""}
+          </p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -2129,6 +2163,35 @@ function EmailChannelCard({ address }: { address: string }) {
       <p className="mt-2 text-xs text-[#9aa5a2]">
         Set up a forwarding rule in your email provider (Gmail, Outlook, etc.) to this address.
       </p>
+    </div>
+  );
+}
+
+function EmailChannelUpsell({
+  monthlyPrice,
+  allowance,
+  overagePrice,
+}: {
+  monthlyPrice: number;
+  allowance: number;
+  overagePrice: number;
+}) {
+  return (
+    <div className="mb-8 rounded-[14px] border border-dashed border-[#148b8e]/40 bg-[#f3fbfb] px-5 py-4">
+      <p className="flex items-center gap-2 font-black text-[#111716]">
+        <Mail className="h-4 w-4 text-[#148b8e]" />
+        Email channel
+      </p>
+      <p className="mt-1 max-w-xl text-sm text-[#66716e]">
+        Add AI email replies — forward support@ and the same agent handles email alongside phone
+        calls. £{monthlyPrice}/mo includes {allowance} replies, then £{overagePrice.toFixed(2)} each.
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <EmailChannelCheckoutButton />
+        <a href="/billing" className="text-sm font-bold text-[#148b8e] underline">
+          View on billing
+        </a>
+      </div>
     </div>
   );
 }

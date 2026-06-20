@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
-import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe";
-import { PlanCheckoutButton, ManageSubscriptionButton } from "./start-trial-button";
+import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS, EMAIL_INCLUDED_REPLIES, EMAIL_OVERAGE_GBP, EMAIL_CHANNEL_MONTHLY_GBP } from "@/lib/stripe";
+import { PlanCheckoutButton, ManageSubscriptionButton, EmailChannelCheckoutButton } from "./start-trial-button";
+import { getEmailChannelUsage } from "@/lib/billing";
 
 type Plan = {
   id: "core" | "growth" | "pro";
@@ -90,6 +91,7 @@ export default async function BillingPage() {
   const billing = await getBillingForUser(user.id);
   const hasPlan = hasActiveAccess(billing);
   const currentPlan = billing?.plan ?? null;
+  const emailChannel = getEmailChannelUsage(billing, hasPlan);
 
   return (
     <main className="min-h-screen w-full px-4 py-6 text-white sm:py-10" style={{ background: "#172929" }}>
@@ -207,6 +209,71 @@ export default async function BillingPage() {
             </div>
           ))}
         </div>
+
+        {hasPlan ? (
+          <div
+            className="mt-10 rounded-2xl p-6"
+            style={{
+              background: "#1f3535",
+              border: emailChannel.enabled
+                ? "1.5px solid rgba(125,232,235,0.35)"
+                : "1.5px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="max-w-xl">
+                <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "#7de8eb" }}>
+                  Add-on
+                </p>
+                <h2 className="mt-1 text-xl font-bold">Email channel</h2>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+                  Forward support@ to WiseCall — the same AI replies by email and logs every contact
+                  alongside phone calls. Setup takes about 2 minutes (Gmail or Microsoft 365 forwarding).
+                </p>
+                <ul className="mt-4 space-y-2 text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
+                  <li className="flex items-start gap-2">
+                    <Tick />
+                    <span>
+                      <strong>£{EMAIL_CHANNEL_MONTHLY_GBP}/mo</strong> excl. VAT ·{" "}
+                      <strong>{EMAIL_INCLUDED_REPLIES} AI replies</strong> included
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Tick />
+                    <span>
+                      Then <strong>£{EMAIL_OVERAGE_GBP.toFixed(2)}</strong> per additional AI-handled email
+                    </span>
+                  </li>
+                </ul>
+                {emailChannel.enabled ? (
+                  <p className="mt-4 text-sm font-semibold" style={{ color: "#7de8eb" }}>
+                    Active — {emailChannel.used}/{emailChannel.allowance} replies used this period
+                    {emailChannel.overage > 0
+                      ? ` · ${emailChannel.overage} overage @ £${EMAIL_OVERAGE_GBP.toFixed(2)}`
+                      : ""}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex-shrink-0">
+                {emailChannel.enabled ? (
+                  <a
+                    href="/dashboard"
+                    className="inline-block rounded-xl px-5 py-2.5 text-sm font-bold"
+                    style={{ background: "rgba(125,232,235,0.15)", color: "#7de8eb" }}
+                  >
+                    Set up forwarding →
+                  </a>
+                ) : emailChannel.canPurchase ? (
+                  <EmailChannelCheckoutButton />
+                ) : (
+                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+                    Start a plan above first.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </main>
   );

@@ -277,6 +277,19 @@ Deno.serve(async (req) => {
 
   if (!profile) return json({ ok: true, skipped: `no agent for ${recipient}` });
 
+  const ownerId = (profile.metadata as Record<string, string> | null)?.owner_id;
+  if (!ownerId) return json({ ok: true, skipped: "no owner" });
+
+  const { data: billingRow } = await supabase
+    .from("wisecall_billing")
+    .select("email_channel_enabled, email_channel_status")
+    .eq("user_id", ownerId)
+    .maybeSingle();
+
+  if (!billingRow?.email_channel_enabled || billingRow.email_channel_status !== "active") {
+    return json({ ok: true, skipped: "email channel not active" });
+  }
+
   const businessName = profile.business_name || profile.clinic_name || profile.profile_name || "the business";
   const fromAddress = agentEmailAddress(profile);
 
@@ -345,6 +358,12 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error("[wisecall-email-inbound] send error:", (e as Error).message);
     return json({ error: "Send failed" }, 502);
+  }
+
+  try {
+    await supabase.rpc("wisecall_record_email_reply", { p_owner: ownerId });
+  } catch (e) {
+    console.error("[wisecall-email-inbound] usage record:", (e as Error).message);
   }
 
   // Upsert the contact by email (one source of truth across channels).
