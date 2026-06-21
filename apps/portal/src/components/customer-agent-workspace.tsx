@@ -2,14 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
+  AlertTriangle,
   ArrowLeft,
   Bot,
+  CalendarCheck,
   Check,
   ChevronRight,
   CirclePlus,
   CreditCard,
+  Flame,
   Grid2X2,
   Hand,
+  HelpCircle,
   History,
   Layers,
   Loader2,
@@ -19,13 +23,18 @@ import {
   MessageSquareText,
   MoreHorizontal,
   Phone,
+  PhoneMissed,
   Play,
   Plus,
+  RefreshCw,
   Save,
   Search,
   ShieldCheck,
   Sparkles,
+  ThumbsDown,
+  ThumbsUp,
   Trash2,
+  TrendingUp,
   UserRound,
   Users,
   Volume2,
@@ -43,6 +52,13 @@ import {
 } from "@/app/actions/agents";
 import type { CallLog } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
+import type {
+  AttentionItem,
+  CallReference,
+  DashboardInsights,
+  InsightsRange,
+  LabelCount,
+} from "@/lib/insights";
 import { OfficeHoursCard } from "./office-hours-card";
 import { ContactsView } from "./contacts-view";
 import { RaiseTicketModal } from "./raise-ticket-modal";
@@ -50,7 +66,7 @@ import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 
-type View = "home" | "assistants" | "detail" | "calls" | "contacts" | "channels";
+type View = "home" | "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
 type DetailTab = "behaviour" | "routing" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -492,6 +508,7 @@ function ChannelsHub({ emailChannel }: { emailChannel?: EmailChannelUsage }) {
 
 const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "home", label: "Home", icon: Grid2X2 },
+  { view: "insights", label: "AI Insights", icon: Sparkles },
   { view: "assistants", label: "Assistants", icon: Bot },
   { view: "calls", label: "Call History", icon: History },
   { view: "contacts", label: "Contacts", icon: Users },
@@ -644,6 +661,8 @@ export function CustomerAgentWorkspace({
   planName,
   emailChannel,
   impersonating,
+  initialInsights,
+  analysisEnabled = false,
 }: {
   initialAssistants?: Assistant[];
   callLogs?: CallLog[];
@@ -655,6 +674,8 @@ export function CustomerAgentWorkspace({
   planName?: string; // subscription plan label (Core / Growth / Pro)
   emailChannel?: EmailChannelUsage;
   impersonating?: { email: string }; // admin viewing as this customer
+  initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
+  analysisEnabled?: boolean; // whether the Claude API key is configured
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
   // A real customer with no agents yet has an empty list — don't assume [0] exists.
@@ -876,6 +897,7 @@ export function CustomerAgentWorkspace({
     if (item.label === "Assistants") return view === "assistants" || view === "detail";
     if (item.label === "Call History") return view === "calls";
     if (item.label === "Home") return view === "home";
+    if (item.label === "AI Insights") return view === "insights";
     if (item.label === "Contacts") return view === "contacts";
     if (item.label === "Channels") return view === "channels";
     return false;
@@ -1102,6 +1124,12 @@ export function CustomerAgentWorkspace({
                 <Menu className="h-5 w-5" />
               </button>
               <span>Home</span>
+              {view === "insights" && (
+                <>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>AI Insights</span>
+                </>
+              )}
               {(view === "assistants" || view === "detail") && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -1158,6 +1186,20 @@ export function CustomerAgentWorkspace({
                 totalCalls={totalCalls}
                 assistants={assistants.length}
                 onOpenAssistants={() => setView("assistants")}
+                onOpenInsights={() => setView("insights")}
+              />
+            )}
+
+            {view === "insights" && (
+              <AiInsights
+                initial={initialInsights}
+                analysisEnabled={analysisEnabled}
+                onViewCalls={() => setView("calls")}
+                onOpenCall={(callId) => {
+                  const log = callLogs.find((c) => c.id === callId);
+                  if (log) setSelectedCall(log);
+                  else setView("calls");
+                }}
               />
             )}
 
@@ -1324,10 +1366,12 @@ function HomeOverview({
   totalCalls,
   assistants,
   onOpenAssistants,
+  onOpenInsights,
 }: {
   totalCalls: number;
   assistants: number;
   onOpenAssistants: () => void;
+  onOpenInsights: () => void;
 }) {
   return (
     <div>
@@ -1336,14 +1380,24 @@ function HomeOverview({
           <h1 className="text-4xl font-black">Home</h1>
           <p className="mt-2 text-[#66716e]">Your WiseCall activity for this month.</p>
         </div>
-        <button
-          type="button"
-          onClick={onOpenAssistants}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
-        >
-          Open assistants
-          <ChevronRight className="h-4 w-4" />
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={onOpenInsights}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#111716]/15 bg-white px-5 py-3 text-sm font-black text-[#111716] transition hover:bg-[#f2f4f3]"
+          >
+            <Sparkles className="h-4 w-4 text-[#148b8e]" />
+            AI Insights
+          </button>
+          <button
+            type="button"
+            onClick={onOpenAssistants}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+          >
+            Open assistants
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <section className="rounded-[18px] border border-black/10 bg-white">
@@ -2112,6 +2166,551 @@ function formatWhen(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+// ── AI Insights ─────────────────────────────────────────────────────────────
+// Plain-English business insights rolled up from each call's AI analysis. The
+// heavy lifting (aggregation, tenant scoping) happens server-side in
+// /api/insights; this component only renders, switches date range, and kicks off
+// a one-time backfill for any un-analysed history.
+
+const INSIGHT_RANGES: { value: InsightsRange; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "7d", label: "7 days" },
+  { value: "30d", label: "30 days" },
+];
+
+const ATTENTION_STYLE: Record<
+  AttentionItem["kind"],
+  { label: string; icon: LucideIcon; tone: string }
+> = {
+  complaint: { label: "Complaint", icon: ThumbsDown, tone: "text-[#c0392b] bg-[#fdecea]" },
+  urgent: { label: "Urgent", icon: Flame, tone: "text-[#c2620a] bg-[#fdf1e3]" },
+  unanswered: { label: "Unanswered", icon: HelpCircle, tone: "text-[#7a5b00] bg-[#fdf7e3]" },
+};
+
+function AiInsights({
+  initial,
+  analysisEnabled,
+  onViewCalls,
+  onOpenCall,
+}: {
+  initial?: DashboardInsights;
+  analysisEnabled: boolean;
+  onViewCalls: () => void;
+  onOpenCall: (callId: string) => void;
+}) {
+  const [range, setRange] = useState<InsightsRange>(initial?.range ?? "7d");
+  const [insights, setInsights] = useState<DashboardInsights | undefined>(initial);
+  const [loading, setLoading] = useState(!initial);
+  const [error, setError] = useState<string | null>(null);
+  const [analysing, setAnalysing] = useState(false);
+  const backfillStarted = useRef(false);
+
+  async function load(next: InsightsRange) {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/insights?range=${next}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Could not load insights.");
+      setInsights(data.insights as DashboardInsights);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load insights.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function selectRange(next: InsightsRange) {
+    if (next === range) return;
+    setRange(next);
+    void load(next);
+  }
+
+  // One-time backfill: if there's call history that has never been analysed,
+  // analyse it in small batches, then refresh. Runs at most once per mount.
+  useEffect(() => {
+    if (backfillStarted.current) return;
+    if (!analysisEnabled) return;
+    if (!insights || insights.pendingAnalysis <= 0) return;
+    backfillStarted.current = true;
+
+    let cancelled = false;
+    (async () => {
+      setAnalysing(true);
+      try {
+        for (let i = 0; i < 12; i += 1) {
+          const res = await fetch("/api/insights/backfill", { method: "POST" });
+          const data = await res.json().catch(() => ({}));
+          if (cancelled || !res.ok || !data.ok) break;
+          if (data.analysed === 0 || data.remaining === 0) break;
+        }
+        if (!cancelled) await load(range);
+      } finally {
+        if (!cancelled) setAnalysing(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysisEnabled, insights?.pendingAnalysis]);
+
+  const header = (
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 className="flex items-center gap-2 text-2xl font-black sm:text-4xl">
+          <Sparkles className="h-6 w-6 text-[#148b8e]" />
+          AI Insights
+        </h1>
+        <p className="mt-2 text-[#66716e]">
+          What your callers wanted, and what needs your attention.
+        </p>
+      </div>
+      <div className="inline-flex rounded-lg border border-black/10 bg-white p-1">
+        {INSIGHT_RANGES.map((r) => (
+          <button
+            key={r.value}
+            type="button"
+            onClick={() => selectRange(r.value)}
+            className={`rounded-md px-4 py-2 text-sm font-bold transition ${
+              range === r.value
+                ? "bg-[#111716] text-white"
+                : "text-[#66716e] hover:bg-[#f2f4f3]"
+            }`}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading && !insights) {
+    return (
+      <div>
+        {header}
+        <div className="flex items-center justify-center rounded-[18px] border border-black/10 bg-white px-5 py-24 text-[#66716e]">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          Loading insights…
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !insights) {
+    return (
+      <div>
+        {header}
+        <div className="rounded-[18px] border border-black/10 bg-white px-5 py-16 text-center">
+          <p className="font-black text-[#111716]">We couldn&apos;t load your insights.</p>
+          <p className="mt-1 text-sm text-[#66716e]">{error}</p>
+          <button
+            type="button"
+            onClick={() => load(range)}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#111716] px-4 py-2 text-sm font-black text-white transition hover:bg-[#263130]"
+          >
+            <RefreshCw className="h-4 w-4" /> Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const i = insights as DashboardInsights;
+
+  // Empty state — no calls at all yet, or none in the chosen range.
+  if (i.totalCalls === 0) {
+    return (
+      <div>
+        {header}
+        <div className="rounded-[18px] border border-dashed border-black/15 bg-white px-5 py-20 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#e6fbfc]">
+            <Sparkles className="h-7 w-7 text-[#148b8e]" />
+          </div>
+          <p className="text-lg font-black text-[#111716]">
+            {i.hasAnyCalls ? "No calls in this period" : "No insights yet"}
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-[#66716e]">
+            {i.hasAnyCalls
+              ? "Try a longer date range to see insights from earlier calls."
+              : "Once your AI agent has handled calls, insights will appear here."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const analysedKnown = i.analysedCalls > 0;
+
+  return (
+    <div>
+      {header}
+
+      {/* AI-generated weekly summary */}
+      <section className="mb-6 rounded-[18px] border border-[#148b8e]/25 bg-gradient-to-br from-[#f3fbfb] to-white px-5 py-5 sm:px-6">
+        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#148b8e]">
+          <Sparkles className="h-4 w-4" />
+          Here&apos;s what changed in your calls
+        </p>
+        <p className="mt-2 text-base leading-relaxed text-[#111716] sm:text-lg">{i.summary}</p>
+        {analysing && (
+          <p className="mt-3 flex items-center gap-2 text-sm text-[#66716e]">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Analysing your recent calls… numbers will update shortly.
+          </p>
+        )}
+        {!analysisEnabled && i.pendingAnalysis > 0 && (
+          <p className="mt-3 text-sm text-[#66716e]">
+            {i.pendingAnalysis} call{i.pendingAnalysis === 1 ? "" : "s"} not yet analysed (AI
+            analysis isn&apos;t switched on).
+          </p>
+        )}
+      </section>
+
+      {/* Headline cards */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <InsightCard
+          label="Calls handled"
+          value={i.totalCalls}
+          icon={PhoneMissed}
+          accent="#148b8e"
+          onClick={onViewCalls}
+        />
+        <InsightCard
+          label="Missed / escalated"
+          value={i.missedOrEscalated}
+          icon={AlertTriangle}
+          accent="#c2620a"
+          onClick={onViewCalls}
+        />
+        <InsightCard
+          label="Bookings"
+          value={i.bookingCount}
+          icon={CalendarCheck}
+          accent="#16a66a"
+          onClick={onViewCalls}
+        />
+        <InsightCard
+          label="New leads"
+          value={i.leadCount}
+          icon={TrendingUp}
+          accent="#2d6cdf"
+          onClick={onViewCalls}
+        />
+        <InsightCard
+          label="Conversion rate"
+          value={`${i.conversionRate}%`}
+          icon={TrendingUp}
+          accent="#16a66a"
+          hint="Bookings + leads"
+        />
+        <InsightCard
+          label="Urgent calls"
+          value={i.urgentCount}
+          icon={Flame}
+          accent="#c2620a"
+        />
+        <InsightCard
+          label="Complaints"
+          value={i.complaintCount}
+          icon={ThumbsDown}
+          accent="#c0392b"
+        />
+        <InsightCard
+          label="Unanswered questions"
+          value={i.unansweredQuestions.length}
+          icon={HelpCircle}
+          accent="#7a5b00"
+        />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {/* Sentiment split */}
+        <section className="rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
+          <h2 className="text-lg font-black text-[#111716]">How callers felt</h2>
+          {analysedKnown ? (
+            <>
+              <SentimentBar sentiment={i.sentiment} />
+              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                <SentimentStat
+                  icon={ThumbsUp}
+                  label="Positive"
+                  value={i.sentiment.positive}
+                  tone="text-[#16a66a]"
+                />
+                <SentimentStat
+                  icon={MessageSquareText}
+                  label="Neutral"
+                  value={i.sentiment.neutral}
+                  tone="text-[#66716e]"
+                />
+                <SentimentStat
+                  icon={ThumbsDown}
+                  label="Negative"
+                  value={i.sentiment.negative}
+                  tone="text-[#c0392b]"
+                />
+              </div>
+            </>
+          ) : (
+            <p className="mt-4 text-sm text-[#66716e]">
+              Sentiment will appear once your calls have been analysed.
+            </p>
+          )}
+        </section>
+
+        {/* Top call reasons */}
+        <section className="rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
+          <h2 className="text-lg font-black text-[#111716]">Top reasons people called</h2>
+          {i.topReasons.length > 0 ? (
+            <ul className="mt-4 space-y-3">
+              {i.topReasons.map((reason) => (
+                <TopReasonRow
+                  key={reason.label}
+                  reason={reason}
+                  max={i.topReasons[0].count}
+                  onClick={onViewCalls}
+                />
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-[#66716e]">
+              Call reasons will appear once your calls have been analysed.
+            </p>
+          )}
+        </section>
+      </div>
+
+      {/* Needs attention */}
+      <section className="mt-6 rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 text-lg font-black text-[#111716]">
+          <AlertTriangle className="h-5 w-5 text-[#c2620a]" />
+          Needs attention
+        </h2>
+        <p className="mt-1 text-sm text-[#66716e]">
+          Complaints, urgent calls and questions your agent couldn&apos;t answer.
+        </p>
+        {i.attention.length > 0 ? (
+          <ul className="mt-4 divide-y divide-black/5">
+            {i.attention.map((item, idx) => (
+              <AttentionRow key={`${item.callId}-${idx}`} item={item} onOpen={onOpenCall} />
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 rounded-lg bg-[#f3fbf6] px-4 py-6 text-center text-sm font-semibold text-[#16a66a]">
+            Nothing needs your attention right now. 🎉
+          </p>
+        )}
+      </section>
+
+      {/* Opportunities */}
+      {i.opportunities.length > 0 && (
+        <section className="mt-6 rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
+          <h2 className="flex items-center gap-2 text-lg font-black text-[#111716]">
+            <TrendingUp className="h-5 w-5 text-[#2d6cdf]" />
+            Opportunities &amp; lost sales
+          </h2>
+          <ul className="mt-4 space-y-2">
+            {i.opportunities.map((opp, idx) => (
+              <CallRefRow key={`${opp.callId}-${idx}`} item={opp} onOpen={onOpenCall} />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Common unanswered questions */}
+      {i.unansweredQuestions.length > 0 && (
+        <section className="mt-6 rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
+          <h2 className="flex items-center gap-2 text-lg font-black text-[#111716]">
+            <HelpCircle className="h-5 w-5 text-[#7a5b00]" />
+            Common unanswered questions
+          </h2>
+          <ul className="mt-4 space-y-2">
+            {i.unansweredQuestions.map((q, idx) => (
+              <CallRefRow key={`${q.callId}-${idx}`} item={q} onOpen={onOpenCall} />
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function InsightCard({
+  label,
+  value,
+  icon: Icon,
+  accent,
+  hint,
+  onClick,
+}: {
+  label: string;
+  value: number | string;
+  icon: LucideIcon;
+  accent: string;
+  hint?: string;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <>
+      <div className="flex items-start justify-between">
+        <span
+          className="flex h-9 w-9 items-center justify-center rounded-lg"
+          style={{ backgroundColor: `${accent}1a`, color: accent }}
+        >
+          <Icon className="h-5 w-5" />
+        </span>
+        {onClick && <ChevronRight className="h-4 w-4 text-[#9aa5a2]" />}
+      </div>
+      <p className="mt-3 text-2xl font-black text-[#111716] sm:text-3xl">{value}</p>
+      <p className="mt-0.5 text-sm font-semibold text-[#66716e]">{label}</p>
+      {hint && <p className="mt-0.5 text-xs text-[#9aa5a2]">{hint}</p>}
+    </>
+  );
+  const base =
+    "rounded-[16px] border border-black/10 bg-white p-4 text-left transition sm:p-5";
+  return onClick ? (
+    <button type="button" onClick={onClick} className={`${base} hover:bg-[#f7f8f7]`}>
+      {inner}
+    </button>
+  ) : (
+    <div className={base}>{inner}</div>
+  );
+}
+
+function SentimentBar({
+  sentiment,
+}: {
+  sentiment: { positive: number; neutral: number; negative: number };
+}) {
+  const total = sentiment.positive + sentiment.neutral + sentiment.negative;
+  const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
+  return (
+    <div className="mt-4 flex h-4 w-full overflow-hidden rounded-full bg-[#f2f4f3]">
+      <div style={{ width: `${pct(sentiment.positive)}%` }} className="bg-[#16a66a]" />
+      <div style={{ width: `${pct(sentiment.neutral)}%` }} className="bg-[#c9d1ce]" />
+      <div style={{ width: `${pct(sentiment.negative)}%` }} className="bg-[#c0392b]" />
+    </div>
+  );
+}
+
+function SentimentStat({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+  tone: string;
+}) {
+  return (
+    <div className="rounded-lg bg-[#f7f8f7] py-3">
+      <Icon className={`mx-auto h-5 w-5 ${tone}`} />
+      <p className="mt-1 text-xl font-black text-[#111716]">{value}</p>
+      <p className="text-xs font-semibold text-[#66716e]">{label}</p>
+    </div>
+  );
+}
+
+function TopReasonRow({
+  reason,
+  max,
+  onClick,
+}: {
+  reason: LabelCount;
+  max: number;
+  onClick: () => void;
+}) {
+  const width = max > 0 ? Math.max(6, (reason.count / max) * 100) : 0;
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="group flex w-full items-center gap-3 text-left"
+      >
+        <span className="w-36 flex-shrink-0 truncate text-sm font-semibold text-[#111716] sm:w-44">
+          {reason.label}
+        </span>
+        <span className="relative h-3 flex-1 overflow-hidden rounded-full bg-[#f2f4f3]">
+          <span
+            className="absolute inset-y-0 left-0 rounded-full bg-[#41c9ce] transition-all group-hover:bg-[#148b8e]"
+            style={{ width: `${width}%` }}
+          />
+        </span>
+        <span className="w-8 flex-shrink-0 text-right text-sm font-black text-[#111716]">
+          {reason.count}
+        </span>
+      </button>
+    </li>
+  );
+}
+
+function AttentionRow({
+  item,
+  onOpen,
+}: {
+  item: AttentionItem;
+  onOpen: (callId: string) => void;
+}) {
+  const style = ATTENTION_STYLE[item.kind];
+  const Icon = style.icon;
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => onOpen(item.callId)}
+        className="flex w-full items-start gap-3 py-3 text-left transition hover:bg-[#f7f8f7]"
+      >
+        <span
+          className={`mt-0.5 flex h-7 items-center gap-1 rounded-full px-2 text-[11px] font-black uppercase tracking-wide ${style.tone}`}
+        >
+          <Icon className="h-3.5 w-3.5" />
+          {style.label}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-[#111716]">
+            {item.detail}
+          </span>
+          <span className="mt-0.5 block text-xs text-[#9aa5a2]">
+            {item.caller} · {formatWhen(item.startedAt)}
+          </span>
+        </span>
+        <ChevronRight className="mt-1 h-4 w-4 flex-shrink-0 text-[#9aa5a2]" />
+      </button>
+    </li>
+  );
+}
+
+function CallRefRow({
+  item,
+  onOpen,
+}: {
+  item: CallReference;
+  onOpen: (callId: string) => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => onOpen(item.callId)}
+        className="flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[#f7f8f7]"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-[#111716]">{item.detail}</span>
+          <span className="mt-0.5 block text-xs text-[#9aa5a2]">
+            {item.caller} · {formatWhen(item.startedAt)}
+          </span>
+        </span>
+        <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#9aa5a2]" />
+      </button>
+    </li>
+  );
 }
 
 function CallHistory({
