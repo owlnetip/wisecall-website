@@ -169,6 +169,7 @@ function hasKnowledgeFields(fields?: KnowledgeFields): boolean {
 
 export type Assistant = {
   id: string;
+  slug?: string; // used for the website chat widget embed + live-chat backend
   name: string;
   businessName: string;
   industry: string;
@@ -1687,6 +1688,8 @@ function AssistantDetail({
         timezone={assistant.timezone}
       />
 
+      {assistant.slug ? <WebsiteWidgetCard slug={assistant.slug} /> : null}
+
       {emailChannel?.enabled && assistant.emailAddress ? (
         <EmailChannelCard
           address={assistant.emailAddress}
@@ -2961,6 +2964,62 @@ function TranscriptView({ transcript }: { transcript: string }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function WebsiteWidgetCard({ slug }: { slug: string }) {
+  const [copied, setCopied] = useState(false);
+  const embed = `<script src="https://wisecall.io/widget.js" data-agent="${slug}" async></script>`;
+  function copy() {
+    navigator.clipboard?.writeText(embed).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1600);
+      },
+      () => {},
+    );
+  }
+  return (
+    <div className="mb-8 rounded-[14px] border border-black/10 bg-white px-5 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 font-black text-[#111716]">
+            <MessageSquareText className="h-4 w-4 text-[#148b8e]" />
+            Website chat widget
+          </p>
+          <p className="mt-1 max-w-xl text-sm text-[#66716e]">
+            Put this agent on your website as a chat bubble. Paste the snippet just before
+            <code className="mx-1 rounded bg-[#f2f4f3] px-1 text-xs">&lt;/body&gt;</code>
+            on any page — visitors chat with the same agent, using its knowledge.
+          </p>
+        </div>
+        <a
+          href={`https://wisecall.io/widget-demo?agent=${encodeURIComponent(slug)}`}
+          target="_blank"
+          rel="noopener"
+          className="flex-shrink-0 rounded-lg border border-black/10 px-3 py-2 text-sm font-bold text-[#111716] transition hover:bg-[#f2f4f3]"
+        >
+          Preview
+        </a>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg border border-black/10 bg-[#0e1b1b] px-3 py-2 text-xs font-semibold text-[#7de8eb]">
+          {embed}
+        </code>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-[#9aa5a2]">
+        Works on any website (WordPress, Wix, Squarespace, custom). Add
+        <code className="mx-1 rounded bg-[#f2f4f3] px-1">data-position=&quot;left&quot;</code>
+        to flip it to the bottom-left.
+      </p>
     </div>
   );
 }

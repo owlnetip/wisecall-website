@@ -33,6 +33,7 @@ function agentEmailAddress(row: ProfileRow): string {
 
 type ProfileRow = {
   id: string;
+  slug: string | null;
   profile_name: string | null;
   receptionist_name: string | null;
   business_name: string | null;
@@ -181,6 +182,7 @@ function mapProfile(row: ProfileRow): Assistant {
   const routing = readRouting(row);
   return {
     id: row.id,
+    slug: row.slug || "",
     name: row.receptionist_name || row.profile_name || "Assistant",
     businessName: row.business_name || row.clinic_name || "",
     industry: meta(row, "industry") || "General",
@@ -227,7 +229,7 @@ export async function getAgentsForUser(userId: string): Promise<Assistant[] | nu
   const { data, error } = await supabase
     .from("wisecall_profiles")
     .select(
-      "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, after_hours_message, business_context, timezone, metadata",
+      "id, slug, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, after_hours_message, business_context, timezone, metadata",
     )
     .eq("metadata->>owner_id", userId)
     .order("created_at", { ascending: false });
@@ -319,7 +321,7 @@ function mapCallRow(row: CallRow): CallLog {
 }
 
 const PROFILE_SELECT =
-  "id, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, after_hours_message, business_context, timezone, metadata";
+  "id, slug, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, after_hours_message, business_context, timezone, metadata";
 
 const CALL_SELECT =
   "id, profile_id, profile_name, caller_id, summary, outcome, transcript, started_at, finished_at, created_at";
