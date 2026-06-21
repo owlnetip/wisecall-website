@@ -418,7 +418,100 @@ function SupportOwl() {
 // The Channels hub: one place to see and enable every way an agent can talk to
 // customers. Phone is included; Email is the first paid add-on; WhatsApp + SMS
 // land here as they ship. Reuses Cursor's email billing data + checkout button.
-function ChannelsHub({ emailChannel }: { emailChannel?: EmailChannelUsage }) {
+// One agent's website-widget embed snippet with a copy button.
+function WidgetEmbedRow({ name, slug }: { name: string; slug: string }) {
+  const [copied, setCopied] = useState(false);
+  const embed = `<script src="https://wisecall.io/widget.js" data-agent="${slug}" async></script>`;
+  function copy() {
+    navigator.clipboard?.writeText(embed).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1600);
+      },
+      () => {},
+    );
+  }
+  return (
+    <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="truncate text-sm font-bold text-[#111716]">{name}</p>
+        <a
+          href={`https://wisecall.io/widget-demo?agent=${encodeURIComponent(slug)}`}
+          target="_blank"
+          rel="noopener"
+          className="flex-shrink-0 text-xs font-bold text-[#148b8e] hover:underline"
+        >
+          Preview
+        </a>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg border border-black/10 bg-[#0e1b1b] px-3 py-2 text-xs font-semibold text-[#7de8eb]">
+          {embed}
+        </code>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// "Website chat" channel — expandable to reveal each agent's embed snippet.
+function WebsiteChatChannel({ assistants }: { assistants: Assistant[] }) {
+  const [open, setOpen] = useState(false);
+  const withSlug = assistants.filter((a) => a.slug);
+  return (
+    <div className="rounded-[14px] border border-black/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-4 px-5 py-4 text-left"
+      >
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+          <MessageSquareText className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-[#111716]">Website chat</p>
+          <p className="text-sm text-[#66716e]">
+            Put your agent on your site as a chat bubble — one line of code.
+          </p>
+        </div>
+        <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+          Included
+        </span>
+        <ChevronDown
+          className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? (
+        <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
+          <p className="mb-1 text-xs text-[#66716e]">
+            Paste this just before <code className="rounded bg-[#f2f4f3] px-1">&lt;/body&gt;</code> on
+            your website. Works on WordPress, Wix, Squarespace or any custom site.
+          </p>
+          {withSlug.length ? (
+            withSlug.map((a) => <WidgetEmbedRow key={a.id} name={a.name} slug={a.slug!} />)
+          ) : (
+            <p className="text-sm text-[#66716e]">Create an agent to get its website embed code.</p>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ChannelsHub({
+  emailChannel,
+  assistants,
+}: {
+  emailChannel?: EmailChannelUsage;
+  assistants: Assistant[];
+}) {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
@@ -443,6 +536,9 @@ function ChannelsHub({ emailChannel }: { emailChannel?: EmailChannelUsage }) {
             Included
           </span>
         </div>
+
+        {/* Website chat — included, expandable to per-agent embed codes */}
+        <WebsiteChatChannel assistants={assistants} />
 
         {/* Email — first paid add-on */}
         <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
@@ -1267,7 +1363,9 @@ export function CustomerAgentWorkspace({
               <ContactsView contacts={contacts} callLogs={callLogs} />
             )}
 
-            {view === "channels" && <ChannelsHub emailChannel={emailChannel} />}
+            {view === "channels" && (
+              <ChannelsHub emailChannel={emailChannel} assistants={assistants} />
+            )}
           </div>
         </main>
       </div>
@@ -1687,8 +1785,6 @@ function AssistantDetail({
         businessName={assistant.businessName}
         timezone={assistant.timezone}
       />
-
-      {assistant.slug ? <WebsiteWidgetCard slug={assistant.slug} /> : null}
 
       {emailChannel?.enabled && assistant.emailAddress ? (
         <EmailChannelCard
@@ -2964,62 +3060,6 @@ function TranscriptView({ transcript }: { transcript: string }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function WebsiteWidgetCard({ slug }: { slug: string }) {
-  const [copied, setCopied] = useState(false);
-  const embed = `<script src="https://wisecall.io/widget.js" data-agent="${slug}" async></script>`;
-  function copy() {
-    navigator.clipboard?.writeText(embed).then(
-      () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1600);
-      },
-      () => {},
-    );
-  }
-  return (
-    <div className="mb-8 rounded-[14px] border border-black/10 bg-white px-5 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 font-black text-[#111716]">
-            <MessageSquareText className="h-4 w-4 text-[#148b8e]" />
-            Website chat widget
-          </p>
-          <p className="mt-1 max-w-xl text-sm text-[#66716e]">
-            Put this agent on your website as a chat bubble. Paste the snippet just before
-            <code className="mx-1 rounded bg-[#f2f4f3] px-1 text-xs">&lt;/body&gt;</code>
-            on any page — visitors chat with the same agent, using its knowledge.
-          </p>
-        </div>
-        <a
-          href={`https://wisecall.io/widget-demo?agent=${encodeURIComponent(slug)}`}
-          target="_blank"
-          rel="noopener"
-          className="flex-shrink-0 rounded-lg border border-black/10 px-3 py-2 text-sm font-bold text-[#111716] transition hover:bg-[#f2f4f3]"
-        >
-          Preview
-        </a>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg border border-black/10 bg-[#0e1b1b] px-3 py-2 text-xs font-semibold text-[#7de8eb]">
-          {embed}
-        </code>
-        <button
-          type="button"
-          onClick={copy}
-          className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
-      </div>
-      <p className="mt-2 text-xs text-[#9aa5a2]">
-        Works on any website (WordPress, Wix, Squarespace, custom). Add
-        <code className="mx-1 rounded bg-[#f2f4f3] px-1">data-position=&quot;left&quot;</code>
-        to flip it to the bottom-left.
-      </p>
     </div>
   );
 }
