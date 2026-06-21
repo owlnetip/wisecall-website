@@ -1,6 +1,3 @@
-// contactMemory.runtime.js — synced from wisecall-edge/src/lib/contactMemory.js
-// Run: npm run sync:portal (from wisecall-edge/) or node scripts/sync-runtime-libs.mjs
-
 // Contact memory — lookup before the call, upsert after saveCallLog.
 
 const { getSupabase } = require("./supabase");

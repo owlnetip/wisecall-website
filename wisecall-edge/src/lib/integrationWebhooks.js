@@ -1,6 +1,3 @@
-// integrationWebhooks.runtime.js — synced from wisecall-edge/src/lib/integrationWebhooks.js
-// Run: npm run sync:portal (from wisecall-edge/) or node scripts/sync-runtime-libs.mjs
-
 // Per-agent custom webhooks — before_call, during_call, after_call.
 
 const DEFAULT_TIMEOUT_MS = 8000;
