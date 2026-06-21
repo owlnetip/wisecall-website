@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
   Bot,
   CalendarCheck,
   Check,
+  ChevronDown,
   ChevronRight,
   CirclePlus,
   CreditCard,
@@ -2198,6 +2199,58 @@ const ATTENTION_STYLE: Record<
   unanswered: { label: "Unanswered", icon: HelpCircle, tone: "text-[#7a5b00] bg-[#fdf7e3]" },
 };
 
+// A collapsible card used for the detail-heavy insight lists, so the page stays
+// scannable: a header (title + icon + count) you click to expand the contents.
+function CollapsibleSection({
+  title,
+  icon: Icon,
+  accent,
+  count,
+  subtitle,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  icon: LucideIcon;
+  accent: string;
+  count: number;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className="mt-6 rounded-[18px] border border-black/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-5 py-4 text-left sm:px-6"
+      >
+        <Icon className="h-5 w-5 flex-shrink-0" style={{ color: accent }} />
+        <div className="min-w-0 flex-1">
+          <h2 className="flex items-center gap-2 text-lg font-black text-[#111716]">
+            {title}
+            <span
+              className="rounded-full px-2 py-0.5 text-xs font-bold"
+              style={{ backgroundColor: `${accent}1a`, color: accent }}
+            >
+              {count}
+            </span>
+          </h2>
+          {subtitle && !open ? (
+            <p className="mt-0.5 truncate text-sm text-[#66716e]">{subtitle}</p>
+          ) : null}
+        </div>
+        <ChevronDown
+          className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? <div className="border-t border-black/5 px-5 pb-5 pt-4 sm:px-6">{children}</div> : null}
+    </section>
+  );
+}
+
 function AiInsights({
   initial,
   analysisEnabled,
@@ -2493,56 +2546,60 @@ function AiInsights({
         </section>
       </div>
 
-      {/* Needs attention */}
-      <section className="mt-6 rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 text-lg font-black text-[#111716]">
-          <AlertTriangle className="h-5 w-5 text-[#c2620a]" />
-          Needs attention
-        </h2>
-        <p className="mt-1 text-sm text-[#66716e]">
-          Complaints, urgent calls and questions your agent couldn&apos;t answer.
-        </p>
+      {/* Needs attention — open by default (the actionable one) */}
+      <CollapsibleSection
+        title="Needs attention"
+        icon={AlertTriangle}
+        accent="#c2620a"
+        count={i.attention.length}
+        defaultOpen={i.attention.length > 0}
+        subtitle="Complaints, urgent calls and unanswered questions"
+      >
         {i.attention.length > 0 ? (
-          <ul className="mt-4 divide-y divide-black/5">
+          <ul className="divide-y divide-black/5">
             {i.attention.map((item, idx) => (
               <AttentionRow key={`${item.callId}-${idx}`} item={item} onOpen={onOpenCall} />
             ))}
           </ul>
         ) : (
-          <p className="mt-4 rounded-lg bg-[#f3fbf6] px-4 py-6 text-center text-sm font-semibold text-[#16a66a]">
+          <p className="rounded-lg bg-[#f3fbf6] px-4 py-6 text-center text-sm font-semibold text-[#16a66a]">
             Nothing needs your attention right now. 🎉
           </p>
         )}
-      </section>
+      </CollapsibleSection>
 
-      {/* Opportunities */}
+      {/* Opportunities — collapsed by default */}
       {i.opportunities.length > 0 && (
-        <section className="mt-6 rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
-          <h2 className="flex items-center gap-2 text-lg font-black text-[#111716]">
-            <TrendingUp className="h-5 w-5 text-[#2d6cdf]" />
-            Opportunities &amp; lost sales
-          </h2>
-          <ul className="mt-4 space-y-2">
+        <CollapsibleSection
+          title="Opportunities & lost sales"
+          icon={TrendingUp}
+          accent="#2d6cdf"
+          count={i.opportunities.length}
+          subtitle="Leads and enquiries worth a follow-up"
+        >
+          <ul className="space-y-2">
             {i.opportunities.map((opp, idx) => (
               <CallRefRow key={`${opp.callId}-${idx}`} item={opp} onOpen={onOpenCall} />
             ))}
           </ul>
-        </section>
+        </CollapsibleSection>
       )}
 
-      {/* Common unanswered questions */}
+      {/* Common unanswered questions — collapsed by default */}
       {i.unansweredQuestions.length > 0 && (
-        <section className="mt-6 rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
-          <h2 className="flex items-center gap-2 text-lg font-black text-[#111716]">
-            <HelpCircle className="h-5 w-5 text-[#7a5b00]" />
-            Common unanswered questions
-          </h2>
-          <ul className="mt-4 space-y-2">
+        <CollapsibleSection
+          title="Common unanswered questions"
+          icon={HelpCircle}
+          accent="#7a5b00"
+          count={i.unansweredQuestions.length}
+          subtitle="Questions your agent couldn't answer — worth adding to its knowledge"
+        >
+          <ul className="space-y-2">
             {i.unansweredQuestions.map((q, idx) => (
               <CallRefRow key={`${q.callId}-${idx}`} item={q} onOpen={onOpenCall} />
             ))}
           </ul>
-        </section>
+        </CollapsibleSection>
       )}
     </div>
   );
