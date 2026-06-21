@@ -60,6 +60,8 @@ import type {
   LabelCount,
 } from "@/lib/insights";
 import { OfficeHoursCard } from "./office-hours-card";
+import { IntegrationWebhooksCard } from "./integration-webhooks-card";
+import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 import { ContactsView } from "./contacts-view";
 import { RaiseTicketModal } from "./raise-ticket-modal";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
@@ -190,6 +192,7 @@ export type Assistant = {
   outOfHoursMessage?: string;
   emailAddress?: string; // forwarding address for the email channel
   emailChannelEnabled?: boolean;
+  integrationWebhooks?: IntegrationWebhook[];
   ownerEmail?: string; // admin view only — which customer owns this agent
   ownerId?: string; // admin view only — owner's auth user id (for "log in as")
 };
@@ -1806,7 +1809,12 @@ function AssistantDetail({
           onSave={onSave}
         />
       ) : (
-        <div className="grid gap-5 md:grid-cols-2">
+        <div>
+          <IntegrationWebhooksCard
+            agentId={assistant.id}
+            initial={assistant.integrationWebhooks ?? []}
+          />
+          <div className="grid gap-5 md:grid-cols-2">
           <Field
             label="Assistant name"
             value={assistant.name}
@@ -1860,6 +1868,7 @@ function AssistantDetail({
             {saveError && (
               <p className="mt-2 text-sm text-red-600">{saveError}</p>
             )}
+          </div>
           </div>
         </div>
       )}
