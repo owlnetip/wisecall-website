@@ -170,6 +170,8 @@ function hasKnowledgeFields(fields?: KnowledgeFields): boolean {
 export type Assistant = {
   id: string;
   slug?: string; // used for the website chat widget embed + live-chat backend
+  chatAccentColor?: string; // website chat widget theming (metadata.chat_accent_color)
+  chatBackgroundColor?: string; // metadata.chat_background_color
   name: string;
   businessName: string;
   industry: string;
@@ -418,10 +420,52 @@ function SupportOwl() {
 // The Channels hub: one place to see and enable every way an agent can talk to
 // customers. Phone is included; Email is the first paid add-on; WhatsApp + SMS
 // land here as they ship. Reuses Cursor's email billing data + checkout button.
-// One agent's website-widget embed snippet with a copy button.
-function WidgetEmbedRow({ name, slug }: { name: string; slug: string }) {
+// A combined colour input: a swatch (native colour picker) + a hex text field.
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-xs font-bold text-[#111716]">
+      <span className="w-20 text-[#66716e]">{label}</span>
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8 w-9 cursor-pointer rounded border border-black/10 bg-white p-0.5"
+        aria-label={`${label} colour`}
+      />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-24 rounded-lg border border-black/10 bg-white px-2 py-1.5 font-mono text-xs text-[#111716] focus:outline-none focus:ring-2 focus:ring-[#148b8e]/40"
+      />
+    </label>
+  );
+}
+
+// One agent's website-widget: embed snippet (copy), brand colours (save) + a
+// live preview of the bubble so customers can match it to their site.
+function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
+  const slug = assistant.slug!;
   const [copied, setCopied] = useState(false);
+  const [accent, setAccent] = useState(assistant.chatAccentColor || "#7de8eb");
+  const [bg, setBg] = useState(assistant.chatBackgroundColor || "#172929");
+  const [pending, start] = useTransition();
+  const [saved, setSaved] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
   const embed = `<script src="https://wisecall.io/widget.js" data-agent="${slug}" async></script>`;
+  const dirty =
+    accent !== (assistant.chatAccentColor || "#7de8eb") ||
+    bg !== (assistant.chatBackgroundColor || "#172929");
+
   function copy() {
     navigator.clipboard?.writeText(embed).then(
       () => {
@@ -431,10 +475,20 @@ function WidgetEmbedRow({ name, slug }: { name: string; slug: string }) {
       () => {},
     );
   }
+  function saveColors() {
+    setErr(null);
+    setSaved(false);
+    start(async () => {
+      const r = await updateAgent(assistant.id, { chatAccentColor: accent, chatBackgroundColor: bg });
+      if (r.ok) setSaved(true);
+      else setErr(r.error ?? "Couldn't save.");
+    });
+  }
+
   return (
     <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="truncate text-sm font-bold text-[#111716]">{name}</p>
+        <p className="truncate text-sm font-bold text-[#111716]">{assistant.name}</p>
         <a
           href={`https://wisecall.io/widget-demo?agent=${encodeURIComponent(slug)}`}
           target="_blank"
@@ -444,6 +498,7 @@ function WidgetEmbedRow({ name, slug }: { name: string; slug: string }) {
           Preview
         </a>
       </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg border border-black/10 bg-[#0e1b1b] px-3 py-2 text-xs font-semibold text-[#7de8eb]">
           {embed}
@@ -455,6 +510,54 @@ function WidgetEmbedRow({ name, slug }: { name: string; slug: string }) {
         >
           {copied ? "Copied" : "Copy"}
         </button>
+      </div>
+
+      {/* Brand colours + live preview */}
+      <div className="mt-3 flex flex-wrap items-start gap-4 border-t border-black/5 pt-3">
+        <div className="space-y-2">
+          <p className="text-xs font-black uppercase tracking-wide text-[#9aa5a2]">Match your brand</p>
+          <ColorField label="Accent" value={accent} onChange={setAccent} />
+          <ColorField label="Header" value={bg} onChange={setBg} />
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={saveColors}
+              disabled={pending || !dirty}
+              className="inline-flex h-8 items-center rounded-lg bg-[#111716] px-4 text-xs font-black text-white transition hover:bg-[#263130] disabled:opacity-50"
+            >
+              {pending ? "Saving…" : "Save colours"}
+            </button>
+            {saved && !dirty && <span className="text-xs font-medium text-[#148b8e]">Saved</span>}
+            {err && <span className="text-xs font-medium text-red-600">{err}</span>}
+          </div>
+        </div>
+
+        {/* Mini live preview of the widget */}
+        <div className="ml-auto">
+          <div className="w-[150px] overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+            <div className="flex items-center gap-2 px-3 py-2" style={{ background: bg }}>
+              <span
+                className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black"
+                style={{ background: accent, color: "#0e1b1b" }}
+              >
+                {(assistant.name || "A").charAt(0).toUpperCase()}
+              </span>
+              <span className="truncate text-[11px] font-bold text-white">{assistant.name}</span>
+            </div>
+            <div className="space-y-1.5 bg-[#f6f8f8] p-2">
+              <div className="max-w-[80%] rounded-lg rounded-bl-sm bg-white px-2 py-1 text-[10px] text-[#111716] shadow-sm">
+                Hi! How can I help?
+              </div>
+              <div
+                className="ml-auto max-w-[80%] rounded-lg rounded-br-sm px-2 py-1 text-[10px]"
+                style={{ background: accent, color: "#0e1b1b" }}
+              >
+                Do you do free quotes?
+              </div>
+            </div>
+          </div>
+          <p className="mt-1 text-center text-[10px] text-[#9aa5a2]">Live preview</p>
+        </div>
       </div>
     </div>
   );
@@ -495,7 +598,7 @@ function WebsiteChatChannel({ assistants }: { assistants: Assistant[] }) {
             your website. Works on WordPress, Wix, Squarespace or any custom site.
           </p>
           {withSlug.length ? (
-            withSlug.map((a) => <WidgetEmbedRow key={a.id} name={a.name} slug={a.slug!} />)
+            withSlug.map((a) => <WidgetEmbedRow key={a.id} assistant={a} />)
           ) : (
             <p className="text-sm text-[#66716e]">Create an agent to get its website embed code.</p>
           )}

@@ -34,6 +34,8 @@ export type AgentPatch = {
   contacts?: RoutingContact[];
   officeHours?: OfficeHours;
   outOfHoursMessage?: string;
+  chatAccentColor?: string;
+  chatBackgroundColor?: string;
   status?: "Live" | "Setup" | "Review";
   integrationWebhooks?: IntegrationWebhook[];
 };
@@ -201,6 +203,9 @@ export async function updateAgent(
     // column write below is what actually reaches the phone agent.
     nextMetadata.out_of_hours_message = patch.outOfHoursMessage;
   }
+  // Website chat widget theming — wisecall-live-chat reads these metadata keys.
+  if (patch.chatAccentColor !== undefined) nextMetadata.chat_accent_color = patch.chatAccentColor;
+  if (patch.chatBackgroundColor !== undefined) nextMetadata.chat_background_color = patch.chatBackgroundColor;
   if (patch.integrationWebhooks !== undefined) {
     // Custom before/during/after call webhooks (integrationWebhooks.runtime.js).
     nextMetadata.integration_webhooks = serializeIntegrationWebhooks(patch.integrationWebhooks);

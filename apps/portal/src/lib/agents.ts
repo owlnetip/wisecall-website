@@ -183,6 +183,8 @@ function mapProfile(row: ProfileRow): Assistant {
   return {
     id: row.id,
     slug: row.slug || "",
+    chatAccentColor: meta(row, "chat_accent_color") || undefined,
+    chatBackgroundColor: meta(row, "chat_background_color") || undefined,
     name: row.receptionist_name || row.profile_name || "Assistant",
     businessName: row.business_name || row.clinic_name || "",
     industry: meta(row, "industry") || "General",
