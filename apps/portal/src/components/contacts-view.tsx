@@ -55,9 +55,12 @@ function contactDisplayName(contact: EnrichedContact): string {
 
 function contactSubtitle(contact: EnrichedContact): string {
   const primary = contactDisplayName(contact);
-  if (contact.phone && primary !== contact.phone) return contact.phone;
-  if (contact.email && primary !== contact.email) return contact.email;
-  if (contact.nameInferred) return "Name from call history";
+  const parts: string[] = [];
+  if (contact.company.trim()) parts.push(contact.company.trim());
+  if (contact.phone && primary !== contact.phone) parts.push(contact.phone);
+  else if (contact.email && primary !== contact.email) parts.push(contact.email);
+  if (parts.length) return parts.join(" · ");
+  if (contact.nameInferred || contact.detailsInferred) return "Details from call history";
   return "No name yet";
 }
 
@@ -174,7 +177,24 @@ function ContactDetail({
             {contact.phone && (
               <span className="flex items-center gap-1.5 text-sm text-[#111716]">
                 <Phone className="h-3.5 w-3.5 flex-shrink-0 text-[#148b8e]" />
-                <span className="break-all">{contact.phone}</span>
+                <span className="break-all">
+                  {contact.callbackPhone && contact.callbackPhone !== contact.phone.replace(/\s/g, "")
+                    ? `Line: ${contact.phone}`
+                    : contact.phone}
+                </span>
+              </span>
+            )}
+            {contact.callbackPhone &&
+              contact.callbackPhone !== contact.phone.replace(/\s/g, "") && (
+                <span className="flex items-center gap-1.5 text-sm text-[#111716]">
+                  <Phone className="h-3.5 w-3.5 flex-shrink-0 text-[#148b8e]" />
+                  <span className="break-all">Callback: {contact.callbackPhone}</span>
+                </span>
+              )}
+            {contact.company && (
+              <span className="text-sm text-[#111716]">
+                <span className="font-bold text-[#66716e]">Company: </span>
+                {contact.company}
               </span>
             )}
             {contact.email && (

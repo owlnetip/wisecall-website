@@ -74,6 +74,7 @@ async function prepareCallSession(profile, { callId, callerId }) {
   const systemPrompt = buildSystemPrompt(profile, {
     contactBlock,
     integrationBlock: pre.contextBlock,
+    callerId,
   });
 
   const integrationTools = buildDuringCallTools(metadata, context);

@@ -7,6 +7,8 @@ export type Contact = {
   phone: string;
   email: string;
   name: string;
+  company: string;
+  callbackPhone: string;
   firstSeen: string; // ISO
   lastSeen: string;  // ISO
   callCount: number;
@@ -27,7 +29,13 @@ type ContactRow = {
   email_count: number;
   ai_summary: string | null;
   notes: string | null;
+  metadata: Record<string, unknown> | null;
 };
+
+function readMetaString(metadata: Record<string, unknown> | null, key: string): string {
+  const value = metadata?.[key];
+  return typeof value === "string" ? value : "";
+}
 
 function mapContact(row: ContactRow, agentName: string): Contact {
   return {
@@ -37,6 +45,8 @@ function mapContact(row: ContactRow, agentName: string): Contact {
     phone: row.phone ?? "",
     email: row.email ?? "",
     name: row.name ?? "",
+    company: readMetaString(row.metadata, "company"),
+    callbackPhone: readMetaString(row.metadata, "callback_phone"),
     firstSeen: row.first_seen,
     lastSeen: row.last_seen,
     callCount: row.call_count,
@@ -67,7 +77,7 @@ export async function getContactsForUser(userId: string): Promise<Contact[]> {
   const { data, error } = await supabase
     .from("wisecall_contacts")
     .select(
-      "id, profile_id, phone, email, name, first_seen, last_seen, call_count, email_count, ai_summary, notes",
+      "id, profile_id, phone, email, name, first_seen, last_seen, call_count, email_count, ai_summary, notes, metadata",
     )
     .in("profile_id", profileIds)
     .order("last_seen", { ascending: false })

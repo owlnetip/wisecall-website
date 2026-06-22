@@ -45,9 +45,14 @@ export async function updateContactNotes(contactId: string, notes: string) {
   return { ok: true };
 }
 
-/** Persist names inferred from call transcripts (only when the row has no name yet). */
+/** Persist names and caller details inferred from call transcripts. */
 export async function backfillInferredContactNames(
-  updates: { id: string; name: string }[],
+  updates: {
+    id: string;
+    name?: string;
+    company?: string;
+    callbackPhone?: string;
+  }[],
 ) {
   const auth = await createSupabaseServerClient();
   const {
@@ -61,17 +66,19 @@ export async function backfillInferredContactNames(
   const admin = isAdmin(user);
   let written = 0;
 
-  for (const { id, name } of updates) {
-    const trimmed = name.trim();
-    if (!trimmed) continue;
+  for (const update of updates) {
+    const name = update.name?.trim();
+    const company = update.company?.trim();
+    const callbackPhone = update.callbackPhone?.trim();
+    if (!name && !company && !callbackPhone) continue;
 
     const { data: contact } = await service
       .from("wisecall_contacts")
-      .select("profile_id, name")
-      .eq("id", id)
+      .select("profile_id, name, metadata")
+      .eq("id", update.id)
       .maybeSingle();
 
-    if (!contact || (contact.name ?? "").trim()) continue;
+    if (!contact) continue;
 
     if (!admin) {
       const { data: profile } = await service
@@ -84,10 +91,23 @@ export async function backfillInferredContactNames(
       if (!profile) continue;
     }
 
+    const patch: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (name && !(contact.name ?? "").trim()) patch.name = name;
+
+    const meta =
+      contact.metadata && typeof contact.metadata === "object"
+        ? { ...(contact.metadata as Record<string, unknown>) }
+        : {};
+    if (company && !meta.company) meta.company = company;
+    if (callbackPhone) meta.callback_phone = callbackPhone;
+    if (company || callbackPhone) patch.metadata = meta;
+
     const { error } = await service
       .from("wisecall_contacts")
-      .update({ name: trimmed, updated_at: new Date().toISOString() })
-      .eq("id", id);
+      .update(patch)
+      .eq("id", update.id);
 
     if (!error) written += 1;
   }

@@ -76,6 +76,7 @@ import type {
 import { OfficeHoursCard } from "./office-hours-card";
 import { IntegrationWebhooksCard } from "./integration-webhooks-card";
 import type { IntegrationWebhook } from "@/lib/integration-webhooks";
+import { CALLER_INTAKE_PROMPT } from "@/lib/caller-intake";
 import { ContactsView } from "./contacts-view";
 import { RaiseTicketModal } from "./raise-ticket-modal";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
@@ -769,7 +770,9 @@ export const agentTemplates: AgentTemplate[] = [
         "- Note appointment or callback requests and pass them to the team.",
         "- Transfer urgent calls to a team member when needed.",
         "",
-        "Always be polite, concise and reassuring. If you don't know an answer, take a message and let the caller know someone will get back to them shortly. Confirm the caller's name and number before ending the call.",
+        CALLER_INTAKE_PROMPT,
+        "",
+        "Always be polite, concise and reassuring. If you don't know an answer, take a message and let the caller know someone will get back to them shortly.",
       ].join("\n");
     },
     buildGreeting: (business, receptionist) => {
@@ -829,6 +832,8 @@ export const agentTemplates: AgentTemplate[] = [
         "",
         "DENTAL EMERGENCIES",
         "- If the caller describes severe pain, swelling, bleeding, trauma or a knocked-out tooth, treat it as urgent: capture their name and number and follow the practice's emergency process (transfer or take an urgent message).",
+        "",
+        CALLER_INTAKE_PROMPT,
         "",
         "RULES",
         "- Always confirm appointment details before booking or cancelling.",

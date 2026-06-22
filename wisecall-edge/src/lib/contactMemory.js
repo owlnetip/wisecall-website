@@ -16,7 +16,7 @@ async function lookupContact(profileId, rawPhone) {
   try {
     const { data } = await sb
       .from("wisecall_contacts")
-      .select("id, name, call_count, last_seen, ai_summary, notes")
+      .select("id, name, call_count, last_seen, ai_summary, notes, metadata")
       .eq("profile_id", profileId)
       .eq("phone", phone)
       .maybeSingle();
@@ -29,8 +29,11 @@ async function lookupContact(profileId, rawPhone) {
 
 function buildContextBlock(contact) {
   if (!contact) return null;
+  const meta = contact.metadata && typeof contact.metadata === "object" ? contact.metadata : {};
   const lines = ["[CALLER MEMORY]"];
   if (contact.name) lines.push(`Name: ${contact.name}`);
+  if (meta.company) lines.push(`Company: ${meta.company}`);
+  if (meta.callback_phone) lines.push(`Confirmed callback number: ${meta.callback_phone}`);
   lines.push(`Previous calls: ${contact.call_count}`);
   if (contact.last_seen) {
     const d = new Date(contact.last_seen);
@@ -46,7 +49,7 @@ function buildContextBlock(contact) {
   return lines.join("\n");
 }
 
-async function upsertContact(profileId, { phone: rawPhone, name, aiSummary, callLogId }) {
+async function upsertContact(profileId, { phone: rawPhone, name, aiSummary, callLogId, company, callbackPhone }) {
   const phone = normalisePhone(rawPhone);
   if (!phone || !profileId) return null;
   const sb = getSupabase();
@@ -55,12 +58,14 @@ async function upsertContact(profileId, { phone: rawPhone, name, aiSummary, call
   try {
     const { data: existing } = await sb
       .from("wisecall_contacts")
-      .select("id, call_count, name")
+      .select("id, call_count, name, metadata")
       .eq("profile_id", profileId)
       .eq("phone", phone)
       .maybeSingle();
 
     const now = new Date().toISOString();
+    const existingMeta =
+      existing?.metadata && typeof existing.metadata === "object" ? existing.metadata : {};
 
     if (existing) {
       const patch = {
@@ -70,6 +75,11 @@ async function upsertContact(profileId, { phone: rawPhone, name, aiSummary, call
       };
       if (name && !existing.name) patch.name = name;
       if (aiSummary) patch.ai_summary = aiSummary;
+
+      const metaPatch = { ...existingMeta };
+      if (company && !metaPatch.company) metaPatch.company = company;
+      if (callbackPhone) metaPatch.callback_phone = callbackPhone;
+      if (Object.keys(metaPatch).length) patch.metadata = metaPatch;
 
       await sb.from("wisecall_contacts").update(patch).eq("id", existing.id);
 
@@ -92,6 +102,10 @@ async function upsertContact(profileId, { phone: rawPhone, name, aiSummary, call
       last_seen: now,
       created_at: now,
       updated_at: now,
+      metadata: {
+        ...(company ? { company } : {}),
+        ...(callbackPhone ? { callback_phone: callbackPhone } : {}),
+      },
     };
     const { data: created } = await sb
       .from("wisecall_contacts")

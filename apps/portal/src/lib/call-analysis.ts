@@ -50,6 +50,9 @@ export type CallAnalysis = {
   recommended_follow_up: string;
   short_manager_summary: string;
   tags: string[];
+  caller_name: string;
+  callback_phone: string;
+  company: string;
 };
 
 function getApiKey(): string | null {
@@ -119,6 +122,9 @@ function normalise(raw: Record<string, unknown>): CallAnalysis {
     recommended_follow_up: str("recommended_follow_up").slice(0, 500),
     short_manager_summary: str("short_manager_summary").slice(0, 500),
     tags: strList(raw.tags),
+    caller_name: str("caller_name").slice(0, 80),
+    callback_phone: str("callback_phone").slice(0, 24),
+    company: str("company").slice(0, 80),
   };
 }
 
@@ -216,6 +222,20 @@ export async function analyzeTranscript(input: {
               items: { type: "string" },
               description: "Up to 5 short topic tags.",
             },
+            caller_name: {
+              type: "string",
+              description:
+                "Caller's confirmed name if they gave one, else empty string.",
+            },
+            callback_phone: {
+              type: "string",
+              description:
+                "Best callback number confirmed on the call (E.164 or UK format), else empty string.",
+            },
+            company: {
+              type: "string",
+              description: "Company the caller said they are from, else empty string.",
+            },
           },
           required: [
             "sentiment",
@@ -233,6 +253,9 @@ export async function analyzeTranscript(input: {
             "recommended_follow_up",
             "short_manager_summary",
             "tags",
+            "caller_name",
+            "callback_phone",
+            "company",
           ],
         },
       },
@@ -284,11 +307,50 @@ type AnalyzableRow = {
   id: string;
   profile_id: string | null;
   profile_name: string | null;
+  caller_id: string | null;
   summary: string | null;
   transcript: string | null;
 };
 
-const ANALYZABLE_SELECT = "id, profile_id, profile_name, summary, transcript";
+const ANALYZABLE_SELECT =
+  "id, profile_id, profile_name, caller_id, summary, transcript";
+
+async function syncContactFromAnalysis(
+  row: AnalyzableRow,
+  analysis: CallAnalysis,
+): Promise<void> {
+  const supabase = getServiceSupabase();
+  if (!supabase || !row.profile_id) return;
+
+  const phone = (row.caller_id ?? "").replace(/[^\d+]/g, "");
+  if (!phone) return;
+
+  const { data: existing } = await supabase
+    .from("wisecall_contacts")
+    .select("id, name, metadata")
+    .eq("profile_id", row.profile_id)
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (!existing) return;
+
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (analysis.caller_name && !(existing.name ?? "").trim()) {
+    patch.name = analysis.caller_name;
+  }
+
+  const meta =
+    existing.metadata && typeof existing.metadata === "object"
+      ? { ...(existing.metadata as Record<string, unknown>) }
+      : {};
+  if (analysis.company && !meta.company) meta.company = analysis.company;
+  if (analysis.callback_phone) meta.callback_phone = analysis.callback_phone;
+  if (analysis.company || analysis.callback_phone) patch.metadata = meta;
+
+  if (Object.keys(patch).length <= 1) return;
+
+  await supabase.from("wisecall_contacts").update(patch).eq("id", existing.id);
+}
 
 // Analyses one call by id and stores the result. Returns the analysis, or null
 // if the call has no usable transcript. Service-role only.
@@ -317,6 +379,8 @@ export async function analyzeAndStoreCall(callId: string): Promise<CallAnalysis 
     .update(analysisToColumns(analysis))
     .eq("id", callId);
   if (updErr) throw new Error(`Could not store analysis for ${callId}: ${updErr.message}`);
+
+  await syncContactFromAnalysis(row, analysis);
 
   return analysis;
 }

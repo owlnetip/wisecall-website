@@ -1,6 +1,7 @@
 import type { CallLog } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
 import { extractContactNameFromLogs } from "@/lib/extract-contact-name";
+import { extractCallerDetailsFromCall } from "@/lib/extract-caller-details";
 
 function callerMatchesContact(contact: Contact, caller: string): boolean {
   const normalizedCaller = caller.trim();
@@ -16,44 +17,77 @@ function callerMatchesContact(contact: Contact, caller: string): boolean {
 }
 
 export type EnrichedContact = Contact & {
-  /** True when the displayed name was inferred from call history, not stored on the row. */
   nameInferred?: boolean;
+  detailsInferred?: boolean;
 };
 
-/** Fill missing contact names from matching call log transcripts/summaries. */
+/** Fill missing contact fields from matching call log transcripts/summaries. */
 export function enrichContactsWithNames(
   contacts: Contact[],
   callLogs: CallLog[],
 ): EnrichedContact[] {
   return contacts.map((contact) => {
-    if (contact.name.trim()) return contact;
-
     const related = callLogs.filter((log) => callerMatchesContact(contact, log.caller));
-    const inferred = extractContactNameFromLogs(related);
-    if (!inferred) return contact;
+    let next: EnrichedContact = { ...contact };
+    let changed = false;
 
-    return {
-      ...contact,
-      name: inferred,
-      nameInferred: true,
-    };
+    if (!contact.name.trim()) {
+      const inferred = extractContactNameFromLogs(related);
+      if (inferred) {
+        next = { ...next, name: inferred, nameInferred: true };
+        changed = true;
+      }
+    }
+
+    if (!contact.company.trim() || !contact.callbackPhone.trim()) {
+      for (const log of related) {
+        const details = extractCallerDetailsFromCall(log);
+        if (!next.company.trim() && details.company) {
+          next = { ...next, company: details.company, detailsInferred: true };
+          changed = true;
+        }
+        if (!next.callbackPhone.trim() && details.callbackPhone) {
+          next = { ...next, callbackPhone: details.callbackPhone, detailsInferred: true };
+          changed = true;
+        }
+        if (next.company.trim() && next.callbackPhone.trim()) break;
+      }
+    }
+
+    return changed ? next : contact;
   });
 }
 
-/** Contacts that gained a name via inference and should be persisted. */
+export type ContactBackfillPatch = {
+  id: string;
+  name?: string;
+  company?: string;
+  callbackPhone?: string;
+};
+
+/** Contacts with newly inferred fields that should be persisted. */
 export function contactsNeedingNameBackfill(
   original: Contact[],
   enriched: EnrichedContact[],
-): { id: string; name: string }[] {
+): ContactBackfillPatch[] {
   const originalById = new Map(original.map((c) => [c.id, c]));
-  const updates: { id: string; name: string }[] = [];
+  const updates: ContactBackfillPatch[] = [];
 
   for (const contact of enriched) {
-    if (!contact.nameInferred || !contact.name.trim()) continue;
     const before = originalById.get(contact.id);
-    if (before && !before.name.trim()) {
-      updates.push({ id: contact.id, name: contact.name.trim() });
+    if (!before) continue;
+
+    const patch: ContactBackfillPatch = { id: contact.id };
+    if (contact.nameInferred && contact.name.trim() && !before.name.trim()) {
+      patch.name = contact.name.trim();
     }
+    if (contact.company.trim() && !before.company.trim()) {
+      patch.company = contact.company.trim();
+    }
+    if (contact.callbackPhone.trim() && !before.callbackPhone.trim()) {
+      patch.callbackPhone = contact.callbackPhone.trim();
+    }
+    if (patch.name || patch.company || patch.callbackPhone) updates.push(patch);
   }
 
   return updates;

@@ -10,6 +10,7 @@ const copies = [
   ["contactMemory.js", "contactMemory.runtime.js"],
   ["integrationWebhooks.js", "integrationWebhooks.runtime.js"],
   ["callSession.js", "callSession.runtime.js"],
+  ["callerIntake.js", "callerIntake.runtime.js"],
 ];
 
 for (const [srcName, destName] of copies) {
