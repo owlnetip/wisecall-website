@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import {
   getStripe,
   getStripeWebhookSecret,
+  planDisplayName,
   isEmailChannelSubscription,
   EMAIL_INCLUDED_REPLIES,
 } from "@/lib/stripe";
@@ -246,8 +247,22 @@ async function sendTrialEndingReminder(stripe: Stripe, sub: Stripe.Subscription)
       })
     : "soon";
   const manageUrl = `${getAppBaseUrl()}/billing`;
+  const billingLine = billingLineForSub(sub);
 
-  await notifyTrialEnding({ email, phone, endDate, manageUrl });
+  await notifyTrialEnding({ email, phone, endDate, manageUrl, billingLine });
+}
+
+// Builds the human "what you'll be charged" clause from the actual subscription
+// price, so the reminder states the customer's real plan + amount (e.g. "£249/
+// month (plus VAT) for your Core plan") instead of a hardcoded figure.
+function billingLineForSub(sub: Stripe.Subscription): string | null {
+  const item = sub.items?.data?.[0];
+  const amount = item?.price?.unit_amount; // pence, excl. VAT
+  const interval = item?.price?.recurring?.interval ?? "month";
+  if (typeof amount !== "number") return null;
+  const pounds = (amount / 100).toLocaleString("en-GB", { maximumFractionDigits: 2 });
+  const planName = planDisplayName(sub.metadata?.plan);
+  return `£${pounds}/${interval} (plus VAT) for your ${planName} plan`;
 }
 
 export async function POST(req: Request) {

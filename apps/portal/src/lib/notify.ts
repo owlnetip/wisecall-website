@@ -7,6 +7,8 @@ export async function notifyTrialEnding(params: {
   phone: string | null;
   endDate: string;
   manageUrl: string;
+  billingLine?: string | null;
+  final?: boolean;
 }) {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   const secret = process.env.WISECALL_TRIAL_REMINDER_SECRET;
