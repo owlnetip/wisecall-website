@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Phone, Mail, Search, MessageSquareText, History } from "lucide-react";
-import type { Contact } from "@/lib/contacts";
+import {
+  ArrowLeft,
+  Phone,
+  Mail,
+  Search,
+  MessageSquareText,
+  History,
+} from "lucide-react";
+import type { EnrichedContact } from "@/lib/enrich-contacts";
 import type { CallLog } from "@/lib/agents";
 import { updateContactNotes } from "@/app/actions/contacts";
 
@@ -41,32 +48,45 @@ function absoluteDate(iso: string): string {
   });
 }
 
+function contactDisplayName(contact: EnrichedContact): string {
+  if (contact.name.trim()) return contact.name.trim();
+  return contact.phone || contact.email || "Unknown";
+}
+
+function contactSubtitle(contact: EnrichedContact): string {
+  const primary = contactDisplayName(contact);
+  if (contact.phone && primary !== contact.phone) return contact.phone;
+  if (contact.email && primary !== contact.email) return contact.email;
+  if (contact.nameInferred) return "Name from call history";
+  return "No name yet";
+}
+
 function ContactRow({
   contact,
   selected,
   onClick,
 }: {
-  contact: Contact;
+  contact: EnrichedContact;
   selected: boolean;
   onClick: () => void;
 }) {
-  const displayName = contact.name || contact.phone || contact.email || "Unknown";
+  const displayName = contactDisplayName(contact);
+  const subtitle = contactSubtitle(contact);
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
-        selected ? "bg-[#eefbfb]" : "hover:bg-[#f2f4f3]"
+        selected ? "bg-[#eefbfb]" : "hover:bg-[#f2f4f3] active:bg-[#e6f7f7]"
       }`}
     >
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#148b8e]/10 text-sm font-black text-[#148b8e]">
+      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#148b8e]/10 text-sm font-black text-[#148b8e]">
         {initials(contact.name, contact.phone)}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-[#111716]">{displayName}</p>
-        <p className="truncate text-xs text-[#66716e]">
-          {contact.phone || contact.email || "No contact info"}
-        </p>
+        <p className="truncate text-xs text-[#66716e]">{subtitle}</p>
       </div>
       <div className="flex-shrink-0 text-right">
         <p className="text-xs text-[#9aa5a2]">{relativeDate(contact.lastSeen)}</p>
@@ -83,16 +103,19 @@ function ContactRow({
 function ContactDetail({
   contact,
   callLogs,
+  onBack,
+  showBack,
 }: {
-  contact: Contact;
+  contact: EnrichedContact;
   callLogs: CallLog[];
+  onBack?: () => void;
+  showBack?: boolean;
 }) {
   const [notes, setNotes] = useState(contact.notes);
   const [pending, start] = useTransition();
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Reset local state when the selected contact changes
   const [lastId, setLastId] = useState(contact.id);
   if (contact.id !== lastId) {
     setLastId(contact.id);
@@ -101,8 +124,6 @@ function ContactDetail({
     setSaveError(null);
   }
 
-  // Match interactions across channels: phone calls (caller = number) and emails
-  // (caller = email address). One timeline per contact.
   const phoneKey = contact.phone.replace(/\s/g, "");
   const emailKey = contact.email.toLowerCase();
   const relatedCalls = callLogs.filter((l) => {
@@ -112,7 +133,7 @@ function ContactDetail({
     return false;
   });
 
-  const displayName = contact.name || contact.phone || contact.email || "Unknown caller";
+  const displayName = contactDisplayName(contact);
 
   function saveNotes() {
     setSaved(false);
@@ -125,40 +146,56 @@ function ContactDetail({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-start gap-4 border-b border-black/5 px-6 py-5">
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto">
+      {showBack && onBack ? (
+        <div className="sticky top-0 z-10 border-b border-black/5 bg-white px-3 py-2 lg:hidden">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-bold text-[#148b8e]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            All contacts
+          </button>
+        </div>
+      ) : null}
+
+      <div className="flex items-start gap-4 border-b border-black/5 px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#148b8e]/10 text-lg font-black text-[#148b8e]">
           {initials(contact.name, contact.phone)}
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-lg font-black text-[#111716]">{displayName}</h2>
+          {contact.nameInferred ? (
+            <p className="text-xs font-medium text-[#148b8e]">Name detected from past calls</p>
+          ) : null}
           <p className="text-sm text-[#66716e]">{contact.agentName}</p>
-          <div className="mt-2 flex flex-wrap gap-3">
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
             {contact.phone && (
               <span className="flex items-center gap-1.5 text-sm text-[#111716]">
-                <Phone className="h-3.5 w-3.5 text-[#148b8e]" />
-                {contact.phone}
+                <Phone className="h-3.5 w-3.5 flex-shrink-0 text-[#148b8e]" />
+                <span className="break-all">{contact.phone}</span>
               </span>
             )}
             {contact.email && (
               <span className="flex items-center gap-1.5 text-sm text-[#111716]">
-                <Mail className="h-3.5 w-3.5 text-[#148b8e]" />
-                {contact.email}
+                <Mail className="h-3.5 w-3.5 flex-shrink-0 text-[#148b8e]" />
+                <span className="break-all">{contact.email}</span>
               </span>
             )}
           </div>
         </div>
       </div>
 
-      <div className="flex-1 space-y-5 px-6 py-5">
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3">
+      <div className="flex-1 space-y-5 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             {
               label: "Interactions",
               value: `${contact.callCount} call${contact.callCount !== 1 ? "s" : ""}${
-                contact.emailCount ? `, ${contact.emailCount} email${contact.emailCount !== 1 ? "s" : ""}` : ""
+                contact.emailCount
+                  ? `, ${contact.emailCount} email${contact.emailCount !== 1 ? "s" : ""}`
+                  : ""
               }`,
             },
             { label: "First contact", value: absoluteDate(contact.firstSeen) },
@@ -171,35 +208,36 @@ function ContactDetail({
           ))}
         </div>
 
-        {/* AI summary */}
         {contact.aiSummary && (
           <div>
             <p className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-[#111716]">
               <MessageSquareText className="h-4 w-4 text-[#148b8e]" />
               AI summary
             </p>
-            <p className="rounded-xl bg-[#eefbfb] px-4 py-3 text-sm text-[#0e4b4d]">
+            <p className="rounded-xl bg-[#eefbfb] px-4 py-3 text-sm leading-relaxed text-[#0e4b4d]">
               {contact.aiSummary}
             </p>
           </div>
         )}
 
-        {/* Notes */}
         <div>
           <p className="mb-1.5 text-sm font-bold text-[#111716]">Notes</p>
           <textarea
             rows={4}
             value={notes}
-            onChange={(e) => { setNotes(e.target.value); setSaved(false); }}
+            onChange={(e) => {
+              setNotes(e.target.value);
+              setSaved(false);
+            }}
             placeholder="Add private notes about this contact — visible only to you."
             className="w-full rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2 text-sm text-[#111716] placeholder:text-[#9aa5a2] focus:outline-none focus:ring-2 focus:ring-[#148b8e]/40"
           />
-          <div className="mt-2 flex items-center gap-3">
+          <div className="mt-2 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={saveNotes}
               disabled={pending}
-              className="inline-flex h-8 items-center rounded-lg bg-[#111716] px-4 text-xs font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+              className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-xs font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
             >
               {pending ? "Saving…" : "Save notes"}
             </button>
@@ -208,7 +246,6 @@ function ContactDetail({
           </div>
         </div>
 
-        {/* Call history */}
         {relatedCalls.length > 0 && (
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-[#111716]">
@@ -221,16 +258,18 @@ function ContactDetail({
                   key={log.id}
                   className="rounded-xl border border-black/5 bg-[#f8fafa] px-4 py-3"
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
                     <p className="text-xs font-semibold text-[#111716]">
                       {log.outcome || "Call"}
                     </p>
-                    <span className="flex-shrink-0 text-xs text-[#9aa5a2]">
+                    <span className="text-xs text-[#9aa5a2]">
                       {relativeDate(log.startedAt)} · {log.durationLabel}
                     </span>
                   </div>
                   {log.summary && (
-                    <p className="mt-1 text-xs text-[#66716e] line-clamp-2">{log.summary}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[#66716e] line-clamp-3">
+                      {log.summary}
+                    </p>
                   )}
                 </div>
               ))}
@@ -246,11 +285,12 @@ export function ContactsView({
   contacts,
   callLogs,
 }: {
-  contacts: Contact[];
+  contacts: EnrichedContact[];
   callLogs: CallLog[];
 }) {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(contacts[0]?.id ?? null);
+  const [mobileShowDetail, setMobileShowDetail] = useState(false);
 
   const filtered = contacts.filter((c) => {
     const q = search.toLowerCase().trim();
@@ -265,9 +305,18 @@ export function ContactsView({
 
   const selected = contacts.find((c) => c.id === selectedId) ?? null;
 
+  function selectContact(id: string) {
+    setSelectedId(id);
+    setMobileShowDetail(true);
+  }
+
+  function backToList() {
+    setMobileShowDetail(false);
+  }
+
   if (contacts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
+      <div className="flex flex-col items-center justify-center px-4 py-16 text-center sm:py-24">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#eefbfb]">
           <Phone className="h-8 w-8 text-[#148b8e]" />
         </div>
@@ -281,18 +330,21 @@ export function ContactsView({
   }
 
   return (
-    <div className="flex h-full min-h-[600px] gap-0 overflow-hidden rounded-[14px] border border-black/10 bg-white">
-      {/* Contact list */}
-      <div className="flex w-[300px] flex-shrink-0 flex-col border-r border-black/5">
+    <div className="flex min-h-[480px] flex-col overflow-hidden rounded-[14px] border border-black/10 bg-white lg:min-h-[600px] lg:flex-row">
+      <div
+        className={`flex flex-col border-black/5 lg:w-[min(100%,320px)] lg:flex-shrink-0 lg:border-r ${
+          mobileShowDetail ? "hidden lg:flex" : "flex flex-1 lg:flex-none"
+        }`}
+      >
         <div className="border-b border-black/5 p-3">
-          <div className="flex items-center gap-2 rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2">
+          <div className="flex items-center gap-2 rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2.5">
             <Search className="h-4 w-4 flex-shrink-0 text-[#9aa5a2]" />
             <input
-              type="text"
+              type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search contacts…"
-              className="min-w-0 flex-1 bg-transparent text-sm text-[#111716] placeholder:text-[#9aa5a2] focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent text-base text-[#111716] placeholder:text-[#9aa5a2] focus:outline-none sm:text-sm"
             />
           </div>
           <p className="mt-2 px-1 text-xs text-[#9aa5a2]">
@@ -305,7 +357,7 @@ export function ContactsView({
               key={c.id}
               contact={c}
               selected={c.id === selectedId}
-              onClick={() => setSelectedId(c.id)}
+              onClick={() => selectContact(c.id)}
             />
           ))}
           {filtered.length === 0 && (
@@ -314,12 +366,20 @@ export function ContactsView({
         </div>
       </div>
 
-      {/* Detail panel */}
-      <div className="flex-1 overflow-hidden">
+      <div
+        className={`min-h-0 flex-1 overflow-hidden ${
+          mobileShowDetail ? "flex flex-col" : "hidden lg:flex lg:flex-col"
+        }`}
+      >
         {selected ? (
-          <ContactDetail contact={selected} callLogs={callLogs} />
+          <ContactDetail
+            contact={selected}
+            callLogs={callLogs}
+            showBack
+            onBack={backToList}
+          />
         ) : (
-          <div className="flex h-full items-center justify-center">
+          <div className="flex h-full min-h-[240px] items-center justify-center px-4">
             <p className="text-sm text-[#9aa5a2]">Select a contact</p>
           </div>
         )}

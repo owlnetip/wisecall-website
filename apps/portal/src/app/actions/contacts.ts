@@ -44,3 +44,54 @@ export async function updateContactNotes(contactId: string, notes: string) {
   revalidatePath("/dashboard");
   return { ok: true };
 }
+
+/** Persist names inferred from call transcripts (only when the row has no name yet). */
+export async function backfillInferredContactNames(
+  updates: { id: string; name: string }[],
+) {
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const admin = isAdmin(user);
+  let written = 0;
+
+  for (const { id, name } of updates) {
+    const trimmed = name.trim();
+    if (!trimmed) continue;
+
+    const { data: contact } = await service
+      .from("wisecall_contacts")
+      .select("profile_id, name")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!contact || (contact.name ?? "").trim()) continue;
+
+    if (!admin) {
+      const { data: profile } = await service
+        .from("wisecall_profiles")
+        .select("id")
+        .eq("id", contact.profile_id)
+        .eq("metadata->>owner_id", user.id)
+        .maybeSingle();
+
+      if (!profile) continue;
+    }
+
+    const { error } = await service
+      .from("wisecall_contacts")
+      .update({ name: trimmed, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (!error) written += 1;
+  }
+
+  if (written > 0) revalidatePath("/dashboard");
+  return { ok: true, written };
+}

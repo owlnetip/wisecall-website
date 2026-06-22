@@ -7,6 +7,11 @@ import { getAgentsForUser, getCallLogsForUser } from "@/lib/agents";
 import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage } from "@/lib/billing";
 import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
+import {
+  enrichContactsWithNames,
+  contactsNeedingNameBackfill,
+} from "@/lib/enrich-contacts";
+import { backfillInferredContactNames } from "@/app/actions/contacts";
 import { isAdmin } from "@/lib/admin";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
 import { getInsightsForUser } from "@/lib/insights";
@@ -71,11 +76,17 @@ export default async function DashboardPage() {
     calls: counts[agent.id] ?? agent.calls,
   }));
 
+  const enrichedContacts = enrichContactsWithNames(contacts, callLogs);
+  const nameBackfill = contactsNeedingNameBackfill(contacts, enrichedContacts);
+  if (nameBackfill.length > 0) {
+    await backfillInferredContactNames(nameBackfill);
+  }
+
   return (
     <CustomerAgentWorkspace
       initialAssistants={enriched ?? undefined}
       callLogs={callLogs}
-      contacts={contacts}
+      contacts={enrichedContacts}
       userEmail={impersonatingEmail ?? user.email}
       // While impersonating, render the customer's own chrome (no Admin link) so
       // it's a faithful view of what they see. The billing-gate bypass above
