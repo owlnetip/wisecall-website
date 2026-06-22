@@ -180,6 +180,60 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
   return { ok: true, id: profileId };
 }
 
+export type DeleteResult = { ok: boolean; releasedNumber?: string | null; error?: string };
+
+// Permanently removes an agent and returns its pooled DDI (if any) to the shared
+// pool so the next first-number agent can reuse it. Admin-only on purpose:
+// customers cancel by giving notice rather than self-serve deleting, so this is
+// only ever invoked from the backend/admin side — there is no client delete UI.
+export async function deleteAgent(agentId: string): Promise<DeleteResult> {
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+  if (!isAdmin(user)) return { ok: false, error: "Admins only." };
+
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  // Confirm the agent exists before touching anything.
+  const { data: row, error: readError } = await service
+    .from("wisecall_profiles")
+    .select("id")
+    .eq("id", agentId)
+    .maybeSingle();
+  if (readError) return { ok: false, error: readError.message };
+  if (!row) return { ok: false, error: "Agent not found." };
+
+  // Delete the profile first. There's no FK from wisecall_number_pool to
+  // profiles, so the pool row survives and is still matched by
+  // assigned_profile_id when we release it next.
+  const { error: deleteError } = await service
+    .from("wisecall_profiles")
+    .delete()
+    .eq("id", agentId);
+  if (deleteError) return { ok: false, error: deleteError.message };
+
+  // Free the pooled DDI (if one was assigned). Returns the freed number, or null
+  // when the agent had no pool number. The agent is already gone, so a release
+  // failure must not fail the whole action — the number can still be reclaimed by
+  // the Stripe-cancellation path or a replenish job.
+  let releasedNumber: string | null = null;
+  const { data: released, error: releaseError } = await service.rpc(
+    "wisecall_release_pool_number",
+    { p_profile_id: agentId },
+  );
+  if (releaseError) {
+    console.error("pool number release failed on delete:", releaseError.message);
+  } else {
+    releasedNumber = (released as string | null) ?? null;
+  }
+
+  revalidatePath("/dashboard");
+  return { ok: true, releasedNumber };
+}
+
 // Persists edits to an agent. Ownership is enforced server-side: the row is
 // only updated if its metadata.owner_id matches the signed-in user, so a user
 // can never edit another customer's agent by guessing an id.
