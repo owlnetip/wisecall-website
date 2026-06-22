@@ -4,6 +4,8 @@ import {
   EMAIL_INCLUDED_REPLIES,
   EMAIL_OVERAGE_GBP,
   EMAIL_CHANNEL_MONTHLY_GBP,
+  getStripe,
+  isEmailChannelSubscription,
 } from "@/lib/stripe";
 
 export type Billing = {
@@ -84,6 +86,68 @@ export async function getBillingForUser(userId: string): Promise<Billing | null>
 // A customer can reach the dashboard / configure agents while trialing or active.
 export function hasActiveAccess(billing: Billing | null): boolean {
   return billing?.status === "trialing" || billing?.status === "active";
+}
+
+// Fallback for when the Stripe webhook hasn't synced the subscription yet (or
+// failed to deliver). startCheckout pre-creates a billing row with the customer
+// id + plan but no status; the webhook is supposed to fill in status/
+// subscription_id afterwards. If it doesn't, the customer is stuck on /billing
+// forever even though they have a live subscription. This reads the truth from
+// Stripe and writes it back, so signup works regardless of webhook timing/health.
+// Returns the (possibly refreshed) billing record.
+export async function reconcileBillingFromStripe(
+  userId: string,
+  billing: Billing | null,
+): Promise<Billing | null> {
+  if (hasActiveAccess(billing)) return billing; // already good — no work needed
+  const customerId = billing?.stripeCustomerId;
+  if (!customerId) return billing; // never started checkout — nothing to reconcile
+
+  const stripe = getStripe();
+  const service = getServiceSupabase();
+  if (!stripe || !service) return billing;
+
+  try {
+    const subs = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 10,
+    });
+    // Newest plan subscription (not the email-channel add-on) that grants access.
+    const planSub = subs.data
+      .filter((s) => !isEmailChannelSubscription(s.metadata))
+      .filter((s) => s.status === "trialing" || s.status === "active")
+      .sort((a, b) => b.created - a.created)[0];
+    if (!planSub) return billing;
+
+    const item = planSub.items?.data?.[0] as { current_period_end?: number } | undefined;
+    const top = (planSub as unknown as { current_period_end?: number }).current_period_end;
+    const periodEndSecs = item?.current_period_end ?? top;
+
+    await service.from("wisecall_billing").upsert(
+      {
+        user_id: userId,
+        stripe_customer_id: customerId,
+        subscription_id: planSub.id,
+        plan: planSub.metadata?.plan ?? billing?.plan ?? "core",
+        status: planSub.status,
+        trial_end:
+          typeof planSub.trial_end === "number"
+            ? new Date(planSub.trial_end * 1000).toISOString()
+            : null,
+        current_period_end:
+          typeof periodEndSecs === "number"
+            ? new Date(periodEndSecs * 1000).toISOString()
+            : null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" },
+    );
+    return await getBillingForUser(userId);
+  } catch (err) {
+    console.error("reconcileBillingFromStripe failed:", (err as Error).message);
+    return billing;
+  }
 }
 
 export function hasEmailChannelAccess(billing: Billing | null): boolean {
