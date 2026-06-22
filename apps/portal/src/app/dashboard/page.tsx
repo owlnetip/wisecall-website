@@ -4,7 +4,7 @@ import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAgentsForUser, getCallLogsForUser } from "@/lib/agents";
-import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage } from "@/lib/billing";
+import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, reconcileBillingFromStripe } from "@/lib/billing";
 import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
 import { isAdmin } from "@/lib/admin";
@@ -45,9 +45,15 @@ export default async function DashboardPage() {
 
   // Billing gate: a real customer must be trialing/active before they can
   // configure an agent. Admins bypass (incl. while viewing as a customer).
-  const billing = await getBillingForUser(effectiveUserId);
+  let billing = await getBillingForUser(effectiveUserId);
   if (!admin && !hasActiveAccess(billing)) {
-    redirect("/billing");
+    // The Stripe webhook may not have synced the new subscription yet (or failed
+    // to deliver), which would otherwise strand a paid-up customer on /billing.
+    // Reconcile straight from Stripe before giving up.
+    billing = await reconcileBillingFromStripe(effectiveUserId, billing);
+    if (!hasActiveAccess(billing)) {
+      redirect("/billing");
+    }
   }
 
   const emailChannel = getEmailChannelUsage(billing, hasActiveAccess(billing));
