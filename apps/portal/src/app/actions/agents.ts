@@ -81,10 +81,9 @@ function slugify(value: string): string {
     .slice(0, 40);
 }
 
-// Creates a brand-new agent owned by the signed-in user. The new row is stamped
-// with metadata.owner_id = the current user, so it shows up only for them. It
-// starts inactive (is_active = false) with no phone number — provisioning a
-// Telnyx number is a separate step.
+// Creates a brand-new agent owned by the signed-in user. The first real DDI for
+// an owner is included and goes live when assignment succeeds. Extra numbered
+// agents stay in setup until an additional number is provisioned/charged.
 export async function createAgent(input: NewAgent): Promise<CreateResult> {
   const auth = await createSupabaseServerClient();
   const {
@@ -99,6 +98,19 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
 
   const service = getServiceSupabase();
   if (!service) return { ok: false, error: "Server not configured." };
+
+  const { data: existingNumberedAgents, error: numberReadError } = await service
+    .from("wisecall_profiles")
+    .select("id,telnyx_number")
+    .eq("metadata->>owner_id", user.id)
+    .not("telnyx_number", "is", null);
+  if (numberReadError) return { ok: false, error: numberReadError.message };
+
+  const hasIncludedNumber = (existingNumberedAgents ?? []).some((row) => {
+    const number = String(row.telnyx_number ?? "").trim();
+    return number.startsWith("+");
+  });
+  const shouldAssignIncludedNumber = !hasIncludedNumber;
 
   const base = slugify(`${input.name}-${input.businessName}`) || "agent";
   const slug = `${base}-${crypto.randomUUID().slice(0, 8)}`;
@@ -138,28 +150,30 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
 
   const profileId = data.id as string;
 
-  // Auto-assign a free pooled number. Pure DB: pooled numbers already point at
-  // the shared TeXML app and the runtime routes by called number, so setting
-  // telnyx_number is all it takes. Best-effort — the agent is still created if
-  // the pool is empty (they can provision later).
-  try {
-    const { data: assigned } = await service.rpc("wisecall_assign_pool_number", {
-      p_profile_id: profileId,
-    });
-    if (assigned) {
-      await service
-        .from("wisecall_profiles")
-        .update({
-          telnyx_number: assigned,
-          metadata: {
-            ...metadata,
-            routing: { provider: "telnyx", number: assigned, status: "live" },
-          },
-        })
-        .eq("id", profileId);
+  if (shouldAssignIncludedNumber) {
+    // Auto-assign one included pooled DDI per owner. Pooled numbers already
+    // point at the shared TeXML app and the runtime routes by called number, so
+    // setting telnyx_number + is_active is enough to make the agent answer.
+    try {
+      const { data: assigned } = await service.rpc("wisecall_assign_pool_number", {
+        p_profile_id: profileId,
+      });
+      if (assigned) {
+        await service
+          .from("wisecall_profiles")
+          .update({
+            telnyx_number: assigned,
+            is_active: true,
+            metadata: {
+              ...metadata,
+              routing: { provider: "telnyx", number: assigned, status: "live" },
+            },
+          })
+          .eq("id", profileId);
+      }
+    } catch (poolErr) {
+      console.error("pool number assign failed:", (poolErr as Error).message);
     }
-  } catch (poolErr) {
-    console.error("pool number assign failed:", (poolErr as Error).message);
   }
 
   revalidatePath("/dashboard");
