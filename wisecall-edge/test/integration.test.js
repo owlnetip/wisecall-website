@@ -8,6 +8,10 @@ const {
 } = require("../src/lib/integrationWebhooks");
 const { buildSystemPrompt } = require("../src/prompt");
 const { mergeIntegrationTools } = require("../src/lib/callSession");
+const {
+  buildEmailSummaryPayload,
+  getEmailSummaryUrl,
+} = require("../src/lib/emailSummary");
 
 test("substituteTemplates replaces call context tokens", () => {
   const out = substituteTemplates("caller={{caller_id}} id={{profile_id}}", {
@@ -87,4 +91,69 @@ test("mergeIntegrationTools avoids duplicate tool names", () => {
   assert.equal(merged.length, 2);
   assert.equal(merged[0].function.name, "transfer_call");
   assert.equal(merged[1].function.name, "create_ticket");
+});
+
+test("getEmailSummaryUrl defaults to the Supabase edge function URL", () => {
+  assert.equal(
+    getEmailSummaryUrl({ SUPABASE_URL: "https://example.supabase.co/" }),
+    "https://example.supabase.co/functions/v1/wisecall-email-summary",
+  );
+  assert.equal(
+    getEmailSummaryUrl({ WISECALL_EMAIL_SUMMARY_URL: "https://hooks.test/email" }),
+    "https://hooks.test/email",
+  );
+});
+
+test("buildEmailSummaryPayload carries routing metadata for recipient selection", () => {
+  const payload = buildEmailSummaryPayload(
+    {
+      id: "p1",
+      slug: "charles-garth",
+      profile_name: "Charles Garth Voice Desk",
+      business_name: "Charles Garth",
+      receptionist_name: "Mia",
+    },
+    { callId: "call-1", callerId: "+441234567890" },
+    {
+      summary: "Message taken for accounts.",
+      transcript: "user: accounts please",
+      outcome: "caller_stop",
+      startedAt: "2026-06-22T00:00:00.000Z",
+      finishedAt: "2026-06-22T00:01:00.000Z",
+      metadata: {
+        collected: {
+          transfer_route_key: "accounts",
+          transfer_label: "Accounts",
+          called_number: "+441135220500",
+        },
+      },
+    },
+  );
+
+  assert.equal(payload.profile.slug, "charles-garth");
+  assert.equal(payload.session.collected.transfer_route_key, "accounts");
+  assert.deepEqual(payload.extra.transfer, { route_key: "accounts", label: "Accounts" });
+});
+
+test("buildEmailSummaryPayload falls back to conversation history when transcript is empty", () => {
+  const payload = buildEmailSummaryPayload(
+    { id: "p1", slug: "agent" },
+    { callId: "call-1", callerId: "+441234567890" },
+    {
+      summary: "Message taken.",
+      transcript: "",
+      metadata: {
+        history: [
+          { type: "conversation", role: "assistant", content: "How can I help?" },
+          { type: "conversation", role: "user", content: "Please call me back." },
+          { type: "function_request", role: "assistant", content: "ignored" },
+        ],
+      },
+    },
+  );
+
+  assert.equal(
+    payload.extra.transcript,
+    "assistant: How can I help?\nuser: Please call me back.",
+  );
 });

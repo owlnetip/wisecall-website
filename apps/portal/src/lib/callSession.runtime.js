@@ -12,6 +12,7 @@ const {
   executeDuringCallWebhook,
   runAfterCallWebhooks,
 } = require("./integrationWebhooks");
+const { sendCallEmailSummary } = require("./emailSummary");
 const { buildSystemPrompt } = require("../prompt");
 const { saveCallLog } = require("../saveCallLog");
 
@@ -156,6 +157,29 @@ async function finalizeCallSession(
   runAfterCallWebhooks(metadataProfile, context).catch((err) => {
     console.error("[callSession] after_call webhooks failed:", err.message);
   });
+
+  // Best-effort — the standard customer summary email is independent of custom webhooks.
+  sendCallEmailSummary(profile, session.context, {
+    transcript,
+    summary,
+    outcome,
+    startedAt,
+    finishedAt,
+    metadata,
+  })
+    .then((result) => {
+      if (result?.skipped) return;
+      if (result && !result.ok) {
+        console.error(
+          "[callSession] email summary failed:",
+          result.status,
+          typeof result.body === "string" ? result.body : JSON.stringify(result.body),
+        );
+      }
+    })
+    .catch((err) => {
+      console.error("[callSession] email summary failed:", err.message);
+    });
 
   return { callLogId };
 }
