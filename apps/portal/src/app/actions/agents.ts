@@ -159,6 +159,10 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
         p_profile_id: profileId,
       });
       if (assigned) {
+        // A number was free: wire it up and go live. is_active MUST be set in the
+        // same write — the call runtime only matches profiles where is_active=true
+        // (wisecallConfigStore), so a number without is_active answers "not
+        // configured yet".
         await service
           .from("wisecall_profiles")
           .update({
@@ -167,6 +171,21 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
             metadata: {
               ...metadata,
               routing: { provider: "telnyx", number: assigned, status: "live" },
+            },
+          })
+          .eq("id", profileId);
+      } else {
+        // Pool was empty (e.g. a burst of signups drained it). Flag the agent as
+        // awaiting a number and show the "provisioning" state, instead of a dead
+        // "Assign number" button. wisecall-pool-replenish picks these up and
+        // assigns + activates a number automatically once the pool refills.
+        await service
+          .from("wisecall_profiles")
+          .update({
+            metadata: {
+              ...metadata,
+              awaiting_number: true,
+              routing: { provider: "telnyx", number: "", status: "pending" },
             },
           })
           .eq("id", profileId);

@@ -38,6 +38,46 @@ async function alertEmail(subject: string, text: string) {
   } catch (_e) { /* ignore */ }
 }
 
+// Assigns free pool numbers to agents that signed up while the pool was empty
+// (metadata.awaiting_number === true, no number yet) and activates them, so the
+// create → empty-pool → replenish → live loop closes with no human step. The
+// runtime only routes calls to is_active profiles, so is_active MUST be set here
+// alongside the number. Returns how many agents were put live.
+async function assignWaitingAgents(
+  supabase: ReturnType<typeof createClient>,
+): Promise<number> {
+  const { data: waiting, error } = await supabase
+    .from("wisecall_profiles")
+    .select("id, metadata")
+    .eq("metadata->>awaiting_number", "true")
+    .is("telnyx_number", null)
+    .limit(50);
+  if (error || !waiting?.length) return 0;
+
+  let assignedCount = 0;
+  for (const row of waiting) {
+    const { data: number } = await supabase.rpc("wisecall_assign_pool_number", {
+      p_profile_id: row.id,
+    });
+    if (!number) break; // pool drained — stop, remaining stay pending for next run
+    const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
+    delete metadata.awaiting_number;
+    await supabase
+      .from("wisecall_profiles")
+      .update({
+        telnyx_number: number,
+        is_active: true,
+        metadata: {
+          ...metadata,
+          routing: { provider: "telnyx", number, status: "live" },
+        },
+      })
+      .eq("id", row.id as string);
+    assignedCount += 1;
+  }
+  return assignedCount;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
@@ -68,9 +108,21 @@ Deno.serve(async (req) => {
     .eq("status", "free");
   if (cErr) return json({ ok: false, error: cErr.message }, 500);
 
-  const free = freeCount ?? 0;
+  // Serve any agents already waiting from the current free pool first (e.g. a
+  // number freed by a cancellation, or signups that outran the pool). This runs
+  // every cycle, even when the pool is healthy.
+  const assignedFromExisting = await assignWaitingAgents(supabase);
+
+  // Re-count free after those assignments so the order math and health check are
+  // based on the true remaining stock.
+  const { count: freeAfter } = await supabase
+    .from("wisecall_number_pool")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "free");
+  const free = freeAfter ?? Math.max(0, (freeCount ?? 0) - assignedFromExisting);
+
   if (free >= minFree) {
-    return json({ ok: true, skipped: "pool healthy", free, minFree });
+    return json({ ok: true, skipped: "pool healthy", free, minFree, assigned: assignedFromExisting });
   }
 
   const need = Math.max(0, target - free);
@@ -145,5 +197,15 @@ Deno.serve(async (req) => {
     return json({ ok: false, reason: "seed_failed", error: insErr.message, ordered: orderedNumbers });
   }
 
-  return json({ ok: true, ordered: orderedNumbers.length, numbers: orderedNumbers, free_before: free, target });
+  // Now that fresh numbers are in the pool, drain any remaining waiting agents.
+  const assignedAfterOrder = await assignWaitingAgents(supabase);
+
+  return json({
+    ok: true,
+    ordered: orderedNumbers.length,
+    numbers: orderedNumbers,
+    free_before: free,
+    target,
+    assigned: assignedFromExisting + assignedAfterOrder,
+  });
 });
