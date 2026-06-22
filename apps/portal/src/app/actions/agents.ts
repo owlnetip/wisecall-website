@@ -103,6 +103,19 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
   const base = slugify(`${input.name}-${input.businessName}`) || "agent";
   const slug = `${base}-${crypto.randomUUID().slice(0, 8)}`;
 
+  const metadata: Record<string, unknown> = {
+    owner_id: user.id,
+    industry: input.industry,
+    source: "portal_create",
+    greeting: input.greeting ?? "",
+    voice: input.voice ?? "Gemma",
+    knowledge: input.knowledge ?? "",
+    knowledge_fields: input.knowledgeFields ?? {},
+    default_routing_email: "",
+    routing_contacts: input.contacts ?? [],
+    transfer_routes: toTransferRoutes(input.contacts ?? []),
+  };
+
   const { data, error } = await service
     .from("wisecall_profiles")
     .insert({
@@ -116,26 +129,41 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
       business_context: input.knowledge ?? "",
       timezone: input.timezone ?? "Europe/London",
       is_active: false,
-      metadata: {
-        owner_id: user.id,
-        industry: input.industry,
-        source: "portal_create",
-        greeting: input.greeting ?? "",
-        voice: input.voice ?? "Gemma",
-        knowledge: input.knowledge ?? "",
-        knowledge_fields: input.knowledgeFields ?? {},
-        default_routing_email: "",
-        routing_contacts: input.contacts ?? [],
-        transfer_routes: toTransferRoutes(input.contacts ?? []),
-      },
+      metadata,
     })
     .select("id")
     .single();
 
   if (error) return { ok: false, error: error.message };
 
+  const profileId = data.id as string;
+
+  // Auto-assign a free pooled number. Pure DB: pooled numbers already point at
+  // the shared TeXML app and the runtime routes by called number, so setting
+  // telnyx_number is all it takes. Best-effort — the agent is still created if
+  // the pool is empty (they can provision later).
+  try {
+    const { data: assigned } = await service.rpc("wisecall_assign_pool_number", {
+      p_profile_id: profileId,
+    });
+    if (assigned) {
+      await service
+        .from("wisecall_profiles")
+        .update({
+          telnyx_number: assigned,
+          metadata: {
+            ...metadata,
+            routing: { provider: "telnyx", number: assigned, status: "live" },
+          },
+        })
+        .eq("id", profileId);
+    }
+  } catch (poolErr) {
+    console.error("pool number assign failed:", (poolErr as Error).message);
+  }
+
   revalidatePath("/dashboard");
-  return { ok: true, id: data.id as string };
+  return { ok: true, id: profileId };
 }
 
 // Persists edits to an agent. Ownership is enforced server-side: the row is

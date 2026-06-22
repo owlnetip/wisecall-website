@@ -8,7 +8,7 @@ import {
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
 import { notifyTrialEnding } from "@/lib/notify";
-import { syncEmailChannelProfiles } from "@/lib/billing";
+import { syncEmailChannelProfiles, getBillingForUser, hasActiveAccess } from "@/lib/billing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +39,46 @@ async function resolveOwnerId(
     .eq("stripe_customer_id", customerId)
     .maybeSingle();
   return (data?.user_id as string | undefined) ?? null;
+}
+
+// Returns pooled numbers to the pool (and clears them off the owner's agents)
+// when the customer no longer has active access — i.e. a real cancellation, not
+// a plan switch (which also fires subscription.deleted for the superseded sub).
+async function reclaimOwnerNumbers(
+  userId: string,
+  service: ReturnType<typeof getServiceSupabase>,
+): Promise<void> {
+  if (!service) return;
+  // Still a paying/trialing customer (e.g. just switched plans) — keep their number.
+  if (hasActiveAccess(await getBillingForUser(userId))) return;
+
+  const { data: profiles } = await service
+    .from("wisecall_profiles")
+    .select("id, metadata")
+    .eq("metadata->>owner_id", userId);
+  const rows = (profiles ?? []) as { id: string; metadata: Record<string, unknown> | null }[];
+  if (!rows.length) return;
+  const ids = rows.map((p) => p.id);
+
+  const now = new Date().toISOString();
+  // Free the pool numbers for reuse.
+  await service
+    .from("wisecall_number_pool")
+    .update({ status: "free", assigned_profile_id: null, assigned_at: null, released_at: now, updated_at: now })
+    .in("assigned_profile_id", ids);
+
+  // Clear the number off each agent + mark it unprovisioned/inactive.
+  for (const p of rows) {
+    const meta = (p.metadata ?? {}) as Record<string, unknown>;
+    await service
+      .from("wisecall_profiles")
+      .update({
+        telnyx_number: null,
+        is_active: false,
+        metadata: { ...meta, routing: { provider: null, number: "", status: "unprovisioned" } },
+      })
+      .eq("id", p.id);
+  }
 }
 
 async function fetchStripeCustomerPhone(
@@ -255,12 +295,18 @@ export async function POST(req: Request) {
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
         await handleSubscriptionEvent(sub);
-        if (
-          event.type === "customer.subscription.deleted" &&
-          isEmailChannelSubscription(sub.metadata)
-        ) {
-          const userId = await resolveOwnerId(sub, getServiceSupabase());
-          if (userId) await syncEmailChannelProfiles(userId, false);
+        if (event.type === "customer.subscription.deleted") {
+          const svc = getServiceSupabase();
+          const userId = await resolveOwnerId(sub, svc);
+          if (userId) {
+            if (isEmailChannelSubscription(sub.metadata)) {
+              await syncEmailChannelProfiles(userId, false);
+            } else {
+              // Main plan cancelled — return pooled numbers for reuse (the helper
+              // no-ops if the customer still has active access, e.g. a plan switch).
+              await reclaimOwnerNumbers(userId, svc);
+            }
+          }
         }
         break;
       }
