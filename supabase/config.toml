@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.wisecall-kb-search]
 verify_jwt = true
+
+[functions.wisecall-live-chat]
+verify_jwt = false
