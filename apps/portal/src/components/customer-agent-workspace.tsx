@@ -12,11 +12,13 @@ import {
   CirclePlus,
   CreditCard,
   Flame,
+  FileText,
   Grid2X2,
   Hand,
   HelpCircle,
   History,
   Layers,
+  Link2,
   Loader2,
   LogOut,
   Mail,
@@ -36,6 +38,7 @@ import {
   ThumbsUp,
   Trash2,
   TrendingUp,
+  UploadCloud,
   UserRound,
   Users,
   Volume2,
@@ -51,6 +54,16 @@ import {
   testVoice,
   updateAgent,
 } from "@/app/actions/agents";
+import {
+  deleteKnowledgeBaseSource,
+  ingestKnowledgeBaseSource,
+  listKnowledgeBaseSources,
+  searchKnowledgeBase,
+  type KnowledgeBaseJob,
+  type KnowledgeBaseSource,
+  type KnowledgeBaseSourceType,
+  type KnowledgeSearchChunk,
+} from "@/app/actions/knowledge-base";
 import type { CallLog } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
 import type {
@@ -70,7 +83,7 @@ import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 
 type View = "home" | "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
-type DetailTab = "behaviour" | "routing" | "technical";
+type DetailTab = "behaviour" | "knowledge" | "routing" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
 // stack wins — only `provider` and the per-provider fields differ. Persisted in
@@ -1904,19 +1917,19 @@ function AssistantDetail({
         />
       ) : null}
 
-      <div className="mb-8 flex border-b border-black/10">
-        {(["behaviour", "routing", "technical"] as DetailTab[]).map((item) => (
+      <div className="mb-8 flex overflow-x-auto border-b border-black/10">
+        {(["behaviour", "knowledge", "routing", "technical"] as DetailTab[]).map((item) => (
           <button
             type="button"
             key={item}
             onClick={() => onTabChange(item)}
-            className={`border-b-2 px-4 py-3 text-sm font-black capitalize transition ${
+            className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-black transition ${
               tab === item
                 ? "border-[#111716] text-[#111716]"
                 : "border-transparent text-[#7a8582] hover:text-[#111716]"
             }`}
           >
-            {item}
+            {item === "knowledge" ? "Knowledge Base" : item}
           </button>
         ))}
       </div>
@@ -1980,6 +1993,13 @@ function AssistantDetail({
                 onClick={() => onAbility("knowledge")}
               />
               <AbilityRow
+                icon={FileText}
+                title="Knowledge Base"
+                body="Documents, URLs and pasted notes for retrieval."
+                enabled
+                onClick={() => onTabChange("knowledge")}
+              />
+              <AbilityRow
                 icon={Phone}
                 title="Transfer Calls"
                 body={
@@ -2000,6 +2020,8 @@ function AssistantDetail({
             </div>
           </div>
         </div>
+      ) : tab === "knowledge" ? (
+        <KnowledgeBaseTab assistant={assistant} />
       ) : tab === "routing" ? (
         <RoutingTab
           contacts={assistant.contacts}
@@ -2075,6 +2097,391 @@ function AssistantDetail({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const KB_CATEGORIES = [
+  "General",
+  "OwlnetPBX",
+  "Yeastar",
+  "SIP",
+  "Phones",
+  "Internet",
+  "NumberPorting",
+  "OWLnetApp",
+];
+
+function sourceTypeLabel(value: string): string {
+  if (value === "url") return "URL";
+  if (value === "sitemap") return "Sitemap";
+  if (value === "paste") return "Text";
+  if (value === "upload") return "File";
+  return value || "Source";
+}
+
+function statusTone(status: string): string {
+  if (status === "completed") return "bg-[#eafaf1] text-[#14823f]";
+  if (status === "failed") return "bg-[#fdecec] text-[#9b1c1c]";
+  return "bg-[#fff6e5] text-[#8a5a00]";
+}
+
+function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
+  const [sources, setSources] = useState<KnowledgeBaseSource[]>([]);
+  const [jobs, setJobs] = useState<KnowledgeBaseJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [sourceType, setSourceType] = useState<KnowledgeBaseSourceType>("paste");
+  const [category, setCategory] = useState("General");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [filename, setFilename] = useState("");
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [mutationOk, setMutationOk] = useState<string | null>(null);
+  const [deletingSource, setDeletingSource] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchChunks, setSearchChunks] = useState<KnowledgeSearchChunk[]>([]);
+  const [isMutating, startMutation] = useTransition();
+  const [isSearching, startSearch] = useTransition();
+
+  const totalChunks = sources.reduce((sum, source) => sum + source.chunkCount, 0);
+
+  async function load() {
+    setLoading(true);
+    setLoadError(null);
+    const result = await listKnowledgeBaseSources(assistant.id);
+    if (result.ok) {
+      setSources(result.sources);
+      setJobs(result.jobs);
+    } else {
+      setLoadError(result.error ?? "Could not load the knowledge base.");
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assistant.id]);
+
+  async function readFile(file: File | undefined) {
+    if (!file) return;
+    setFilename(file.name);
+    if (!title.trim()) setTitle(file.name.replace(/\.[^.]+$/, ""));
+    setText(await file.text());
+  }
+
+  function ingest() {
+    setMutationError(null);
+    setMutationOk(null);
+    startMutation(async () => {
+      const result = await ingestKnowledgeBaseSource({
+        agentId: assistant.id,
+        sourceType,
+        sourceUrl,
+        title,
+        text,
+        filename,
+        category,
+      });
+      if (!result.ok) {
+        setMutationError(result.error ?? "Could not add this source.");
+        return;
+      }
+      setMutationOk(
+        `${result.chunksAdded ?? 0} chunk${result.chunksAdded === 1 ? "" : "s"} indexed`,
+      );
+      if (sourceType === "url" || sourceType === "sitemap") setSourceUrl("");
+      else {
+        setTitle("");
+        setText("");
+        setFilename("");
+      }
+      await load();
+    });
+  }
+
+  function remove(source: KnowledgeBaseSource) {
+    setMutationError(null);
+    setMutationOk(null);
+    setDeletingSource(source.source);
+    startMutation(async () => {
+      const result = await deleteKnowledgeBaseSource(assistant.id, source.source);
+      setDeletingSource(null);
+      if (!result.ok) {
+        setMutationError(result.error ?? "Could not remove this source.");
+        return;
+      }
+      setMutationOk("Source removed");
+      await load();
+    });
+  }
+
+  function testSearch() {
+    const clean = query.trim();
+    if (!clean) return;
+    setSearchError(null);
+    startSearch(async () => {
+      const result = await searchKnowledgeBase(assistant.id, clean);
+      if (!result.ok) {
+        setSearchChunks([]);
+        setSearchError(result.error ?? "Search failed.");
+        return;
+      }
+      setSearchChunks(result.chunks);
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-[18px] border border-black/10 bg-white">
+        <div className="flex flex-col gap-4 border-b border-black/10 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-xl font-black">
+              <FileText className="h-5 w-5 text-[#148b8e]" />
+              Knowledge Base
+            </h2>
+            <p className="mt-1 text-sm text-[#66716e]">
+              {sources.length} source{sources.length === 1 ? "" : "s"} · {totalChunks} indexed chunk{totalChunks === 1 ? "" : "s"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/10 bg-white px-4 py-2.5 text-sm font-black text-[#111716] transition hover:bg-[#f7f8f7] disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
+
+        <div className="p-5">
+          {loading ? (
+            <div className="flex items-center justify-center rounded-[14px] bg-[#f7f8f7] px-4 py-12 text-sm font-semibold text-[#66716e]">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading sources
+            </div>
+          ) : loadError ? (
+            <div className="rounded-[14px] border border-[#e7caca] bg-[#fff7f7] px-4 py-4 text-sm text-[#9b1c1c]">
+              {loadError}
+            </div>
+          ) : sources.length ? (
+            <div className="overflow-hidden rounded-[14px] border border-black/10">
+              <div className="grid grid-cols-[1fr_110px_90px_120px_48px] gap-3 border-b border-black/10 bg-[#fbfcfc] px-4 py-3 text-xs font-black uppercase tracking-wide text-[#66716e] max-md:hidden">
+                <span>Source</span>
+                <span>Category</span>
+                <span>Chunks</span>
+                <span>Updated</span>
+                <span />
+              </div>
+              <div className="divide-y divide-black/10">
+                {sources.map((source) => (
+                  <div
+                    key={source.source}
+                    className="grid gap-3 px-4 py-4 md:grid-cols-[1fr_110px_90px_120px_48px] md:items-center"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-black text-[#111716]">{source.title}</p>
+                      <p className="mt-1 flex min-w-0 items-center gap-1 truncate text-xs text-[#66716e]">
+                        <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">{source.source}</span>
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-[#66716e]">{source.category}</span>
+                    <span className="font-mono text-sm text-[#66716e]">{source.chunkCount}</span>
+                    <span className="text-xs text-[#66716e]">{formatWhen(source.latest)}</span>
+                    <button
+                      type="button"
+                      onClick={() => remove(source)}
+                      disabled={isMutating && deletingSource === source.source}
+                      aria-label={`Remove ${source.title}`}
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#fdeaea] hover:text-[#c0392b] disabled:opacity-50"
+                    >
+                      {isMutating && deletingSource === source.source ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-[14px] border border-dashed border-black/15 bg-[#fbfcfc] px-5 py-12 text-center">
+              <FileText className="mx-auto h-8 w-8 text-[#148b8e]" />
+              <p className="mt-3 font-black text-[#111716]">No indexed sources yet</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-[#66716e]">
+                Add a web page, sitemap, pasted notes or text file to make retrieval available for this agent.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-[18px] border border-black/10 bg-white p-5">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-lg font-black">Add source</h3>
+            <p className="mt-1 text-sm text-[#66716e]">Content is chunked, embedded and attached to {assistant.name}.</p>
+          </div>
+          <select
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            className="h-10 rounded-lg border border-black/15 bg-white px-3 text-sm font-bold outline-none focus:border-[#111716]"
+          >
+            {KB_CATEGORIES.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-5 inline-flex rounded-lg border border-black/10 bg-[#f7f8f7] p-1">
+          {(["paste", "url", "sitemap", "upload"] as KnowledgeBaseSourceType[]).map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setSourceType(item)}
+              className={`rounded-md px-3 py-2 text-sm font-black transition ${
+                sourceType === item ? "bg-[#111716] text-white" : "text-[#66716e] hover:bg-white"
+              }`}
+            >
+              {sourceTypeLabel(item)}
+            </button>
+          ))}
+        </div>
+
+        {sourceType === "url" || sourceType === "sitemap" ? (
+          <Field
+            label={sourceType === "sitemap" ? "Sitemap URL" : "Page URL"}
+            value={sourceUrl}
+            onChange={setSourceUrl}
+            placeholder={sourceType === "sitemap" ? "https://example.com/sitemap.xml" : "https://example.com/help"}
+          />
+        ) : (
+          <div className="space-y-4">
+            <Field
+              label={sourceType === "upload" ? "Display title" : "Title"}
+              value={title}
+              onChange={setTitle}
+              placeholder="Refund policy"
+            />
+            {sourceType === "upload" ? (
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-[14px] border border-dashed border-black/20 bg-[#fbfcfc] px-4 py-8 text-center transition hover:bg-[#f7f8f7]">
+                <UploadCloud className="h-7 w-7 text-[#148b8e]" />
+                <span className="mt-2 text-sm font-black text-[#111716]">
+                  {filename || "Choose a text file"}
+                </span>
+                <span className="mt-1 text-xs text-[#66716e]">TXT, Markdown, CSV, JSON or HTML</span>
+                <input
+                  type="file"
+                  accept=".txt,.md,.markdown,.csv,.json,.html,.htm,text/*,application/json"
+                  className="sr-only"
+                  onChange={(event) => void readFile(event.target.files?.[0])}
+                />
+              </label>
+            ) : null}
+            <label className="block">
+              <span className="mb-2 block text-sm font-black">Text</span>
+              <textarea
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                placeholder="Paste the policy, FAQ or notes here."
+                rows={8}
+                className="w-full resize-y rounded-lg border border-black/15 bg-white px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-[#9aa4a1] focus:border-[#111716]"
+              />
+            </label>
+          </div>
+        )}
+
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={ingest}
+            disabled={isMutating}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+          >
+            {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {isMutating ? "Indexing" : "Add to Knowledge Base"}
+          </button>
+          {mutationOk ? <span className="text-sm font-bold text-[#14823f]">{mutationOk}</span> : null}
+          {mutationError ? <span className="text-sm font-bold text-[#9b1c1c]">{mutationError}</span> : null}
+        </div>
+      </section>
+
+      <section className="rounded-[18px] border border-black/10 bg-white p-5">
+        <h3 className="text-lg font-black">Test retrieval</h3>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") testSearch();
+            }}
+            placeholder="Ask a question this agent should answer"
+            className="h-12 min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+          />
+          <button
+            type="button"
+            onClick={testSearch}
+            disabled={isSearching || !query.trim()}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#111716] px-5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+          >
+            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            Search
+          </button>
+        </div>
+        {searchError ? <p className="mt-3 text-sm font-bold text-[#9b1c1c]">{searchError}</p> : null}
+        {searchChunks.length > 0 ? (
+          <div className="mt-4 space-y-3">
+            {searchChunks.map((chunk, index) => (
+              <div key={`${chunk.title}-${index}`} className="rounded-[14px] border border-black/10 bg-[#fbfcfc] p-4">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-black text-[#111716]">{chunk.title || "Untitled"}</p>
+                  <span className="font-mono text-xs font-bold text-[#66716e]">
+                    {chunk.similarity.toFixed(3)}
+                  </span>
+                </div>
+                <p className="text-sm leading-6 text-[#66716e]">{truncate(chunk.content, 360)}</p>
+              </div>
+            ))}
+          </div>
+        ) : query && !isSearching && !searchError ? (
+          <p className="mt-3 text-sm text-[#66716e]">No matching chunks yet.</p>
+        ) : null}
+      </section>
+
+      {jobs.length > 0 ? (
+        <section className="rounded-[18px] border border-black/10 bg-white p-5">
+          <h3 className="text-lg font-black">Recent ingest jobs</h3>
+          <div className="mt-4 divide-y divide-black/10">
+            {jobs.map((job) => (
+              <div key={job.id} className="flex flex-wrap items-center gap-3 py-3">
+                <span className={`rounded-full px-2.5 py-1 text-xs font-black ${statusTone(job.status)}`}>
+                  {job.status || "running"}
+                </span>
+                <span className="font-bold text-[#111716]">
+                  {job.sourceTitle || job.sourceUrl || sourceTypeLabel(job.sourceType)}
+                </span>
+                <span className="text-sm text-[#66716e]">
+                  {sourceTypeLabel(job.sourceType)} · {job.chunksAdded} chunk{job.chunksAdded === 1 ? "" : "s"} · {formatWhen(job.startedAt)}
+                </span>
+                {job.errorMessage ? (
+                  <span className="basis-full text-sm text-[#9b1c1c]">{job.errorMessage}</span>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -3869,11 +4276,13 @@ function Field({
   label,
   value,
   onChange,
+  placeholder,
   autoFocus = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
   autoFocus?: boolean;
 }) {
   return (
@@ -3882,8 +4291,9 @@ function Field({
       <input
         value={value}
         autoFocus={autoFocus}
+        placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+        className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition placeholder:text-[#9aa4a1] focus:border-[#111716]"
       />
     </label>
   );
