@@ -3,3 +3,6 @@
 
 [functions.wisecall-trial-cap-reached]
 verify_jwt = false
+
+[functions.wisecall-kb-search]
+verify_jwt = true
