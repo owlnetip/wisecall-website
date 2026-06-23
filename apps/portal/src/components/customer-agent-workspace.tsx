@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -47,7 +48,9 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
 import { EmailChannelCheckoutButton } from "@/app/billing/start-trial-button";
+import { disconnectSlack, updateSlackConnectionProfile } from "@/app/actions/slack";
 import type { EmailChannelUsage } from "@/lib/billing";
+import type { SlackConnection } from "@/lib/slack";
 import {
   createAgent,
   provisionNumber,
@@ -622,12 +625,214 @@ function WebsiteChatChannel({ assistants }: { assistants: Assistant[] }) {
   );
 }
 
+function SlackChannelCard({
+  assistants,
+  connection,
+  configured,
+}: {
+  assistants: Assistant[];
+  connection?: SlackConnection | null;
+  configured: boolean;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(Boolean(connection));
+  const [profileId, setProfileId] = useState(connection?.profileId || assistants[0]?.id || "");
+  const [pending, start] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (connection?.profileId) setProfileId(connection.profileId);
+  }, [connection?.profileId]);
+
+  function connect() {
+    if (!profileId) {
+      setErr("Create an agent first.");
+      return;
+    }
+    window.location.href = `/api/slack/install?profile_id=${encodeURIComponent(profileId)}`;
+  }
+
+  function saveAgent() {
+    if (!connection || !profileId || profileId === connection.profileId) return;
+    setErr(null);
+    setMessage(null);
+    start(async () => {
+      const result = await updateSlackConnectionProfile(profileId);
+      if (result.ok) {
+        setMessage("Agent updated.");
+        router.refresh();
+      } else setErr(result.error ?? "Couldn't update.");
+    });
+  }
+
+  function disconnect() {
+    setErr(null);
+    setMessage(null);
+    start(async () => {
+      const result = await disconnectSlack();
+      if (result.ok) {
+        setMessage("Slack disconnected.");
+        router.refresh();
+      } else setErr(result.error ?? "Couldn't disconnect.");
+    });
+  }
+
+  const linkedAgent = assistants.find((a) => a.id === (connection?.profileId || profileId));
+
+  return (
+    <div className="rounded-[14px] border border-black/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-4 px-5 py-4 text-left"
+      >
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+          <MessageSquareText className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-[#111716]">Slack</p>
+          <p className="text-sm text-[#66716e]">
+            Let staff or clients message your agent in Slack — DMs and @mentions.
+          </p>
+        </div>
+        {connection ? (
+          <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+            Connected
+          </span>
+        ) : configured ? (
+          <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
+            Not connected
+          </span>
+        ) : (
+          <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
+            Setup required
+          </span>
+        )}
+        <ChevronDown
+          className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open ? (
+        <div className="space-y-3 border-t border-black/5 px-5 pb-5 pt-4">
+          {!configured ? (
+            <p className="text-sm text-[#66716e]">
+              Slack is not configured on this environment yet. An admin needs to add{" "}
+              <code className="rounded bg-[#f2f4f3] px-1">SLACK_CLIENT_ID</code>,{" "}
+              <code className="rounded bg-[#f2f4f3] px-1">SLACK_CLIENT_SECRET</code>, and{" "}
+              <code className="rounded bg-[#f2f4f3] px-1">SLACK_SIGNING_SECRET</code>.
+            </p>
+          ) : connection ? (
+            <>
+              <p className="text-sm text-[#66716e]">
+                Connected to <strong>{connection.workspaceName}</strong>
+                {linkedAgent ? (
+                  <>
+                    {" "}
+                    — handled by <strong>{linkedAgent.name}</strong>
+                  </>
+                ) : null}
+                .
+              </p>
+              <p className="text-xs text-[#66716e]">
+                People can DM the WiseCall bot or @mention it in a channel. Replies are logged to
+                Contacts like every other channel.
+              </p>
+              {assistants.length > 1 ? (
+                <label className="block text-xs font-bold text-[#66716e]">
+                  Agent
+                  <select
+                    value={profileId}
+                    onChange={(e) => setProfileId(e.target.value)}
+                    className="mt-1 block w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-[#111716]"
+                  >
+                    {assistants.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name} — {a.businessName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-2">
+                {assistants.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={saveAgent}
+                    disabled={pending || profileId === connection.profileId}
+                    className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-50"
+                  >
+                    {pending ? "Saving…" : "Save agent"}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={disconnect}
+                  disabled={pending}
+                  className="inline-flex h-9 items-center rounded-lg border border-black/10 bg-white px-4 text-sm font-bold text-[#66716e] transition hover:bg-[#f8fafa] disabled:opacity-50"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-[#66716e]">
+                Connect your Slack workspace to let people message your AI receptionist. Works with
+                direct messages and @mentions in channels.
+              </p>
+              {assistants.length ? (
+                <>
+                  {assistants.length > 1 ? (
+                    <label className="block text-xs font-bold text-[#66716e]">
+                      Which agent handles Slack?
+                      <select
+                        value={profileId}
+                        onChange={(e) => setProfileId(e.target.value)}
+                        className="mt-1 block w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-[#111716]"
+                      >
+                        {assistants.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.name} — {a.businessName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={connect}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#111716] px-5 text-sm font-black text-white transition hover:bg-[#263130]"
+                  >
+                    <Link2 className="h-4 w-4" />
+                    Connect Slack
+                  </button>
+                </>
+              ) : (
+                <p className="text-sm text-[#66716e]">Create an agent first, then connect Slack.</p>
+              )}
+            </>
+          )}
+          {message ? <p className="text-xs font-medium text-[#148b8e]">{message}</p> : null}
+          {err ? <p className="text-xs font-medium text-red-600">{err}</p> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ChannelsHub({
   emailChannel,
   assistants,
+  slackConnection,
+  slackConfigured,
 }: {
   emailChannel?: EmailChannelUsage;
   assistants: Assistant[];
+  slackConnection?: SlackConnection | null;
+  slackConfigured?: boolean;
 }) {
   return (
     <div className="mx-auto max-w-3xl">
@@ -691,6 +896,13 @@ function ChannelsHub({
             </span>
           )}
         </div>
+
+        {/* Slack — workspace OAuth */}
+        <SlackChannelCard
+          assistants={assistants}
+          connection={slackConnection}
+          configured={slackConfigured ?? false}
+        />
 
         {/* WhatsApp — coming soon */}
         <div className="flex items-center gap-4 rounded-[14px] border border-dashed border-black/10 bg-[#fafbfb] px-5 py-4">
@@ -882,6 +1094,10 @@ export function CustomerAgentWorkspace({
   trial,
   planName,
   emailChannel,
+  slackConnection,
+  slackConfigured = false,
+  initialView,
+  slackBanner: initialSlackBanner,
   impersonating,
   initialInsights,
   analysisEnabled = false,
@@ -895,6 +1111,10 @@ export function CustomerAgentWorkspace({
   trial?: { used: number; cap: number; blocked: boolean }; // free-trial call usage
   planName?: string; // subscription plan label (Core / Growth / Pro)
   emailChannel?: EmailChannelUsage;
+  slackConnection?: SlackConnection | null;
+  slackConfigured?: boolean;
+  initialView?: View;
+  slackBanner?: string | null;
   impersonating?: { email: string }; // admin viewing as this customer
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
@@ -904,7 +1124,8 @@ export function CustomerAgentWorkspace({
   const [selectedId, setSelectedId] = useState(
     (initialAssistants ?? demoAssistants)[0]?.id ?? "",
   );
-  const [view, setView] = useState<View>("assistants");
+  const [view, setView] = useState<View>(initialView || "assistants");
+  const [slackBanner, setSlackBanner] = useState<string | null>(initialSlackBanner ?? null);
   const [detailTab, setDetailTab] = useState<DetailTab>("behaviour");
   const [searchTerm, setSearchTerm] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -1485,7 +1706,19 @@ export function CustomerAgentWorkspace({
             )}
 
             {view === "channels" && (
-              <ChannelsHub emailChannel={emailChannel} assistants={assistants} />
+              <>
+                {slackBanner ? (
+                  <div className="mx-auto mb-4 max-w-3xl rounded-xl border border-[#148b8e]/30 bg-[#eefbfb] px-4 py-3 text-sm text-[#111716]">
+                    {slackBanner}
+                  </div>
+                ) : null}
+                <ChannelsHub
+                  emailChannel={emailChannel}
+                  assistants={assistants}
+                  slackConnection={slackConnection}
+                  slackConfigured={slackConfigured}
+                />
+              </>
             )}
           </div>
         </main>
