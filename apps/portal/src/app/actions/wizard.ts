@@ -54,14 +54,21 @@ function htmlToText(html: string): string {
     .slice(0, 14000);
 }
 
-async function fetchSiteText(url: string): Promise<string> {
+const FETCH_UA =
+  "Mozilla/5.0 (compatible; WiseCall/1.0; +https://wisecall.io) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+async function fetchSiteTextDirect(url: string): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
   try {
     const res = await fetch(url, {
       signal: controller.signal,
       redirect: "follow",
-      headers: { "user-agent": "WiseCallSetupBot/1.0 (+https://wisecall.io)" },
+      headers: {
+        "user-agent": FETCH_UA,
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "en-GB,en;q=0.9",
+      },
     });
     if (!res.ok) throw new Error(`Site returned ${res.status}`);
     const html = await res.text();
@@ -69,6 +76,46 @@ async function fetchSiteText(url: string): Promise<string> {
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Fallback for Cloudflare-protected or bot-blocked sites. Uses the same Jina
+// stack as kb-search embeddings — get a free key at https://jina.ai/?sui=apikey.
+async function fetchSiteTextViaJina(url: string): Promise<string> {
+  const apiKey = process.env.JINA_API_KEY;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25000);
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "X-Retain-Images": "none",
+    };
+    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+
+    const res = await fetch("https://r.jina.ai/", {
+      method: "POST",
+      signal: controller.signal,
+      headers,
+      body: JSON.stringify({ url }),
+    });
+    if (!res.ok) throw new Error(`Reader returned ${res.status}`);
+    const data = (await res.json()) as { data?: { content?: string } };
+    const text = data.data?.content?.trim() ?? "";
+    if (!text) throw new Error("Reader returned no content");
+    return text.slice(0, 14000);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchSiteText(url: string): Promise<string> {
+  try {
+    const direct = await fetchSiteTextDirect(url);
+    if (direct.length >= 80) return direct;
+  } catch {
+    // Direct fetch often fails on Cloudflare/WAF-protected sites — try Reader.
+  }
+  return fetchSiteTextViaJina(url);
 }
 
 // AI-assisted onboarding: fetch the customer's website and have Claude draft a
