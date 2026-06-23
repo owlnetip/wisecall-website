@@ -175,6 +175,21 @@ async function handleSubscriptionEvent(sub: Stripe.Subscription) {
   await upsertPlanSubscription(sub);
 }
 
+async function handleDeletedSubscription(sub: Stripe.Subscription) {
+  const svc = getServiceSupabase();
+  const userId = await resolveOwnerId(sub, svc);
+  if (!userId) return;
+
+  if (isEmailChannelSubscription(sub.metadata)) {
+    await syncEmailChannelProfiles(userId, false);
+    return;
+  }
+
+  // Main plan cancelled — return pooled numbers for reuse (the helper no-ops
+  // if the customer still has active access, e.g. a plan switch).
+  await reclaimOwnerNumbers(userId, svc);
+}
+
 // When switching Core/Growth/Pro, cancel other plan subs — keep the email channel add-on.
 async function cancelOtherPlanSubscriptions(
   stripe: Stripe,
@@ -307,21 +322,15 @@ export async function POST(req: Request) {
       }
       case "customer.subscription.created":
       case "customer.subscription.updated":
+      case "customer.subscription.paused":
+      case "customer.subscription.resumed":
+      case "customer.subscription.pending_update_applied":
+      case "customer.subscription.pending_update_expired":
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
         await handleSubscriptionEvent(sub);
         if (event.type === "customer.subscription.deleted") {
-          const svc = getServiceSupabase();
-          const userId = await resolveOwnerId(sub, svc);
-          if (userId) {
-            if (isEmailChannelSubscription(sub.metadata)) {
-              await syncEmailChannelProfiles(userId, false);
-            } else {
-              // Main plan cancelled — return pooled numbers for reuse (the helper
-              // no-ops if the customer still has active access, e.g. a plan switch).
-              await reclaimOwnerNumbers(userId, svc);
-            }
-          }
+          await handleDeletedSubscription(sub);
         }
         break;
       }
