@@ -101,7 +101,7 @@ type InsightRow = {
 const INSIGHT_SELECT =
   "id, caller_id, summary, outcome, started_at, created_at, transcript, sentiment, sentiment_score, intent_category, urgency, complaint_detected, lead_detected, booking_detected, unanswered_question, ai_insight_summary, ai_analysis_json, analysed_at";
 
-function emptyInsights(range: InsightsRange, hasAnyCalls: boolean): DashboardInsights {
+export function emptyInsights(range: InsightsRange, hasAnyCalls: boolean): DashboardInsights {
   return {
     range,
     generatedAt: new Date().toISOString(),
