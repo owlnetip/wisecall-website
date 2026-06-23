@@ -14,7 +14,7 @@ import {
 import { backfillInferredContactNames } from "@/app/actions/contacts";
 import { isAdmin } from "@/lib/admin";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
-import { getInsightsForUser } from "@/lib/insights";
+import { getInsightsForUser, emptyInsights } from "@/lib/insights";
 import { isAnalysisConfigured } from "@/lib/call-analysis";
 
 export default async function DashboardPage() {
@@ -63,13 +63,25 @@ export default async function DashboardPage() {
 
   const emailChannel = getEmailChannelUsage(billing, hasActiveAccess(billing));
 
+  // Load every panel independently and degrade gracefully: a transient failure
+  // in one fetch (cold start, a Supabase/insights hiccup) must NOT 500 the whole
+  // dashboard and force a refresh — render what we have and log the rest.
+  const safe = async <T,>(label: string, p: Promise<T>, fallback: T): Promise<T> => {
+    try {
+      return await p;
+    } catch (err) {
+      console.error(`dashboard load: ${label} failed`, err instanceof Error ? err.message : err);
+      return fallback;
+    }
+  };
+
   const [agents, callLogs, contacts, trial, insights] = await Promise.all([
-    getAgentsForUser(effectiveUserId),
-    getCallLogsForUser(effectiveUserId),
-    getContactsForUser(effectiveUserId),
-    getTrialUsage(effectiveUserId, billing),
+    safe("agents", getAgentsForUser(effectiveUserId), []),
+    safe("callLogs", getCallLogsForUser(effectiveUserId), []),
+    safe("contacts", getContactsForUser(effectiveUserId), []),
+    safe("trial", getTrialUsage(effectiveUserId, billing), null),
     // Default range matches the AI Insights view's default ("Last 7 days").
-    getInsightsForUser(effectiveUserId, "7d"),
+    safe("insights", getInsightsForUser(effectiveUserId, "7d"), emptyInsights("7d", false)),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.

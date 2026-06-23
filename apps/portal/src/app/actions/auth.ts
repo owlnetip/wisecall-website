@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/env";
 
@@ -31,6 +32,9 @@ export async function signInAction(
     return { error: error.message };
   }
 
+  // Drop the cached RSC tree so the post-login render uses the fresh session
+  // cookie set above, instead of a stale layout that can error on first paint.
+  revalidatePath("/", "layout");
   redirect(redirectTo);
 }
 
@@ -69,6 +73,7 @@ export async function signUpAction(
     return { message: "Check your inbox to confirm your email, then choose your plan." };
   }
 
+  revalidatePath("/", "layout");
   redirect("/billing");
 }
 
@@ -104,6 +109,7 @@ export async function updatePassword(
   if (error) {
     return { error: error.message };
   }
+  revalidatePath("/", "layout");
   redirect("/dashboard");
 }
 
