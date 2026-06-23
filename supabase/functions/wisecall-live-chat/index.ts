@@ -184,6 +184,11 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "- Ask one clear question at a time.",
     "- Never say the visitor is calling, never offer SMS, and never say you will text them. This is website chat.",
     "- Do not invent bookings, viewing availability, fees, guarantees, opening hours, or legal advice.",
+    "",
+    "Using knowledge:",
+    "- If a [KNOWLEDGE BASE] block is provided below, treat it as the authoritative source and answer from it.",
+    "- If it does not cover the question, you may use general knowledge to help, BUT never invent business-specific details (prices, timescales, account or system specifics, what is configured on their account). For those, say you will check with the support team and offer to pass their details on.",
+    "- If you are unsure, be honest and offer to escalate rather than guessing.",
     "- Capture useful follow-up details when the visitor wants a callback or asks a question that needs staff follow-up.",
     "- If the visitor gives contact details, confirm you will pass the message to the team.",
     "- Use UK English.",
@@ -252,13 +257,49 @@ async function loadProfile(supabase: any, slug: string) {
   return data;
 }
 
-async function callOpenAi(profile: any, history: ChatMessage[]) {
+// Only inject KB chunks this relevant. Below this, the match is noise (e.g. an
+// unrelated billing chunk surfacing for a voicemail question) and would mislead
+// the agent more than help, so we fall back to general knowledge instead.
+const KB_MIN_SIMILARITY = 0.35;
+
+// Pull relevant knowledge-base context for the visitor's question by calling the
+// wisecall-kb-search function (which embeds with Jina and runs the match RPC,
+// scoped to this agent's profile id). Relevance-gated: returns a context block
+// built only from sufficiently-similar chunks, or null when nothing is a good
+// match. Never throws — KB lookup is best-effort and must not break the chat.
+async function fetchKbContext(profileId: string, query: string): Promise<string | null> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !svcKey || !profileId || !query) return null;
+    const res = await fetch(`${supabaseUrl}/functions/v1/wisecall-kb-search`, {
+      method: "POST",
+      headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ profile_id: profileId, query, match_count: 4 }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const chunks = Array.isArray(data?.chunks) ? data.chunks : [];
+    const relevant = chunks
+      .filter((c: { content?: string; similarity?: number }) =>
+        c?.content && typeof c.similarity === "number" && c.similarity >= KB_MIN_SIMILARITY)
+      .map((c: { content: string }) => c.content);
+    if (!relevant.length) return null;
+    return "[KNOWLEDGE BASE]\n" + relevant.join("\n---\n");
+  } catch (e) {
+    console.error("[wisecall-live-chat] kb context:", (e as Error).message);
+    return null;
+  }
+}
+
+async function callOpenAi(profile: any, history: ChatMessage[], kbContext: string | null) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return null;
 
   const prompt = buildProfilePrompt(profile, profile?.metadata || {});
   const messages = [
     { role: "system", content: prompt },
+    ...(kbContext ? [{ role: "system", content: kbContext }] : []),
     ...history.slice(-18).map((message) => ({
       role: message.role === "assistant" ? "assistant" : "user",
       content: message.content,
@@ -467,7 +508,8 @@ serve(async (req) => {
     let chatLog = await getOrCreateChatLog(supabase, profile, body, extracted);
     const collected = { ...(chatLog.metadata?.collected || {}), ...extracted };
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
-    const reply = (await callOpenAi(profile, history)) || fallbackReply(profile, collected);
+    const kbContext = await fetchKbContext(profile.id, message);
+    const reply = (await callOpenAi(profile, history, kbContext)) || fallbackReply(profile, collected);
     const updatedMessages = [...history, { role: "assistant", content: reply } as ChatMessage];
     const transcript = formatTranscript(updatedMessages);
 

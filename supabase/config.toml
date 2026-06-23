@@ -9,3 +9,8 @@ verify_jwt = true
 
 [functions.wisecall-live-chat]
 verify_jwt = false
+
+# Resend inbound webhook — authenticates via its own inbound secret, not a
+# Supabase JWT, so JWT verification must stay off or the webhook 401s.
+[functions.wisecall-email-inbound]
+verify_jwt = false
