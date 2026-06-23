@@ -9,3 +9,6 @@ verify_jwt = true
 
 [functions.wisecall-live-chat]
 verify_jwt = false
+
+[functions.wisecall-slack-inbound]
+verify_jwt = false

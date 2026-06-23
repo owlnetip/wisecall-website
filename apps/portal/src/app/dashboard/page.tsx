@@ -17,7 +17,29 @@ import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
 import { getInsightsForUser, emptyInsights } from "@/lib/insights";
 import { isAnalysisConfigured } from "@/lib/call-analysis";
 
-export default async function DashboardPage() {
+import { getSlackConnectionForUser } from "@/lib/messaging-connections";
+
+function slackBannerFromParams(params: {
+  slack_connected?: string;
+  slack_error?: string;
+}): string | null {
+  if (params.slack_connected === "1") return "Slack connected successfully.";
+  if (!params.slack_error) return null;
+  const labels: Record<string, string> = {
+    access_denied: "Slack connection was cancelled.",
+    not_configured: "Slack is not configured on this environment yet.",
+    no_agent: "Create an agent before connecting Slack.",
+    save_failed: "Connected to Slack but saving failed — try again.",
+    state_mismatch: "Slack connection expired — please try again.",
+  };
+  return labels[params.slack_error] || "Slack connection failed. Please try again.";
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; slack_connected?: string; slack_error?: string }>;
+}) {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -61,7 +83,12 @@ export default async function DashboardPage() {
     }
   }
 
-  const emailChannel = getEmailChannelUsage(billing, hasActiveAccess(billing));
+  const params = await searchParams;
+  const initialView = params.view === "channels" || params.slack_connected || params.slack_error
+    ? ("channels" as const)
+    : undefined;
+  const slackBanner = slackBannerFromParams(params);
+  const slackConfigured = Boolean(process.env.SLACK_CLIENT_ID && process.env.SLACK_CLIENT_SECRET);
 
   // Load every panel independently and degrade gracefully: a transient failure
   // in one fetch (cold start, a Supabase/insights hiccup) must NOT 500 the whole
@@ -75,14 +102,17 @@ export default async function DashboardPage() {
     }
   };
 
-  const [agents, callLogs, contacts, trial, insights] = await Promise.all([
+  const [agents, callLogs, contacts, trial, insights, slackConnection] = await Promise.all([
     safe("agents", getAgentsForUser(effectiveUserId), []),
     safe("callLogs", getCallLogsForUser(effectiveUserId), []),
     safe("contacts", getContactsForUser(effectiveUserId), []),
     safe("trial", getTrialUsage(effectiveUserId, billing), null),
     // Default range matches the AI Insights view's default ("Last 7 days").
     safe("insights", getInsightsForUser(effectiveUserId, "7d"), emptyInsights("7d", false)),
+    safe("slack", getSlackConnectionForUser(effectiveUserId), null),
   ]);
+
+  const emailChannel = getEmailChannelUsage(billing, hasActiveAccess(billing));
 
   // Real per-agent call counts from the logs, matched on profile id.
   const counts = callLogs.reduce<Record<string, number>>((acc, log) => {
@@ -113,6 +143,10 @@ export default async function DashboardPage() {
       trial={trial ?? undefined}
       planName={billing?.plan ? planDisplayName(billing.plan) : undefined}
       emailChannel={emailChannel}
+      slackConnection={slackConnection}
+      slackConfigured={slackConfigured}
+      initialView={initialView}
+      slackBanner={slackBanner}
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}
