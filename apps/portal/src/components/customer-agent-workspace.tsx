@@ -1484,7 +1484,7 @@ export function CustomerAgentWorkspace({
                 }}
                 onSave={save}
                 onProvision={provision}
-                onDelete={deleteSelected}
+                onDelete={isAdmin ? deleteSelected : undefined}
                 adminMode={adminMode}
                 planName={planName}
                 emailChannel={emailChannel}
@@ -1902,7 +1902,7 @@ function AssistantDetail({
               </button>
             </form>
           ) : null}
-          {adminMode && onDelete ? (
+          {onDelete ? (
             <button
               type="button"
               onClick={() => setDeleteConfirm(true)}
