@@ -82,9 +82,10 @@ import { RaiseTicketModal } from "./raise-ticket-modal";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
+import { OutboundManager } from "@/components/outbound-manager";
 
 type View = "home" | "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
-type DetailTab = "behaviour" | "knowledge" | "routing" | "technical";
+type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
 // stack wins — only `provider` and the per-provider fields differ. Persisted in
@@ -1925,7 +1926,7 @@ function AssistantDetail({
       ) : null}
 
       <div className="mb-8 flex overflow-x-auto border-b border-black/10">
-        {(["behaviour", "knowledge", "routing", "technical"] as DetailTab[]).map((item) => (
+        {(["behaviour", "knowledge", "routing", "outbound", "technical"] as DetailTab[]).map((item) => (
           <button
             type="button"
             key={item}
@@ -1936,7 +1937,7 @@ function AssistantDetail({
                 : "border-transparent text-[#7a8582] hover:text-[#111716]"
             }`}
           >
-            {item === "knowledge" ? "Knowledge Base" : item}
+            {item === "knowledge" ? "Knowledge Base" : item === "outbound" ? "Outbound" : item}
           </button>
         ))}
       </div>
@@ -2040,6 +2041,8 @@ function AssistantDetail({
           onDefaultEmailChange={(defaultEmail) => onChange({ defaultEmail })}
           onSave={onSave}
         />
+      ) : tab === "outbound" ? (
+        <OutboundManager profileId={assistant.id} businessName={assistant.businessName} />
       ) : (
         <div>
           <IntegrationWebhooksCard
