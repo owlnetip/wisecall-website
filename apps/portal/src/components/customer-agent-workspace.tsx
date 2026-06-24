@@ -946,8 +946,10 @@ export function CustomerAgentWorkspace({
   function createAssistant() {
     const template =
       agentTemplates.find((t) => t.id === newTemplateId) ?? agentTemplates[0];
-    const receptionist = newAssistantName.trim() || "Receptionist";
     const business = newBusinessName.trim() || "New business";
+    // The assistant always identifies as "{business} assistant", never a
+    // personal name (an optional typed name is used only as an internal label).
+    const receptionist = `${business} assistant`;
     const prompt = template.buildPrompt(business, receptionist);
     const greeting = template.buildGreeting(business, receptionist);
     const voice = cartesiaVoices[0].id;
