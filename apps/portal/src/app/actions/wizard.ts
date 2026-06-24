@@ -163,7 +163,7 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-opus-4-8",
+      model: "claude-sonnet-4-6",
       max_tokens: 3000,
       thinking: { type: "disabled" },
       tool_choice: { type: "tool", name: "emit_agent_draft" },

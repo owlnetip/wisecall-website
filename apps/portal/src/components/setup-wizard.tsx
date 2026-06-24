@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Loader2, Sparkles, X, ArrowLeft, Check, Globe } from "lucide-react";
 import { draftAgentFromWebsite, type AgentDraft } from "@/app/actions/wizard";
 import { OfficeHoursGrid } from "./office-hours-card";
@@ -26,6 +26,26 @@ export function SetupWizard({
   const [error, setError] = useState<string | null>(null);
   const [generating, startGenerate] = useTransition();
   const [submitting, startSubmit] = useTransition();
+  const [loadingPhase, setLoadingPhase] = useState(0);
+
+  const loadingSteps = [
+    "Reading your website…",
+    "Understanding your business…",
+    "Drafting your receptionist…",
+    "Almost there…",
+  ];
+
+  useEffect(() => {
+    if (!generating) {
+      setLoadingPhase(0);
+      return;
+    }
+    const timings = [0, 4000, 10000, 18000];
+    const timers = timings.map((delay, i) =>
+      setTimeout(() => setLoadingPhase(i), delay),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [generating]);
 
   function generate() {
     setError(null);
@@ -114,7 +134,7 @@ export function SetupWizard({
               >
                 {generating ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Reading your site & drafting…
+                    <Loader2 className="h-4 w-4 animate-spin" /> {loadingSteps[loadingPhase]}
                   </>
                 ) : (
                   <>
@@ -122,6 +142,11 @@ export function SetupWizard({
                   </>
                 )}
               </button>
+              {generating && (
+                <p className="mt-3 text-center text-xs text-[#9aa5a2]">
+                  This usually takes 15–30 seconds
+                </p>
+              )}
               <button
                 type="button"
                 onClick={onManual}
