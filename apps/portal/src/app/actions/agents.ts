@@ -71,7 +71,12 @@ export type NewAgent = {
   timezone?: string;
 };
 
-export type CreateResult = { ok: boolean; id?: string; error?: string };
+export type CreateResult = {
+  ok: boolean;
+  id?: string;
+  error?: string;
+  routing?: { provider: "telnyx" | null; number: string; status: "unprovisioned" | "pending" | "live" };
+};
 
 function slugify(value: string): string {
   return value
@@ -150,6 +155,8 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
 
   const profileId = data.id as string;
 
+  let routing: CreateResult["routing"] = { provider: null, number: "", status: "unprovisioned" };
+
   if (shouldAssignIncludedNumber) {
     // Auto-assign one included pooled DDI per owner. Pooled numbers already
     // point at the shared TeXML app and the runtime routes by called number, so
@@ -174,6 +181,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
             },
           })
           .eq("id", profileId);
+        routing = { provider: "telnyx", number: assigned as string, status: "live" };
       } else {
         // Pool was empty (e.g. a burst of signups drained it). Flag the agent as
         // awaiting a number and show the "provisioning" state, instead of a dead
@@ -189,6 +197,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
             },
           })
           .eq("id", profileId);
+        routing = { provider: "telnyx", number: "", status: "pending" };
       }
     } catch (poolErr) {
       console.error("pool number assign failed:", (poolErr as Error).message);
@@ -196,7 +205,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
   }
 
   revalidatePath("/dashboard");
-  return { ok: true, id: profileId };
+  return { ok: true, id: profileId, routing };
 }
 
 export type DeleteResult = { ok: boolean; releasedNumber?: string | null; error?: string };
@@ -501,4 +510,36 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
   //     .eq("metadata->>owner_id", user.id);
   //   revalidatePath("/dashboard");
   //   return { ok: true, routing };
+}
+
+// Lightweight poll used by the portal to detect when a pending agent's number
+// has been assigned. Called client-side every ~10 s while any agent shows
+// routing.status === "pending". Returns a map of id → { number, status }.
+export async function getPendingAgentsStatus(
+  ids: string[],
+): Promise<Record<string, { number: string; status: "pending" | "live" }>> {
+  if (!ids.length) return {};
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return {};
+  const service = getServiceSupabase();
+  if (!service) return {};
+
+  const { data } = await service
+    .from("wisecall_profiles")
+    .select("id, telnyx_number, is_active, metadata")
+    .in("id", ids)
+    .eq("metadata->>owner_id", user.id);
+
+  const result: Record<string, { number: string; status: "pending" | "live" }> = {};
+  for (const row of data ?? []) {
+    const raw = row.metadata as Record<string, unknown> | null;
+    const r = (raw?.routing ?? {}) as Record<string, unknown>;
+    const number = typeof r.number === "string" ? r.number : (row.telnyx_number as string | null) ?? "";
+    const status = row.is_active && number ? "live" : "pending";
+    result[row.id as string] = { number, status };
+  }
+  return result;
 }
