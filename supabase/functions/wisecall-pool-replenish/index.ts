@@ -10,7 +10,7 @@
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, TELNYX_API_KEY,
 //          WISECALL_POOL_REPLENISH_SECRET, RESEND_API_KEY (alerts),
 //          WISECALL_EMAIL_FROM / WISECALL_EMAIL_TO (alert from/to).
-// Tunables: WISECALL_POOL_MIN_FREE (default 5), WISECALL_POOL_TARGET (default 10),
+// Tunables: WISECALL_POOL_MIN_FREE (default 2), WISECALL_POOL_TARGET (default 10),
 //           WISECALL_POOL_NDC (default 113).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
   const telnyxKey = Deno.env.get("TELNYX_API_KEY");
   if (!telnyxKey) return json({ ok: false, error: "TELNYX_API_KEY not configured" }, 500);
 
-  const minFree = num("WISECALL_POOL_MIN_FREE", 5);
+  const minFree = num("WISECALL_POOL_MIN_FREE", 2);
   const target = num("WISECALL_POOL_TARGET", 10);
   const ndc = Deno.env.get("WISECALL_POOL_NDC") || "113";
 
