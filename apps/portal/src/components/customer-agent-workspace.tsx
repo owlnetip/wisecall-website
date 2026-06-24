@@ -3685,12 +3685,12 @@ function RoutingCard({
   const heading = live
     ? routing.number
     : pending
-      ? "Number requested — setting up"
+      ? "Setting up your phone number"
       : "No phone number assigned yet";
   const sub = live
     ? "Live and answering calls"
     : pending
-      ? "We're provisioning the line for this agent."
+      ? "WiseCall is provisioning your number — usually ready within 5 minutes. Refresh the page to check."
       : "Assign a number to put this agent on a phone line.";
 
   return (

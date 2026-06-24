@@ -188,7 +188,7 @@ function mapProfile(row: ProfileRow): Assistant {
     name: row.receptionist_name || row.profile_name || "Assistant",
     businessName: row.business_name || row.clinic_name || "",
     industry: meta(row, "industry") || "General",
-    phoneNumber: routing.number || "Number pending",
+    phoneNumber: routing.number || (routing.status === "pending" ? "Setting up…" : "Number pending"),
     status: row.is_active ? "Live" : "Setup",
     receptionistName: row.receptionist_name || row.profile_name || "",
     prompt: row.system_prompt || "",
