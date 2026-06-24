@@ -50,6 +50,7 @@ import { EmailChannelCheckoutButton } from "@/app/billing/start-trial-button";
 import type { EmailChannelUsage } from "@/lib/billing";
 import {
   createAgent,
+  deleteAgent,
   provisionNumber,
   testVoice,
   updateAgent,
@@ -925,6 +926,7 @@ export function CustomerAgentWorkspace({
   const [isPending, startTransition] = useTransition();
   const [isCreating, startCreate] = useTransition();
   const [isProvisioning, startProvision] = useTransition();
+  const [isDeleting, startDelete] = useTransition();
 
   const selectedAssistant =
     assistants.find((assistant) => assistant.id === selectedId) ?? assistants[0];
@@ -946,6 +948,15 @@ export function CustomerAgentWorkspace({
     setAssistants((current) =>
       current.map((a) => (a.id === selectedAssistant.id ? { ...a, ...patch } : a)),
     );
+  }
+
+  function deleteSelected() {
+    startDelete(async () => {
+      const result = await deleteAgent(selectedAssistant.id);
+      if (!result.ok) return; // leave on page; AssistantDetail shows the error
+      setAssistants((current) => current.filter((a) => a.id !== selectedAssistant.id));
+      setView("assistants");
+    });
   }
 
   function createAssistant() {
@@ -1451,6 +1462,7 @@ export function CustomerAgentWorkspace({
                 saveError={saveError}
                 isProvisioning={isProvisioning}
                 provisionError={provisionError}
+                isDeleting={isDeleting}
                 onBack={() => setView("assistants")}
                 onTabChange={setDetailTab}
                 onChange={updateSelected}
@@ -1472,6 +1484,7 @@ export function CustomerAgentWorkspace({
                 }}
                 onSave={save}
                 onProvision={provision}
+                onDelete={deleteSelected}
                 adminMode={adminMode}
                 planName={planName}
                 emailChannel={emailChannel}
@@ -1826,6 +1839,7 @@ function AssistantDetail({
   saveError,
   isProvisioning,
   provisionError,
+  isDeleting = false,
   onBack,
   onTabChange,
   onChange,
@@ -1834,6 +1848,7 @@ function AssistantDetail({
   onAbility,
   onSave,
   onProvision,
+  onDelete,
   adminMode = false,
   planName,
   emailChannel,
@@ -1845,6 +1860,7 @@ function AssistantDetail({
   saveError: string | null;
   isProvisioning: boolean;
   provisionError: string | null;
+  isDeleting?: boolean;
   onBack: () => void;
   onTabChange: (tab: DetailTab) => void;
   onChange: (patch: Partial<Assistant>) => void;
@@ -1853,10 +1869,12 @@ function AssistantDetail({
   onAbility: (key: "knowledge" | "transfer") => void;
   onSave: () => void;
   onProvision: () => void;
+  onDelete?: () => void;
   adminMode?: boolean;
   planName?: string;
   emailChannel?: EmailChannelUsage;
 }) {
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-8 flex items-start justify-between gap-4">
@@ -1884,6 +1902,17 @@ function AssistantDetail({
               </button>
             </form>
           ) : null}
+          {adminMode && onDelete ? (
+            <button
+              type="button"
+              onClick={() => setDeleteConfirm(true)}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:opacity-60"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {isDeleting ? "Deleting…" : "Delete agent"}
+            </button>
+          ) : null}
           <button
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-[#f2f4f3]"
@@ -1893,6 +1922,36 @@ function AssistantDetail({
           </button>
         </div>
       </div>
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-black text-[#111716]">Delete &apos;{assistant.name}&apos;?</h2>
+            <p className="mt-2 text-sm text-[#66716e]">
+              This will permanently delete the agent. If it has a pooled number (+{assistant.phoneNumber.replace(/[^\d]/g, "")}), that number will be returned to the pool automatically.
+            </p>
+            <p className="mt-2 text-sm font-bold text-red-700">This cannot be undone.</p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(false)}
+                className="rounded-lg border border-black/10 px-4 py-2 text-sm font-bold text-[#66716e] transition hover:bg-[#f2f4f3]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => { setDeleteConfirm(false); onDelete?.(); }}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-black text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                Yes, delete it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <RoutingCard
         routing={assistant.routing}
