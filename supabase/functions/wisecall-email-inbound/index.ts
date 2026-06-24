@@ -176,6 +176,39 @@ async function callClaude(systemPrompt: string, userMessage: string): Promise<st
   return (block?.text || "").trim();
 }
 
+// Only inject KB chunks this relevant; weaker matches are noise that would
+// mislead the reply more than help.
+const KB_MIN_SIMILARITY = 0.35;
+
+// Relevance-gated knowledge-base lookup for the inbound email, via the
+// wisecall-kb-search function (scoped to this agent's profile id). Returns a
+// context block built from sufficiently-similar chunks, or null. Best-effort:
+// never throws, so a KB hiccup can't block the email reply.
+async function fetchKbContext(profileId: string, query: string): Promise<string | null> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !svcKey || !profileId || !query) return null;
+    const res = await fetch(`${supabaseUrl}/functions/v1/wisecall-kb-search`, {
+      method: "POST",
+      headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ profile_id: profileId, query, match_count: 4 }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const chunks = Array.isArray(data?.chunks) ? data.chunks : [];
+    const relevant = chunks
+      .filter((c: { content?: string; similarity?: number }) =>
+        c?.content && typeof c.similarity === "number" && c.similarity >= KB_MIN_SIMILARITY)
+      .map((c: { content: string }) => c.content);
+    if (!relevant.length) return null;
+    return "[KNOWLEDGE BASE]\n" + relevant.join("\n---\n");
+  } catch (e) {
+    console.error("[wisecall-email-inbound] kb context:", (e as Error).message);
+    return null;
+  }
+}
+
 async function sendReply(opts: {
   fromAddress: string;
   fromName: string;
@@ -346,6 +379,15 @@ Deno.serve(async (req) => {
     if (contact.notes) memoryLines.push(`Notes: ${contact.notes}`);
   }
 
+  const rawBody = email.text || email.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const incoming = stripQuotedReply(rawBody);
+
+  // Relevance-gated knowledge-base lookup using the email's subject + body.
+  const kbContext = await fetchKbContext(
+    profile.id,
+    `${email.subject || ""}\n${incoming}`.trim(),
+  );
+
   const systemPrompt = [
     profile.system_prompt || `You are a helpful, professional UK English receptionist for ${businessName}.`,
     "",
@@ -357,15 +399,19 @@ Deno.serve(async (req) => {
     "- Do not invent availability, prices, or confirmations you cannot verify.",
     "- If you need information only a human or a booking system can provide, say you'll pass it to the team and they'll follow up, and capture what you can.",
     "- Never mention that you are an AI unless asked directly.",
+    "",
+    "Using knowledge:",
+    "- If a [KNOWLEDGE BASE] block is provided below, treat it as the authoritative source and answer from it.",
+    "- If it does not cover the question, you may use general knowledge to help, BUT never invent business-specific details (prices, timescales, account or system specifics). For those, say the team will confirm and follow up.",
+    "- If you are unsure, be honest and offer to have the team follow up rather than guessing.",
     profile.business_context ? `\nBusiness knowledge:\n${profile.business_context}` : "",
+    kbContext ? `\n${kbContext}` : "",
     memoryLines.length ? `\n${memoryLines.join("\n")}` : "",
     "\nReturn ONLY the body of the email reply — no subject line, no email headers.",
   ]
     .filter(Boolean)
     .join("\n");
 
-  const rawBody = email.text || email.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  const incoming = stripQuotedReply(rawBody);
   const userMessage = `The customer (${email.from.name || email.from.email}) emailed:\n\nSubject: ${email.subject}\n\n${incoming}`;
 
   let replyText: string;

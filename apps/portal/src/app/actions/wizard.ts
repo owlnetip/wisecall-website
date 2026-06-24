@@ -178,18 +178,19 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
               businessName: { type: "string", description: "The trading name of the business." },
               receptionistName: {
                 type: "string",
-                description: "A warm, professional UK first name for the AI receptionist (e.g. Olivia, Grace).",
+                description:
+                  "The assistant's name. ALWAYS the business's trading name followed by ' assistant' (e.g. 'Northwind assistant'). Never a personal first name.",
               },
               industry: { type: "string", description: "Short industry label, e.g. 'Dental practice'." },
               greeting: {
                 type: "string",
                 description:
-                  "The exact first sentence the receptionist says when answering, naming the business. One short sentence.",
+                  "The exact first sentence the assistant says when answering, naming the business. Start with a neutral greeting — 'Hi', 'Hello' or 'Welcome' — and NEVER a time-of-day greeting like 'Good morning' or 'Good afternoon'. Do not use a personal name. One short sentence.",
               },
               prompt: {
                 type: "string",
                 description:
-                  "The system prompt: how the receptionist should behave, tone, what it can help with, what to do for bookings/enquiries. UK English. 120-250 words.",
+                  "The system prompt: how the assistant should behave, tone, what it can help with, what to do for bookings/enquiries. The assistant refers to itself as the [business] assistant, never a personal name, and never uses time-of-day greetings. UK English. 120-250 words.",
               },
               businessContext: {
                 type: "string",
@@ -266,13 +267,24 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
           : undefined,
     };
 
+    const businessName = str("businessName") || "My business";
+    // Enforce the company-assistant identity regardless of what the model returns:
+    // the assistant is always "{business} assistant", never a personal name.
+    const receptionistName = `${businessName} assistant`;
+    // Strip any leading time-of-day greeting ("Good morning,"/"Good afternoon" …)
+    // the model may still have produced, replacing it with a neutral "Hi".
+    const greeting = str("greeting").replace(
+      /^\s*(good\s+(morning|afternoon|evening))\b[\s,!-]*/i,
+      "Hi, ",
+    );
+
     return {
       ok: true,
       draft: {
-        businessName: str("businessName") || "My business",
-        receptionistName: str("receptionistName") || "Olivia",
+        businessName,
+        receptionistName,
         industry: str("industry") || "General",
-        greeting: str("greeting"),
+        greeting,
         prompt: str("prompt"),
         knowledge: str("businessContext"),
         knowledgeFields,
