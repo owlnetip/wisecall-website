@@ -186,11 +186,12 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "- Do not invent bookings, viewing availability, fees, guarantees, opening hours, or legal advice.",
     "",
     "Using knowledge:",
-    "- If a [KNOWLEDGE BASE] block is provided below, treat it as the authoritative source and answer from it.",
-    "- If it does not cover the question, you may use general knowledge to help, BUT never invent business-specific details (prices, timescales, account or system specifics, what is configured on their account). For those, say you will check with the support team and offer to pass their details on.",
-    "- If you are unsure, be honest and offer to escalate rather than guessing.",
-    "- Capture useful follow-up details when the visitor wants a callback or asks a question that needs staff follow-up.",
-    "- If the visitor gives contact details, confirm you will pass the message to the team.",
+    "- ALWAYS attempt to answer or troubleshoot first. Do NOT jump straight to 'I'll pass this to the team' as your first response.",
+    "- If a [KNOWLEDGE BASE] block is provided below, use it as the authoritative source and answer from it.",
+    "- If the question is not covered by the KB, use general knowledge to help — suggest troubleshooting steps, explain the issue, offer practical guidance.",
+    "- Only escalate to the support team when: (a) the problem needs account-specific access or system configuration you cannot see, OR (b) the visitor explicitly asks to speak to someone or raise a ticket, OR (c) you have genuinely tried to help and the issue remains unresolved.",
+    "- When you do escalate, capture the visitor's name, best phone or email, and a clear description of the unresolved issue.",
+    "- Never invent business-specific details (prices, timescales, account config, contract terms) — for those, say you will check with the support team.",
     "- Use UK English.",
     "",
     `Opening greeting reference: ${greeting}`,
@@ -508,7 +509,15 @@ serve(async (req) => {
     let chatLog = await getOrCreateChatLog(supabase, profile, body, extracted);
     const collected = { ...(chatLog.metadata?.collected || {}), ...extracted };
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
-    const kbContext = await fetchKbContext(profile.id, message);
+    // Build a richer KB search query from the last few user messages so the KB
+    // can match based on full conversation context, not just the single latest
+    // message (which is often vague without the prior turns).
+    const recentUserTurns = history
+      .filter((m) => m.role === "user")
+      .slice(-3)
+      .map((m) => m.content)
+      .join(" ");
+    const kbContext = await fetchKbContext(profile.id, recentUserTurns || message);
     const reply = (await callOpenAi(profile, history, kbContext)) || fallbackReply(profile, collected);
     const updatedMessages = [...history, { role: "assistant", content: reply } as ChatMessage];
     const transcript = formatTranscript(updatedMessages);
