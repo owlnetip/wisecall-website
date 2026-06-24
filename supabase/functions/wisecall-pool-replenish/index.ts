@@ -46,11 +46,14 @@ async function alertEmail(subject: string, text: string) {
 async function assignWaitingAgents(
   supabase: ReturnType<typeof createClient>,
 ): Promise<number> {
+  // Match agents that need a number: either telnyx_number IS NULL (fresh create
+  // with no number ever set) or it is the legacy placeholder string "Number pending"
+  // (older portal code wrote that literal instead of leaving null).
   const { data: waiting, error } = await supabase
     .from("wisecall_profiles")
     .select("id, metadata")
     .eq("metadata->>awaiting_number", "true")
-    .is("telnyx_number", null)
+    .or("telnyx_number.is.null,telnyx_number.eq.Number pending")
     .limit(50);
   if (error || !waiting?.length) return 0;
 
