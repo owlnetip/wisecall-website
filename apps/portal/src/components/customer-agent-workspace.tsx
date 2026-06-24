@@ -51,6 +51,7 @@ import type { EmailChannelUsage } from "@/lib/billing";
 import {
   createAgent,
   deleteAgent,
+  getPendingAgentsStatus,
   provisionNumber,
   testVoice,
   updateAgent,
@@ -928,6 +929,33 @@ export function CustomerAgentWorkspace({
   const [isProvisioning, startProvision] = useTransition();
   const [isDeleting, startDelete] = useTransition();
 
+  // Poll for number assignment on agents that are still awaiting one. Only runs
+  // while at least one agent is pending; clears itself once all are live.
+  useEffect(() => {
+    const pendingIds = assistants
+      .filter((a) => a.routing.status === "pending")
+      .map((a) => a.id);
+    if (!pendingIds.length) return;
+    const interval = setInterval(async () => {
+      const updates = await getPendingAgentsStatus(pendingIds);
+      const live = Object.entries(updates).filter(([, r]) => r.status === "live");
+      if (!live.length) return;
+      setAssistants((current) =>
+        current.map((a) => {
+          const update = updates[a.id];
+          if (!update || update.status !== "live") return a;
+          return {
+            ...a,
+            phoneNumber: update.number,
+            status: "Live",
+            routing: { ...a.routing, number: update.number, status: "live" as const },
+          };
+        }),
+      );
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [assistants]);
+
   const selectedAssistant =
     assistants.find((assistant) => assistant.id === selectedId) ?? assistants[0];
 
@@ -989,13 +1017,14 @@ export function CustomerAgentWorkspace({
         setCreateError(result.error ?? "Could not create the assistant.");
         return;
       }
+      const routing = result.routing ?? { provider: null as null, number: "", status: "unprovisioned" as const };
       const assistant: Assistant = {
         id: result.id,
         name: receptionist,
         businessName: business,
         industry: template.industry,
-        phoneNumber: "Number pending",
-        status: "Setup",
+        phoneNumber: routing.number || (routing.status === "pending" ? "Setting up…" : "Number pending"),
+        status: routing.status === "live" ? "Live" : "Setup",
         receptionistName: receptionist,
         prompt,
         greeting,
@@ -1010,7 +1039,7 @@ export function CustomerAgentWorkspace({
         transferNumber: "",
         calls: 0,
         cost: "GBP 0.00",
-        routing: { provider: null, number: "", status: "unprovisioned" },
+        routing,
       };
       setAssistants((current) => [assistant, ...current]);
       setSelectedId(result.id);
@@ -1050,13 +1079,14 @@ export function CustomerAgentWorkspace({
       });
     }
 
+    const routing = result.routing ?? { provider: null as null, number: "", status: "unprovisioned" as const };
     const assistant: Assistant = {
       id: result.id,
       name: draft.receptionistName || "Receptionist",
       businessName: draft.businessName || "New business",
       industry: draft.industry || "General",
-      phoneNumber: "Number pending",
-      status: "Setup",
+      phoneNumber: routing.number || (routing.status === "pending" ? "Setting up…" : "Number pending"),
+      status: routing.status === "live" ? "Live" : "Setup",
       receptionistName: draft.receptionistName || "Receptionist",
       prompt: draft.prompt,
       greeting: draft.greeting,
@@ -1072,7 +1102,7 @@ export function CustomerAgentWorkspace({
       officeHours: hasHours ? draft.officeHours : undefined,
       calls: 0,
       cost: "GBP 0.00",
-      routing: { provider: null, number: "", status: "unprovisioned" },
+      routing,
     };
     setAssistants((current) => [assistant, ...current]);
     setSelectedId(result.id);
