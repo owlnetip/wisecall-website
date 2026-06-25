@@ -77,6 +77,7 @@ import type {
 } from "@/lib/insights";
 import { OfficeHoursCard } from "./office-hours-card";
 import { IntegrationWebhooksCard } from "./integration-webhooks-card";
+import { PbxExtensionCard } from "./pbx-extension-card";
 import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 import { CALLER_INTAKE_PROMPT } from "@/lib/caller-intake";
 import { ContactsView } from "./contacts-view";
@@ -2134,6 +2135,7 @@ function AssistantDetail({
         <OutboundManager profileId={assistant.id} businessName={assistant.businessName} />
       ) : (
         <div>
+          <PbxExtensionCard agentId={assistant.id} />
           <IntegrationWebhooksCard
             agentId={assistant.id}
             initial={assistant.integrationWebhooks ?? []}
