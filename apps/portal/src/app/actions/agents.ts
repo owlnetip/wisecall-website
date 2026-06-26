@@ -87,6 +87,17 @@ function slugify(value: string): string {
     .slice(0, 40);
 }
 
+function morProvisionHeaders(serviceRoleKey: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+  };
+  const provisionSecret = process.env.WISECALL_PROVISION_SECRET?.trim();
+  if (provisionSecret) headers["x-wisecall-provision-secret"] = provisionSecret;
+  return headers;
+}
+
 // Creates a brand-new agent owned by the signed-in user. The first real DDI for
 // an owner is included and goes live when assignment succeeds. Extra numbered
 // agents stay in setup until an additional number is provisioned/charged.
@@ -168,7 +179,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
           `${config.url}/functions/v1/wisecall-provision-mor-agent`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json", apikey: config.serviceRoleKey },
+            headers: morProvisionHeaders(config.serviceRoleKey),
             body: JSON.stringify({ profile_id: profileId }),
           }
         );
@@ -525,10 +536,7 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
       const fnUrl = `${config.url}/functions/v1/wisecall-provision-mor-agent`;
       const fnRes = await fetch(fnUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: config.serviceRoleKey,
-        },
+        headers: morProvisionHeaders(config.serviceRoleKey),
         body: JSON.stringify({ profile_id: agentId }),
       });
       const fnBody = await fnRes.json();

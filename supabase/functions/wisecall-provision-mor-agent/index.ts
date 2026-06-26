@@ -11,6 +11,14 @@ async function sha1(message: string): Promise<string> {
     .join("");
 }
 
+async function sha256(message: string): Promise<string> {
+  const data = new TextEncoder().encode(message);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 function xmlTag(xml: string, tag: string): string | null {
   const m = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, "i"));
   return m?.[1]?.trim() || null;
@@ -89,7 +97,8 @@ async function resolveResellerUsername(
 serve(async (req) => {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-wisecall-provision-secret",
   };
 
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -101,12 +110,32 @@ serve(async (req) => {
     });
 
   try {
-    // Service-role only. This function provisions paid MOR resources and is
-    // called from the Next.js server action, never directly from the browser.
+    // Internal only. This function provisions paid MOR resources and is called
+    // from the Next.js server action, never directly from the browser.
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const providedKey = (req.headers.get("apikey") || "").trim();
-    if (providedKey !== SERVICE_ROLE_KEY) {
+    const PROVISION_SECRET = Deno.env.get("WISECALL_PROVISION_SECRET")?.trim() ?? "";
+    const PROVISION_SECRET_SHA256 =
+      Deno.env.get("WISECALL_PROVISION_SECRET_SHA256")?.trim() ||
+      "aaf533c44f417d85b4d813e30c046290a6ec444cc765cd5ee303e9c1d0dd7ed3";
+    const authHeader = (req.headers.get("authorization") || "").trim();
+    const bearerKey = authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
+    const providedKey = (req.headers.get("apikey") || bearerKey).trim();
+    const providedProvisionSecret =
+      (req.headers.get("x-wisecall-provision-secret") || "").trim();
+    const provisionSecretMatches =
+      Boolean(PROVISION_SECRET && providedProvisionSecret === PROVISION_SECRET) ||
+      Boolean(
+        providedProvisionSecret &&
+          PROVISION_SECRET_SHA256 &&
+          (await sha256(providedProvisionSecret)) === PROVISION_SECRET_SHA256,
+      );
+    if (
+      providedKey !== SERVICE_ROLE_KEY &&
+      !provisionSecretMatches
+    ) {
       return json({ ok: false, error: "Forbidden" }, 403);
     }
 
