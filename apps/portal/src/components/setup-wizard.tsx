@@ -156,7 +156,6 @@ export function SetupWizard({
 
   useEffect(() => {
     if (!generating) {
-      setLoadingPhase(0);
       return;
     }
     const timings = [0, 4000, 10000, 18000];
@@ -183,6 +182,7 @@ export function SetupWizard({
 
   function generate() {
     setError(null);
+    setLoadingPhase(0);
     startGenerate(async () => {
       const res = await draftAgentFromWebsite(website);
       if (!res.ok || !res.draft) {
@@ -917,11 +917,13 @@ function TextArea({
   label,
   value,
   onChange,
+  placeholder,
   rows,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  placeholder?: string;
   rows: number;
 }) {
   return (
@@ -930,6 +932,7 @@ function TextArea({
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
         rows={rows}
         className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed text-[#111716] outline-none focus:border-[#148b8e]"
       />
