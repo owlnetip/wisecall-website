@@ -28,6 +28,14 @@ function morError(xml: string): string | null {
   return xmlTag(xml, "error") || xmlTag(xml, "e");
 }
 
+function morResponseError(xml: string): string | null {
+  return morError(xml) || (/access denied/i.test(xml) ? "Access Denied" : null);
+}
+
+function shouldTryAlternateAuth(xml: string, error: string | null): boolean {
+  return /incorrect hash|access denied/i.test(`${error || ""} ${xml}`);
+}
+
 async function morGet(url: string): Promise<string> {
   const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new Error(`MOR HTTP ${res.status}: ${res.statusText}`);
@@ -65,16 +73,20 @@ function morLoginUsername(username: string): string {
   return username.trim().replace(/ /g, "_");
 }
 
-async function resolveResellerUsername(
+async function resolveResellerCredentials(
   supabase: any,
   resellerId: string,
   configuredUsername: string,
-): Promise<string> {
-  if (configuredUsername.trim()) return morLoginUsername(configuredUsername);
-
+): Promise<{
+  resellerId: string;
+  username: string;
+  password: string;
+  apiKey: string;
+  uniqueHash: string;
+}> {
   const { data, error } = await supabase
     .from("reseller_credentials")
-    .select("reseller_name")
+    .select("reseller_id, reseller_name, password, unique_hash, api_key")
     .eq("reseller_id", resellerId)
     .eq("is_active", true)
     .maybeSingle();
@@ -82,14 +94,32 @@ async function resolveResellerUsername(
   if (error) {
     throw new Error(`Failed to look up MOR reseller ${resellerId}: ${error.message}`);
   }
-  const row = data as { reseller_name?: string } | null;
-  if (!row?.reseller_name) {
+  const row = data as {
+    reseller_id?: string | number;
+    reseller_name?: string;
+    password?: string | null;
+    unique_hash?: string | null;
+    api_key?: string | null;
+  } | null;
+  if (!row?.reseller_id) {
     throw new Error(
       `MOR_WISECALL_RESELLER_USERNAME is not configured and no active reseller_credentials row exists for ${resellerId}`,
     );
   }
 
-  return morLoginUsername(row.reseller_name);
+  const apiKey = String(row.api_key || row.unique_hash || "").trim();
+  const uniqueHash = String(row.unique_hash || "").trim();
+  if (!apiKey && !uniqueHash) {
+    throw new Error(`MOR reseller ${resellerId} has no api_key or unique_hash configured`);
+  }
+
+  return {
+    resellerId: String(row.reseller_id),
+    username: morLoginUsername(configuredUsername.trim() || row.reseller_name || resellerId),
+    password: String(row.password || "").trim(),
+    apiKey: apiKey || uniqueHash,
+    uniqueHash,
+  };
 }
 
 // ─── main ─────────────────────────────────────────────────────────────────────
@@ -357,11 +387,12 @@ serve(async (req) => {
     const alreadyDone = (e: string | null) =>
       !!e && /already.*(assigned|reserved)|is already/i.test(e);
 
-    const resellerUsername = await resolveResellerUsername(
+    const reseller = await resolveResellerCredentials(
       supabase,
       MOR_RESELLER_ID,
       MOR_RESELLER_USERNAME,
     );
+    const resellerUsername = reseller.username;
     console.log(`✅ Using MOR reseller ${resellerUsername} (${MOR_RESELLER_ID}) for DID assignment`);
 
     // ── 5b. Reserve the DID to the reseller ─────────────────────────────────
@@ -374,26 +405,42 @@ serve(async (req) => {
     );
     console.log("MOR did_details_update (reserve→reseller) response:", reserveXml.slice(0, 200));
 
-    const reserveErr = morError(reserveXml);
+    const reserveErr = morResponseError(reserveXml);
     if (reserveErr && !alreadyDone(reserveErr)) {
       throw new Error(`MOR DID reserve to reseller failed: ${reserveErr}`);
     }
 
     // ── 5c. Assign the reseller-owned DID to the MOR user ───────────────────
-    // did_details_update reports success on this MOR but does not reliably set
-    // the owner. The Numbers page uses did_assign with the reseller login.
-    const userHash = await sha1(`${resellerUsername}${apiSecret}${didNumber}${morUserId}`);
-    const userXml = await morGet(
-      `${MOR_API_URL}/billing/api/did_assign?` +
-      new URLSearchParams({
-        u: resellerUsername,
-        hash: userHash,
-        did: didNumber,
-        user_id: morUserId,
-      }),
+    // This MOR install does not expose did_assign. The working Numbers flow
+    // moves the reseller-owned DID to the target user with did_details_update.
+    const userReserveParams = new URLSearchParams({
+      u: resellerUsername,
+      did_id: didId,
+      did_user_id: morUserId,
+      hash: await sha1(`${didId}${reseller.apiKey}`),
+    });
+    if (reseller.password) userReserveParams.set("p", reseller.password);
+
+    let userXml = await morGet(
+      `${MOR_API_URL}/billing/api/did_details_update?${userReserveParams.toString()}`,
     );
-    console.log("MOR did_assign (reseller→user) response:", userXml.slice(0, 300));
-    const userAssignErr = morError(userXml);
+    console.log("MOR did_details_update (reseller→user) response:", userXml.slice(0, 300));
+    let userAssignErr = morResponseError(userXml);
+
+    if (
+      userAssignErr &&
+      reseller.uniqueHash &&
+      reseller.uniqueHash !== reseller.apiKey &&
+      shouldTryAlternateAuth(userXml, userAssignErr)
+    ) {
+      userReserveParams.set("hash", reseller.uniqueHash);
+      userXml = await morGet(
+        `${MOR_API_URL}/billing/api/did_details_update?${userReserveParams.toString()}`,
+      );
+      console.log("MOR did_details_update (reseller→user unique hash) response:", userXml.slice(0, 300));
+      userAssignErr = morResponseError(userXml);
+    }
+
     if (userAssignErr && !alreadyDone(userAssignErr)) {
       throw new Error(`MOR DID user assign failed: ${userAssignErr}`);
     }
@@ -401,33 +448,50 @@ serve(async (req) => {
     await new Promise((resolve) => setTimeout(resolve, 2_000));
 
     // ── 5d. Bind the now-user-owned DID to the SIP device ───────────────────
-    // The Numbers proxy tries the MOR hash variants seen across instances. If
-    // the device is not a trunk, retry the non-trunk endpoint.
+    // The Numbers flow assigns SIP devices with did_device_assign. Some MOR
+    // builds accept the reseller unique hash directly; others require the
+    // did+device+api-key hash or the device+did fallback order.
     async function assignDidToDeviceWithEndpoint(endpoint: string): Promise<{ xml: string; err: string | null }> {
-      const hashInputs = [
-        `${didNumber}${morDeviceId}${apiSecret}`,
-        `${morDeviceId}${didNumber}${apiSecret}`,
-        `${resellerUsername}${apiSecret}`,
-      ];
-
       let lastXml = "";
       let lastErr: string | null = null;
-      for (const hashInput of hashInputs) {
-        const hash = await sha1(hashInput);
+
+      const attempts = [
+        {
+          label: "reseller unique hash",
+          hash: reseller.uniqueHash,
+          enabled: Boolean(reseller.uniqueHash),
+        },
+        {
+          label: "did + device_id + reseller api key",
+          hash: await sha1(`${didNumber}${morDeviceId}${reseller.apiKey}`),
+          enabled: true,
+        },
+        {
+          label: "device_id + did + reseller api key",
+          hash: await sha1(`${morDeviceId}${didNumber}${reseller.apiKey}`),
+          enabled: true,
+        },
+      ];
+
+      for (const attempt of attempts) {
+        if (!attempt.enabled) continue;
+        const params = new URLSearchParams({
+          u: resellerUsername,
+          did: didNumber,
+          device_id: morDeviceId,
+          user_id: morUserId,
+          hash: attempt.hash,
+        });
+        if (reseller.password) params.set("p", reseller.password);
+
         const xml = await morGet(
-          `${MOR_API_URL}/billing/api/${endpoint}?` +
-          new URLSearchParams({
-            u: resellerUsername,
-            did: didNumber,
-            device_id: morDeviceId,
-            hash,
-          }),
+          `${MOR_API_URL}/billing/api/${endpoint}?${params.toString()}`,
         );
         lastXml = xml;
-        lastErr = morError(xml);
+        lastErr = morResponseError(xml);
         if (!lastErr) return { xml, err: null };
-        if (!/incorrect hash/i.test(lastErr)) return { xml, err: lastErr };
-        console.log(`⚠️ ${endpoint} returned Incorrect hash; trying alternate known hash pattern`);
+        if (!shouldTryAlternateAuth(xml, lastErr)) return { xml, err: lastErr };
+        console.log(`⚠️ ${endpoint} failed with ${attempt.label}; trying alternate auth/hash pattern`);
       }
 
       return { xml: lastXml, err: lastErr };
@@ -435,9 +499,9 @@ serve(async (req) => {
 
     async function assignDidToDevice(endpoint: string): Promise<string> {
       let result = await assignDidToDeviceWithEndpoint(endpoint);
-      if (result.err && endpoint === "did_trunk_device_assign" && /not a trunk/i.test(result.err)) {
-        console.log("⚠️ Device not a trunk; retrying with did_device_assign");
-        result = await assignDidToDeviceWithEndpoint("did_device_assign");
+      if (result.err && endpoint === "did_device_assign" && /trunk/i.test(result.err)) {
+        console.log("⚠️ SIP device assignment asked for trunk flow; retrying with did_trunk_device_assign");
+        result = await assignDidToDeviceWithEndpoint("did_trunk_device_assign");
       }
       if (result.err && !alreadyDone(result.err)) {
         throw new Error(`MOR DID device assign failed: ${result.err}`);
@@ -445,8 +509,8 @@ serve(async (req) => {
       return result.xml;
     }
 
-    let didXml = await assignDidToDevice("did_trunk_device_assign");
-    let didAssignErr = morError(didXml);
+    let didXml = await assignDidToDevice("did_device_assign");
+    let didAssignErr = morResponseError(didXml);
     console.log("MOR device assign response:", didXml.slice(0, 200));
     if (didAssignErr && alreadyDone(didAssignErr)) didAssignErr = null;
     console.log(`✅ DID ${didNumber} bound to user ${morUserId} / device ${morDeviceId}`);
