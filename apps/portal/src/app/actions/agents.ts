@@ -246,6 +246,25 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
 
 export type DeleteResult = { ok: boolean; releasedNumber?: string | null; error?: string };
 
+async function releaseMorNumber(profileId: string): Promise<string | null> {
+  const config = getSupabaseConfig();
+  if (!config) return null;
+
+  const fnRes = await fetch(`${config.url}/functions/v1/wisecall-release-mor-agent`, {
+    method: "POST",
+    headers: morProvisionHeaders(config.serviceRoleKey),
+    body: JSON.stringify({ profile_id: profileId }),
+  });
+  const fnBody = await fnRes.json();
+  if (!fnBody.ok) {
+    throw new Error(fnBody.error || "MOR release failed.");
+  }
+  if (Array.isArray(fnBody.warnings) && fnBody.warnings.length > 0) {
+    console.warn("MOR number release warnings:", fnBody.warnings.join("; "));
+  }
+  return (fnBody.releasedNumber as string | null | undefined) ?? null;
+}
+
 // Permanently removes an agent and returns its pooled DDI (if any) to the shared
 // pool so the next first-number agent can reuse it. Admin-only on purpose:
 // customers cancel by giving notice rather than self-serve deleting, so this is
@@ -292,6 +311,13 @@ export async function deleteAgent(agentId: string): Promise<DeleteResult> {
     console.error("pool number release failed on delete:", releaseError.message);
   } else {
     releasedNumber = (released as string | null) ?? null;
+  }
+
+  try {
+    const releasedMorNumber = await releaseMorNumber(agentId);
+    if (releasedMorNumber) releasedNumber = releasedMorNumber;
+  } catch (releaseMorError) {
+    console.error("MOR number release failed on delete:", (releaseMorError as Error).message);
   }
 
   revalidatePath("/dashboard");
