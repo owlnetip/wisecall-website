@@ -23,7 +23,7 @@ export type CheckoutResult = { ok: boolean; url?: string; error?: string };
 // The subscription is recorded by the webhook once checkout completes; the
 // webhook also cancels any prior subscription so an upgrade doesn't double-bill.
 export async function startCheckout(planInput: string): Promise<CheckoutResult> {
-  const plan: PlanId = isPlanId(planInput) ? planInput : "core";
+  const plan: PlanId = isPlanId(planInput) ? planInput : "professional";
 
   const auth = await createSupabaseServerClient();
   const {

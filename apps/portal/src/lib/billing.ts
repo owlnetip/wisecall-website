@@ -144,7 +144,7 @@ export async function reconcileBillingFromStripe(
         user_id: userId,
         stripe_customer_id: customerId,
         subscription_id: planSub.id,
-        plan: planSub.metadata?.plan ?? billing?.plan ?? "core",
+        plan: planSub.metadata?.plan ?? billing?.plan ?? "professional",
         status: planSub.status,
         trial_end:
           typeof planSub.trial_end === "number"

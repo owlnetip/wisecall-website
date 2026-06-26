@@ -115,7 +115,7 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
 
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
   const notificationPhone = await fetchStripeCustomerPhone(getStripe(), customerId);
-  const plan = sub.metadata?.plan ?? "core";
+  const plan = sub.metadata?.plan ?? "professional";
   const newPeriodEnd = periodEnd(sub);
 
   // Detect billing period change so we can reset call counters for the new period.
@@ -252,10 +252,15 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice) {
   const service = getServiceSupabase();
   if (!stripe || !service) return;
 
-  // Only act on subscription invoices
-  const subId = typeof invoice.subscription === "string"
-    ? invoice.subscription
-    : (invoice.subscription as { id?: string } | null)?.id;
+  // Only act on subscription invoices. `subscription` exists at runtime but the
+  // installed Stripe types relocated it, so read it through a narrow cast. Newer
+  // API versions also expose it via invoice.parent.subscription_details.
+  const inv = invoice as unknown as {
+    subscription?: string | { id?: string } | null;
+    parent?: { subscription_details?: { subscription?: string | { id?: string } } | null } | null;
+  };
+  const subRef = inv.subscription ?? inv.parent?.subscription_details?.subscription ?? null;
+  const subId = typeof subRef === "string" ? subRef : subRef?.id;
   if (!subId) return;
 
   // Skip email channel add-on invoices — only main plan subs have call overage
