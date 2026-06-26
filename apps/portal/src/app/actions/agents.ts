@@ -162,13 +162,13 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     // involvement — existing Telnyx agents are completely untouched.
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (supabaseUrl && serviceKey) {
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (supabaseUrl && anonKey) {
         const fnRes = await fetch(
           `${supabaseUrl}/functions/v1/wisecall-provision-mor-agent`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json", apikey: serviceKey },
+            headers: { "Content-Type": "application/json", apikey: anonKey },
             body: JSON.stringify({ profile_id: profileId }),
           }
         );
@@ -519,8 +519,8 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
       //   assigns DID to device → inserts wisecall_sip_endpoints (bridge picks
       //   it up in ~30 s) → writes metadata.routing back to the profile.
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (!supabaseUrl || !serviceKey) {
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !anonKey) {
         return { ok: false, error: "Supabase not configured." };
       }
       const fnUrl = `${supabaseUrl}/functions/v1/wisecall-provision-mor-agent`;
@@ -528,7 +528,7 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: serviceKey,
+          apikey: anonKey,
         },
         body: JSON.stringify({ profile_id: agentId }),
       });
