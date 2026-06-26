@@ -27,6 +27,11 @@ export const TRIAL_DAYS = 7;
 export const TRIAL_CALL_CAP = 20;
 
 // Monthly subscription plans (£/mo). Override via env for test-mode duplicates.
+export const STARTER_PRICE = process.env.STRIPE_STARTER_PRICE || "price_1TmcN7F6ZlidDG7dL2VOwz61"; // £99/mo
+export const PROFESSIONAL_PRICE = process.env.STRIPE_PROFESSIONAL_PRICE || "price_1TmcN8F6ZlidDG7dq22YymbJ"; // £199/mo
+export const BUSINESS_PRICE = process.env.STRIPE_BUSINESS_PRICE || "price_1TmcN9F6ZlidDG7d5abmEf41"; // £399/mo
+
+// Legacy plans — kept active for existing subscribers, not offered to new signups.
 export const CORE_PRICE = process.env.STRIPE_CORE_PRICE || "price_1Tj5TaF6ZlidDG7dJc4YYOEu"; // £249/mo
 export const GROWTH_PRICE = process.env.STRIPE_GROWTH_PRICE || "price_1Tj5TbF6ZlidDG7dVqVvOiV4"; // £399/mo
 export const PRO_PRICE = process.env.STRIPE_PRO_PRICE || "price_1Tj5TdF6ZlidDG7d4Asvpqsa"; // £699/mo
@@ -39,16 +44,17 @@ export const EMAIL_CHANNEL_MONTHLY_GBP = 79;
 export const EMAIL_INCLUDED_REPLIES = 100;
 export const EMAIL_OVERAGE_GBP = 0.75;
 
-export type PlanId = "core" | "growth" | "pro";
+export type PlanId = "starter" | "professional" | "business";
+export type LegacyPlanId = "core" | "growth" | "pro";
 
 const PLAN_PRICE: Record<PlanId, string> = {
-  core: CORE_PRICE,
-  growth: GROWTH_PRICE,
-  pro: PRO_PRICE,
+  starter: STARTER_PRICE,
+  professional: PROFESSIONAL_PRICE,
+  business: BUSINESS_PRICE,
 };
 
 export function isPlanId(value: string): value is PlanId {
-  return value === "core" || value === "growth" || value === "pro";
+  return value === "starter" || value === "professional" || value === "business";
 }
 
 // Every plan starts with the same 7-day free trial (call cap enforced in-app).
@@ -58,12 +64,19 @@ export function planHasTrial(_plan: PlanId): boolean {
 
 export function planDisplayName(plan: string | null | undefined): string {
   switch (plan) {
+    case "starter":
+      return "Starter";
+    case "professional":
+      return "Professional";
+    case "business":
+      return "Business";
+    // Legacy plan names — existing subscribers
     case "core":
-      return "Core";
+      return "Core (legacy)";
     case "growth":
-      return "Growth";
+      return "Growth (legacy)";
     case "pro":
-      return "Pro";
+      return "Pro (legacy)";
     case "payg":
       return "Pay As You Go (legacy)";
     default:

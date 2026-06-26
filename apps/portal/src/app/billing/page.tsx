@@ -6,54 +6,54 @@ import { PlanCheckoutButton, ManageSubscriptionButton, EmailChannelCheckoutButto
 import { getEmailChannelUsage } from "@/lib/billing";
 
 type Plan = {
-  id: "core" | "growth" | "pro";
+  id: "starter" | "professional" | "business";
   name: string;
   price: string;
   tagline: string;
   calls: string;
-  extensions: string;
+  overage: string;
   popular?: boolean;
 };
 
 const PLANS: Plan[] = [
   {
-    id: "core",
-    name: "Core",
-    price: "£249",
-    tagline: "Smaller teams & practices",
-    calls: "250 AI calls / month",
-    extensions: "5 staff extensions",
+    id: "starter",
+    name: "Starter",
+    price: "£99",
+    tagline: "Small businesses & sole traders",
+    calls: "100 AI calls / month",
+    overage: "£0.65 per additional call",
   },
   {
-    id: "growth",
-    name: "Growth",
-    price: "£399",
-    tagline: "Busier teams, higher volumes",
-    calls: "500 AI calls / month",
-    extensions: "10 staff extensions",
+    id: "professional",
+    name: "Professional",
+    price: "£199",
+    tagline: "Growing businesses with regular enquiries",
+    calls: "300 AI calls / month",
+    overage: "£0.55 per additional call",
     popular: true,
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: "£699",
-    tagline: "High volume, unlimited extensions",
-    calls: "1,000 AI calls / month",
-    extensions: "Unlimited extensions",
+    id: "business",
+    name: "Business",
+    price: "£399",
+    tagline: "Busy teams & multi-site businesses",
+    calls: "750 AI calls / month",
+    overage: "£0.45 per additional call",
   },
 ];
 
 // Shared inclusions — identical across plans (mirrors the marketing pricing page).
 const INCLUSIONS = [
   "AI receptionist, 24/7",
-  "Complete phone system",
-  "Business numbers included",
-  "3,000 outbound mins / user",
-  "iOS, Android & desktop apps",
-  "Call summaries & data capture",
-  "Out-of-hours & overflow modes",
-  "Escalation & call routing",
-  "Audit trail & call logs",
+  "Call summaries & transcripts",
+  "SMS, email & WhatsApp follow-up",
+  "Appointment booking",
+  "Call transfers & routing",
+  "Live chat handover",
+  "CRM integrations",
+  "Dashboard & analytics",
+  "Knowledge base setup",
 ];
 
 function Tick() {
@@ -117,7 +117,7 @@ export default async function BillingPage() {
             Choose your <span style={{ color: "#7de8eb" }}>WiseCall</span> plan
           </h1>
           <p className="mt-2 text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
-            Every plan includes the AI receptionist, a complete phone system and UK outbound calling.
+            Everything included. Just choose how many AI calls you need.
             Prices exclude VAT, billed monthly on a 12-month term.
           </p>
           <p
@@ -184,8 +184,8 @@ export default async function BillingPage() {
                 <div className="flex items-center gap-2 text-sm font-semibold text-white">
                   <span style={{ color: "#7de8eb" }}>📞</span> {plan.calls}
                 </div>
-                <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <span style={{ color: "#7de8eb" }}>👥</span> {plan.extensions}
+                <div className="flex items-center gap-2 text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
+                  <span style={{ color: "#7de8eb" }}>+</span> {plan.overage}
                 </div>
               </div>
 
