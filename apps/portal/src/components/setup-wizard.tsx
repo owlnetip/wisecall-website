@@ -14,8 +14,11 @@ import {
   Plus,
   Trash2,
   PhoneForwarded,
+  Play,
+  Square,
 } from "lucide-react";
 import { draftAgentFromWebsite, type AgentDraft } from "@/app/actions/wizard";
+import { testVoice } from "@/app/actions/agents";
 import { OfficeHoursGrid } from "./office-hours-card";
 import type { AgentTemplate, RoutingContact } from "./customer-agent-workspace";
 
@@ -125,6 +128,8 @@ export function SetupWizard({
   const [generating, startGenerate] = useTransition();
   const [submitting, startSubmit] = useTransition();
   const [loadingPhase, setLoadingPhase] = useState(0);
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   // The original AI-written prompt/greeting, kept so switching back to the
   // general receptionist template restores it instead of the generic text.
   const aiRef = useRef<{ prompt: string; greeting: string } | null>(null);
@@ -214,6 +219,28 @@ export function SetupWizard({
   }
 
   const selectedVoiceId = draft?.voice || voices[0]?.id || "";
+
+  async function previewVoice(voiceId: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (playingVoice === voiceId) {
+      audioRef.current?.pause();
+      setPlayingVoice(null);
+      return;
+    }
+    audioRef.current?.pause();
+    setPlayingVoice(voiceId);
+    const res = await testVoice(voiceId);
+    if (!res.ok || !res.audio) {
+      setPlayingVoice(null);
+      return;
+    }
+    const mime = res.mime || "audio/mp3";
+    const audio = new Audio(`data:${mime};base64,${res.audio}`);
+    audioRef.current = audio;
+    audio.onended = () => setPlayingVoice(null);
+    audio.onerror = () => setPlayingVoice(null);
+    audio.play().catch(() => setPlayingVoice(null));
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm">
@@ -507,6 +534,7 @@ export function SetupWizard({
               <div className="grid gap-2 sm:grid-cols-2">
                 {voices.map((v) => {
                   const active = selectedVoiceId === v.id;
+                  const isPlaying = playingVoice === v.id;
                   return (
                     <button
                       key={v.id}
@@ -522,11 +550,25 @@ export function SetupWizard({
                         <span className="block font-bold text-[#111716]">{v.label}</span>
                         <span className="block text-xs text-[#66716e]">{v.blurb}</span>
                       </span>
-                      {active && (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#148b8e] text-white">
-                          <Check className="h-3 w-3" />
+                      <span className="flex items-center gap-2">
+                        <span
+                          role="button"
+                          onClick={(e) => previewVoice(v.id, e)}
+                          className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 bg-white text-[#66716e] transition hover:border-[#148b8e] hover:text-[#148b8e]"
+                          title={isPlaying ? "Stop" : "Preview voice"}
+                        >
+                          {isPlaying ? (
+                            <Square className="h-3 w-3 fill-current" />
+                          ) : (
+                            <Play className="h-3 w-3 fill-current" />
+                          )}
                         </span>
-                      )}
+                        {active && (
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#148b8e] text-white">
+                            <Check className="h-3 w-3" />
+                          </span>
+                        )}
+                      </span>
                     </button>
                   );
                 })}
