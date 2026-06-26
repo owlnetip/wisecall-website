@@ -93,7 +93,7 @@ type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical
 // Provider-agnostic call routing. The portal stays the same whichever telco
 // stack wins — only `provider` and the per-provider fields differ. Persisted in
 // metadata.routing on wisecall_profiles.
-export type RoutingProvider = "telnyx" | "mor_openai";
+export type RoutingProvider = "telnyx" | "mor_openai" | "mor_sip";
 export type RoutingStatus = "unprovisioned" | "pending" | "live";
 export type AgentRouting = {
   provider: RoutingProvider | null;

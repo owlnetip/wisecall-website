@@ -196,15 +196,28 @@ export async function saveSipEndpoint(input: {
     is_enabled: input.isEnabled,
     updated_at: new Date().toISOString(),
   };
-  if (password) {
+
+  // Don't use upsert: PostgREST defaults omitted columns to NULL, so a blank
+  // password on an edit would try to write sip_password = NULL and trip the
+  // NOT NULL constraint. Branch explicitly — update never touches columns we
+  // didn't set, so leaving the password blank keeps the stored one.
+  if (existing) {
+    if (password) {
+      row.sip_password = password;
+    }
+    const { error } = await service
+      .from("wisecall_sip_endpoints")
+      .update(row)
+      .eq("profile_id", input.agentId);
+
+    if (error) return { ok: false, error: error.message };
+  } else {
     row.sip_password = password;
+    const { error } = await service.from("wisecall_sip_endpoints").insert(row);
+
+    if (error) return { ok: false, error: error.message };
   }
 
-  const { error } = await service
-    .from("wisecall_sip_endpoints")
-    .upsert(row, { onConflict: "profile_id" });
-
-  if (error) return { ok: false, error: error.message };
 
   revalidatePath("/dashboard");
   return { ok: true };
