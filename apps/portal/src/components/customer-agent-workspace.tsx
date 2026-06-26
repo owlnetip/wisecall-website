@@ -1057,7 +1057,9 @@ export function CustomerAgentWorkspace({
   // AI setup wizard finish: create the drafted agent, then apply the fields
   // createAgent doesn't take (website + office hours), and open it for review.
   async function createFromDraft(draft: AgentDraft): Promise<WizardResult> {
-    const voice = cartesiaVoices[0].id;
+    const voice = draft.voice || cartesiaVoices[0].id;
+    const contacts = draft.contacts ?? [];
+    const defaultEmail = (draft.defaultEmail ?? "").trim();
     const result = await createAgent({
       name: draft.receptionistName || "Receptionist",
       businessName: draft.businessName || "New business",
@@ -1067,17 +1069,21 @@ export function CustomerAgentWorkspace({
       voice,
       knowledge: draft.knowledge,
       knowledgeFields: draft.knowledgeFields,
-      contacts: [],
+      contacts,
     });
     if (!result.ok || !result.id) {
       return { ok: false, error: result.error ?? "Could not create the assistant." };
     }
 
+    // Persist the remaining wizard answers that createAgent doesn't take
+    // directly (website, opening hours, messages inbox). Contacts are already
+    // saved by createAgent; defaultEmail must go through updateAgent.
     const hasHours = Object.keys(draft.officeHours ?? {}).length > 0;
-    if (draft.website || hasHours) {
+    if (draft.website || hasHours || defaultEmail) {
       await updateAgent(result.id, {
         website: draft.website,
         officeHours: draft.officeHours,
+        defaultEmail,
       });
     }
 
@@ -1095,8 +1101,8 @@ export function CustomerAgentWorkspace({
       voice,
       knowledge: draft.knowledge,
       knowledgeFields: draft.knowledgeFields,
-      defaultEmail: "",
-      contacts: [],
+      defaultEmail,
+      contacts,
       website: draft.website,
       timezone: "Europe/London",
       fallbackEmail: "",
@@ -1548,6 +1554,9 @@ export function CustomerAgentWorkspace({
             setWizardOpen(false);
             setCreateOpen(true);
           }}
+          voices={cartesiaVoices}
+          templates={agentTemplates}
+          accountEmail={userEmail ?? ""}
         />
       )}
 

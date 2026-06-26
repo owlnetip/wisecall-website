@@ -4,7 +4,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { isAdmin } from "@/lib/admin";
-import type { KnowledgeFields, OfficeHours } from "@/components/customer-agent-workspace";
+import type {
+  KnowledgeFields,
+  OfficeHours,
+  RoutingContact,
+} from "@/components/customer-agent-workspace";
 
 export type AgentDraft = {
   businessName: string;
@@ -16,7 +20,22 @@ export type AgentDraft = {
   knowledgeFields: KnowledgeFields;
   officeHours: OfficeHours;
   website: string;
+  // Guided-setup extras the wizard fills in after the scan. Defaulted here so a
+  // freshly scanned draft is already valid; the user reviews/changes each one.
+  templateId: string; // matched agent template (receptionist / dentally …)
+  voice: string; // chosen Cartesia voice id ("" → wizard uses the default)
+  defaultEmail: string; // where call messages + transcripts are sent
+  contacts: RoutingContact[]; // staff/colleagues for transfers + notifications
 };
+
+// Maps the AI-detected industry to one of our agent templates so the wizard can
+// pre-select it. Specialised templates (e.g. dental booking) only match on a
+// clear signal; everything else falls back to the general receptionist.
+function matchTemplateId(industry: string, context: string): string {
+  const hay = `${industry} ${context}`.toLowerCase();
+  if (/\bdent|orthodont|dental practice\b/.test(hay)) return "dentally";
+  return "receptionist";
+}
 
 export type DraftResult = { ok: boolean; draft?: AgentDraft; error?: string };
 
@@ -290,6 +309,12 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
         knowledgeFields,
         officeHours,
         website: url,
+        templateId: matchTemplateId(str("industry"), str("businessContext")),
+        voice: "",
+        // Pre-fill the messages inbox with the account holder's email — the most
+        // common answer — so most users just confirm it in the wizard.
+        defaultEmail: user.email ?? "",
+        contacts: [],
       },
     };
   } catch (err) {
