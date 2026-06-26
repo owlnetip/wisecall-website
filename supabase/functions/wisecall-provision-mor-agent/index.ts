@@ -91,6 +91,17 @@ function morLoginUsername(username: string): string {
   return username.trim().replace(/ /g, "_");
 }
 
+function morDeviceBlocks(xml: string): string[] {
+  return xml.match(/<device>[\s\S]*?<\/device>/gi) || [];
+}
+
+function morDeviceBlock(xml: string, deviceId: string): string {
+  const blocks = morDeviceBlocks(xml);
+  return blocks.find((block) =>
+    xmlTag(block, "device_id") === deviceId || xmlTag(block, "id") === deviceId
+  ) || blocks[0] || "";
+}
+
 async function resolveResellerCredentials(
   supabase: any,
   resellerId: string,
@@ -138,6 +149,84 @@ async function resolveResellerCredentials(
     apiKey: apiKey || uniqueHash,
     uniqueHash,
   };
+}
+
+async function syncMorDevicePassword(options: {
+  morApiUrl: string;
+  resellerUsername: string;
+  reseller: {
+    password: string;
+    apiKey: string;
+    uniqueHash: string;
+  };
+  morUserId: string;
+  morDeviceId: string;
+  deviceUsername: string;
+  sipPassword: string;
+}): Promise<string> {
+  const {
+    morApiUrl,
+    resellerUsername,
+    reseller,
+    morUserId,
+    morDeviceId,
+    deviceUsername,
+    sipPassword,
+  } = options;
+
+  const deviceHash = reseller.uniqueHash || await sha1(`${morUserId}${reseller.apiKey}`);
+  const devicesParams = new URLSearchParams({
+    u: resellerUsername,
+    hash: deviceHash,
+    user_id: morUserId,
+    show_hidden_devices: "0",
+  });
+  if (reseller.password) devicesParams.set("p", reseller.password);
+
+  const devicesXml = await morGet(
+    `${morApiUrl}/billing/api/devices_get?${devicesParams.toString()}`,
+  );
+  const block = morDeviceBlock(devicesXml, morDeviceId);
+  if (!block) throw new Error(`MOR devices_get: device ${morDeviceId} was not found`);
+
+  const usernameForHash = xmlTag(block, "username") || deviceUsername;
+  const authentication = xmlTag(block, "authentication") || "0";
+  const host = xmlTag(block, "ipaddr") || xmlTag(block, "host") || "dynamic";
+  const port = xmlTag(block, "port") || "5060";
+  const updateHash = await sha1(
+    `${morDeviceId}${authentication}${usernameForHash}${host}${port}${reseller.apiKey}`,
+  );
+
+  const updateParams = new URLSearchParams({
+    u: resellerUsername,
+    device: morDeviceId,
+    authentication,
+    username: usernameForHash,
+    host,
+    port,
+    hash: updateHash,
+    password: sipPassword,
+    device_type: "SIP",
+  });
+  if (reseller.password) updateParams.set("p", reseller.password);
+
+  const updateXml = await morGet(
+    `${morApiUrl}/billing/api/device_update?${updateParams.toString()}`,
+  );
+  console.log("MOR device_update password response:", updateXml.slice(0, 200));
+  const updateErr = morResponseError(updateXml);
+  if (updateErr) throw new Error(`MOR device_update password failed: ${updateErr}`);
+
+  const verifyXml = await morGet(
+    `${morApiUrl}/billing/api/devices_get?${devicesParams.toString()}`,
+  );
+  const verifyBlock = morDeviceBlock(verifyXml, morDeviceId);
+  const morPassword = xmlTag(verifyBlock, "secret") || xmlTag(verifyBlock, "password");
+  if (morPassword && morPassword !== sipPassword) {
+    throw new Error("MOR device_update password did not match the saved SIP password");
+  }
+
+  return usernameForHash;
 }
 
 // ─── main ─────────────────────────────────────────────────────────────────────
@@ -333,8 +422,9 @@ serve(async (req) => {
         description: `WiseCall agent ${profile_id.slice(0, 8)}`,
         type: "SIP",
         device_type: "SIP",
+        authentication: "0",
         host: "dynamic",
-        secret: sipPassword,
+        password: sipPassword,
       });
       if (reseller.password) deviceParams.set("p", reseller.password);
 
@@ -368,26 +458,27 @@ serve(async (req) => {
 
       deviceUsername = xmlTag(deviceSourceXml, "username") || xmlTag(deviceSourceXml, "name") || morUsername;
 
-      // ── 4. Set SIP secret ────────────────────────────────────────────────
-      const updateHash = await sha1(`admin${MOR_ADMIN_PASSWORD}${MOR_API_SECRET}`);
-      const updateParams = new URLSearchParams({
-        u: "admin",
-        p: MOR_ADMIN_PASSWORD,
-        hash: updateHash,
-        device_id: morDeviceId,
-        secret: sipPassword,
-      });
-      const updateXml = await morPost(`${MOR_API_URL}/billing/api/device_details_update`, updateParams);
-      console.log("MOR device_details_update response:", updateXml.slice(0, 200));
-      const updateErr = morError(updateXml);
-      if (updateErr) console.warn(`⚠️ MOR device_details_update warning: ${updateErr}`);
-
       // Save MOR IDs to pool now so retries can skip user/device creation.
       await supabase
         .from("wisecall_mor_ddi_pool")
         .update({ mor_user_id: morUserId, mor_device_id: morDeviceId })
         .eq("id", didPoolId);
     }
+
+    // ── 4. Ensure MOR and Supabase hold the same SIP password ─────────────
+    // MOR's device_create ignores `secret` for dynamic SIP devices and may
+    // generate its own password. device_update uses `password`, plus a hash
+    // that includes the device auth fields.
+    deviceUsername = await syncMorDevicePassword({
+      morApiUrl: MOR_API_URL,
+      resellerUsername,
+      reseller,
+      morUserId,
+      morDeviceId,
+      deviceUsername,
+      sipPassword,
+    });
+    console.log(`✅ MOR SIP password synced for device ${morDeviceId}`);
 
     const apiSecret = MOR_API_SECRET.trim();
 
