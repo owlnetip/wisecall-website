@@ -157,10 +157,35 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
 
   let routing: CreateResult["routing"] = { provider: null, number: "", status: "unprovisioned" };
 
-  if (shouldAssignIncludedNumber) {
-    // Auto-assign one included pooled DDI per owner. Pooled numbers already
-    // point at the shared TeXML app and the runtime routes by called number, so
-    // setting telnyx_number + is_active is enough to make the agent answer.
+  if (process.env.WISECALL_ROUTING_PROVIDER === "mor_sip") {
+    // MOR path: every new agent gets its own DDI from the MOR pool. No Telnyx
+    // involvement — existing Telnyx agents are completely untouched.
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (supabaseUrl && serviceKey) {
+        const fnRes = await fetch(
+          `${supabaseUrl}/functions/v1/wisecall-provision-mor-agent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", apikey: serviceKey },
+            body: JSON.stringify({ profile_id: profileId }),
+          }
+        );
+        const fnBody = await fnRes.json();
+        if (fnBody.ok) {
+          routing = fnBody.routing as CreateResult["routing"];
+        } else {
+          console.error("MOR provisioning failed:", fnBody.error);
+        }
+      }
+    } catch (morErr) {
+      console.error("MOR provision call failed:", (morErr as Error).message);
+    }
+  } else if (shouldAssignIncludedNumber) {
+    // Telnyx path: auto-assign one included pooled DDI per owner. Pooled numbers
+    // already point at the shared TeXML app and the runtime routes by called
+    // number, so setting telnyx_number + is_active is enough to make the agent answer.
     try {
       const { data: assigned } = await service.rpc("wisecall_assign_pool_number", {
         p_profile_id: profileId,
@@ -488,9 +513,34 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
       // Application, then persist routing below. Until then:
       return { ok: false, error: "Telnyx provisioning isn't switched on yet." };
 
+    case "mor_sip": {
+      // Calls wisecall-provision-mor-agent (loveableowlnetportal) which:
+      //   reserves a pool DID → creates MOR user → creates SIP device →
+      //   assigns DID to device → inserts wisecall_sip_endpoints (bridge picks
+      //   it up in ~30 s) → writes metadata.routing back to the profile.
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !serviceKey) {
+        return { ok: false, error: "Supabase not configured." };
+      }
+      const fnUrl = `${supabaseUrl}/functions/v1/wisecall-provision-mor-agent`;
+      const fnRes = await fetch(fnUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceKey,
+        },
+        body: JSON.stringify({ profile_id: agentId }),
+      });
+      const fnBody = await fnRes.json();
+      if (!fnBody.ok) {
+        return { ok: false, error: fnBody.error || "Provisioning failed." };
+      }
+      revalidatePath("/dashboard");
+      return { ok: true, routing: fnBody.routing as AgentRouting };
+    }
+
     case "mor_openai":
-      // TODO: allocate a DID in MOR, create the SIP route into the OpenAI
-      // Realtime agent, then persist routing below. Until then:
       return { ok: false, error: "MOR / OpenAI routing isn't switched on yet." };
 
     default:
