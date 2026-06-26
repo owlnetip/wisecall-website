@@ -14,3 +14,8 @@ verify_jwt = false
 # Supabase JWT, so JWT verification must stay off or the webhook 401s.
 [functions.wisecall-email-inbound]
 verify_jwt = false
+
+# Internal provisioning — called from the Next.js server action with the
+# service-role apikey. The function body rejects non-service-role calls.
+[functions.wisecall-provision-mor-agent]
+verify_jwt = false

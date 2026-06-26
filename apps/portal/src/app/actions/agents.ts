@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
+import { getSupabaseConfig } from "@/lib/env";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { isAdmin } from "@/lib/admin";
 import type {
@@ -161,14 +162,13 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     // MOR path: every new agent gets its own DDI from the MOR pool. No Telnyx
     // involvement — existing Telnyx agents are completely untouched.
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      if (supabaseUrl && anonKey) {
+      const config = getSupabaseConfig();
+      if (config) {
         const fnRes = await fetch(
-          `${supabaseUrl}/functions/v1/wisecall-provision-mor-agent`,
+          `${config.url}/functions/v1/wisecall-provision-mor-agent`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json", apikey: anonKey },
+            headers: { "Content-Type": "application/json", apikey: config.serviceRoleKey },
             body: JSON.stringify({ profile_id: profileId }),
           }
         );
@@ -518,17 +518,16 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
       //   reserves a pool DID → creates MOR user → creates SIP device →
       //   assigns DID to device → inserts wisecall_sip_endpoints (bridge picks
       //   it up in ~30 s) → writes metadata.routing back to the profile.
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      if (!supabaseUrl || !anonKey) {
+      const config = getSupabaseConfig();
+      if (!config) {
         return { ok: false, error: "Supabase not configured." };
       }
-      const fnUrl = `${supabaseUrl}/functions/v1/wisecall-provision-mor-agent`;
+      const fnUrl = `${config.url}/functions/v1/wisecall-provision-mor-agent`;
       const fnRes = await fetch(fnUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: anonKey,
+          apikey: config.serviceRoleKey,
         },
         body: JSON.stringify({ profile_id: agentId }),
       });
