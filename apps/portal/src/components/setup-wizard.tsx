@@ -17,7 +17,7 @@ import {
   Play,
   Square,
 } from "lucide-react";
-import { draftAgentFromWebsite, type AgentDraft } from "@/app/actions/wizard";
+import { draftAgentFromWebsite, draftAgentFromInputs, type AgentDraft, type BusinessInputs } from "@/app/actions/wizard";
 import { testVoice } from "@/app/actions/agents";
 import { OfficeHoursGrid } from "./office-hours-card";
 import type { AgentTemplate, RoutingContact } from "./customer-agent-workspace";
@@ -126,10 +126,21 @@ export function SetupWizard({
   const [draft, setDraft] = useState<AgentDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generating, startGenerate] = useTransition();
+  const [generatingManual, startGenerateManual] = useTransition();
   const [submitting, startSubmit] = useTransition();
   const [loadingPhase, setLoadingPhase] = useState(0);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [manualInputs, setManualInputs] = useState<BusinessInputs>({
+    businessName: "",
+    industry: "",
+    services: "",
+    address: "",
+    openingHoursText: "",
+    pricing: "",
+    payments: "",
+    extra: "",
+  });
   // The original AI-written prompt/greeting, kept so switching back to the
   // general receptionist template restores it instead of the generic text.
   const aiRef = useRef<{ prompt: string; greeting: string } | null>(null);
@@ -332,33 +343,99 @@ export function SetupWizard({
           )}
 
           {/* STEP — basics (manual only) */}
-          {step === "basics" && draft && (
+          {step === "basics" && (
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-black text-[#111716]">Tell us about your business</h3>
                 <p className="mt-1 text-sm text-[#66716e]">
-                  We&apos;ll use this to name your assistant and shape how it answers.
+                  Fill in what you know — we&apos;ll use it to build your receptionist. Leave anything blank that doesn&apos;t apply.
                 </p>
               </div>
-              <Field
-                label="Business name"
-                value={draft.businessName}
-                placeholder="e.g. Northwind Dental"
-                onChange={(v) =>
-                  patchDraft({
-                    businessName: v,
-                    // Keep the assistant identity as "{business} assistant".
-                    receptionistName: v ? `${v} assistant` : "",
-                  })
-                }
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Business name *"
+                  value={manualInputs.businessName}
+                  placeholder="e.g. Northwind Dental"
+                  onChange={(v) => setManualInputs((p) => ({ ...p, businessName: v }))}
+                />
+                <Field
+                  label="Industry / type of business"
+                  value={manualInputs.industry}
+                  placeholder="e.g. Dental practice, Law firm, Estate agent"
+                  onChange={(v) => setManualInputs((p) => ({ ...p, industry: v }))}
+                />
+              </div>
+              <TextArea
+                label="Services & treatments"
+                value={manualInputs.services}
+                placeholder="e.g. General dentistry, implants, orthodontics, whitening"
+                onChange={(v) => setManualInputs((p) => ({ ...p, services: v }))}
+                rows={3}
               />
-              <Field
-                label="Industry"
-                value={draft.industry}
-                placeholder="e.g. Dental practice, Law firm, Estate agent"
-                onChange={(v) => patchDraft({ industry: v })}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Address & parking"
+                  value={manualInputs.address}
+                  placeholder="e.g. 12 High Street, Leeds LS1 4AB"
+                  onChange={(v) => setManualInputs((p) => ({ ...p, address: v }))}
+                />
+                <Field
+                  label="Opening hours"
+                  value={manualInputs.openingHoursText}
+                  placeholder="e.g. Mon–Fri 9am–5:30pm, Sat 9am–1pm"
+                  onChange={(v) => setManualInputs((p) => ({ ...p, openingHoursText: v }))}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Pricing"
+                  value={manualInputs.pricing}
+                  placeholder="e.g. Consultation from £50, implants from £1,800"
+                  onChange={(v) => setManualInputs((p) => ({ ...p, pricing: v }))}
+                />
+                <Field
+                  label="Payments, insurance & registration"
+                  value={manualInputs.payments}
+                  placeholder="e.g. NHS & private, card, finance plans"
+                  onChange={(v) => setManualInputs((p) => ({ ...p, payments: v }))}
+                />
+              </div>
+              <TextArea
+                label="Anything else callers commonly ask"
+                value={manualInputs.extra}
+                placeholder="e.g. Free parking on-site, wheelchair accessible, new patients welcome"
+                onChange={(v) => setManualInputs((p) => ({ ...p, extra: v }))}
+                rows={2}
               />
               {error && <p className="text-sm font-medium text-red-600">{error}</p>}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!manualInputs.businessName.trim()) {
+                    setError("Add your business name to continue.");
+                    return;
+                  }
+                  setError(null);
+                  startGenerateManual(async () => {
+                    const res = await draftAgentFromInputs(manualInputs);
+                    if (!res.ok || !res.draft) {
+                      setError(res.error ?? "Couldn't build the agent.");
+                      return;
+                    }
+                    aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
+                    setDraft(res.draft);
+                    goNext();
+                  });
+                }}
+                disabled={generatingManual || !manualInputs.businessName.trim()}
+                className="mt-1 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+              >
+                {generatingManual ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Building your receptionist…</>
+                ) : (
+                  <><Sparkles className="h-4 w-4" /> Build my receptionist</>
+                )}
+              </button>
               <div className="flex items-center justify-between pt-1">
                 <button
                   type="button"
@@ -369,20 +446,6 @@ export function SetupWizard({
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#66716e] hover:text-[#111716]"
                 >
                   <ArrowLeft className="h-4 w-4" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!draft.businessName.trim()) {
-                      setError("Add your business name to continue.");
-                      return;
-                    }
-                    setError(null);
-                    goNext();
-                  }}
-                  className="inline-flex h-10 items-center rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130]"
-                >
-                  Next: assistant type
                 </button>
               </div>
             </div>

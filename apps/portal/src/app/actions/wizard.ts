@@ -37,6 +37,17 @@ function matchTemplateId(_industry: string, _context: string): string {
 
 export type DraftResult = { ok: boolean; draft?: AgentDraft; error?: string };
 
+export type BusinessInputs = {
+  businessName: string;
+  industry: string;
+  services: string;
+  address: string;
+  openingHoursText: string;
+  pricing: string;
+  payments: string;
+  extra: string;
+};
+
 const VALID_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
 function normaliseUrl(input: string): string | null {
@@ -314,6 +325,165 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
         defaultEmail: user.email ?? "",
         contacts: [],
       },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? `AI draft failed: ${err.message}` : "AI draft failed.",
+    };
+  }
+}
+
+// Shared helper: parse the AI tool-use output into an AgentDraft.
+function parseDraftOutput(
+  out: Record<string, unknown>,
+  defaults: { website?: string; defaultEmail?: string },
+): AgentDraft {
+  const str = (k: string): string => (typeof out[k] === "string" ? (out[k] as string) : "");
+  const officeHours: OfficeHours = {};
+  if (Array.isArray(out.openingHours)) {
+    for (const item of out.openingHours) {
+      const v = (item ?? {}) as Record<string, unknown>;
+      const day = typeof v.day === "string" ? v.day : "";
+      const open = typeof v.open === "string" ? v.open : "";
+      const close = typeof v.close === "string" ? v.close : "";
+      if (VALID_DAYS.includes(day) && /^\d{1,2}:\d{2}$/.test(open) && /^\d{1,2}:\d{2}$/.test(close)) {
+        officeHours[day] = { open, close };
+      }
+    }
+  }
+  const knowledgeFields: KnowledgeFields = {
+    services: str("services") || undefined,
+    pricing: str("pricing") || undefined,
+    address: str("address") || undefined,
+    openingHours:
+      Object.keys(officeHours).length > 0
+        ? VALID_DAYS.filter((d) => officeHours[d])
+            .map((d) => `${d}: ${officeHours[d].open}-${officeHours[d].close}`)
+            .join(", ")
+        : undefined,
+  };
+  const businessName = str("businessName") || "My business";
+  const greeting = str("greeting").replace(
+    /^\s*(good\s+(morning|afternoon|evening))\b[\s,!-]*/i,
+    "Hi, ",
+  );
+  return {
+    businessName,
+    receptionistName: `${businessName} assistant`,
+    industry: str("industry") || "General",
+    greeting,
+    prompt: str("prompt"),
+    knowledge: str("businessContext"),
+    knowledgeFields,
+    officeHours,
+    website: defaults.website ?? "",
+    templateId: matchTemplateId(str("industry"), str("businessContext")),
+    voice: "",
+    defaultEmail: defaults.defaultEmail ?? "",
+    contacts: [],
+  };
+}
+
+// The shared Anthropic tool definition for agent-draft generation.
+const EMIT_AGENT_DRAFT_TOOL: Anthropic.Messages.Tool = {
+  name: "emit_agent_draft",
+  description: "Return a complete first-draft configuration for an AI phone receptionist for this business.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      businessName: { type: "string", description: "The trading name of the business." },
+      receptionistName: {
+        type: "string",
+        description: "The assistant's name. ALWAYS the business's trading name followed by ' assistant'. Never a personal first name.",
+      },
+      industry: { type: "string", description: "Short industry label, e.g. 'Dental practice'." },
+      greeting: {
+        type: "string",
+        description:
+          "The exact first sentence the assistant says when answering, naming the business. Start with a neutral greeting — 'Hi', 'Hello' or 'Welcome' — NEVER a time-of-day greeting. One short sentence.",
+      },
+      prompt: {
+        type: "string",
+        description:
+          "System prompt: how the assistant should behave, tone, what it can help with. UK English. 120-250 words.",
+      },
+      businessContext: {
+        type: "string",
+        description: "Factual knowledge the receptionist needs: services, location, FAQs. Plain prose.",
+      },
+      services: { type: "string", description: "Main services/products, comma or line separated." },
+      pricing: { type: "string", description: "Any pricing info, else empty string." },
+      address: { type: "string", description: "Business address if known, else empty string." },
+      openingHours: {
+        type: "array",
+        description: "Opening hours if provided. Omit closed/unknown days. Empty array if none.",
+        items: {
+          type: "object",
+          properties: {
+            day: { type: "string", enum: VALID_DAYS },
+            open: { type: "string", description: "24h HH:MM" },
+            close: { type: "string", description: "24h HH:MM" },
+          },
+          required: ["day", "open", "close"],
+        },
+      },
+    },
+    required: ["businessName", "receptionistName", "industry", "greeting", "prompt", "businessContext", "services"],
+  },
+};
+
+// Builds an AgentDraft from manually-entered business details instead of a website scan.
+// The AI call is identical — we just feed it structured text instead of scraped HTML.
+export async function draftAgentFromInputs(inputs: BusinessInputs): Promise<DraftResult> {
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+  if (!isAdmin(user) && !hasActiveAccess(await getBillingForUser(user.id))) {
+    return { ok: false, error: "Start your free trial first." };
+  }
+  if (!inputs.businessName.trim()) return { ok: false, error: "Business name is required." };
+
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_WISECASE;
+  if (!apiKey) return { ok: false, error: "AI setup isn't switched on yet (missing Claude API key)." };
+
+  const lines: string[] = [
+    `Business name: ${inputs.businessName.trim()}`,
+    inputs.industry ? `Industry: ${inputs.industry.trim()}` : "",
+    inputs.services ? `Services: ${inputs.services.trim()}` : "",
+    inputs.address ? `Address: ${inputs.address.trim()}` : "",
+    inputs.openingHoursText ? `Opening hours: ${inputs.openingHoursText.trim()}` : "",
+    inputs.pricing ? `Pricing: ${inputs.pricing.trim()}` : "",
+    inputs.payments ? `Payments / insurance: ${inputs.payments.trim()}` : "",
+    inputs.extra ? `Additional info: ${inputs.extra.trim()}` : "",
+  ].filter(Boolean);
+
+  const anthropic = new Anthropic({ apiKey });
+  try {
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 3000,
+      thinking: { type: "disabled" },
+      tool_choice: { type: "tool", name: "emit_agent_draft" },
+      tools: [EMIT_AGENT_DRAFT_TOOL],
+      messages: [
+        {
+          role: "user",
+          content: `You are setting up an AI phone receptionist for a UK business. The customer has provided the following details about their business. Draft a complete, ready-to-review configuration based exactly on what they've told you. Where information is missing, use sensible professional defaults rather than inventing facts.\n\n${lines.join("\n")}`,
+        },
+      ],
+    });
+
+    const block = message.content.find((b) => b.type === "tool_use");
+    if (!block || block.type !== "tool_use") {
+      return { ok: false, error: "The AI couldn't draft an agent from those details. Try filling in more information." };
+    }
+    const out = block.input as Record<string, unknown>;
+    return {
+      ok: true,
+      draft: parseDraftOutput(out, { defaultEmail: user.email ?? "" }),
     };
   } catch (err) {
     return {
