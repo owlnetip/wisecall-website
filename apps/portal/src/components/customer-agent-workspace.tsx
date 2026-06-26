@@ -2027,7 +2027,15 @@ function AssistantDetail({
                 : "border-transparent text-[#7a8582] hover:text-[#111716]"
             }`}
           >
-            {item === "knowledge" ? "Knowledge Base" : item === "outbound" ? "Outbound" : item}
+            {
+              {
+                behaviour: "Behaviour",
+                knowledge: "Knowledge Base",
+                routing: "Routing",
+                outbound: "Outbound",
+                technical: "Technical",
+              }[item]
+            }
           </button>
         ))}
       </div>
