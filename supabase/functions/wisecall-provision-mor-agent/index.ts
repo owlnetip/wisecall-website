@@ -54,10 +54,28 @@ async function morPost(url: string, params: URLSearchParams): Promise<string> {
 }
 
 function generateSecret(len = 20): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  const bytes = new Uint8Array(len);
+  const uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lowercase = "abcdefghjkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const chars = `${uppercase}${lowercase}${digits}`;
+  const required = [uppercase, lowercase, digits].map((set) => {
+    const byte = new Uint8Array(1);
+    crypto.getRandomValues(byte);
+    return set[byte[0] % set.length];
+  });
+  const bytes = new Uint8Array(Math.max(0, len - required.length));
   crypto.getRandomValues(bytes);
-  return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
+  const password = [
+    ...required,
+    ...Array.from(bytes).map((b) => chars[b % chars.length]),
+  ];
+  for (let i = password.length - 1; i > 0; i--) {
+    const byte = new Uint8Array(1);
+    crypto.getRandomValues(byte);
+    const j = byte[0] % (i + 1);
+    [password[i], password[j]] = [password[j], password[i]];
+  }
+  return password.join("");
 }
 
 // Derive the SIP/API host from MOR_API_URL (strips scheme and path).
