@@ -188,8 +188,19 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    // Deterministic username — same on every attempt for this profile.
-    const morUsername = "wca" + profile_id.replace(/-/g, "").slice(0, 10);
+    const reseller = await resolveResellerCredentials(
+      supabase,
+      MOR_RESELLER_ID,
+      MOR_RESELLER_USERNAME,
+    );
+    const resellerUsername = reseller.username;
+    const resellerOwnerId = reseller.uniqueHash || reseller.resellerId;
+    console.log(`✅ Using MOR reseller ${resellerUsername} (${MOR_RESELLER_ID}) for provisioning`);
+
+    // Deterministic username — same on every attempt for this profile. If we
+    // are recovering from an old admin-owned partial, use a stable replacement.
+    const baseMorUsername = "wca" + profile_id.replace(/-/g, "").slice(0, 10);
+    let morUsername = baseMorUsername;
 
     // ── 0. Check for existing partial provisioning (idempotency) ──────────
     // If a previous attempt already reserved a DID and created MOR resources,
@@ -214,7 +225,7 @@ serve(async (req) => {
     let deviceUsername = "";
     let sipPassword = "";
 
-    if (existingPool?.mor_user_id && existingPool?.mor_device_id) {
+    if (existingPool?.mor_user_id && existingPool?.mor_device_id && existingSip?.sip_username) {
       // Full partial state available — skip user + device creation entirely.
       didPoolId = existingPool.id;
       didNumber = existingPool.did_number;
@@ -224,25 +235,35 @@ serve(async (req) => {
       sipPassword = existingSip?.sip_password || generateSecret();
       console.log(`♻️ Resuming provisioning: DID ${didNumber} user ${morUserId} device ${morDeviceId}`);
     } else {
-      // ── 1. Reserve a free DID ──────────────────────────────────────────────
-      // If already reserved for this profile, the SQL fn returns the existing row.
-      const { data: didRows, error: didErr } = await supabase.rpc(
-        "wisecall_reserve_mor_did",
-        { p_profile_id: profile_id }
-      );
-      if (didErr) throw new Error(`DID reservation failed: ${didErr.message}`);
-      const didRow = Array.isArray(didRows) ? didRows[0] : didRows;
-      if (!didRow) throw new Error("No available MOR DIDs in pool — all 100 assigned");
-      didPoolId = didRow.id;
-      didNumber = didRow.did_number;
-      console.log(`✅ Reserved DID ${didNumber} (pool id ${didPoolId})`);
+      if (existingPool?.id && existingPool?.did_number) {
+        didPoolId = existingPool.id;
+        didNumber = existingPool.did_number;
+        morUsername = `${baseMorUsername}r`;
+        console.log(
+          `♻️ Reusing reserved DID ${didNumber}, replacing partial MOR resources with reseller-owned ${morUsername}`,
+        );
+      } else {
+        // ── 1. Reserve a free DID ────────────────────────────────────────────
+        // If already reserved for this profile, the SQL fn returns the existing row.
+        const { data: didRows, error: didErr } = await supabase.rpc(
+          "wisecall_reserve_mor_did",
+          { p_profile_id: profile_id }
+        );
+        if (didErr) throw new Error(`DID reservation failed: ${didErr.message}`);
+        const didRow = Array.isArray(didRows) ? didRows[0] : didRows;
+        if (!didRow) throw new Error("No available MOR DIDs in pool — all 100 assigned");
+        didPoolId = didRow.id;
+        didNumber = didRow.did_number;
+        console.log(`✅ Reserved DID ${didNumber} (pool id ${didPoolId})`);
+      }
 
       sipPassword = generateSecret();
       const morPassword = generateSecret();
 
       // ── 2. Create MOR user ───────────────────────────────────────────────
       const userParams = new URLSearchParams({
-        hash: MOR_UNIQUE_HASH.trim(),
+        u: resellerUsername,
+        hash: reseller.uniqueHash || reseller.apiKey,
         username: morUsername,
         password: morPassword,
         password2: morPassword,
@@ -251,7 +272,10 @@ serve(async (req) => {
         email: `${morUsername}@wisecall.io`,
         device_type: "SIP",
         country_id: "80",
+        id: resellerOwnerId,
+        owner_id: resellerOwnerId,
       });
+      if (reseller.password) userParams.set("p", reseller.password);
 
       const userXml = await morPost(`${MOR_API_URL}/billing/api/user_register`, userParams);
       console.log("MOR user_register response:", userXml.slice(0, 400));
@@ -283,16 +307,18 @@ serve(async (req) => {
       }
 
       // ── 3. Create SIP device under the new user ──────────────────────────
-      const adminHash = await sha1(`admin${MOR_ADMIN_PASSWORD}${MOR_API_SECRET}`);
+      const deviceHash = reseller.uniqueHash || await sha1(`${morUserId}${reseller.apiKey}`);
       const deviceParams = new URLSearchParams({
-        u: "admin",
-        p: MOR_ADMIN_PASSWORD,
-        hash: adminHash,
+        u: resellerUsername,
+        hash: deviceHash,
         user_id: morUserId,
         description: `WiseCall agent ${profile_id.slice(0, 8)}`,
         type: "SIP",
         device_type: "SIP",
+        host: "dynamic",
+        secret: sipPassword,
       });
+      if (reseller.password) deviceParams.set("p", reseller.password);
 
       const deviceXml = await morPost(`${MOR_API_URL}/billing/api/device_create`, deviceParams);
       console.log("MOR device_create response:", deviceXml.slice(0, 400));
@@ -301,9 +327,15 @@ serve(async (req) => {
       if (deviceErr) {
         // If device already exists for this user, look it up via devices_get.
         console.warn(`⚠️ device_create error: ${deviceErr} — looking up existing device for user ${morUserId}`);
+        const devicesParams = new URLSearchParams({
+          u: resellerUsername,
+          hash: deviceHash,
+          user_id: morUserId,
+          show_hidden_devices: "0",
+        });
+        if (reseller.password) devicesParams.set("p", reseller.password);
         const devicesXml = await morGet(
-          `${MOR_API_URL}/billing/api/devices_get?` +
-          new URLSearchParams({ u: "admin", p: MOR_ADMIN_PASSWORD, hash: MOR_UNIQUE_HASH.trim(), user_id: morUserId })
+          `${MOR_API_URL}/billing/api/devices_get?${devicesParams.toString()}`
         );
         console.log("MOR devices_get response:", devicesXml.slice(0, 400));
         morDeviceId = xmlTag(devicesXml, "device_id") || xmlTag(devicesXml, "id") || "";
@@ -387,12 +419,6 @@ serve(async (req) => {
     const alreadyDone = (e: string | null) =>
       !!e && /already.*(assigned|reserved)|is already/i.test(e);
 
-    const reseller = await resolveResellerCredentials(
-      supabase,
-      MOR_RESELLER_ID,
-      MOR_RESELLER_USERNAME,
-    );
-    const resellerUsername = reseller.username;
     console.log(`✅ Using MOR reseller ${resellerUsername} (${MOR_RESELLER_ID}) for DID assignment`);
 
     // ── 5b. Reserve the DID to the reseller ─────────────────────────────────
@@ -515,8 +541,8 @@ serve(async (req) => {
     if (didAssignErr && alreadyDone(didAssignErr)) didAssignErr = null;
     console.log(`✅ DID ${didNumber} bound to user ${morUserId} / device ${morDeviceId}`);
 
-    // ── 6. Insert wisecall_sip_endpoints (bridge auto-picks it up in ~30s) ─
-    const { error: sipErr } = await supabase.from("wisecall_sip_endpoints").insert({
+    // ── 6. Upsert wisecall_sip_endpoints (bridge auto-picks it up in ~30s) ─
+    const { error: sipErr } = await supabase.from("wisecall_sip_endpoints").upsert({
       profile_id,
       pbx_type: "mor",
       sip_username: deviceUsername,
@@ -526,9 +552,9 @@ serve(async (req) => {
       transport: "udp",
       is_enabled: true,
       mor_device_id: morDeviceId,
-    });
-    if (sipErr) throw new Error(`wisecall_sip_endpoints insert: ${sipErr.message}`);
-    console.log(`✅ SIP endpoint inserted: ${deviceUsername}@${MOR_SIP_HOST}`);
+    }, { onConflict: "profile_id" });
+    if (sipErr) throw new Error(`wisecall_sip_endpoints upsert: ${sipErr.message}`);
+    console.log(`✅ SIP endpoint upserted: ${deviceUsername}@${MOR_SIP_HOST}`);
 
     // ── 7. Update agent profile: routing + number ─────────────────────────
     const { data: profileRow } = await supabase
