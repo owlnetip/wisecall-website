@@ -217,7 +217,7 @@ export function SetupWizard({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm">
-      <div className="mt-8 w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+      <div className="mt-8 w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-black/10 px-6 py-4">
           <div className="flex items-center gap-2">
@@ -438,8 +438,8 @@ export function SetupWizard({
                 <Field label="Business name" value={draft.businessName} onChange={(v) => patchDraft({ businessName: v })} />
                 <Field label="Assistant name" value={draft.receptionistName} onChange={(v) => patchDraft({ receptionistName: v })} />
               </div>
-              <TextArea label="How it should behave (prompt)" value={draft.prompt} onChange={(v) => patchDraft({ prompt: v })} rows={6} />
-              <TextArea label="What it knows about your business" value={draft.knowledge} onChange={(v) => patchDraft({ knowledge: v })} rows={4} />
+              <TextArea label="How it should behave (prompt)" value={draft.prompt} onChange={(v) => patchDraft({ prompt: v })} rows={10} />
+              <TextArea label="What it knows about your business" value={draft.knowledge} onChange={(v) => patchDraft({ knowledge: v })} rows={6} />
               {error && <p className="text-sm font-medium text-red-600">{error}</p>}
               <div className="flex items-center justify-between pt-1">
                 <button
