@@ -47,6 +47,27 @@ export const EMAIL_OVERAGE_GBP = 0.75;
 export type PlanId = "starter" | "professional" | "business";
 export type LegacyPlanId = "core" | "growth" | "pro";
 
+// AI calls included per plan per month, and the per-call overage rate (GBP excl. VAT).
+export const PLAN_CALLS_INCLUDED: Record<PlanId, number> = {
+  starter: 100,
+  professional: 300,
+  business: 750,
+};
+
+export const PLAN_OVERAGE_RATE_GBP: Record<PlanId, number> = {
+  starter: 0.65,
+  professional: 0.55,
+  business: 0.45,
+};
+
+export function planCallsIncluded(plan: string | null | undefined): number {
+  return PLAN_CALLS_INCLUDED[plan as PlanId] ?? 0;
+}
+
+export function planOverageRateGbp(plan: string | null | undefined): number {
+  return PLAN_OVERAGE_RATE_GBP[plan as PlanId] ?? 0.65;
+}
+
 const PLAN_PRICE: Record<PlanId, string> = {
   starter: STARTER_PRICE,
   professional: PROFESSIONAL_PRICE,

@@ -5,6 +5,9 @@ import {
   planDisplayName,
   isEmailChannelSubscription,
   EMAIL_INCLUDED_REPLIES,
+  VAT_RATE,
+  planCallsIncluded,
+  planOverageRateGbp,
 } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
@@ -112,16 +115,30 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
 
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
   const notificationPhone = await fetchStripeCustomerPhone(getStripe(), customerId);
+  const plan = sub.metadata?.plan ?? "core";
+  const newPeriodEnd = periodEnd(sub);
+
+  // Detect billing period change so we can reset call counters for the new period.
+  const { data: existing } = await service
+    .from("wisecall_billing")
+    .select("calls_period_end")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const prevPeriodEnd = (existing?.calls_period_end as string | null) ?? null;
+  const periodChanged = Boolean(newPeriodEnd && prevPeriodEnd && newPeriodEnd !== prevPeriodEnd);
 
   await service.from("wisecall_billing").upsert(
     {
       user_id: userId,
       stripe_customer_id: customerId ?? null,
       subscription_id: sub.id,
-      plan: sub.metadata?.plan ?? "core",
+      plan,
       status: sub.status,
       trial_end: unixToIso(sub.trial_end),
-      current_period_end: periodEnd(sub),
+      current_period_end: newPeriodEnd,
+      calls_monthly_allowance: planCallsIncluded(plan) || undefined,
+      calls_period_end: newPeriodEnd,
+      ...(periodChanged ? { calls_used_period: 0, calls_overage_period: 0 } : {}),
       ...(notificationPhone ? { notification_phone: notificationPhone } : {}),
       updated_at: new Date().toISOString(),
     },
@@ -222,6 +239,69 @@ async function cancelOtherPlanSubscriptions(
   } catch (err) {
     console.error(
       "stripe webhook: list subscriptions failed",
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
+// When Stripe creates a new subscription invoice (draft, before finalisation),
+// we add an overage line item for any AI calls beyond the plan's monthly allowance
+// in the closing period. Stripe then includes this in the same invoice the customer pays.
+async function handleInvoiceCreated(invoice: Stripe.Invoice) {
+  const stripe = getStripe();
+  const service = getServiceSupabase();
+  if (!stripe || !service) return;
+
+  // Only act on subscription invoices
+  const subId = typeof invoice.subscription === "string"
+    ? invoice.subscription
+    : (invoice.subscription as { id?: string } | null)?.id;
+  if (!subId) return;
+
+  // Skip email channel add-on invoices — only main plan subs have call overage
+  let sub: Stripe.Subscription;
+  try {
+    sub = await stripe.subscriptions.retrieve(subId);
+  } catch {
+    return;
+  }
+  if (isEmailChannelSubscription(sub.metadata)) return;
+
+  const customerId = typeof invoice.customer === "string"
+    ? invoice.customer
+    : (invoice.customer as { id?: string } | null)?.id;
+  if (!customerId) return;
+
+  // Look up their call overage for the closing period
+  const { data: billing } = await service
+    .from("wisecall_billing")
+    .select("user_id, plan, calls_overage_period")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+
+  const overageCount = (billing?.calls_overage_period as number | null) ?? 0;
+  if (overageCount <= 0) return;
+
+  const plan = (billing?.plan as string | null) ?? null;
+  const rateGbp = planOverageRateGbp(plan);
+  const amountPence = Math.round(overageCount * rateGbp * 100);
+  if (amountPence <= 0) return;
+
+  try {
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      invoice: invoice.id,
+      amount: amountPence,
+      currency: "gbp",
+      description: `AI call overage — ${overageCount} call${overageCount === 1 ? "" : "s"} @ £${rateGbp.toFixed(2)} each`,
+      tax_rates: [VAT_RATE],
+    });
+    console.log(
+      `stripe webhook: added call overage item — ${overageCount} calls @ £${rateGbp} = £${(amountPence / 100).toFixed(2)} for user ${billing?.user_id}`,
+    );
+  } catch (err) {
+    console.error(
+      "stripe webhook: failed to add overage invoice item",
       err instanceof Error ? err.message : err,
     );
   }
@@ -336,6 +416,10 @@ export async function POST(req: Request) {
       }
       case "customer.subscription.trial_will_end": {
         await sendTrialEndingReminder(stripe, event.data.object as Stripe.Subscription);
+        break;
+      }
+      case "invoice.created": {
+        await handleInvoiceCreated(event.data.object as Stripe.Invoice);
         break;
       }
       default:

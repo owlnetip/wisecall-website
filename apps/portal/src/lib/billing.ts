@@ -6,6 +6,8 @@ import {
   EMAIL_CHANNEL_MONTHLY_GBP,
   getStripe,
   isEmailChannelSubscription,
+  planCallsIncluded,
+  planOverageRateGbp,
 } from "@/lib/stripe";
 
 export type Billing = {
@@ -23,6 +25,10 @@ export type Billing = {
   emailUsedPeriod: number;
   emailOveragePeriod: number;
   emailPeriodEnd: string | null;
+  callsMonthlyAllowance: number;
+  callsUsedPeriod: number;
+  callsOveragePeriod: number;
+  callsPeriodEnd: string | null;
 };
 
 type BillingRow = {
@@ -40,17 +46,22 @@ type BillingRow = {
   email_used_period: number | null;
   email_overage_period: number | null;
   email_period_end: string | null;
+  calls_monthly_allowance: number | null;
+  calls_used_period: number | null;
+  calls_overage_period: number | null;
+  calls_period_end: string | null;
 };
 
 const BILLING_SELECT =
-  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end";
+  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end";
 
 function mapBilling(row: BillingRow): Billing {
+  const plan = row.plan ?? null;
   return {
     userId: row.user_id,
     stripeCustomerId: row.stripe_customer_id,
     subscriptionId: row.subscription_id,
-    plan: row.plan,
+    plan,
     status: row.status,
     trialEnd: row.trial_end,
     currentPeriodEnd: row.current_period_end,
@@ -61,6 +72,10 @@ function mapBilling(row: BillingRow): Billing {
     emailUsedPeriod: row.email_used_period ?? 0,
     emailOveragePeriod: row.email_overage_period ?? 0,
     emailPeriodEnd: row.email_period_end,
+    callsMonthlyAllowance: row.calls_monthly_allowance ?? planCallsIncluded(plan),
+    callsUsedPeriod: row.calls_used_period ?? 0,
+    callsOveragePeriod: row.calls_overage_period ?? 0,
+    callsPeriodEnd: row.calls_period_end,
   };
 }
 
@@ -212,6 +227,23 @@ export async function getTrialUsage(
 
   const used = count ?? 0;
   return { used, cap, blocked: used >= cap };
+}
+
+export type CallUsage = {
+  used: number;
+  allowance: number;
+  overage: number;
+  overagePriceGbp: number;
+};
+
+export function getCallUsage(billing: Billing | null): CallUsage {
+  const plan = billing?.plan ?? null;
+  return {
+    used: billing?.callsUsedPeriod ?? 0,
+    allowance: billing?.callsMonthlyAllowance ?? planCallsIncluded(plan),
+    overage: billing?.callsOveragePeriod ?? 0,
+    overagePriceGbp: planOverageRateGbp(plan),
+  };
 }
 
 // Mirror email_channel_enabled onto every agent profile for the owner (runtime reads metadata).

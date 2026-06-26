@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { analyzeAndStoreCall, isAnalysisConfigured } from "@/lib/call-analysis";
+import { getServiceSupabase } from "@/lib/supabase";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AFTER-CALL AI ANALYSIS TRIGGER
@@ -55,6 +56,30 @@ export async function POST(request: Request) {
   if (!callId) {
     return NextResponse.json({ ok: false, error: "Missing call_id." }, { status: 400 });
   }
+
+  // Record the call against the owner's monthly allowance (fire-and-forget — never
+  // block the response on billing; a failure here is logged but doesn't fail the call).
+  void (async () => {
+    try {
+      const service = getServiceSupabase();
+      if (service) {
+        // Resolve profile_id from call log
+        const { data: log } = await service
+          .from("wisecall_call_logs")
+          .select("profile_id")
+          .eq("id", callId)
+          .maybeSingle();
+        if (log?.profile_id) {
+          const { data } = await service.rpc("wisecall_record_ai_call", {
+            p_profile_id: log.profile_id,
+          });
+          console.log("wisecall_record_ai_call:", JSON.stringify(data));
+        }
+      }
+    } catch (err) {
+      console.error("call-completed: usage recording failed:", err instanceof Error ? err.message : err);
+    }
+  })();
 
   try {
     const analysis = await analyzeAndStoreCall(callId);
