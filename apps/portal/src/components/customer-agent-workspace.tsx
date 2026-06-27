@@ -46,7 +46,6 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
-import { EmailChannelCheckoutButton } from "@/app/billing/start-trial-button";
 import type { EmailChannelUsage } from "@/lib/billing";
 import {
   createAgent,
@@ -661,7 +660,7 @@ function ChannelsHub({
         {/* Website chat — included, expandable to per-agent embed codes */}
         <WebsiteChatChannel assistants={assistants} />
 
-        {/* Email — first paid add-on */}
+        {/* Email — included in every plan */}
         <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
           <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
             <Mail className="h-5 w-5" />
@@ -669,29 +668,22 @@ function ChannelsHub({
           <div className="min-w-0 flex-1">
             <p className="font-black text-[#111716]">Email</p>
             <p className="text-sm text-[#66716e]">
-              Forward your inbox — the same agent replies to emails and logs every contact.
+              Forward your inbox and the same agent replies to emails and logs every contact.
             </p>
           </div>
           {emailChannel?.enabled ? (
             <div className="flex flex-shrink-0 items-center gap-3">
               <span className="text-xs font-semibold text-[#66716e]">
                 {emailChannel.used}/{emailChannel.allowance} replies used
-                {emailChannel.overage > 0 ? ` · ${emailChannel.overage} overage` : ""}
+                {emailChannel.overage > 0 ? ` · ${emailChannel.overage} over allowance` : ""}
               </span>
               <span className="rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
-                Active
+                Included
               </span>
-            </div>
-          ) : emailChannel?.canPurchase ? (
-            <div className="flex flex-shrink-0 flex-col items-end gap-1">
-              <span className="text-xs font-semibold text-[#66716e]">
-                £{emailChannel.monthlyPriceGbp}/mo · {emailChannel.allowance} replies incl.
-              </span>
-              <EmailChannelCheckoutButton />
             </div>
           ) : (
             <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
-              Start a plan to add
+              Start a plan to use
             </span>
           )}
         </div>
@@ -2015,12 +2007,6 @@ function AssistantDetail({
           used={emailChannel.used}
           allowance={emailChannel.allowance}
           overage={emailChannel.overage}
-        />
-      ) : emailChannel?.canPurchase && !adminMode ? (
-        <EmailChannelUpsell
-          monthlyPrice={emailChannel.monthlyPriceGbp}
-          allowance={emailChannel.allowance}
-          overagePrice={emailChannel.overagePriceGbp}
         />
       ) : null}
 
@@ -3746,35 +3732,6 @@ function EmailChannelCard({
       <p className="mt-2 text-xs text-[#9aa5a2]">
         Set up a forwarding rule in your email provider (Gmail, Outlook, etc.) to this address.
       </p>
-    </div>
-  );
-}
-
-function EmailChannelUpsell({
-  monthlyPrice,
-  allowance,
-  overagePrice,
-}: {
-  monthlyPrice: number;
-  allowance: number;
-  overagePrice: number;
-}) {
-  return (
-    <div className="mb-8 rounded-[14px] border border-dashed border-[#148b8e]/40 bg-[#f3fbfb] px-5 py-4">
-      <p className="flex items-center gap-2 font-black text-[#111716]">
-        <Mail className="h-4 w-4 text-[#148b8e]" />
-        Email channel
-      </p>
-      <p className="mt-1 max-w-xl text-sm text-[#66716e]">
-        Add AI email replies — forward support@ and the same agent handles email alongside phone
-        calls. £{monthlyPrice}/mo includes {allowance} replies, then £{overagePrice.toFixed(2)} each.
-      </p>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <EmailChannelCheckoutButton />
-        <a href="/billing" className="text-sm font-bold text-[#148b8e] underline">
-          View on billing
-        </a>
-      </div>
     </div>
   );
 }

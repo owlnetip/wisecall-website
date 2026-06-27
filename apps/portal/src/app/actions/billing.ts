@@ -6,14 +6,12 @@ import { getAppBaseUrl } from "@/lib/env";
 import {
   getStripe,
   lineItemsForPlan,
-  lineItemsForEmailChannel,
   planHasTrial,
   isPlanId,
   type PlanId,
   TRIAL_DAYS,
   TRIAL_CALL_CAP,
 } from "@/lib/stripe";
-import { getBillingForUser, hasActiveAccess, hasEmailChannelAccess } from "@/lib/billing";
 
 export type CheckoutResult = { ok: boolean; url?: string; error?: string };
 
@@ -91,51 +89,9 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
   return { ok: true, url: session.url };
 }
 
-// Email channel add-on — £79/mo, no trial. Requires an active Core/Growth/Pro plan first.
-export async function startEmailChannelCheckout(): Promise<CheckoutResult> {
-  const auth = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await auth.auth.getUser();
-  if (!user) return { ok: false, error: "Not signed in." };
-
-  const billing = await getBillingForUser(user.id);
-  if (!hasActiveAccess(billing)) {
-    return { ok: false, error: "Start a WiseCall plan before adding Email channel." };
-  }
-  if (hasEmailChannelAccess(billing)) {
-    return { ok: false, error: "Email channel is already active on your account." };
-  }
-
-  const stripe = getStripe();
-  if (!stripe) return { ok: false, error: "Billing isn't switched on yet." };
-
-  const service = getServiceSupabase();
-  if (!service) return { ok: false, error: "Server not configured." };
-
-  const customerId = billing?.stripeCustomerId;
-  if (!customerId) {
-    return { ok: false, error: "No billing account found — contact support." };
-  }
-
-  const baseUrl = getAppBaseUrl();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: customerId,
-    line_items: lineItemsForEmailChannel(),
-    payment_method_collection: "always",
-    allow_promotion_codes: true,
-    subscription_data: {
-      metadata: { owner_id: user.id, addon: "email_channel" },
-    },
-    metadata: { owner_id: user.id, addon: "email_channel" },
-    success_url: `${baseUrl}/dashboard?email_channel=1`,
-    cancel_url: `${baseUrl}/billing`,
-  });
-
-  if (!session.url) return { ok: false, error: "Could not start checkout." };
-  return { ok: true, url: session.url };
-}
+// NOTE: the separate £79 Email Channel checkout was retired 2026-06-27 — AI email
+// is now bundled into every plan (see lib/stripe.ts PLAN_EMAIL_INCLUDED). No
+// standalone email purchase flow remains.
 
 // Opens the Stripe Customer Portal so a customer can cancel or change their
 // subscription (e.g. before the trial converts). Requires the Customer Portal to

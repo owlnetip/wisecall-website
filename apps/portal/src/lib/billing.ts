@@ -7,6 +7,7 @@ import {
   getStripe,
   isEmailChannelSubscription,
   planCallsIncluded,
+  planEmailIncluded,
   planOverageRateGbp,
 } from "@/lib/stripe";
 
@@ -165,11 +166,10 @@ export async function reconcileBillingFromStripe(
   }
 }
 
+// AI email is now bundled into every plan (the separate £79 add-on was retired
+// 2026-06-27). Any active/trialing plan has email access.
 export function hasEmailChannelAccess(billing: Billing | null): boolean {
-  return (
-    billing?.emailChannelEnabled === true &&
-    billing.emailChannelStatus === "active"
-  );
+  return hasActiveAccess(billing);
 }
 
 export type EmailChannelUsage = {
@@ -184,17 +184,18 @@ export type EmailChannelUsage = {
 
 export function getEmailChannelUsage(
   billing: Billing | null,
-  hasPlan: boolean,
+  _hasPlan: boolean,
 ): EmailChannelUsage {
-  const allowance = billing?.emailMonthlyAllowance ?? EMAIL_INCLUDED_REPLIES;
+  const allowance =
+    billing?.emailMonthlyAllowance ?? planEmailIncluded(billing?.plan) ?? EMAIL_INCLUDED_REPLIES;
   return {
     enabled: hasEmailChannelAccess(billing),
     used: billing?.emailUsedPeriod ?? 0,
     allowance,
     overage: billing?.emailOveragePeriod ?? 0,
-    monthlyPriceGbp: EMAIL_CHANNEL_MONTHLY_GBP,
+    monthlyPriceGbp: EMAIL_CHANNEL_MONTHLY_GBP, // 0 — bundled
     overagePriceGbp: EMAIL_OVERAGE_GBP,
-    canPurchase: hasPlan && !hasEmailChannelAccess(billing),
+    canPurchase: false, // email is bundled into every plan; never a separate purchase
   };
 }
 

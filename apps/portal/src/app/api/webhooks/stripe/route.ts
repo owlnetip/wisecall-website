@@ -7,6 +7,8 @@ import {
   EMAIL_INCLUDED_REPLIES,
   VAT_RATE,
   planCallsIncluded,
+  planEmailIncluded,
+  planWhatsappIncluded,
   planOverageRateGbp,
 } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
@@ -117,8 +119,9 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
   const notificationPhone = await fetchStripeCustomerPhone(getStripe(), customerId);
   const plan = sub.metadata?.plan ?? "professional";
   const newPeriodEnd = periodEnd(sub);
+  const planActive = sub.status === "active" || sub.status === "trialing";
 
-  // Detect billing period change so we can reset call counters for the new period.
+  // Detect billing period change so we can reset usage counters for the new period.
   const { data: existing } = await service
     .from("wisecall_billing")
     .select("calls_period_end")
@@ -136,14 +139,35 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
       status: sub.status,
       trial_end: unixToIso(sub.trial_end),
       current_period_end: newPeriodEnd,
+      // Bundled channel allowances (single-platform model).
       calls_monthly_allowance: planCallsIncluded(plan) || undefined,
       calls_period_end: newPeriodEnd,
-      ...(periodChanged ? { calls_used_period: 0, calls_overage_period: 0 } : {}),
+      // AI email is now bundled into every plan (£79 add-on retired). Enable it for
+      // any active/trialing plan so the email-inbound gate passes, and set the
+      // per-plan email allowance.
+      email_channel_enabled: planActive ? true : false,
+      email_channel_status: planActive ? "active" : sub.status,
+      email_monthly_allowance: planEmailIncluded(plan) || undefined,
+      whatsapp_monthly_allowance: planWhatsappIncluded(plan) || undefined,
+      whatsapp_period_end: newPeriodEnd,
+      ...(periodChanged
+        ? {
+            calls_used_period: 0,
+            calls_overage_period: 0,
+            email_used_period: 0,
+            email_overage_period: 0,
+            whatsapp_used_period: 0,
+            whatsapp_overage_period: 0,
+          }
+        : {}),
       ...(notificationPhone ? { notification_phone: notificationPhone } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },
   );
+
+  // Mirror email-enabled onto the owner's agent profiles (runtime/UI reads metadata).
+  await syncEmailChannelProfiles(userId, planActive);
 }
 
 async function upsertEmailChannelSubscription(sub: Stripe.Subscription) {

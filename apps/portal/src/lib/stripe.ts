@@ -36,22 +36,42 @@ export const CORE_PRICE = process.env.STRIPE_CORE_PRICE || "price_1Tj5TaF6ZlidDG
 export const GROWTH_PRICE = process.env.STRIPE_GROWTH_PRICE || "price_1Tj5TbF6ZlidDG7dVqVvOiV4"; // £399/mo
 export const PRO_PRICE = process.env.STRIPE_PRO_PRICE || "price_1Tj5TdF6ZlidDG7d4Asvpqsa"; // £699/mo
 
-// Email channel add-on — £79/mo, 100 AI replies included, £0.75 overage (tracked in-app).
-// Live product prod_Uk0P7OfRlBAgo8, price price_1TkWOtF6ZlidDG7dU36EdYop (excl. VAT).
+// RETIRED 2026-06-27: the separate £79 Email Channel add-on. AI email is now
+// bundled into every plan (see PLAN_EMAIL_INCLUDED). These constants are kept only
+// so legacy references compile; the product is no longer sold. EMAIL_OVERAGE_GBP is
+// retained as the in-app fallback overage display until usage packs replace it.
 export const EMAIL_CHANNEL_PRICE =
   process.env.STRIPE_EMAIL_CHANNEL_PRICE || "price_1TkWOtF6ZlidDG7dU36EdYop";
-export const EMAIL_CHANNEL_MONTHLY_GBP = 79;
+export const EMAIL_CHANNEL_MONTHLY_GBP = 0; // bundled, no separate charge
 export const EMAIL_INCLUDED_REPLIES = 100;
 export const EMAIL_OVERAGE_GBP = 0.75;
 
 export type PlanId = "starter" | "professional" | "business";
 export type LegacyPlanId = "core" | "growth" | "pro";
 
-// AI calls included per plan per month, and the per-call overage rate (GBP excl. VAT).
+// Per-plan monthly allowances for the bundled AI channels (single-platform model).
 export const PLAN_CALLS_INCLUDED: Record<PlanId, number> = {
   starter: 100,
   professional: 300,
   business: 750,
+};
+
+export const PLAN_EMAIL_INCLUDED: Record<PlanId, number> = {
+  starter: 100,
+  professional: 500,
+  business: 2000,
+};
+
+export const PLAN_WHATSAPP_INCLUDED: Record<PlanId, number> = {
+  starter: 250,
+  professional: 800,
+  business: 2500,
+};
+
+export const PLAN_LIVECHAT_INCLUDED: Record<PlanId, number> = {
+  starter: 100,
+  professional: 300,
+  business: 1000,
 };
 
 export const PLAN_OVERAGE_RATE_GBP: Record<PlanId, number> = {
@@ -62,6 +82,18 @@ export const PLAN_OVERAGE_RATE_GBP: Record<PlanId, number> = {
 
 export function planCallsIncluded(plan: string | null | undefined): number {
   return PLAN_CALLS_INCLUDED[plan as PlanId] ?? 0;
+}
+
+export function planEmailIncluded(plan: string | null | undefined): number {
+  return PLAN_EMAIL_INCLUDED[plan as PlanId] ?? 0;
+}
+
+export function planWhatsappIncluded(plan: string | null | undefined): number {
+  return PLAN_WHATSAPP_INCLUDED[plan as PlanId] ?? 0;
+}
+
+export function planLivechatIncluded(plan: string | null | undefined): number {
+  return PLAN_LIVECHAT_INCLUDED[plan as PlanId] ?? 0;
 }
 
 export function planOverageRateGbp(plan: string | null | undefined): number {
