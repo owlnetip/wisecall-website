@@ -688,18 +688,23 @@ function ChannelsHub({
           )}
         </div>
 
-        {/* WhatsApp — coming soon */}
-        <div className="flex items-center gap-4 rounded-[14px] border border-dashed border-black/10 bg-[#fafbfb] px-5 py-4">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#f2f4f3] text-[#9aa5a2]">
+        {/* WhatsApp — included in every plan; number connected during setup */}
+        <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eafaf1] text-[#14823f]">
             <MessageSquareText className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-black text-[#111716]">WhatsApp</p>
-            <p className="text-sm text-[#66716e]">Let customers message your business on WhatsApp.</p>
+            <p className="text-sm text-[#66716e]">
+              The same agent replies to WhatsApp messages on your WhatsApp Business number.
+            </p>
           </div>
-          <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
-            Coming soon
-          </span>
+          <a
+            href="mailto:info@wisecall.io?subject=Connect%20my%20WhatsApp%20number"
+            className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]"
+          >
+            Connect number →
+          </a>
         </div>
 
         {/* SMS — coming soon */}

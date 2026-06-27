@@ -19,3 +19,8 @@ verify_jwt = false
 # service-role apikey. The function body rejects non-service-role calls.
 [functions.wisecall-provision-mor-agent]
 verify_jwt = false
+
+# Meta WhatsApp Cloud API webhook — Meta calls it unauthenticated (verified via
+# hub.verify_token / WHATSAPP_VERIFY_TOKEN), so JWT verification must stay off.
+[functions.wisecall-whatsapp-inbound]
+verify_jwt = false
