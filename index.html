@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WiseCall | AI Business Communications Platform</title>
-  <meta name="description" content="WiseCall is an AI-powered business communications platform. It answers calls, qualifies enquiries, books appointments and captures information around the clock. Complete phone system included.">
-  <meta name="keywords" content="AI receptionist UK, business phone system, AI call answering, WiseCall, AI communications">
+  <meta name="description" content="WiseCall is your AI receptionist. It answers calls, qualifies enquiries, books appointments and captures information around the clock. We provide a number, no phone system needed, and route calls to the right person, taking messages when no one's available. Or connect your existing PBX.">
+  <meta name="keywords" content="AI receptionist UK, AI call answering, AI voice agent, WiseCall, AI communications">
   <meta name="author" content="WiseCall">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://wisecall.io/">
@@ -13,12 +13,12 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://wisecall.io/">
   <meta property="og:title" content="WiseCall | AI Business Communications Platform">
-  <meta property="og:description" content="AI receptionist that answers calls, qualifies enquiries, and books appointments. Complete phone system included on every plan.">
+  <meta property="og:description" content="AI receptionist that answers calls, qualifies enquiries, and books appointments. No phone system needed, we provide a number and route calls to the right person. Or connect your existing PBX.">
   <meta property="og:image" content="https://wisecall.io/og-image.jpg">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="WiseCall | AI Business Communications">
-  <meta name="twitter:description" content="AI receptionist. Complete phone system. One monthly price.">
+  <meta name="twitter:description" content="AI receptionist. No phone system needed, your own number, or connect your PBX. One monthly price.">
 
   <link rel="icon" type="image/png" href="favicon.png">
 
@@ -40,12 +40,12 @@
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",
     "url": "https://wisecall.io/",
-    "description": "AI voice agent for UK businesses. Answers calls, captures details, supports bookings, sends summaries and includes a business phone system foundation.",
+    "description": "AI receptionist for UK businesses. Answers calls, captures details, supports bookings and sends summaries. We provide a number, no phone system needed, and route calls to the right person, taking messages when no one's available. Or connect your existing PBX.",
     "offers": {
       "@type": "Offer",
       "priceCurrency": "GBP",
       "price": "99",
-      "description": "Starter plan — 100 AI calls/month. Plans from £99/month."
+      "description": "Starter plan, 100 AI calls/month. Plans from £99/month."
     }
   }
   </script>
@@ -104,19 +104,15 @@
     .orb-stage.is-static { cursor: default; pointer-events: none; }
     .orb { position: absolute; inset: 0; border-radius: 50%;
       background:
-        radial-gradient(ellipse 52% 22% at 50% 85%, rgba(206,246,247,0.4) 0%, transparent 72%),
-        radial-gradient(circle at 36% 30%, #f4fffe 0%, #c4f4f5 22%, #7de8eb 46%, #3f9a9d 74%, rgba(45,92,92,0.45) 86%, rgba(23,41,41,0) 94%);
-      box-shadow: 0 0 44px rgba(125, 232, 235, 0.2);
+        radial-gradient(circle at 34% 27%, #eafdfe 0%, #b4f4f6 15%, #79dfe2 36%, #46b8bb 58%, #228f92 80%, #12686a 96%);
+      box-shadow: inset -8px -10px 26px rgba(8, 60, 62, 0.35), 0 0 36px rgba(125, 232, 235, 0.22), 0 22px 46px rgba(12, 53, 54, 0.26);
       animation: orb-float 7s ease-in-out infinite;
       transition: box-shadow 0.4s ease, filter 0.4s ease; }
     .orb-swirl { position: absolute; inset: 0; border-radius: 50%;
-      background: radial-gradient(circle at 31% 27%, rgba(255,255,255,0.55) 0%, transparent 30%);
-      mix-blend-mode: screen; filter: blur(3px);
-      animation: orb-spin 24s linear infinite; }
-    .orb-core { position: absolute; inset: 0; border-radius: 50%;
-      background: radial-gradient(circle at 73% 77%, rgba(16,40,40,0.5) 0%, transparent 40%);
-      filter: blur(6px);
-      animation: orb-spin 34s linear infinite reverse; }
+      background: radial-gradient(circle at 32% 26%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 22%, transparent 40%);
+      mix-blend-mode: screen; filter: blur(4px);
+      animation: orb-spin 30s linear infinite; }
+    .orb-core { display: none; }
     .orb-stage:hover .orb { box-shadow: 0 0 60px rgba(125, 232, 235, 0.32); filter: brightness(1.05); }
     @keyframes orb-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
     @keyframes orb-spin { to { transform: rotate(360deg); } }
@@ -142,6 +138,7 @@
       }
     };
   </script>
+  <link rel="stylesheet" href="/light-sections.css" data-wc-light>
 </head>
 
 <body class="min-h-screen bg-[#172929] overflow-x-hidden">
@@ -228,9 +225,9 @@
         </h1>
 
         <p class="motion text-xl text-white/70 leading-relaxed mb-3 max-w-xl" data-anim="fade-up" style="transition-delay:0.1s">
-          WiseCall is an AI-powered business communications platform. It answers calls, qualifies enquiries, books appointments and captures information around the clock, with a complete phone system included as standard.
+          WiseCall is your AI receptionist. It answers calls, qualifies enquiries, books appointments and captures information around the clock. We give you a dedicated number, no phone system needed, and route each call to the right person, taking a message if no one's available.
         </p>
-        <p class="motion text-sm text-white/50 mb-10" data-anim="fade-up" style="transition-delay:0.12s">AI receptionist. Complete phone system. One monthly price.</p>
+        <p class="motion text-sm text-white/50 mb-10" data-anim="fade-up" style="transition-delay:0.12s">No phone system needed. Your own number, or connect your existing PBX. One monthly price.</p>
 
         <div class="motion flex flex-col sm:flex-row gap-4 mb-12" data-anim="fade-up" style="transition-delay:0.15s">
           <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
@@ -323,7 +320,7 @@
   </section>
 
   <!-- ───── LIVE DEMO ───── -->
-  <section class="relative py-24 px-6" id="live-demo">
+  <section class="light relative py-24 px-6" id="live-demo">
     <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
     <div class="relative z-10 max-w-2xl mx-auto text-center">
       <div class="motion" data-anim="fade-up">
@@ -344,7 +341,7 @@
             </span>
           </div>
 
-          <div class="w-full max-w-sm flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 backdrop-blur-sm focus-within:border-[#7de8eb]/70 focus-within:bg-white/10 transition-colors">
+          <div class="demo-dial w-full max-w-sm flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 backdrop-blur-sm focus-within:border-[#7de8eb]/70 focus-within:bg-white/10 transition-colors">
             <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
             <input id="demoCallbackPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile number" aria-label="Mobile number for demo callback" class="min-w-0 flex-1 bg-transparent border-0 outline-none text-white placeholder:text-white/45 font-semibold text-base tracking-wide">
             <button id="demoCallbackButton" type="submit" class="shrink-0 rounded-full bg-[#7de8eb] px-4 py-2 text-[#172929] text-sm font-bold hover:bg-[#9cf1f3] transition-colors">Call me</button>
@@ -353,7 +350,7 @@
 
         <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-4" aria-live="polite"></p>
         <p class="text-white/40 text-sm mt-2">
-          Prefer to dial in? <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white">+44 113 522 2277</a>.
+          Prefer to dial in? <a href="tel:+441135222277" class="font-bold text-[#172929] hover:text-[#0a8a8e] transition-colors">+44 113 522 2277</a>.
         </p>
       </div>
     </div>
@@ -366,7 +363,7 @@
       <div class="motion text-center mb-16" data-anim="fade-up">
         <span class="text-sm text-[#7de8eb] font-semibold">How It Works</span>
         <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Everything your business needs, in one platform</h2>
-        <p class="text-xl text-white/70 max-w-3xl mx-auto">AI receptionist and complete phone system included on every plan. Nothing extra to procure.</p>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">A complete AI receptionist on a number we provide, no phone system needed. Already have a PBX? Connect that instead. Nothing to rip out, nothing extra to procure.</p>
       </div>
 
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -381,11 +378,11 @@
 
         <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.08s">
           <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
-            <i data-lucide="building-2" class="w-6 h-6 text-[#7de8eb]"></i>
+            <i data-lucide="phone-forwarded" class="w-6 h-6 text-[#7de8eb]"></i>
           </div>
-          <h3 class="text-xl font-semibold text-white mb-2">Complete Phone System</h3>
-          <p class="text-white/60 text-sm leading-relaxed">Business numbers, staff extensions, call routing and apps for iOS, Android and desktop. No separate telecoms contract required. Your team uses WiseCall as their everyday business phone.</p>
-          <a href="#pricing" class="inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors">View plans &rarr;</a>
+          <h3 class="text-xl font-semibold text-white mb-2">No Phone System Needed</h3>
+          <p class="text-white/60 text-sm leading-relaxed">We give you a dedicated number, there's nothing to buy or manage. WiseCall answers, forwards each call to the right person's mobile, and takes a message if no one's available. Already have a PBX? Register WiseCall to that instead.</p>
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors" data-inquiry="Demo Request">See how it works &rarr;</a>
         </div>
 
         <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all group" data-anim="fade-up" style="transition-delay:0.11s">
@@ -428,7 +425,7 @@
   </section>
 
   <!-- ───── INDUSTRIES ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="industries">
+  <section class="light relative py-24 px-6 overflow-hidden" id="industries">
     <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/30 to-[#172929] pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto">
       <div class="motion text-center mb-16" data-anim="fade-up">
@@ -503,9 +500,9 @@
 
         <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 transition-all" data-anim="fade-up" style="transition-delay:0.14s">
           <div class="text-2xl mb-3">📱</div>
-          <h3 class="text-xl font-semibold text-white mb-2">Your numbers. Your team. One system.</h3>
-          <p class="text-white/60 text-sm leading-relaxed">Keep your existing business numbers. Your team gets a full phone system with apps for iOS, Android and desktop, included in every plan. No additional hardware or contracts.</p>
-          <a href="#pricing" class="inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors">View plans &rarr;</a>
+          <h3 class="text-xl font-semibold text-white mb-2">A number, and the right person, every time</h3>
+          <p class="text-white/60 text-sm leading-relaxed">No phone system? No problem. We give you a dedicated number and WiseCall routes each call to the right person's mobile, taking a message if no one answers. Prefer to use your existing PBX? You can connect that instead.</p>
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="inline-block mt-4 text-sm text-[#7de8eb] hover:text-white transition-colors" data-inquiry="Demo Request">See how it works &rarr;</a>
         </div>
       </div>
 
@@ -531,8 +528,62 @@
     </div>
   </section>
 
+  <!-- ───── EMAIL CHANNEL ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="email-channel">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-1/4 w-[460px] h-[460px] bg-[#7de8eb] rounded-full blur-[170px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Copy -->
+      <div class="motion" data-anim="fade-up">
+        <span class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#172929] bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] rounded-full px-3 py-1 mb-5">New · Email Channel</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mb-5 leading-tight">Now WiseCall answers <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">email, too</span></h2>
+        <p class="text-xl text-white/70 leading-relaxed mb-8">Enquiries do not only come by phone. Built into every plan, WiseCall reads inbound emails, understands the enquiry and replies, using the same knowledge base it uses on calls.</p>
+        <ul class="space-y-3 mb-9">
+          <li class="flex items-start gap-3 text-white/75"><i data-lucide="mail-check" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Reads and understands inbound emails automatically</li>
+          <li class="flex items-start gap-3 text-white/75"><i data-lucide="sparkles" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Replies in your tone using your agent's knowledge base</li>
+          <li class="flex items-start gap-3 text-white/75"><i data-lucide="inbox" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Every email logged alongside your calls, in one place</li>
+          <li class="flex items-start gap-3 text-white/75"><i data-lucide="git-branch" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Escalates to your team when a human is needed</li>
+        </ul>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <a href="#pricing" class="mbtn inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_46px_rgba(125,232,235,0.5)]" data-inquiry="Email Channel Enquiry">See plans <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+          <span class="text-white/55 text-sm"><span class="text-[#7de8eb] font-semibold">Included in every plan</span> · with a monthly AI email allowance</span>
+        </div>
+      </div>
+      <!-- Email reply mock -->
+      <div class="motion" data-anim="scale-in" style="transition-delay:0.1s">
+        <div class="rounded-2xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/20 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+          <!-- inbound -->
+          <div class="flex items-start gap-3 mb-5">
+            <div class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-white/70 font-bold text-sm">JD</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-white font-semibold text-sm">Jane Doe</p>
+                <span class="text-white/40 text-xs">9:42</span>
+              </div>
+              <p class="text-white/45 text-xs mb-2">to info@yourbusiness.co.uk</p>
+              <div class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white/75 text-sm leading-relaxed">Hi, do you have any availability for an appointment next week? Mornings are best for me. Thanks, Jane</div>
+            </div>
+          </div>
+          <!-- AI reply -->
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center flex-shrink-0">
+              <i data-lucide="bot" class="w-5 h-5 text-[#172929]"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-2">
+                <p class="text-white font-semibold text-sm">WiseCall AI</p>
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]"><span class="w-1.5 h-1.5 rounded-full bg-[#7de8eb]"></span>Replied in 30s</span>
+              </div>
+              <div class="rounded-xl bg-gradient-to-br from-[#7de8eb]/[0.10] to-transparent border border-[#7de8eb]/30 px-4 py-3 text-white/85 text-sm leading-relaxed">Hi Jane, thanks for getting in touch. We have morning appointments at 9:00 and 10:30 on Tuesday and 9:30 on Thursday next week. Reply with whichever suits and I'll get you booked in.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ───── PRICING ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="pricing">
+  <section class="light relative py-24 px-6 overflow-hidden" id="pricing">
     <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/20 to-[#172929] pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto">
       <div class="motion text-center mb-6" data-anim="fade-up">
@@ -540,7 +591,7 @@
         <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Simple AI call answering pricing</h2>
         <p class="text-xl text-white/70 max-w-3xl mx-auto">Your AI receptionist is ready to answer calls, capture enquiries, send follow-ups and hand over to your team when needed.</p>
       </div>
-      <p class="motion text-center text-white/50 text-sm mb-12" data-anim="fade-up" style="transition-delay:0.05s">Everything included. Just choose how many AI calls you need.</p>
+      <p class="motion text-center text-white/50 text-sm mb-12" data-anim="fade-up" style="transition-delay:0.05s">Everything included. Simply choose how much AI communication volume your business needs.</p>
 
       <div class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-8 items-stretch">
         <!-- Starter -->
@@ -556,19 +607,18 @@
             </div>
             <p class="text-white/40 text-xs mt-1">excl. VAT &middot; 12-month term</p>
           </div>
-          <div class="mb-6 pb-6 border-b border-[#7de8eb]/10 space-y-2.5 min-h-[88px]">
-            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">100</span> AI calls/month</span></div>
-            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="plus-circle" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span>£0.65 per additional call</span></div>
+          <div class="mb-6 pb-6 border-b border-[#7de8eb]/10 space-y-2.5">
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">100</span> AI Calls</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="mail" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">100</span> AI Email Replies</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="message-circle" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">250</span> WhatsApp Messages</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">100</span> Live Chat Conversations</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="bell" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span>SMS Notifications included</span></div>
           </div>
           <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors mb-6" data-inquiry="Demo Request - Starter (100 calls, £99/mo)">Start for £99</a>
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>SMS, email &amp; WhatsApp follow-up</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call transfers &amp; routing</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Live chat handover</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>CRM integrations</li>
+            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
+            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call transfers &amp; routing</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>CRM integrations</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Dashboard &amp; analytics</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Knowledge base setup</li>
           </ul>
@@ -588,19 +638,18 @@
             </div>
             <p class="text-white/40 text-xs mt-1">excl. VAT &middot; 12-month term</p>
           </div>
-          <div class="mb-6 pb-6 border-b border-[#7de8eb]/15 space-y-2.5 min-h-[88px]">
-            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">300</span> AI calls/month</span></div>
-            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="plus-circle" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span>£0.55 per additional call</span></div>
+          <div class="mb-6 pb-6 border-b border-[#7de8eb]/15 space-y-2.5">
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">300</span> AI Calls</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="mail" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">500</span> AI Email Replies</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="message-circle" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">800</span> WhatsApp Messages</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">300</span> Live Chat Conversations</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="bell" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span>SMS Notifications included</span></div>
           </div>
           <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)] mb-6" data-inquiry="Demo Request - Professional (300 calls, £199/mo)">Choose Professional</a>
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>SMS, email &amp; WhatsApp follow-up</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call transfers &amp; routing</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Live chat handover</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>CRM integrations</li>
+            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
+            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call transfers &amp; routing</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>CRM integrations</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Dashboard &amp; analytics</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Knowledge base setup</li>
           </ul>
@@ -619,19 +668,18 @@
             </div>
             <p class="text-white/40 text-xs mt-1">excl. VAT &middot; 12-month term</p>
           </div>
-          <div class="mb-6 pb-6 border-b border-[#7de8eb]/10 space-y-2.5 min-h-[88px]">
-            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">750</span> AI calls/month</span></div>
-            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="plus-circle" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span>£0.45 per additional call</span></div>
+          <div class="mb-6 pb-6 border-b border-[#7de8eb]/10 space-y-2.5">
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">750</span> AI Calls</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="mail" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">2,000</span> AI Email Replies</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="message-circle" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">2,500</span> WhatsApp Messages</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">1,000</span> Live Chat Conversations</span></div>
+            <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="bell" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span>SMS Notifications included</span></div>
           </div>
           <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors mb-6" data-inquiry="Demo Request - Business (750 calls, £399/mo)">Choose Business</a>
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>SMS, email &amp; WhatsApp follow-up</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call transfers &amp; routing</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Live chat handover</li>
-            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>CRM integrations</li>
+            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
+            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call transfers &amp; routing</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>CRM integrations</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Dashboard &amp; analytics</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Knowledge base setup</li>
           </ul>
@@ -652,27 +700,13 @@
         </div>
       </div>
 
-      <!-- Add-ons -->
-      <div class="motion max-w-6xl mx-auto mb-10" data-anim="fade-up" style="transition-delay:0.15s">
-        <p class="text-center text-white/45 text-xs uppercase tracking-widest font-semibold mb-4">Optional add-on — available on any plan</p>
-        <div class="rounded-xl bg-white/[.04] border border-[#7de8eb]/15 p-6 flex flex-col sm:flex-row sm:items-center gap-5">
-          <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#7de8eb]/5 border border-[#7de8eb]/25 flex items-center justify-center">
-            <i data-lucide="mail" class="w-5 h-5 text-[#7de8eb]"></i>
-          </div>
-          <div class="flex-1">
-            <p class="font-bold text-white mb-0.5">Email Channel — <span class="text-[#7de8eb]">£79/month</span></p>
-            <p class="text-white/55 text-sm">Your AI receptionist handles inbound emails too. 100 AI replies included, £0.75 per additional reply. Uses your agent's existing knowledge base.</p>
-          </div>
-          <a href="/pricing/" class="flex-shrink-0 text-sm text-[#7de8eb] font-semibold hover:text-white transition-colors whitespace-nowrap">See add-ons &rarr;</a>
-        </div>
-      </div>
 
       <!-- Usage note + inclusions -->
       <div class="motion max-w-4xl mx-auto rounded-xl bg-white/5 border border-[#7de8eb]/10 p-8" data-anim="fade-up" style="transition-delay:0.1s">
         <p class="text-white font-semibold mb-4">Inclusions and usage</p>
-        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">AI call allowance:</span> Based on completed AI-handled calls. Additional usage is billed monthly at the rate shown on your plan.</p>
-        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">Included outbound destinations:</span> UK 01/02 (local and national), UK 03 numbers, and major UK mobile networks. Up to 3,000 outbound minutes per user, per month.</p>
-        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">Standard exclusions:</span> premium rate numbers, international destinations, directory enquiries, and non-standard number ranges.</p>
+        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">One platform, four AI channels:</span> Every plan includes AI voice, email, WhatsApp and live chat, each with its own monthly usage allowance, plus SMS notifications. Need more? Add usage packs any time.</p>
+        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">No phone system needed:</span> We provide a dedicated number and route calls to the right person, taking messages when no one's available. Prefer your existing PBX? Connect it instead, no new hardware or migration.</p>
+        <p class="text-white/65 text-sm mb-3"><span class="text-[#7de8eb] font-medium">Every plan includes:</span> call answering, summaries, appointment booking, call transfers, CRM integrations, dashboard and knowledge base setup.</p>
         <p class="text-white/40 text-xs">All prices exclude VAT. 12-month minimum term. Payment by monthly Direct Debit.</p>
         <p class="text-white/60 text-sm mt-4">Questions about which plan fits? <a href="#" class="contact-link text-[#7de8eb] font-semibold" data-inquiry="Pricing Enquiry">Book a demo and we will advise.</a></p>
       </div>
@@ -761,7 +795,7 @@
   </section>
 
   <!-- ───── SECURITY ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="security">
+  <section class="light relative py-24 px-6 overflow-hidden" id="security">
     <div class="absolute inset-0 bg-gradient-to-b from-[#1a3535]/20 to-[#172929] pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto">
       <div class="motion text-center mb-16" data-anim="fade-up">
@@ -815,15 +849,15 @@
             What is WiseCall?
             <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
           </summary>
-          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">WiseCall is an AI-powered business communications platform. It combines an AI receptionist that answers and manages your inbound calls with a complete phone system for your team. Every plan includes business numbers, staff extensions, mobile and desktop apps, and call handling around the clock.</div>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">WiseCall is your AI receptionist. It answers and manages your inbound calls around the clock, qualifying enquiries, booking appointments, capturing details and following up by SMS, email and WhatsApp. We provide a dedicated number, so there's no phone system needed, and if you already run a PBX, you can connect that instead.</div>
         </details>
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
           <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
-            Is the phone system included?
+            Do I need a phone system to use WiseCall?
             <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
           </summary>
-          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. Every WiseCall plan includes a complete phone system with business numbers, extensions and apps for iOS, Android and desktop. You do not need a separate telecoms contract or any hardware.</div>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">No. By default we provide a dedicated number and WiseCall handles everything, answering calls, routing them to the right person's mobile and taking a message if no one's available. There's no phone system to buy or manage. If you already run a PBX, you can register WiseCall to your existing system instead.</div>
         </details>
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
@@ -831,7 +865,7 @@
             What counts as an AI call?
             <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
           </summary>
-          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">An AI call is any inbound call answered and handled by the WiseCall AI receptionist. Internal calls between your team members are not counted. Your plan includes a set number of AI calls per month. Additional calls are charged at £0.65 each.</div>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">An AI call is any inbound call answered and handled by the WiseCall AI receptionist. Internal calls between your team members are not counted. Your plan includes a monthly allowance of AI calls, alongside AI email, WhatsApp and live chat. Need more of any channel? You can add a usage pack at any time.</div>
         </details>
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
@@ -868,10 +902,10 @@
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
           <summary class="flex items-center justify-between gap-4 px-6 py-5 text-white font-medium cursor-pointer">
-            How many outbound minutes are included?
+            Can WiseCall handle email enquiries too?
             <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
           </summary>
-          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Up to 3,000 outbound minutes per user, per month to included UK destinations. Calls beyond the allowance or to non-included destinations are charged at standard rates. Full details are under <a href="#pricing" class="text-[#7de8eb]">Pricing</a>.</div>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Yes. AI email is included in every plan, with a monthly allowance of AI email replies (alongside AI calls, WhatsApp and live chat). WiseCall reads and replies to inbound emails using your agent's knowledge base, just like it does on calls. Full details are under <a href="#pricing" class="text-[#7de8eb]">Pricing</a>.</div>
         </details>
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
@@ -879,7 +913,7 @@
             How does pricing work?
             <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
           </summary>
-          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Plans start from £99/month (Starter, 100 AI calls), rising to £199/month (Professional, 300 calls) and £399/month (Business, 750 calls). Enterprise pricing is custom. All plans include every WiseCall feature — the only difference is the number of AI calls included each month. Additional calls are billed monthly at the overage rate shown on your plan. All prices exclude VAT. Full details are listed under the pricing section.</div>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Plans start from £99/month (Starter, 100 AI calls), rising to £199/month (Professional, 300 calls) and £399/month (Business, 750 calls). Enterprise pricing is custom. All plans include every WiseCall feature, the only difference is the number of AI calls included each month. Additional calls are billed monthly at the overage rate shown on your plan. All prices exclude VAT. Full details are listed under the pricing section.</div>
         </details>
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
@@ -937,7 +971,7 @@
         <img src="owl-logo.png" alt="WiseCall" class="h-10">
         <span class="text-white font-bold text-xl">WiseCall</span>
       </div>
-      <p class="text-white/50 max-w-sm mx-auto mb-8 text-sm leading-relaxed">AI-powered business communications. Phone system included. UK-based.</p>
+      <p class="text-white/50 max-w-sm mx-auto mb-8 text-sm leading-relaxed">AI receptionist for UK businesses. No phone system needed, or connect your PBX. UK-based.</p>
       <div class="flex flex-wrap justify-center gap-6 mb-8 text-sm">
         <a href="#how-it-works" class="text-white/50 hover:text-[#7de8eb] transition-colors">How It Works</a>
         <a href="#pricing" class="text-white/50 hover:text-[#7de8eb] transition-colors">Pricing</a>

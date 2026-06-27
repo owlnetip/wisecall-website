@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CallbackForm } from "@/components/callback-form";
 
 export const metadata: Metadata = {
-  title: "Try WiseCall — live AI receptionist demo",
+  title: "Try WiseCall, live AI receptionist demo",
   description: "Enter your number and the WiseCall AI receptionist will call you for a live demo.",
 };
 
@@ -30,7 +30,7 @@ export default function TryPage() {
         <h1 className="mt-5 text-2xl font-bold text-white">Try the AI receptionist</h1>
         <p className="mt-2 text-sm leading-6" style={{ color: "rgba(255,255,255,0.6)" }}>
           Pop in your mobile and WiseCall will call you straight back, so you can have a
-          real conversation with the AI receptionist — ask about opening hours, request a
+          real conversation with the AI receptionist, ask about opening hours, request a
           callback, or ask to be put through. Takes about a minute.
         </p>
 

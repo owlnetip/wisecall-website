@@ -1,0 +1,120 @@
+/* ============================================================================
+   WiseCall — per-section light mode
+   ----------------------------------------------------------------------------
+   The site stays DARK by default (nav, hero, statement sections, footer).
+   Add class="light" to any <section> to flip just that band to a clean light
+   scheme — giving the page a dark/light rhythm like the app portal.
+
+   Everything here is scoped under `section.light`, so it never touches the
+   dark sections. Accent cyan (#7de8eb) stays bright for FILLS; accent TEXT is
+   deepened to #0a8a8e so it stays readable on white.
+   ============================================================================ */
+
+section.light {
+  background: #f6fbfb !important;
+  color: #0c1f1f !important;
+}
+
+/* Soft seam between dark→light→dark bands */
+section.light { box-shadow: inset 0 1px 0 rgba(12, 31, 31, 0.04); }
+
+/* ---- Kill the dark gradient WASH + dim glow orbs inside light sections --- */
+section.light [class*="from-[#172929]"].absolute,
+section.light [class*="from-[#1a3535]"].absolute,
+section.light [class*="via-[#1a3535]"].absolute,
+section.light [class*="to-[#172929]"].absolute {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+section.light [class*="blur-["].absolute.rounded-full {
+  opacity: 0.08 !important;
+}
+
+/* ---- Text: white opacities → graded ink --------------------------------- */
+section.light .text-white          { color: #0c1f1f !important; }
+section.light .text-white\/85      { color: rgba(12, 31, 31, 0.92) !important; }
+section.light .text-white\/80      { color: rgba(12, 31, 31, 0.88) !important; }
+section.light .text-white\/78      { color: rgba(12, 31, 31, 0.86) !important; }
+section.light .text-white\/72,
+section.light .text-white\/70,
+section.light .text-white\/68,
+section.light .text-white\/65      { color: rgba(12, 31, 31, 0.72) !important; }
+section.light .text-white\/60,
+section.light .text-white\/55      { color: rgba(12, 31, 31, 0.62) !important; }
+section.light .text-white\/50,
+section.light .text-white\/45      { color: rgba(12, 31, 31, 0.52) !important; }
+section.light .text-white\/40,
+section.light .text-white\/30      { color: rgba(12, 31, 31, 0.42) !important; }
+
+/* Accent text: bright cyan → readable deep teal */
+section.light .text-\[\#7de8eb\] { color: #0a8a8e !important; }
+
+/* Placeholders (demo phone input) */
+section.light .placeholder\:text-white\/45::placeholder,
+section.light input::placeholder { color: rgba(12, 31, 31, 0.42) !important; }
+section.light input { color: #0c1f1f !important; }
+
+/* ---- Surfaces / cards ---------------------------------------------------- */
+section.light .card {
+  background: #ffffff !important;
+  border: 1px solid rgba(12, 31, 31, 0.10) !important;
+  box-shadow: 0 1px 2px rgba(12, 31, 31, 0.04), 0 8px 24px rgba(12, 31, 31, 0.06);
+}
+section.light .card-strong {
+  background: linear-gradient(135deg, #eefafa, #f7fdfd) !important;
+  border: 1px solid rgba(10, 138, 142, 0.30) !important;
+  box-shadow: 0 1px 2px rgba(12, 31, 31, 0.04), 0 8px 24px rgba(12, 31, 31, 0.06);
+}
+section.light .bg-white\/5,
+section.light .bg-white\/10,
+section.light .bg-white\/20,
+section.light .bg-white\/\[\.04\],
+section.light .bg-white\/\[\.025\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(12, 31, 31, 0.04), 0 8px 24px rgba(12, 31, 31, 0.06);
+}
+/* Raised section strips inside a light band → soft tint, no heavy shadow */
+section.light .bg-white\/\[\.025\],
+section.light .bg-white\/\[\.04\] {
+  background-color: #f0f8f8 !important;
+  box-shadow: none;
+}
+
+/* Solid dark mini-surfaces → light */
+section.light .bg-\[\#172929\],
+section.light .bg-\[\#1a3535\] { background-color: #f6fbfb !important; }
+
+/* ---- Buttons / chips ----------------------------------------------------- */
+section.light .btn-secondary,
+section.light .mbtn.bg-white\/10 {
+  background: #ffffff !important;
+  color: #0a8a8e !important;
+  border: 1px solid rgba(10, 138, 142, 0.30) !important;
+}
+section.light .eyebrow {
+  color: #0a8a8e !important;
+  background: rgba(10, 138, 142, 0.08) !important;
+  border: 1px solid rgba(10, 138, 142, 0.22) !important;
+}
+
+/* ---- Borders / dividers -------------------------------------------------- */
+section.light [class*="border-\[\#7de8eb\]\/"] {
+  border-color: rgba(10, 138, 142, 0.18) !important;
+}
+section.light .border-white\/10,
+section.light .border-white\/15,
+section.light .border-white\/20 {
+  border-color: rgba(12, 31, 31, 0.10) !important;
+}
+section.light details.card,
+section.light details.group { background: #ffffff !important; }
+
+/* ---- Demo dial box: keep it DARK on the light section for contrast ------- */
+section.light .demo-dial {
+  background: #0f2e2f !important;
+  border: 1px solid rgba(125, 232, 235, 0.35) !important;
+  box-shadow: 0 12px 30px rgba(12, 53, 54, 0.25) !important;
+}
+section.light .demo-dial input { color: #ffffff !important; }
+section.light .demo-dial input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
+section.light .demo-dial .text-\[\#7de8eb\] { color: #7de8eb !important; } /* phone icon stays bright */
