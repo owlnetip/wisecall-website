@@ -80,9 +80,24 @@ section.light .bg-white\/\[\.04\] {
   box-shadow: none;
 }
 
-/* Solid dark mini-surfaces → light */
-section.light .bg-\[\#172929\],
-section.light .bg-\[\#1a3535\] { background-color: #f6fbfb !important; }
+/* Solid dark mini-surfaces → light (any opacity variant: /50, /60, /82 ...) */
+section.light [class*="bg-[#172929]"],
+section.light [class*="bg-[#1a3535]"] {
+  background-color: #f0f8f8 !important;
+}
+
+/* Form fields inside light sections → clean light field, dark text */
+section.light input,
+section.light textarea,
+section.light select {
+  background-color: #ffffff !important;
+  color: #0c1f1f !important;
+  border-color: rgba(12, 31, 31, 0.15) !important;
+}
+section.light input::placeholder,
+section.light textarea::placeholder {
+  color: rgba(12, 31, 31, 0.4) !important;
+}
 
 /* ---- Buttons / chips ----------------------------------------------------- */
 section.light .btn-secondary,
