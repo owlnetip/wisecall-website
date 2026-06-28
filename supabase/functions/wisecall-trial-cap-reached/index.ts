@@ -93,21 +93,24 @@ async function sendSms(params: { to: string; text: string }): Promise<boolean> {
   const from = Deno.env.get("VONAGE_FROM_NUMBER");
   if (!apiKey || !apiSecret || !from) return false;
 
-  const res = await fetch("https://rest.nexmo.com/sms/json", {
+  const credentials = btoa(`${apiKey}:${apiSecret}`);
+  const res = await fetch("https://api.nexmo.com/v1/messages", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
-      api_key: apiKey,
-      api_secret: apiSecret,
+      channel: "sms",
+      message_type: "text",
       to: params.to.replace(/\s+/g, ""),
       from,
       text: params.text,
     }),
   });
 
-  const body = await res.json().catch(() => ({}));
-  const message = (body as { messages?: Array<{ status?: string }> }).messages?.[0];
-  if (!res.ok || message?.status !== "0") {
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
     console.error("vonage failed", res.status, body);
     return false;
   }

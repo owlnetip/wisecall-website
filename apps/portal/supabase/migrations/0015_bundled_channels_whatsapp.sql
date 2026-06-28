@@ -1,5 +1,5 @@
--- Single-platform model: AI email retired as a separate £79 add-on and bundled
--- into every plan; WhatsApp + live chat added as bundled channels with their own
+-- Single-platform model: AI email is bundled into every plan; WhatsApp + live chat
+-- added as bundled channels with their own
 -- monthly allowances. Mirrors the call/email usage pattern (migration 0014 / 0005).
 
 -- 1. WhatsApp + live-chat usage columns on wisecall_billing
@@ -84,16 +84,16 @@ $$;
 grant execute on function public.wisecall_record_whatsapp_message(uuid) to service_role;
 
 -- 4. Backfill: email is now bundled, so enable it + set per-plan allowances for
---    every existing active/trialing plan. (No £79 subscribers exist.)
+--    every existing active/trialing plan.
 update public.wisecall_billing
 set email_channel_enabled = true,
     email_channel_status  = 'active',
     email_monthly_allowance = case plan
       when 'starter' then 100 when 'professional' then 500 when 'business' then 2000 else email_monthly_allowance end,
     whatsapp_monthly_allowance = case plan
-      when 'starter' then 250 when 'professional' then 800 when 'business' then 2500 else 0 end,
+      when 'starter' then 100 when 'professional' then 500 when 'business' then 2000 else 0 end,
     livechat_monthly_allowance = case plan
-      when 'starter' then 100 when 'professional' then 300 when 'business' then 1000 else 0 end,
+      when 'starter' then 100 when 'professional' then 500 when 'business' then 2000 else 0 end,
     whatsapp_period_end = current_period_end
 where status in ('active', 'trialing')
   and plan in ('starter', 'professional', 'business');
