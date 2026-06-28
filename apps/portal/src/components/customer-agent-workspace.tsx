@@ -596,9 +596,9 @@ function EmailChannel({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center gap-4 px-5 py-4 text-left"
+        className="flex w-full items-start gap-4 px-5 py-4 text-left"
       >
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eef2fb] text-[#3b5bb5]">
+        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eef2fb] text-[#3b5bb5]">
           <Mail className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -608,19 +608,21 @@ function EmailChannel({
           </p>
         </div>
         {usage?.enabled ? (
-          <ChannelUsageBadge
-            used={usage.used}
-            allowance={usage.allowance}
-            overage={usage.overage}
-            unit="replies"
-          />
+          <div className="self-center">
+            <ChannelUsageBadge
+              used={usage.used}
+              allowance={usage.allowance}
+              overage={usage.overage}
+              unit="replies"
+            />
+          </div>
         ) : (
-          <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
+          <span className="self-center flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
             Start a plan to use
           </span>
         )}
         <ChevronDown
-          className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open ? (
@@ -678,9 +680,9 @@ function WebsiteChatChannel({ assistants, usage }: { assistants: Assistant[]; us
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center gap-4 px-5 py-4 text-left"
+        className="flex w-full items-start gap-4 px-5 py-4 text-left"
       >
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
           <MessageSquareText className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -690,19 +692,21 @@ function WebsiteChatChannel({ assistants, usage }: { assistants: Assistant[]; us
           </p>
         </div>
         {usage?.enabled ? (
-          <ChannelUsageBadge
-            used={usage.used}
-            allowance={usage.allowance}
-            overage={usage.overage}
-            unit="chats"
-          />
+          <div className="self-center">
+            <ChannelUsageBadge
+              used={usage.used}
+              allowance={usage.allowance}
+              overage={usage.overage}
+              unit="chats"
+            />
+          </div>
         ) : (
-          <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
             Included
           </span>
         )}
         <ChevronDown
-          className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open ? (
@@ -804,9 +808,9 @@ function WhatsAppChannel({
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="flex w-full items-center gap-4 px-5 py-4 text-left"
+        className="flex w-full items-start gap-4 px-5 py-4 text-left"
       >
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eafaf1] text-[#14823f]">
+        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eafaf1] text-[#14823f]">
           <MessageSquareText className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -815,7 +819,7 @@ function WhatsAppChannel({
             Add WhatsApp to the same AI agent that handles calls, email and live chat.
           </p>
         </div>
-        <div className="flex flex-shrink-0 items-center gap-3">
+        <div className="self-center flex flex-shrink-0 items-center gap-3">
           {usage?.enabled && usage.allowance > 0 ? (
             <span className="text-xs font-semibold text-[#66716e]">
               {usage.used.toLocaleString()}/{usage.allowance.toLocaleString()} messages
@@ -827,7 +831,7 @@ function WhatsAppChannel({
           </span>
         </div>
         <ChevronDown
-          className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -961,8 +965,8 @@ function ChannelsHub({
 
       <div className="space-y-3">
         {/* Phone — always included */}
-        <div className="flex items-center gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+        <div className="flex items-start gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
+          <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
             <Phone className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
@@ -970,14 +974,16 @@ function ChannelsHub({
             <p className="text-sm text-[#66716e]">Your AI receptionist answers and routes calls.</p>
           </div>
           {callUsage ? (
-            <ChannelUsageBadge
-              used={callUsage.used}
-              allowance={callUsage.allowance}
-              overage={callUsage.overage}
-              unit="calls"
-            />
+            <div className="self-center">
+              <ChannelUsageBadge
+                used={callUsage.used}
+                allowance={callUsage.allowance}
+                overage={callUsage.overage}
+                unit="calls"
+              />
+            </div>
           ) : (
-            <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+            <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
               Included
             </span>
           )}
