@@ -349,10 +349,27 @@
           Live Demo
         </span>
         <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Hear it for yourself</h2>
-        <p class="text-xl text-white/70 mb-12">Enter your mobile and the WiseCall demo agent calls you back.</p>
+        <p class="text-xl text-white/70 mb-12 md:hidden">Tap below to call the WiseCall demo agent straight from your phone.</p>
+        <p class="text-xl text-white/70 mb-12 hidden md:block">Enter your mobile and the WiseCall demo agent calls you back.</p>
       </div>
 
-      <div class="motion" data-anim="scale-in" style="transition-delay:0.1s">
+      <!-- Mobile: tap-to-call orb -->
+      <div class="motion md:hidden flex flex-col items-center" data-anim="scale-in" style="transition-delay:0.1s">
+        <a href="tel:+441135222277" class="orb-stage mb-8" aria-label="Call the WiseCall demo">
+          <span class="orb">
+            <span class="orb-swirl"></span>
+            <span class="orb-core"></span>
+          </span>
+        </a>
+        <a href="tel:+441135222277" class="inline-flex items-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)] transition-shadow">
+          <i data-lucide="phone-call" class="w-5 h-5"></i>
+          Call the demo
+        </a>
+        <p class="text-white/40 text-sm mt-4">+44 113 522 2277</p>
+      </div>
+
+      <!-- Desktop: callback form -->
+      <div class="motion hidden md:flex flex-col items-center" data-anim="scale-in" style="transition-delay:0.1s">
         <form id="demoCallbackForm" class="flex flex-col items-center" novalidate>
           <div class="orb-stage is-static mb-8" aria-hidden="true">
             <span class="orb">
