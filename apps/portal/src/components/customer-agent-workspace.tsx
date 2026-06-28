@@ -1080,19 +1080,6 @@ function ChannelsHub({
         {/* WhatsApp — included in every plan; number connected during setup */}
         <WhatsAppChannel assistants={assistants} userEmail={userEmail} usage={whatsappChannel} />
 
-        {/* SMS — coming soon */}
-        <div className="flex items-center gap-4 rounded-[14px] border border-dashed border-black/10 bg-[#fafbfb] px-5 py-4">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#f2f4f3] text-[#9aa5a2]">
-            <MessageSquareText className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-black text-[#111716]">SMS</p>
-            <p className="text-sm text-[#66716e]">Two-way texts, handled and logged like every other channel.</p>
-          </div>
-          <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
-            Coming soon
-          </span>
-        </div>
       </div>
     </div>
   );
