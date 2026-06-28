@@ -4000,10 +4000,10 @@ function parseTranscript(raw: string): TranscriptTurn[] {
   for (const line of raw.split(/\r?\n/)) {
     const text = line.trim();
     if (!text) continue;
-    const match = text.match(/^(assistant|agent|ai|bot|user|caller|customer|human)\s*:\s*(.*)$/i);
+    const match = text.match(/^(assistant|agent|ai|bot|wisecall|user|caller|customer|human|visitor)\s*:\s*(.*)$/i);
     if (match) {
       const role = match[1].toLowerCase();
-      const speaker = ["user", "caller", "customer", "human"].includes(role)
+      const speaker = ["user", "caller", "customer", "human", "visitor"].includes(role)
         ? "caller"
         : "agent";
       turns.push({ speaker, text: match[2] });
