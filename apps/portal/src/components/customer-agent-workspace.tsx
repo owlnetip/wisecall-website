@@ -1303,6 +1303,7 @@ export function CustomerAgentWorkspace({
       const routing = result.routing ?? { provider: null as null, number: "", status: "unprovisioned" as const };
       const assistant: Assistant = {
         id: result.id,
+        slug: result.slug ?? "",
         name: receptionist,
         businessName: business,
         industry: template.industry,
@@ -1371,6 +1372,7 @@ export function CustomerAgentWorkspace({
     const routing = result.routing ?? { provider: null as null, number: "", status: "unprovisioned" as const };
     const assistant: Assistant = {
       id: result.id,
+      slug: result.slug ?? "",
       name: draft.receptionistName || "Receptionist",
       businessName: draft.businessName || "New business",
       industry: draft.industry || "General",

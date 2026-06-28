@@ -75,6 +75,7 @@ export type NewAgent = {
 export type CreateResult = {
   ok: boolean;
   id?: string;
+  slug?: string;
   error?: string;
   routing?: { provider: "telnyx" | null; number: string; status: "unprovisioned" | "pending" | "live" };
 };
@@ -241,7 +242,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
   }
 
   revalidatePath("/dashboard");
-  return { ok: true, id: profileId, routing };
+  return { ok: true, id: profileId, slug, routing };
 }
 
 export type DeleteResult = { ok: boolean; releasedNumber?: string | null; error?: string };
