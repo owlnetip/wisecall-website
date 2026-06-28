@@ -321,6 +321,7 @@ export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
 }
 
 function mapCallRow(row: CallRow): CallLog {
+  const channel = channelFromRow(row);
   return {
     id: row.id,
     profileId: row.profile_id || "",
@@ -329,9 +330,10 @@ function mapCallRow(row: CallRow): CallLog {
     summary: row.summary || "",
     outcome: row.outcome || "",
     startedAt: row.started_at || row.created_at || "",
-    durationLabel: duration(row.started_at, row.finished_at),
+    // Duration only means something for a voice call; text channels have none.
+    durationLabel: channel === "phone" ? duration(row.started_at, row.finished_at) : "—",
     transcript: row.transcript || "",
-    channel: channelFromRow(row),
+    channel,
   };
 }
 
