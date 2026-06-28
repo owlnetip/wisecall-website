@@ -797,7 +797,6 @@ function WhatsAppChannel({
   const [setupPath, setSetupPath] = useState<WhatsAppSetupPath>("included");
   const [selectedAssistantId, setSelectedAssistantId] = useState(assistants[0]?.id ?? "");
   const selectedAssistant = assistants.find((assistant) => assistant.id === selectedAssistantId) ?? assistants[0];
-  const selectedOption = whatsappSetupOptions.find((option) => option.id === setupPath)!;
 
   return (
     <div className="rounded-[14px] border border-black/10 bg-white">
@@ -836,45 +835,15 @@ function WhatsAppChannel({
       </button>
 
       {open ? (
-        <div className="space-y-5 border-t border-black/5 px-5 pb-5 pt-4">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-black/10 bg-[#fbfcfc] p-3">
-              <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#7a8582]">
-                <ShieldCheck className="h-4 w-4 text-[#148b8e]" />
-                Status
-              </div>
-              <p className="text-sm font-bold text-[#111716]">Not connected yet</p>
-              <p className="mt-1 text-xs leading-relaxed text-[#66716e]">
-                Choose a setup route below. We activate the provider webhook and number mapping once Meta confirms the number.
-              </p>
-            </div>
-            <div className="rounded-xl border border-black/10 bg-[#fbfcfc] p-3">
-              <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#7a8582]">
-                <Layers className="h-4 w-4 text-[#148b8e]" />
-                Routing
-              </div>
-              <p className="text-sm font-bold text-[#111716]">By WhatsApp number</p>
-              <p className="mt-1 text-xs leading-relaxed text-[#66716e]">
-                Inbound messages route to the correct WiseCall account by the connected WhatsApp number.
-              </p>
-            </div>
-            <div className="rounded-xl border border-black/10 bg-[#fbfcfc] p-3">
-              <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#7a8582]">
-                <History className="h-4 w-4 text-[#148b8e]" />
-                Logs
-              </div>
-              <p className="text-sm font-bold text-[#111716]">Saved to Contacts</p>
-              <p className="mt-1 text-xs leading-relaxed text-[#66716e]">
-                WhatsApp conversations share the same contact memory as phone, email and live chat.
-              </p>
-            </div>
-          </div>
+        <div className="space-y-4 border-t border-black/5 px-5 pb-5 pt-4">
+          <p className="text-sm leading-relaxed text-[#66716e]">
+            Inbound messages route to the same AI and save to Contacts, just like calls and email. Pick
+            a setup route and we&apos;ll handle the Meta connection and webhook.
+          </p>
 
           {assistants.length > 1 ? (
             <label className="block">
-              <span className="mb-1 block text-xs font-black uppercase tracking-[0.12em] text-[#7a8582]">
-                Connect to agent
-              </span>
+              <span className="mb-1 block text-xs font-bold text-[#7a8582]">Connect to agent</span>
               <select
                 value={selectedAssistant?.id ?? ""}
                 onChange={(event) => setSelectedAssistantId(event.target.value)}
@@ -889,7 +858,7 @@ function WhatsAppChannel({
             </label>
           ) : null}
 
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="space-y-2">
             {whatsappSetupOptions.map((option) => {
               const selected = setupPath === option.id;
               return (
@@ -897,78 +866,36 @@ function WhatsAppChannel({
                   key={option.id}
                   type="button"
                   onClick={() => setSetupPath(option.id)}
-                  className={`flex h-full flex-col rounded-xl border p-4 text-left transition ${
-                    selected
-                      ? "border-[#148b8e] bg-[#effcfc] shadow-[0_12px_30px_rgba(20,139,142,0.12)]"
-                      : "border-black/10 bg-white hover:border-[#7de8eb]"
+                  className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
+                    selected ? "border-[#148b8e] bg-[#effcfc]" : "border-black/10 bg-white hover:border-[#7de8eb]"
                   }`}
                 >
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-black text-[#111716]">{option.label}</p>
-                      <span
-                        className={`mt-1 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-black ${
-                          selected ? "bg-[#d8f7f8] text-[#116f72]" : "bg-[#f2f4f3] text-[#66716e]"
-                        }`}
-                      >
-                        {option.badge}
-                      </span>
-                    </div>
-                    <span
-                      className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
-                        selected ? "border-[#148b8e] bg-[#148b8e] text-white" : "border-black/20 text-transparent"
-                      }`}
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                    </span>
-                  </div>
-                  <p className="text-sm leading-relaxed text-[#66716e]">{option.summary}</p>
-                  <div className="mt-4 space-y-2">
-                    {option.points.map((point) => (
-                      <div key={point} className="flex gap-2 text-xs leading-relaxed text-[#4f5b58]">
-                        <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#14823f]" />
-                        <span>{point}</span>
-                      </div>
-                    ))}
+                  <span
+                    className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
+                      selected ? "border-[#148b8e] bg-[#148b8e] text-white" : "border-black/20 text-transparent"
+                    }`}
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-bold text-[#111716]">
+                      {option.label}
+                      <span className="ml-2 text-xs font-semibold text-[#7a8582]">{option.badge}</span>
+                    </p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-[#66716e]">{option.summary}</p>
                   </div>
                 </button>
               );
             })}
           </div>
 
-          <div className="rounded-xl border border-[#f2d58b] bg-[#fffaf0] p-4">
-            <div className="flex gap-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#b77900]" />
-              <div>
-                <p className="text-sm font-black text-[#111716]">
-                  {setupPath === "own" ? "Do not move a live WhatsApp number yet" : "Meta admin access is required"}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-[#66716e]">
-                  {setupPath === "own"
-                    ? "We need to check whether the number is already used in WhatsApp, WhatsApp Business, Twilio, Vonage or another provider before migration."
-                    : "The business owner needs admin access to their Meta Business Portfolio and may need to complete Meta business checks."}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
-            <div>
-              <p className="text-sm font-black text-[#111716]">What happens next</p>
-              <div className="mt-2 grid gap-2 text-xs text-[#66716e] sm:grid-cols-2">
-                {[
-                  "Confirm the agent and business details",
-                  "Connect the number through Meta WhatsApp Business",
-                  "Verify the number by SMS or voice code",
-                  "WiseCall maps the webhook to the right account",
-                ].map((step) => (
-                  <div key={step} className="flex gap-2">
-                    <ChevronRight className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#148b8e]" />
-                    <span>{step}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-md text-xs leading-relaxed text-[#7a8582]">
+              Needs Meta Business admin access.{" "}
+              {setupPath === "own"
+                ? "Don't move a live number yet — we check it first."
+                : "We complete the Meta checks for you."}
+            </p>
             <a
               href={buildWhatsAppSetupHref(setupPath, selectedAssistant, userEmail)}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#111716] px-4 py-2.5 text-sm font-black text-white hover:bg-[#1f3535]"
@@ -977,18 +904,6 @@ function WhatsAppChannel({
               <ChevronRight className="h-4 w-4" />
             </a>
           </div>
-
-          <p className="text-xs leading-relaxed text-[#7a8582]">
-            Selected route: <span className="font-bold text-[#4f5b58]">{selectedOption.label}</span>
-            {selectedAssistant ? (
-              <>
-                {" "}
-                for <span className="font-bold text-[#4f5b58]">{selectedAssistant.businessName}</span>.
-              </>
-            ) : (
-              "."
-            )}
-          </p>
         </div>
       ) : null}
     </div>
@@ -1888,7 +1803,6 @@ export function CustomerAgentWorkspace({
                 onDelete={isAdmin ? deleteSelected : undefined}
                 adminMode={adminMode}
                 planName={planName}
-                emailChannel={emailChannel}
               />
             )}
 
@@ -2262,7 +2176,6 @@ function AssistantDetail({
   onDelete,
   adminMode = false,
   planName,
-  emailChannel,
 }: {
   assistant: Assistant;
   tab: DetailTab;
@@ -2283,7 +2196,6 @@ function AssistantDetail({
   onDelete?: () => void;
   adminMode?: boolean;
   planName?: string;
-  emailChannel?: EmailChannelUsage;
 }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   return (
@@ -4086,64 +3998,6 @@ function TranscriptView({ transcript }: { transcript: string }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function EmailChannelCard({
-  address,
-  used,
-  allowance,
-  overage,
-}: {
-  address: string;
-  used: number;
-  allowance: number;
-  overage: number;
-}) {
-  const [copied, setCopied] = useState(false);
-  function copy() {
-    navigator.clipboard?.writeText(address).then(
-      () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      },
-      () => {},
-    );
-  }
-  return (
-    <div className="mb-8 rounded-[14px] border border-black/10 bg-white px-5 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 font-black text-[#111716]">
-            <Mail className="h-4 w-4 text-[#148b8e]" />
-            Email channel
-          </p>
-          <p className="mt-1 max-w-xl text-sm text-[#66716e]">
-            Forward your business inbox to the address below and the agent will reply to emails just
-            like it answers calls — using the same knowledge, and logging every contact.
-          </p>
-          <p className="mt-2 text-xs font-semibold text-[#148b8e]">
-            {used}/{allowance} AI replies this period
-            {overage > 0 ? ` · ${overage} overage` : ""}
-          </p>
-        </div>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <code className="flex-1 truncate rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2 text-sm font-semibold text-[#111716]">
-          {address}
-        </code>
-        <button
-          type="button"
-          onClick={copy}
-          className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
-      </div>
-      <p className="mt-2 text-xs text-[#9aa5a2]">
-        Set up a forwarding rule in your email provider (Gmail, Outlook, etc.) to this address.
-      </p>
     </div>
   );
 }
