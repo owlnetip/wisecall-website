@@ -276,14 +276,22 @@ type CallRow = {
 };
 
 function channelFromRow(row: CallRow): CallChannel {
-  const raw = String((row.metadata as Record<string, unknown> | null)?.channel ?? "").toLowerCase();
+  const meta = (row.metadata as Record<string, unknown> | null) ?? {};
+  const raw = String(meta.channel ?? "").toLowerCase();
   if (raw === "whatsapp" || raw === "email" || raw === "chat") return raw;
+  // Website live chat predates per-channel tagging — it tags itself via the
+  // edge-function source and a "live_chat" outcome instead of metadata.channel.
+  if (String(meta.source ?? "") === "wisecall-live-chat") return "chat";
+  if (String(row.outcome ?? "").toLowerCase().startsWith("live_chat")) return "chat";
   return "phone";
 }
 
 function duration(started: string | null, finished: string | null): string {
   if (!started || !finished) return "—";
   const secs = Math.max(0, Math.round((Date.parse(finished) - Date.parse(started)) / 1000));
+  // Zero-length means there's no real duration (e.g. a single WhatsApp/email
+  // exchange logged with started == finished) — show a dash, not "0:00".
+  if (secs === 0) return "—";
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
@@ -330,8 +338,7 @@ function mapCallRow(row: CallRow): CallLog {
     summary: row.summary || "",
     outcome: row.outcome || "",
     startedAt: row.started_at || row.created_at || "",
-    // Duration only means something for a voice call; text channels have none.
-    durationLabel: channel === "phone" ? duration(row.started_at, row.finished_at) : "—",
+    durationLabel: duration(row.started_at, row.finished_at),
     transcript: row.transcript || "",
     channel,
   };
