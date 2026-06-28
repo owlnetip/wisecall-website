@@ -825,6 +825,26 @@
             }
         }
 
+        .call-demo-mobile {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .call-demo-mobile {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+                color: var(--dark-bg);
+                padding: 1.2rem 2.5rem;
+                border-radius: 50px;
+                font-weight: 700;
+                font-size: 1.05rem;
+                text-decoration: none;
+                box-shadow: 0 6px 30px rgba(110, 212, 215, 0.35);
+            }
+        }
+
         @media (max-width: 768px) {
             .hero {
                 padding: 8rem 1.5rem 3rem;
@@ -952,6 +972,10 @@
         <p class="credibility">Built for trades, field services and mobile teams.</p>
         <div class="hero-buttons">
             <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="primary-btn" data-inquiry="Trades Demo">Start Free Trial</a>
+            <a href="tel:+441135222277" class="call-demo-mobile" aria-label="Call the WiseCall demo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.64 4.9 2 2 0 0 1 3.62 2.7h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.1a16 16 0 0 0 6 6l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.02z"/></svg>
+                Call the demo
+            </a>
             <a href="#calculator" class="secondary-btn">Calculate Your Missed Lead Value</a>
         </div>
     </section>

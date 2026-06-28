@@ -262,9 +262,26 @@
             Live Demo
           </span>
           <h3 class="font-bold text-white text-lg mt-4 mb-1">Talk to WiseCall</h3>
-          <p class="text-white/55 text-sm mb-6">Enter your mobile and say "dental" when Ava asks.</p>
+          <p class="text-white/55 text-sm mb-6 lg:hidden">Tap below to call the demo straight from your phone.</p>
+          <p class="text-white/55 text-sm mb-6 hidden lg:block">Enter your mobile and say "dental" when Ava asks.</p>
 
-          <form id="demoCallbackForm" class="flex flex-col items-center" novalidate>
+          <!-- Mobile: tap to call -->
+          <div class="lg:hidden flex flex-col items-center">
+            <a href="tel:+441135222277" class="orb-stage mb-8" aria-label="Call the WiseCall demo">
+              <span class="orb">
+                <span class="orb-swirl"></span>
+                <span class="orb-core"></span>
+              </span>
+            </a>
+            <a href="tel:+441135222277" class="inline-flex items-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)] transition-shadow">
+              <i data-lucide="phone-call" class="w-5 h-5"></i>
+              Call the demo
+            </a>
+            <p class="text-white/40 text-sm mt-4">+44 113 522 2277</p>
+          </div>
+
+          <!-- Desktop: callback form -->
+          <form id="demoCallbackForm" class="hidden lg:flex flex-col items-center" novalidate>
             <div class="orb-stage is-static mb-8" aria-hidden="true">
               <span class="orb">
                 <span class="orb-swirl"></span>
@@ -279,7 +296,7 @@
             </div>
           </form>
           <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-4" aria-live="polite"></p>
-          <p class="text-white/40 text-sm mt-2">
+          <p class="text-white/40 text-sm mt-2 hidden lg:block">
             Prefer to dial in? <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white">+44 113 522 2277</a>.
           </p>
         </div>
