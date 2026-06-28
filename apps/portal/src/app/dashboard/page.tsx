@@ -4,7 +4,7 @@ import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAgentsForUser, getCallLogsForUser } from "@/lib/agents";
-import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, reconcileBillingFromStripe } from "@/lib/billing";
+import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, getCallUsage, getWhatsappUsage, getLivechatUsage, reconcileBillingFromStripe } from "@/lib/billing";
 import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
 import {
@@ -62,6 +62,9 @@ export default async function DashboardPage() {
   }
 
   const emailChannel = getEmailChannelUsage(billing, hasActiveAccess(billing));
+  const callUsage = getCallUsage(billing);
+  const whatsappChannel = getWhatsappUsage(billing);
+  const livechatChannel = getLivechatUsage(billing);
 
   // Load every panel independently and degrade gracefully: a transient failure
   // in one fetch (cold start, a Supabase/insights hiccup) must NOT 500 the whole
@@ -113,6 +116,9 @@ export default async function DashboardPage() {
       trial={trial ?? undefined}
       planName={billing?.plan ? planDisplayName(billing.plan) : undefined}
       emailChannel={emailChannel}
+      callUsage={callUsage}
+      whatsappChannel={whatsappChannel}
+      livechatChannel={livechatChannel}
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}

@@ -8,6 +8,8 @@ import {
   isEmailChannelSubscription,
   planCallsIncluded,
   planEmailIncluded,
+  planWhatsappIncluded,
+  planLivechatIncluded,
   planOverageRateGbp,
 } from "@/lib/stripe";
 
@@ -30,6 +32,12 @@ export type Billing = {
   callsUsedPeriod: number;
   callsOveragePeriod: number;
   callsPeriodEnd: string | null;
+  whatsappMonthlyAllowance: number;
+  whatsappUsedPeriod: number;
+  whatsappOveragePeriod: number;
+  livechatMonthlyAllowance: number;
+  livechatUsedPeriod: number;
+  livechatOveragePeriod: number;
 };
 
 type BillingRow = {
@@ -51,10 +59,16 @@ type BillingRow = {
   calls_used_period: number | null;
   calls_overage_period: number | null;
   calls_period_end: string | null;
+  whatsapp_monthly_allowance: number | null;
+  whatsapp_used_period: number | null;
+  whatsapp_overage_period: number | null;
+  livechat_monthly_allowance: number | null;
+  livechat_used_period: number | null;
+  livechat_overage_period: number | null;
 };
 
 const BILLING_SELECT =
-  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end";
+  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end, whatsapp_monthly_allowance, whatsapp_used_period, whatsapp_overage_period, livechat_monthly_allowance, livechat_used_period, livechat_overage_period";
 
 function mapBilling(row: BillingRow): Billing {
   const plan = row.plan ?? null;
@@ -77,6 +91,12 @@ function mapBilling(row: BillingRow): Billing {
     callsUsedPeriod: row.calls_used_period ?? 0,
     callsOveragePeriod: row.calls_overage_period ?? 0,
     callsPeriodEnd: row.calls_period_end,
+    whatsappMonthlyAllowance: row.whatsapp_monthly_allowance ?? planWhatsappIncluded(plan),
+    whatsappUsedPeriod: row.whatsapp_used_period ?? 0,
+    whatsappOveragePeriod: row.whatsapp_overage_period ?? 0,
+    livechatMonthlyAllowance: row.livechat_monthly_allowance ?? planLivechatIncluded(plan),
+    livechatUsedPeriod: row.livechat_used_period ?? 0,
+    livechatOveragePeriod: row.livechat_overage_period ?? 0,
   };
 }
 
@@ -129,7 +149,7 @@ export async function reconcileBillingFromStripe(
       status: "all",
       limit: 10,
     });
-    // Newest plan subscription (not the email-channel add-on) that grants access.
+    // Newest plan subscription that grants access; ignore historical legacy email subscriptions.
     const planSub = subs.data
       .filter((s) => !isEmailChannelSubscription(s.metadata))
       .filter((s) => s.status === "trialing" || s.status === "active")
@@ -166,8 +186,7 @@ export async function reconcileBillingFromStripe(
   }
 }
 
-// AI email is now bundled into every plan (the separate £79 add-on was retired
-// 2026-06-27). Any active/trialing plan has email access.
+// AI email is bundled into every plan. Any active/trialing plan has email access.
 export function hasEmailChannelAccess(billing: Billing | null): boolean {
   return hasActiveAccess(billing);
 }
@@ -184,8 +203,9 @@ export type EmailChannelUsage = {
 
 export function getEmailChannelUsage(
   billing: Billing | null,
-  _hasPlan: boolean,
+  hasPlan: boolean,
 ): EmailChannelUsage {
+  void hasPlan;
   const allowance =
     billing?.emailMonthlyAllowance ?? planEmailIncluded(billing?.plan) ?? EMAIL_INCLUDED_REPLIES;
   return {
@@ -244,6 +264,34 @@ export function getCallUsage(billing: Billing | null): CallUsage {
     allowance: billing?.callsMonthlyAllowance ?? planCallsIncluded(plan),
     overage: billing?.callsOveragePeriod ?? 0,
     overagePriceGbp: planOverageRateGbp(plan),
+  };
+}
+
+// Generic per-channel usage shape for the bundled WhatsApp / live-chat channels.
+// `enabled` is true whenever the customer has an active/trialing plan (every plan
+// bundles all channels; the plan only controls the monthly allowance).
+export type ChannelUsage = {
+  enabled: boolean;
+  used: number;
+  allowance: number;
+  overage: number;
+};
+
+export function getWhatsappUsage(billing: Billing | null): ChannelUsage {
+  return {
+    enabled: hasActiveAccess(billing),
+    used: billing?.whatsappUsedPeriod ?? 0,
+    allowance: billing?.whatsappMonthlyAllowance ?? planWhatsappIncluded(billing?.plan),
+    overage: billing?.whatsappOveragePeriod ?? 0,
+  };
+}
+
+export function getLivechatUsage(billing: Billing | null): ChannelUsage {
+  return {
+    enabled: hasActiveAccess(billing),
+    used: billing?.livechatUsedPeriod ?? 0,
+    allowance: billing?.livechatMonthlyAllowance ?? planLivechatIncluded(billing?.plan),
+    overage: billing?.livechatOveragePeriod ?? 0,
   };
 }
 

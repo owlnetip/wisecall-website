@@ -46,7 +46,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
-import type { EmailChannelUsage } from "@/lib/billing";
+import type { EmailChannelUsage, ChannelUsage, CallUsage } from "@/lib/billing";
 import {
   createAgent,
   deleteAgent,
@@ -580,7 +580,7 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
 }
 
 // "Website chat" channel — expandable to reveal each agent's embed snippet.
-function WebsiteChatChannel({ assistants }: { assistants: Assistant[] }) {
+function WebsiteChatChannel({ assistants, usage }: { assistants: Assistant[]; usage?: ChannelUsage }) {
   const [open, setOpen] = useState(false);
   const withSlug = assistants.filter((a) => a.slug);
   return (
@@ -600,9 +600,18 @@ function WebsiteChatChannel({ assistants }: { assistants: Assistant[] }) {
             Put your agent on your site as a chat bubble — one line of code.
           </p>
         </div>
-        <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
-          Included
-        </span>
+        {usage?.enabled ? (
+          <ChannelUsageBadge
+            used={usage.used}
+            allowance={usage.allowance}
+            overage={usage.overage}
+            unit="chats"
+          />
+        ) : (
+          <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+            Included
+          </span>
+        )}
         <ChevronDown
           className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
         />
@@ -689,9 +698,11 @@ function buildWhatsAppSetupHref(path: WhatsAppSetupPath, assistant: Assistant | 
 function WhatsAppChannel({
   assistants,
   userEmail,
+  usage,
 }: {
   assistants: Assistant[];
   userEmail?: string;
+  usage?: ChannelUsage;
 }) {
   const [open, setOpen] = useState(true);
   const [setupPath, setSetupPath] = useState<WhatsAppSetupPath>("included");
@@ -719,6 +730,12 @@ function WhatsAppChannel({
             <span className="rounded-full bg-[#fff7df] px-2.5 py-0.5 text-[11px] font-black text-[#9a6a00]">
               Setup required
             </span>
+            {usage?.enabled && usage.allowance > 0 ? (
+              <span className="text-[11px] font-semibold text-[#66716e]">
+                {usage.used.toLocaleString()}/{usage.allowance.toLocaleString()} messages
+                {usage.overage > 0 ? ` · ${usage.overage.toLocaleString()} over` : ""}
+              </span>
+            ) : null}
           </div>
           <p className="text-sm text-[#66716e]">
             Add WhatsApp to the same AI agent that handles calls, email and live chat.
@@ -889,12 +906,45 @@ function WhatsAppChannel({
   );
 }
 
+// A consistent "used / allowance" badge for the bundled channels, so every plan
+// reads as fully inclusive with a clear monthly limit. Shows an "over allowance"
+// note when usage has run past the included amount.
+function ChannelUsageBadge({
+  used,
+  allowance,
+  overage,
+  unit,
+}: {
+  used: number;
+  allowance: number;
+  overage?: number;
+  unit: string;
+}) {
+  return (
+    <div className="flex flex-shrink-0 items-center gap-3">
+      <span className="text-xs font-semibold text-[#66716e]">
+        {used.toLocaleString()}/{allowance.toLocaleString()} {unit}
+        {overage && overage > 0 ? ` · ${overage.toLocaleString()} over` : ""}
+      </span>
+      <span className="rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+        Included
+      </span>
+    </div>
+  );
+}
+
 function ChannelsHub({
   emailChannel,
+  callUsage,
+  whatsappChannel,
+  livechatChannel,
   assistants,
   userEmail,
 }: {
   emailChannel?: EmailChannelUsage;
+  callUsage?: CallUsage;
+  whatsappChannel?: ChannelUsage;
+  livechatChannel?: ChannelUsage;
   assistants: Assistant[];
   userEmail?: string;
 }) {
@@ -918,13 +968,22 @@ function ChannelsHub({
             <p className="font-black text-[#111716]">Phone</p>
             <p className="text-sm text-[#66716e]">Your AI receptionist answers and routes calls.</p>
           </div>
-          <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
-            Included
-          </span>
+          {callUsage ? (
+            <ChannelUsageBadge
+              used={callUsage.used}
+              allowance={callUsage.allowance}
+              overage={callUsage.overage}
+              unit="calls"
+            />
+          ) : (
+            <span className="flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+              Included
+            </span>
+          )}
         </div>
 
         {/* Website chat — included, expandable to per-agent embed codes */}
-        <WebsiteChatChannel assistants={assistants} />
+        <WebsiteChatChannel assistants={assistants} usage={livechatChannel} />
 
         {/* Email — included in every plan */}
         <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
@@ -938,15 +997,12 @@ function ChannelsHub({
             </p>
           </div>
           {emailChannel?.enabled ? (
-            <div className="flex flex-shrink-0 items-center gap-3">
-              <span className="text-xs font-semibold text-[#66716e]">
-                {emailChannel.used}/{emailChannel.allowance} replies used
-                {emailChannel.overage > 0 ? ` · ${emailChannel.overage} over allowance` : ""}
-              </span>
-              <span className="rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
-                Included
-              </span>
-            </div>
+            <ChannelUsageBadge
+              used={emailChannel.used}
+              allowance={emailChannel.allowance}
+              overage={emailChannel.overage}
+              unit="replies"
+            />
           ) : (
             <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
               Start a plan to use
@@ -955,7 +1011,7 @@ function ChannelsHub({
         </div>
 
         {/* WhatsApp — included in every plan; number connected during setup */}
-        <WhatsAppChannel assistants={assistants} userEmail={userEmail} />
+        <WhatsAppChannel assistants={assistants} userEmail={userEmail} usage={whatsappChannel} />
 
         {/* SMS — coming soon */}
         <div className="flex items-center gap-4 rounded-[14px] border border-dashed border-black/10 bg-[#fafbfb] px-5 py-4">
@@ -1133,6 +1189,9 @@ export function CustomerAgentWorkspace({
   trial,
   planName,
   emailChannel,
+  callUsage,
+  whatsappChannel,
+  livechatChannel,
   impersonating,
   initialInsights,
   analysisEnabled = false,
@@ -1146,6 +1205,9 @@ export function CustomerAgentWorkspace({
   trial?: { used: number; cap: number; blocked: boolean }; // free-trial call usage
   planName?: string; // subscription plan label (Core / Growth / Pro)
   emailChannel?: EmailChannelUsage;
+  callUsage?: CallUsage; // bundled AI-call allowance + usage
+  whatsappChannel?: ChannelUsage; // bundled WhatsApp allowance + usage
+  livechatChannel?: ChannelUsage; // bundled live-chat allowance + usage
   impersonating?: { email: string }; // admin viewing as this customer
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
@@ -1785,7 +1847,14 @@ export function CustomerAgentWorkspace({
             )}
 
             {view === "channels" && (
-              <ChannelsHub emailChannel={emailChannel} assistants={assistants} userEmail={userEmail} />
+              <ChannelsHub
+                emailChannel={emailChannel}
+                callUsage={callUsage}
+                whatsappChannel={whatsappChannel}
+                livechatChannel={livechatChannel}
+                assistants={assistants}
+                userEmail={userEmail}
+              />
             )}
           </div>
         </main>
