@@ -581,6 +581,93 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
   );
 }
 
+// "Email" channel — expandable to reveal each agent's forwarding address.
+function EmailChannel({
+  assistants,
+  usage,
+}: {
+  assistants: Assistant[];
+  usage?: EmailChannelUsage;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-[14px] border border-black/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-4 px-5 py-4 text-left"
+      >
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eef2fb] text-[#3b5bb5]">
+          <Mail className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-[#111716]">Email</p>
+          <p className="text-sm text-[#66716e]">
+            Forward your inbox and the same agent replies to emails and logs every contact.
+          </p>
+        </div>
+        {usage?.enabled ? (
+          <ChannelUsageBadge
+            used={usage.used}
+            allowance={usage.allowance}
+            overage={usage.overage}
+            unit="replies"
+          />
+        ) : (
+          <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
+            Start a plan to use
+          </span>
+        )}
+        <ChevronDown
+          className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? (
+        <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
+          <p className="mb-1 text-xs text-[#66716e]">
+            Set up a forwarding rule in your email provider (Gmail, Outlook, etc.) to the address
+            below. The agent will reply using the same knowledge as your phone line.
+          </p>
+          {assistants.length ? (
+            assistants.map((a) => <AgentEmailRow key={a.id} assistant={a} />)
+          ) : (
+            <p className="text-sm text-[#66716e]">Create an agent to get its email forwarding address.</p>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AgentEmailRow({ assistant }: { assistant: Assistant }) {
+  const [copied, setCopied] = useState(false);
+  const address = assistant.emailAddress ?? "";
+  function copy() {
+    navigator.clipboard?.writeText(address).then(
+      () => { setCopied(true); setTimeout(() => setCopied(false), 1500); },
+      () => {},
+    );
+  }
+  return (
+    <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
+      <p className="mb-2 truncate text-sm font-bold text-[#111716]">{assistant.name}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="flex-1 truncate rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#111716]">
+          {address}
+        </code>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // "Website chat" channel — expandable to reveal each agent's embed snippet.
 function WebsiteChatChannel({ assistants, usage }: { assistants: Assistant[]; usage?: ChannelUsage }) {
   const [open, setOpen] = useState(false);
@@ -987,30 +1074,8 @@ function ChannelsHub({
         {/* Website chat — included, expandable to per-agent embed codes */}
         <WebsiteChatChannel assistants={assistants} usage={livechatChannel} />
 
-        {/* Email — included in every plan */}
-        <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
-            <Mail className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-black text-[#111716]">Email</p>
-            <p className="text-sm text-[#66716e]">
-              Forward your inbox and the same agent replies to emails and logs every contact.
-            </p>
-          </div>
-          {emailChannel?.enabled ? (
-            <ChannelUsageBadge
-              used={emailChannel.used}
-              allowance={emailChannel.allowance}
-              overage={emailChannel.overage}
-              unit="replies"
-            />
-          ) : (
-            <span className="flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
-              Start a plan to use
-            </span>
-          )}
-        </div>
+        {/* Email — included in every plan; expandable to per-agent forwarding addresses */}
+        <EmailChannel assistants={assistants} usage={emailChannel} />
 
         {/* WhatsApp — included in every plan; number connected during setup */}
         <WhatsAppChannel assistants={assistants} userEmail={userEmail} usage={whatsappChannel} />
@@ -2326,15 +2391,6 @@ function AssistantDetail({
         businessName={assistant.businessName}
         timezone={assistant.timezone}
       />
-
-      {emailChannel?.enabled && assistant.emailAddress ? (
-        <EmailChannelCard
-          address={assistant.emailAddress}
-          used={emailChannel.used}
-          allowance={emailChannel.allowance}
-          overage={emailChannel.overage}
-        />
-      ) : null}
 
       <div className="mb-8 flex overflow-x-auto border-b border-black/10">
         {(["behaviour", "knowledge", "routing", "outbound", "technical"] as DetailTab[]).map((item) => (
