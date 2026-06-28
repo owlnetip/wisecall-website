@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe";
@@ -10,8 +11,7 @@ type Plan = {
   name: string;
   price: string;
   tagline: string;
-  calls: string;
-  overage: string;
+  allowances: string[];
   popular?: boolean;
 };
 
@@ -20,17 +20,25 @@ const PLANS: Plan[] = [
     id: "starter",
     name: "Starter",
     price: "£99",
-    tagline: "Small businesses & sole traders",
-    calls: "100 AI calls / month",
-    overage: "£0.65 per additional call",
+    tagline: "Ideal for small businesses",
+    allowances: [
+      "100 AI calls / month",
+      "100 AI email replies / month",
+      "100 WhatsApp conversations / month",
+      "100 live chat conversations / month",
+    ],
   },
   {
     id: "professional",
     name: "Professional",
     price: "£199",
     tagline: "Growing businesses with regular enquiries",
-    calls: "300 AI calls / month",
-    overage: "£0.55 per additional call",
+    allowances: [
+      "300 AI calls / month",
+      "500 AI email replies / month",
+      "500 WhatsApp conversations / month",
+      "500 live chat conversations / month",
+    ],
     popular: true,
   },
   {
@@ -38,22 +46,29 @@ const PLANS: Plan[] = [
     name: "Business",
     price: "£399",
     tagline: "Busy teams & multi-site businesses",
-    calls: "750 AI calls / month",
-    overage: "£0.45 per additional call",
+    allowances: [
+      "750 AI calls / month",
+      "2,000 AI email replies / month",
+      "2,000 WhatsApp conversations / month",
+      "2,000 live chat conversations / month",
+    ],
   },
 ];
 
 // Shared inclusions — identical across plans (mirrors the marketing pricing page).
 const INCLUSIONS = [
-  "AI receptionist, 24/7",
+  "AI Receptionist 24/7",
+  "AI Email Assistant",
+  "AI WhatsApp Assistant",
+  "AI Live Chat",
   "Call summaries & transcripts",
-  "SMS, email & WhatsApp follow-up",
   "Appointment booking",
-  "Call transfers & routing",
-  "Live chat handover",
+  "Smart routing & transfers",
   "CRM integrations",
   "Dashboard & analytics",
-  "Knowledge base setup",
+  "Knowledge Base",
+  "AI Insights",
+  "SMS notifications",
 ];
 
 function Tick() {
@@ -97,27 +112,27 @@ export default async function BillingPage() {
     <main className="min-h-screen w-full px-4 py-6 text-white sm:py-10" style={{ background: "#172929" }}>
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
-          <a
+          <Link
             href="/"
             className="text-sm font-semibold transition hover:text-[#7de8eb]"
             style={{ color: "rgba(255,255,255,0.55)" }}
           >
             ← Back to sign in
-          </a>
-          <a
+          </Link>
+          <Link
             href="/dashboard"
             className="text-sm font-semibold transition hover:text-[#7de8eb]"
             style={{ color: "rgba(255,255,255,0.55)" }}
           >
             Dashboard
-          </a>
+          </Link>
         </div>
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">
             Choose your <span style={{ color: "#7de8eb" }}>WiseCall</span> plan
           </h1>
           <p className="mt-2 text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
-            Everything included. Just choose how many AI calls you need.
+            Everything included. Choose the amount of AI communication your business needs.
             Prices exclude VAT, billed monthly on a 12-month term.
           </p>
           <p
@@ -161,7 +176,7 @@ export default async function BillingPage() {
                   className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide"
                   style={{ background: "#7de8eb", color: "#0c1717" }}
                 >
-                  Most popular
+                  Best value
                 </span>
               ) : null}
               <h2 className="text-xl font-bold">{plan.name}</h2>
@@ -179,14 +194,13 @@ export default async function BillingPage() {
                 excl. VAT · 12-month term · {TRIAL_DAYS}-day free trial
               </p>
 
-              {/* Headline metrics */}
+              {/* Headline allowances */}
               <div className="mt-4 space-y-2 border-y border-white/10 py-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <span style={{ color: "#7de8eb" }}>📞</span> {plan.calls}
-                </div>
-                <div className="flex items-center gap-2 text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
-                  <span style={{ color: "#7de8eb" }}>+</span> {plan.overage}
-                </div>
+                {plan.allowances.map((allowance) => (
+                  <div key={allowance} className="flex items-center gap-2 text-sm font-semibold text-white">
+                    <span style={{ color: "#7de8eb" }}>✓</span> {allowance}
+                  </div>
+                ))}
               </div>
 
               <div className="mt-5">
@@ -220,10 +234,10 @@ export default async function BillingPage() {
                 <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "#7de8eb" }}>
                   Included in your plan
                 </p>
-                <h2 className="mt-1 text-xl font-bold">Email channel</h2>
+                <h2 className="mt-1 text-xl font-bold">AI Email Assistant</h2>
                 <p className="mt-2 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
-                  Forward support@ to WiseCall and the same AI replies by email, logging every contact
-                  alongside phone calls. Setup takes about 2 minutes (Gmail or Microsoft 365 forwarding).
+                  Forward support@ to WiseCall and the same AI replies by email, logging every
+                  contact alongside voice, WhatsApp and live chat conversations.
                 </p>
                 <p className="mt-4 text-sm font-semibold" style={{ color: "#7de8eb" }}>
                   {emailChannel.used}/{emailChannel.allowance} AI email replies used this period
@@ -231,17 +245,38 @@ export default async function BillingPage() {
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <a
+                <Link
                   href="/dashboard"
                   className="inline-block rounded-xl px-5 py-2.5 text-sm font-bold"
                   style={{ background: "rgba(125,232,235,0.15)", color: "#7de8eb" }}
                 >
                   Set up forwarding →
-                </a>
+                </Link>
               </div>
             </div>
           </div>
         ) : null}
+
+        <div
+          className="mt-10 rounded-2xl p-6"
+          style={{ background: "#1f3535", border: "1.5px solid rgba(255,255,255,0.08)" }}
+        >
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "#7de8eb" }}>
+            Need more usage?
+          </p>
+          <div className="mt-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-bold">Extra AI Communication Pack</h2>
+              <p className="mt-1 text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
+                £39 adds +100 AI calls, +100 email replies, +100 WhatsApp conversations and
+                +100 live chat conversations for occasional busy months.
+              </p>
+            </div>
+            <span className="text-2xl font-bold" style={{ color: "#7de8eb" }}>
+              £39
+            </span>
+          </div>
+        </div>
       </div>
     </main>
   );

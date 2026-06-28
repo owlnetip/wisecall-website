@@ -8,6 +8,7 @@ import {
   VAT_RATE,
   planCallsIncluded,
   planEmailIncluded,
+  planLivechatIncluded,
   planWhatsappIncluded,
   planOverageRateGbp,
 } from "@/lib/stripe";
@@ -142,14 +143,14 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
       // Bundled channel allowances (single-platform model).
       calls_monthly_allowance: planCallsIncluded(plan) || undefined,
       calls_period_end: newPeriodEnd,
-      // AI email is now bundled into every plan (£79 add-on retired). Enable it for
-      // any active/trialing plan so the email-inbound gate passes, and set the
-      // per-plan email allowance.
+      // AI email is bundled into every plan. Enable it for any active/trialing
+      // plan so the email-inbound gate passes, and set the per-plan allowance.
       email_channel_enabled: planActive ? true : false,
       email_channel_status: planActive ? "active" : sub.status,
       email_monthly_allowance: planEmailIncluded(plan) || undefined,
       whatsapp_monthly_allowance: planWhatsappIncluded(plan) || undefined,
       whatsapp_period_end: newPeriodEnd,
+      livechat_monthly_allowance: planLivechatIncluded(plan) || undefined,
       ...(periodChanged
         ? {
             calls_used_period: 0,
@@ -158,6 +159,8 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
             email_overage_period: 0,
             whatsapp_used_period: 0,
             whatsapp_overage_period: 0,
+            livechat_used_period: 0,
+            livechat_overage_period: 0,
           }
         : {}),
       ...(notificationPhone ? { notification_phone: notificationPhone } : {}),
@@ -231,7 +234,8 @@ async function handleDeletedSubscription(sub: Stripe.Subscription) {
   await reclaimOwnerNumbers(userId, svc);
 }
 
-// When switching Core/Growth/Pro, cancel other plan subs — keep the email channel add-on.
+// When switching plans, cancel other plan subscriptions while preserving any
+// historical legacy email subscription records.
 async function cancelOtherPlanSubscriptions(
   stripe: Stripe,
   customerId: string | null | undefined,
@@ -287,7 +291,7 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice) {
   const subId = typeof subRef === "string" ? subRef : subRef?.id;
   if (!subId) return;
 
-  // Skip email channel add-on invoices — only main plan subs have call overage
+  // Skip historical legacy email invoices; only main plan subs have usage billing.
   let sub: Stripe.Subscription;
   try {
     sub = await stripe.subscriptions.retrieve(subId);

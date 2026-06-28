@@ -1,4 +1,4 @@
--- Email channel add-on billing (Option A: £79/mo, 100 replies included, £0.75 overage)
+-- Legacy email channel billing columns, retained for bundled email usage tracking.
 -- Tracked on wisecall_billing; enforced in wisecall-email-inbound edge function.
 
 alter table public.wisecall_billing

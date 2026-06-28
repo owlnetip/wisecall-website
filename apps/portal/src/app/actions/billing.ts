@@ -89,9 +89,8 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
   return { ok: true, url: session.url };
 }
 
-// NOTE: the separate £79 Email Channel checkout was retired 2026-06-27 — AI email
-// is now bundled into every plan (see lib/stripe.ts PLAN_EMAIL_INCLUDED). No
-// standalone email purchase flow remains.
+// AI email is bundled into every plan (see lib/stripe.ts PLAN_EMAIL_INCLUDED).
+// No standalone email purchase flow remains.
 
 // Opens the Stripe Customer Portal so a customer can cancel or change their
 // subscription (e.g. before the trial converts). Requires the Customer Portal to
