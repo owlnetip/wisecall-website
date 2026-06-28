@@ -275,6 +275,32 @@ type CallRow = {
   metadata: Record<string, unknown> | null;
 };
 
+const OUTCOME_LABELS: Record<string, string> = {
+  // Live chat
+  live_chat: "Live chat",
+  live_chat_in_progress: "Chat in progress",
+  live_chat_ended: "Chat ended",
+  // Phone / voice
+  caller_stop: "Caller ended",
+  transfer: "Transferred",
+  transferred: "Transferred",
+  voicemail: "Voicemail",
+  no_answer: "No answer",
+  busy: "Busy",
+  failed: "Failed",
+  completed: "Completed",
+  // WhatsApp / messaging
+  "whatsapp replied": "WhatsApp replied",
+  // Email
+  "email replied": "Email replied",
+};
+
+export function friendlyOutcome(raw: string | null | undefined): string {
+  if (!raw) return "—";
+  const key = raw.trim().toLowerCase();
+  return OUTCOME_LABELS[key] ?? raw;
+}
+
 function channelFromRow(row: CallRow): CallChannel {
   const meta = (row.metadata as Record<string, unknown> | null) ?? {};
   const raw = String(meta.channel ?? "").toLowerCase();

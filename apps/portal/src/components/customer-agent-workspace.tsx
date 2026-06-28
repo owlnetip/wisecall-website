@@ -67,6 +67,7 @@ import {
   type KnowledgeSearchChunk,
 } from "@/app/actions/knowledge-base";
 import type { CallLog, CallChannel } from "@/lib/agents";
+import { friendlyOutcome } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
 import type {
   AttentionItem,
@@ -3884,7 +3885,7 @@ function CallHistory({
                   </MobileField>
                   <div className="grid grid-cols-2 gap-3">
                     <MobileField label="Outcome">
-                      <span className="text-sm text-[#66716e]">{log.outcome || "—"}</span>
+                      <span className="text-sm text-[#66716e]">{friendlyOutcome(log.outcome)}</span>
                     </MobileField>
                     <MobileField label="Length">
                       <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
@@ -3909,7 +3910,7 @@ function CallHistory({
                     </span>
                   </span>
                   <span className="truncate text-sm text-[#66716e]">{log.summary || "—"}</span>
-                  <span className="text-sm text-[#66716e]">{log.outcome || "—"}</span>
+                  <span className="text-sm text-[#66716e]">{friendlyOutcome(log.outcome)}</span>
                   <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
                 </button>
               ))}
@@ -3949,7 +3950,7 @@ function CallDetailModal({ log, onClose }: { log: CallLog; onClose: () => void }
               <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[#7a8582]">
                 Outcome
               </p>
-              <p className="text-sm">{log.outcome}</p>
+              <p className="text-sm">{friendlyOutcome(log.outcome)}</p>
             </div>
           )}
           {log.summary && (
