@@ -244,6 +244,10 @@ export async function getAgentsForUser(userId: string): Promise<Assistant[] | nu
   return (data as ProfileRow[]).map(mapProfile);
 }
 
+// Which inbound channel the interaction arrived on. Phone is the default for
+// historical/voice logs that predate per-channel tagging.
+export type CallChannel = "phone" | "whatsapp" | "email" | "chat";
+
 export type CallLog = {
   id: string;
   profileId: string;
@@ -254,6 +258,7 @@ export type CallLog = {
   startedAt: string; // ISO
   durationLabel: string;
   transcript: string;
+  channel: CallChannel;
 };
 
 type CallRow = {
@@ -267,7 +272,14 @@ type CallRow = {
   started_at: string | null;
   finished_at: string | null;
   created_at: string | null;
+  metadata: Record<string, unknown> | null;
 };
+
+function channelFromRow(row: CallRow): CallChannel {
+  const raw = String((row.metadata as Record<string, unknown> | null)?.channel ?? "").toLowerCase();
+  if (raw === "whatsapp" || raw === "email" || raw === "chat") return raw;
+  return "phone";
+}
 
 function duration(started: string | null, finished: string | null): string {
   if (!started || !finished) return "—";
@@ -294,7 +306,7 @@ export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
   const { data, error } = await supabase
     .from("wisecall_call_logs")
     .select(
-      "id, profile_id, profile_name, caller_id, summary, outcome, transcript, started_at, finished_at, created_at",
+      "id, profile_id, profile_name, caller_id, summary, outcome, transcript, started_at, finished_at, created_at, metadata",
     )
     .in("profile_id", ids)
     .order("created_at", { ascending: false })
@@ -319,6 +331,7 @@ function mapCallRow(row: CallRow): CallLog {
     startedAt: row.started_at || row.created_at || "",
     durationLabel: duration(row.started_at, row.finished_at),
     transcript: row.transcript || "",
+    channel: channelFromRow(row),
   };
 }
 

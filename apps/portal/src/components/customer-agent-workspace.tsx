@@ -23,6 +23,7 @@ import {
   LogOut,
   Mail,
   Menu,
+  MessageCircle,
   MessageSquareText,
   MoreHorizontal,
   Phone,
@@ -65,7 +66,7 @@ import {
   type KnowledgeBaseSourceType,
   type KnowledgeSearchChunk,
 } from "@/app/actions/knowledge-base";
-import type { CallLog } from "@/lib/agents";
+import type { CallLog, CallChannel } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
 import type {
   AttentionItem,
@@ -3816,6 +3817,28 @@ function CallRefRow({
   );
 }
 
+// A small channel badge for the history list — at a glance, how the conversation
+// arrived (phone / WhatsApp / email / website chat).
+const channelMeta: Record<CallChannel, { Icon: LucideIcon; label: string; bg: string; fg: string }> = {
+  phone: { Icon: Phone, label: "Phone call", bg: "bg-[#eefbfb]", fg: "text-[#148b8e]" },
+  whatsapp: { Icon: MessageCircle, label: "WhatsApp", bg: "bg-[#eafaf1]", fg: "text-[#14823f]" },
+  email: { Icon: Mail, label: "Email", bg: "bg-[#eef2fb]", fg: "text-[#3b5bb5]" },
+  chat: { Icon: MessageSquareText, label: "Website chat", bg: "bg-[#eefbfb]", fg: "text-[#148b8e]" },
+};
+
+function ChannelIcon({ channel }: { channel: CallChannel }) {
+  const { Icon, label, bg, fg } = channelMeta[channel] ?? channelMeta.phone;
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${bg} ${fg}`}
+    >
+      <Icon className="h-4 w-4" />
+    </span>
+  );
+}
+
 function CallHistory({
   callLogs,
   onOpen,
@@ -3849,9 +3872,12 @@ function CallHistory({
                   onClick={() => onOpen(log)}
                   className="flex w-full flex-col gap-3 px-4 py-4 text-left transition hover:bg-[#f7f8f7]"
                 >
-                  <div>
-                    <span className="block font-black">{log.caller}</span>
-                    <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
+                  <div className="flex items-center gap-3">
+                    <ChannelIcon channel={log.channel} />
+                    <div>
+                      <span className="block font-black">{log.caller}</span>
+                      <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
+                    </div>
                   </div>
                   <MobileField label="Summary">
                     <span className="text-sm text-[#66716e]">{log.summary || "—"}</span>
@@ -3875,9 +3901,12 @@ function CallHistory({
                   onClick={() => onOpen(log)}
                   className="grid w-full grid-cols-[1fr_200px_130px_80px] gap-4 px-5 py-4 text-left transition hover:bg-[#f7f8f7]"
                 >
-                  <span>
-                    <span className="block font-black">{log.caller}</span>
-                    <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
+                  <span className="flex items-center gap-3">
+                    <ChannelIcon channel={log.channel} />
+                    <span>
+                      <span className="block font-black">{log.caller}</span>
+                      <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
+                    </span>
                   </span>
                   <span className="truncate text-sm text-[#66716e]">{log.summary || "—"}</span>
                   <span className="text-sm text-[#66716e]">{log.outcome || "—"}</span>
@@ -3951,6 +3980,21 @@ type TranscriptTurn = { speaker: "agent" | "caller"; text: string };
 // turns so we can colour each speaker. Lines without a known prefix are folded
 // into the previous turn.
 function parseTranscript(raw: string): TranscriptTurn[] {
+  // Email and WhatsApp logs use "--- Their message ---" / "--- WiseCall reply ---"
+  // section markers (with a FROM:/SUBJECT: header) rather than per-line speaker
+  // prefixes. Normalise that into caller/agent turns so they render as a chat,
+  // the same as a phone call.
+  if (/---\s*their message\s*---/i.test(raw) && /---\s*wisecall reply\s*---/i.test(raw)) {
+    const their = raw
+      .match(/---\s*their message\s*---\s*([\s\S]*?)\s*---\s*wisecall reply\s*---/i)?.[1]
+      ?.trim();
+    const reply = raw.match(/---\s*wisecall reply\s*---\s*([\s\S]*)$/i)?.[1]?.trim();
+    const out: TranscriptTurn[] = [];
+    if (their) out.push({ speaker: "caller", text: their });
+    if (reply) out.push({ speaker: "agent", text: reply });
+    if (out.length) return out;
+  }
+
   const turns: TranscriptTurn[] = [];
   for (const line of raw.split(/\r?\n/)) {
     const text = line.trim();
