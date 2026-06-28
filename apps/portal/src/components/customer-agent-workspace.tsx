@@ -810,24 +810,21 @@ function WhatsAppChannel({
           <MessageSquareText className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-black text-[#111716]">WhatsApp</p>
-            <span className="rounded-full bg-[#eafaf1] px-2.5 py-0.5 text-[11px] font-black text-[#14823f]">
-              Included
-            </span>
-            <span className="rounded-full bg-[#fff7df] px-2.5 py-0.5 text-[11px] font-black text-[#9a6a00]">
-              Setup required
-            </span>
-            {usage?.enabled && usage.allowance > 0 ? (
-              <span className="text-[11px] font-semibold text-[#66716e]">
-                {usage.used.toLocaleString()}/{usage.allowance.toLocaleString()} messages
-                {usage.overage > 0 ? ` · ${usage.overage.toLocaleString()} over` : ""}
-              </span>
-            ) : null}
-          </div>
+          <p className="font-black text-[#111716]">WhatsApp</p>
           <p className="text-sm text-[#66716e]">
             Add WhatsApp to the same AI agent that handles calls, email and live chat.
           </p>
+        </div>
+        <div className="flex flex-shrink-0 items-center gap-3">
+          {usage?.enabled && usage.allowance > 0 ? (
+            <span className="text-xs font-semibold text-[#66716e]">
+              {usage.used.toLocaleString()}/{usage.allowance.toLocaleString()} messages
+              {usage.overage > 0 ? ` · ${usage.overage.toLocaleString()} over` : ""}
+            </span>
+          ) : null}
+          <span className="rounded-full bg-[#fff7df] px-3 py-1 text-xs font-bold text-[#9a6a00]">
+            Setup required
+          </span>
         </div>
         <ChevronDown
           className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
