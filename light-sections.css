@@ -130,6 +130,18 @@ section.light .demo-dial {
   border: 1px solid rgba(125, 232, 235, 0.35) !important;
   box-shadow: 0 12px 30px rgba(12, 53, 54, 0.25) !important;
 }
-section.light .demo-dial input { color: #ffffff !important; }
-section.light .demo-dial input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
+section.light .demo-dial .demo-phone-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+}
+section.light .demo-dial .demo-phone-input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
+section.light .demo-dial .demo-phone-input:-webkit-autofill,
+section.light .demo-dial .demo-phone-input:-webkit-autofill:hover,
+section.light .demo-dial .demo-phone-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  box-shadow: 0 0 0 1000px #123b3c inset !important;
+}
 section.light .demo-dial .text-\[\#7de8eb\] { color: #7de8eb !important; } /* phone icon stays bright */
