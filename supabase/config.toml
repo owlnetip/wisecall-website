@@ -29,3 +29,8 @@ verify_jwt = false
 # JWT in the request, so JWT verification must stay off.
 [functions.wisecall-sms-inbound]
 verify_jwt = false
+
+# Internal SMS number provisioning — called from the Next.js server action with
+# the service-role key. The function body rejects non-service-role callers.
+[functions.wisecall-provision-sms]
+verify_jwt = false
