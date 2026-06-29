@@ -24,6 +24,7 @@ import {
   Mail,
   Menu,
   MessageCircle,
+  MessageSquare,
   MessageSquareText,
   MoreHorizontal,
   Phone,
@@ -56,6 +57,8 @@ import {
   testVoice,
   updateAgent,
 } from "@/app/actions/agents";
+import { provisionSmsNumber } from "@/app/actions/sms";
+import type { AgentSmsNumber } from "@/lib/agents";
 import {
   deleteKnowledgeBaseSource,
   ingestKnowledgeBaseSource,
@@ -938,11 +941,158 @@ function ChannelUsageBadge({
   );
 }
 
+function AgentSmsRow({
+  assistant,
+  smsNumber,
+  isProvisioning,
+  onProvision,
+}: {
+  assistant: Assistant;
+  smsNumber?: string;
+  isProvisioning: boolean;
+  onProvision: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    if (!smsNumber) return;
+    navigator.clipboard?.writeText(smsNumber).then(
+      () => { setCopied(true); setTimeout(() => setCopied(false), 1500); },
+      () => {},
+    );
+  }
+  return (
+    <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
+      <p className="mb-2 truncate text-sm font-bold text-[#111716]">{assistant.name}</p>
+      {smsNumber ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="flex-1 truncate rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#111716]">
+            {smsNumber}
+          </code>
+          <button
+            type="button"
+            onClick={copy}
+            className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={isProvisioning}
+          onClick={onProvision}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#7c3aed] px-4 py-2 text-sm font-black text-white transition hover:bg-[#6d28d9] disabled:opacity-60"
+        >
+          {isProvisioning ? "Getting number…" : "Get SMS number"}
+          {!isProvisioning && <ChevronRight className="h-4 w-4" />}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SMSChannel({
+  assistants,
+  usage,
+  initialSmsNumbers,
+}: {
+  assistants: Assistant[];
+  usage?: ChannelUsage;
+  initialSmsNumbers: AgentSmsNumber[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [smsNumbers, setSmsNumbers] = useState(initialSmsNumbers);
+  const [provisioningId, setProvisioningId] = useState<string | null>(null);
+  const [provisionError, setProvisionError] = useState<string | null>(null);
+
+  async function handleProvision(profileId: string) {
+    setProvisioningId(profileId);
+    setProvisionError(null);
+    const result = await provisionSmsNumber(profileId);
+    if (result.ok) {
+      setSmsNumbers((prev) => [
+        ...prev.filter((n) => n.profileId !== profileId),
+        { profileId, smsNumber: result.smsNumber },
+      ]);
+    } else {
+      setProvisionError(result.error);
+    }
+    setProvisioningId(null);
+  }
+
+  return (
+    <div className="rounded-[14px] border border-black/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-start gap-4 px-5 py-4 text-left"
+      >
+        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#f5f0ff] text-[#7c3aed]">
+          <MessageSquare className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-[#111716]">SMS</p>
+          <p className="text-sm text-[#66716e]">
+            Reply to text messages using the same AI agent that handles calls, email and chat.
+          </p>
+        </div>
+        {usage?.enabled ? (
+          <div className="self-center">
+            <ChannelUsageBadge
+              used={usage.used}
+              allowance={usage.allowance}
+              overage={usage.overage}
+              unit="messages"
+            />
+          </div>
+        ) : (
+          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+            Included
+          </span>
+        )}
+        <ChevronDown
+          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? (
+        <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
+          <p className="mb-1 text-xs text-[#66716e]">
+            Each agent gets its own UK mobile number. Customers text in and the AI replies instantly —
+            every conversation is saved to Contacts alongside calls and emails.
+          </p>
+          {provisionError ? (
+            <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-[#c0392b]">{provisionError}</p>
+          ) : null}
+          {assistants.length ? (
+            assistants.map((a) => {
+              const assigned = smsNumbers.find((n) => n.profileId === a.id);
+              return (
+                <AgentSmsRow
+                  key={a.id}
+                  assistant={a}
+                  smsNumber={assigned?.smsNumber}
+                  isProvisioning={provisioningId === a.id}
+                  onProvision={() => handleProvision(a.id)}
+                />
+              );
+            })
+          ) : (
+            <p className="text-sm text-[#66716e]">Create an agent to get an SMS number.</p>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ChannelsHub({
   emailChannel,
   callUsage,
   whatsappChannel,
   livechatChannel,
+  smsChannel,
+  smsNumbers,
   assistants,
   userEmail,
 }: {
@@ -950,6 +1100,8 @@ function ChannelsHub({
   callUsage?: CallUsage;
   whatsappChannel?: ChannelUsage;
   livechatChannel?: ChannelUsage;
+  smsChannel?: ChannelUsage;
+  smsNumbers: AgentSmsNumber[];
   assistants: Assistant[];
   userEmail?: string;
 }) {
@@ -997,6 +1149,9 @@ function ChannelsHub({
 
         {/* WhatsApp — included in every plan; number connected during setup */}
         <WhatsAppChannel assistants={assistants} userEmail={userEmail} usage={whatsappChannel} />
+
+        {/* SMS — included in every plan; UK number auto-provisioned via Vonage */}
+        <SMSChannel assistants={assistants} usage={smsChannel} initialSmsNumbers={smsNumbers} />
 
       </div>
     </div>
@@ -1164,6 +1319,8 @@ export function CustomerAgentWorkspace({
   callUsage,
   whatsappChannel,
   livechatChannel,
+  smsChannel,
+  smsNumbers,
   impersonating,
   initialInsights,
   analysisEnabled = false,
@@ -1180,6 +1337,8 @@ export function CustomerAgentWorkspace({
   callUsage?: CallUsage; // bundled AI-call allowance + usage
   whatsappChannel?: ChannelUsage; // bundled WhatsApp allowance + usage
   livechatChannel?: ChannelUsage; // bundled live-chat allowance + usage
+  smsChannel?: ChannelUsage; // bundled SMS allowance + usage
+  smsNumbers?: AgentSmsNumber[]; // already-provisioned Vonage SMS numbers
   impersonating?: { email: string }; // admin viewing as this customer
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
@@ -1825,6 +1984,8 @@ export function CustomerAgentWorkspace({
                 callUsage={callUsage}
                 whatsappChannel={whatsappChannel}
                 livechatChannel={livechatChannel}
+                smsChannel={smsChannel}
+                smsNumbers={smsNumbers ?? []}
                 assistants={assistants}
                 userEmail={userEmail}
               />
@@ -3783,6 +3944,7 @@ function CallRefRow({
 const channelMeta: Record<CallChannel, { Icon: LucideIcon; label: string; bg: string; fg: string }> = {
   phone: { Icon: Phone, label: "Phone call", bg: "bg-[#eefbfb]", fg: "text-[#148b8e]" },
   whatsapp: { Icon: MessageCircle, label: "WhatsApp", bg: "bg-[#eafaf1]", fg: "text-[#14823f]" },
+  sms: { Icon: MessageSquare, label: "SMS", bg: "bg-[#f5f0ff]", fg: "text-[#7c3aed]" },
   email: { Icon: Mail, label: "Email", bg: "bg-[#eef2fb]", fg: "text-[#3b5bb5]" },
   chat: { Icon: MessageSquareText, label: "Website chat", bg: "bg-[#eefbfb]", fg: "text-[#148b8e]" },
 };

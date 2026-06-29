@@ -246,7 +246,7 @@ export async function getAgentsForUser(userId: string): Promise<Assistant[] | nu
 
 // Which inbound channel the interaction arrived on. Phone is the default for
 // historical/voice logs that predate per-channel tagging.
-export type CallChannel = "phone" | "whatsapp" | "email" | "chat";
+export type CallChannel = "phone" | "whatsapp" | "sms" | "email" | "chat";
 
 export type CallLog = {
   id: string;
@@ -291,6 +291,8 @@ const OUTCOME_LABELS: Record<string, string> = {
   completed: "Completed",
   // WhatsApp / messaging
   "whatsapp replied": "WhatsApp replied",
+  // SMS
+  "sms replied": "SMS replied",
   // Email
   "email replied": "Email replied",
 };
@@ -304,7 +306,7 @@ export function friendlyOutcome(raw: string | null | undefined): string {
 function channelFromRow(row: CallRow): CallChannel {
   const meta = (row.metadata as Record<string, unknown> | null) ?? {};
   const raw = String(meta.channel ?? "").toLowerCase();
-  if (raw === "whatsapp" || raw === "email" || raw === "chat") return raw;
+  if (raw === "whatsapp" || raw === "sms" || raw === "email" || raw === "chat") return raw;
   // Website live chat predates per-channel tagging — it tags itself via the
   // edge-function source and a "live_chat" outcome instead of metadata.channel.
   if (String(meta.source ?? "") === "wisecall-live-chat") return "chat";
@@ -411,6 +413,37 @@ export async function getAllAgents(): Promise<Assistant[] | null> {
       ownerEmail: ownerId ? emailById[ownerId] ?? "Unassigned" : "Unassigned",
     };
   });
+}
+
+export type AgentSmsNumber = { profileId: string; smsNumber: string };
+
+// Returns the active SMS numbers assigned to the user's agents.
+export async function getSmsNumbersForUser(userId: string): Promise<AgentSmsNumber[]> {
+  const supabase = getServiceSupabase();
+  if (!supabase) return [];
+
+  const { data: profiles } = await supabase
+    .from("wisecall_profiles")
+    .select("id")
+    .eq("metadata->>owner_id", userId);
+  const ids = (profiles ?? []).map((p) => p.id as string);
+  if (!ids.length) return [];
+
+  const { data, error } = await supabase
+    .from("wisecall_sms_numbers")
+    .select("profile_id, sms_number")
+    .in("profile_id", ids)
+    .eq("status", "active");
+
+  if (error) {
+    console.error("getSmsNumbersForUser failed:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => ({
+    profileId: row.profile_id as string,
+    smsNumber: row.sms_number as string,
+  }));
 }
 
 // Admin only: recent call logs across all agents.

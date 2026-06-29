@@ -24,3 +24,8 @@ verify_jwt = false
 # X-Twilio-Signature inside the function, so JWT verification must stay off.
 [functions.wisecall-whatsapp-inbound]
 verify_jwt = false
+
+# Vonage SMS inbound webhook — Vonage posts form-encoded messages; no Supabase
+# JWT in the request, so JWT verification must stay off.
+[functions.wisecall-sms-inbound]
+verify_jwt = false

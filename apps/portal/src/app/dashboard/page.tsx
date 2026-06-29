@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
-import { getAgentsForUser, getCallLogsForUser } from "@/lib/agents";
-import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, getCallUsage, getWhatsappUsage, getLivechatUsage, reconcileBillingFromStripe } from "@/lib/billing";
+import { getAgentsForUser, getCallLogsForUser, getSmsNumbersForUser } from "@/lib/agents";
+import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, getCallUsage, getWhatsappUsage, getLivechatUsage, getSmsUsage, reconcileBillingFromStripe } from "@/lib/billing";
 import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
 import {
@@ -65,6 +65,7 @@ export default async function DashboardPage() {
   const callUsage = getCallUsage(billing);
   const whatsappChannel = getWhatsappUsage(billing);
   const livechatChannel = getLivechatUsage(billing);
+  const smsChannel = getSmsUsage(billing);
 
   // Load every panel independently and degrade gracefully: a transient failure
   // in one fetch (cold start, a Supabase/insights hiccup) must NOT 500 the whole
@@ -78,13 +79,14 @@ export default async function DashboardPage() {
     }
   };
 
-  const [agents, callLogs, contacts, trial, insights] = await Promise.all([
+  const [agents, callLogs, contacts, trial, insights, smsNumbers] = await Promise.all([
     safe("agents", getAgentsForUser(effectiveUserId), []),
     safe("callLogs", getCallLogsForUser(effectiveUserId), []),
     safe("contacts", getContactsForUser(effectiveUserId), []),
     safe("trial", getTrialUsage(effectiveUserId, billing), null),
     // Default range matches the AI Insights view's default ("Last 7 days").
     safe("insights", getInsightsForUser(effectiveUserId, "7d"), emptyInsights("7d", false)),
+    safe("smsNumbers", getSmsNumbersForUser(effectiveUserId), []),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.
@@ -119,6 +121,8 @@ export default async function DashboardPage() {
       callUsage={callUsage}
       whatsappChannel={whatsappChannel}
       livechatChannel={livechatChannel}
+      smsChannel={smsChannel}
+      smsNumbers={smsNumbers}
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}

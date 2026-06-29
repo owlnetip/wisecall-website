@@ -10,6 +10,7 @@ import {
   planEmailIncluded,
   planWhatsappIncluded,
   planLivechatIncluded,
+  planSmsIncluded,
   planOverageRateGbp,
 } from "@/lib/stripe";
 
@@ -38,6 +39,9 @@ export type Billing = {
   livechatMonthlyAllowance: number;
   livechatUsedPeriod: number;
   livechatOveragePeriod: number;
+  smsMonthlyAllowance: number;
+  smsUsedPeriod: number;
+  smsOveragePeriod: number;
 };
 
 type BillingRow = {
@@ -65,10 +69,13 @@ type BillingRow = {
   livechat_monthly_allowance: number | null;
   livechat_used_period: number | null;
   livechat_overage_period: number | null;
+  sms_monthly_allowance: number | null;
+  sms_used_period: number | null;
+  sms_overage_period: number | null;
 };
 
 const BILLING_SELECT =
-  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end, whatsapp_monthly_allowance, whatsapp_used_period, whatsapp_overage_period, livechat_monthly_allowance, livechat_used_period, livechat_overage_period";
+  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end, whatsapp_monthly_allowance, whatsapp_used_period, whatsapp_overage_period, livechat_monthly_allowance, livechat_used_period, livechat_overage_period, sms_monthly_allowance, sms_used_period, sms_overage_period";
 
 function mapBilling(row: BillingRow): Billing {
   const plan = row.plan ?? null;
@@ -97,6 +104,9 @@ function mapBilling(row: BillingRow): Billing {
     livechatMonthlyAllowance: row.livechat_monthly_allowance ?? planLivechatIncluded(plan),
     livechatUsedPeriod: row.livechat_used_period ?? 0,
     livechatOveragePeriod: row.livechat_overage_period ?? 0,
+    smsMonthlyAllowance: row.sms_monthly_allowance ?? planSmsIncluded(plan),
+    smsUsedPeriod: row.sms_used_period ?? 0,
+    smsOveragePeriod: row.sms_overage_period ?? 0,
   };
 }
 
@@ -292,6 +302,15 @@ export function getLivechatUsage(billing: Billing | null): ChannelUsage {
     used: billing?.livechatUsedPeriod ?? 0,
     allowance: billing?.livechatMonthlyAllowance ?? planLivechatIncluded(billing?.plan),
     overage: billing?.livechatOveragePeriod ?? 0,
+  };
+}
+
+export function getSmsUsage(billing: Billing | null): ChannelUsage {
+  return {
+    enabled: hasActiveAccess(billing),
+    used: billing?.smsUsedPeriod ?? 0,
+    allowance: billing?.smsMonthlyAllowance ?? planSmsIncluded(billing?.plan),
+    overage: billing?.smsOveragePeriod ?? 0,
   };
 }
 

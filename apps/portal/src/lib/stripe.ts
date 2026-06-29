@@ -72,6 +72,12 @@ export const PLAN_LIVECHAT_INCLUDED: Record<PlanId, number> = {
   business: 2000,
 };
 
+export const PLAN_SMS_INCLUDED: Record<PlanId, number> = {
+  starter: 100,
+  professional: 500,
+  business: 2000,
+};
+
 export const PLAN_OVERAGE_RATE_GBP: Record<PlanId, number> = {
   starter: 0.65,
   professional: 0.55,
@@ -92,6 +98,10 @@ export function planWhatsappIncluded(plan: string | null | undefined): number {
 
 export function planLivechatIncluded(plan: string | null | undefined): number {
   return PLAN_LIVECHAT_INCLUDED[plan as PlanId] ?? 0;
+}
+
+export function planSmsIncluded(plan: string | null | undefined): number {
+  return PLAN_SMS_INCLUDED[plan as PlanId] ?? 0;
 }
 
 export function planOverageRateGbp(plan: string | null | undefined): number {
