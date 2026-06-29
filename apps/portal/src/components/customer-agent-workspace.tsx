@@ -4059,43 +4059,163 @@ function CallDetailModal({ log, onClose }: { log: CallLog; onClose: () => void }
 
 type TranscriptTurn = { speaker: "agent" | "caller"; text: string };
 
-// Transcripts are stored line-by-line as "assistant: …" / "user: …". Parse into
-// turns so we can colour each speaker. Lines without a known prefix are folded
-// into the previous turn.
+const CALLER_LABEL =
+  /^(?:customer(?:\s*\([^)]+\))?|user|caller|human|visitor)\s*:\s*(.*)$/is;
+const AGENT_LABEL = /^(?:assistant|agent|ai|bot|wisecall)\s*:\s*(.*)$/is;
+const CHANNEL_CUSTOMER = /(?:^|\n)(Customer(?:\s*\([^)]+\))?\s*:\s*)/gi;
+
+function speakerFromLabel(label: string): TranscriptTurn["speaker"] {
+  const role = label.replace(/\s*\([^)]*\)/, "").trim().toLowerCase();
+  return ["user", "caller", "customer", "human", "visitor"].includes(role) ? "caller" : "agent";
+}
+
+function parseSpeakerSegment(segment: string): TranscriptTurn | null {
+  const trimmed = segment.trim();
+  if (!trimmed) return null;
+  const labelMatch = trimmed.match(
+    /^(Customer(?:\s*\([^)]+\))?|User|Caller|Visitor|Human|Assistant|Agent|AI|Bot|WiseCall)\s*:\s*([\s\S]*)$/i,
+  );
+  if (labelMatch) {
+    return {
+      speaker: speakerFromLabel(labelMatch[1]),
+      text: labelMatch[2].trim(),
+    };
+  }
+  const caller = trimmed.match(CALLER_LABEL);
+  if (caller) return { speaker: "caller", text: caller[1].trim() };
+  const agent = trimmed.match(AGENT_LABEL);
+  if (agent) return { speaker: "agent", text: agent[1].trim() };
+  return { speaker: "agent", text: trimmed };
+}
+
+function pushTurn(turns: TranscriptTurn[], speaker: TranscriptTurn["speaker"], text: string) {
+  const cleaned = text.trim();
+  if (!cleaned) return;
+  const last = turns[turns.length - 1];
+  if (last && last.speaker === speaker) {
+    last.text = `${last.text}\n\n${cleaned}`;
+    return;
+  }
+  turns.push({ speaker, text: cleaned });
+}
+
+// Multi-turn SMS / WhatsApp test logs often alternate:
+//   Customer (SMS): …
+//   [agent reply paragraphs]
+//   Customer (SMS): …
+function parseChannelThread(body: string): TranscriptTurn[] {
+  const turns: TranscriptTurn[] = [];
+  const markers: { index: number; length: number }[] = [];
+  for (const match of body.matchAll(CHANNEL_CUSTOMER)) {
+    if (match.index != null) markers.push({ index: match.index, length: match[0].length });
+  }
+  if (!markers.length) return [];
+
+  let cursor = 0;
+  for (let i = 0; i < markers.length; i += 1) {
+    const marker = markers[i];
+    const agentBefore = body.slice(cursor, marker.index).trim();
+    if (agentBefore) pushTurn(turns, "agent", agentBefore);
+
+    const sliceEnd = i + 1 < markers.length ? markers[i + 1].index : body.length;
+    const block = body.slice(marker.index + marker.length, sliceEnd).trim();
+    if (!block) {
+      cursor = sliceEnd;
+      continue;
+    }
+
+    const newline = block.indexOf("\n");
+    if (newline === -1) {
+      pushTurn(turns, "caller", block);
+    } else {
+      pushTurn(turns, "caller", block.slice(0, newline).trim());
+      pushTurn(turns, "agent", block.slice(newline + 1).trim());
+    }
+    cursor = sliceEnd;
+  }
+
+  const tail = body.slice(cursor).trim();
+  if (tail) pushTurn(turns, "agent", tail);
+  return turns;
+}
+
+function parseLineTranscript(body: string): TranscriptTurn[] {
+  const turns: TranscriptTurn[] = [];
+  for (const line of body.split(/\n/)) {
+    const lineText = line.trim();
+    if (!lineText) continue;
+    const parsed = parseSpeakerSegment(lineText);
+    if (!parsed) continue;
+    const hasExplicitLabel =
+      CALLER_LABEL.test(lineText) ||
+      AGENT_LABEL.test(lineText) ||
+      /^Customer(?:\s*\([^)]+\))?\s*:/i.test(lineText);
+    const last = turns[turns.length - 1];
+    if (last && !hasExplicitLabel) {
+      last.text += ` ${parsed.text}`;
+    } else {
+      turns.push(parsed);
+    }
+  }
+  return turns;
+}
+
+function parseParagraphTranscript(body: string): TranscriptTurn[] {
+  const turns: TranscriptTurn[] = [];
+  for (const block of body.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean)) {
+    const parsed = parseSpeakerSegment(block);
+    if (!parsed) continue;
+    const hasLabel =
+      /^(Customer(?:\s*\([^)]+\))?|User|Caller|Visitor|Human|Assistant|Agent|AI|Bot|WiseCall)\s*:/i.test(
+        block,
+      );
+    pushTurn(turns, hasLabel ? parsed.speaker : "agent", hasLabel ? parsed.text : block);
+  }
+  return turns;
+}
+
+// Transcripts are stored line-by-line as "assistant: …" / "user: …", as channel
+// sections ("--- Their message ---"), or as labelled turns like "Customer (SMS):".
+// Normalise every format into caller/agent chat turns for the detail modal.
 function parseTranscript(raw: string): TranscriptTurn[] {
-  // Email and WhatsApp logs use "--- Their message ---" / "--- WiseCall reply ---"
-  // section markers (with a FROM:/SUBJECT: header) rather than per-line speaker
-  // prefixes. Normalise that into caller/agent turns so they render as a chat,
-  // the same as a phone call.
-  if (/---\s*their message\s*---/i.test(raw) && /---\s*wisecall reply\s*---/i.test(raw)) {
-    const their = raw
+  const text = raw.replace(/\r\n/g, "\n").trim();
+  if (!text) return [];
+
+  // Email / SMS / WhatsApp single-exchange logs.
+  if (/---\s*their message\s*---/i.test(text) && /---\s*wisecall reply\s*---/i.test(text)) {
+    const their = text
       .match(/---\s*their message\s*---\s*([\s\S]*?)\s*---\s*wisecall reply\s*---/i)?.[1]
       ?.trim();
-    const reply = raw.match(/---\s*wisecall reply\s*---\s*([\s\S]*)$/i)?.[1]?.trim();
+    const reply = text.match(/---\s*wisecall reply\s*---\s*([\s\S]*)$/i)?.[1]?.trim();
     const out: TranscriptTurn[] = [];
     if (their) out.push({ speaker: "caller", text: their });
     if (reply) out.push({ speaker: "agent", text: reply });
     if (out.length) return out;
   }
 
-  const turns: TranscriptTurn[] = [];
-  for (const line of raw.split(/\r?\n/)) {
-    const text = line.trim();
-    if (!text) continue;
-    const match = text.match(/^(assistant|agent|ai|bot|wisecall|user|caller|customer|human|visitor)\s*:\s*(.*)$/i);
-    if (match) {
-      const role = match[1].toLowerCase();
-      const speaker = ["user", "caller", "customer", "human", "visitor"].includes(role)
-        ? "caller"
-        : "agent";
-      turns.push({ speaker, text: match[2] });
-    } else if (turns.length > 0) {
-      turns[turns.length - 1].text += ` ${text}`;
-    } else {
-      turns.push({ speaker: "agent", text });
-    }
+  // Drop envelope headers (FROM:/SUBJECT:/TO:) before parsing turns.
+  const body = text.replace(/^(?:FROM|SUBJECT|TO):\s*.+\n?/gim, "").trim();
+
+  if (/Customer\s*(?:\([^)]+\))?\s*:/i.test(body)) {
+    const threaded = parseChannelThread(body);
+    if (threaded.length) return threaded;
   }
-  return turns;
+
+  if (/^(?:user|assistant|caller|agent)\s*:/im.test(body)) {
+    const lined = parseLineTranscript(body);
+    if (lined.length) return lined;
+  }
+
+  if (/^(?:Visitor|WiseCall)\s*:/im.test(body)) {
+    const lined = parseLineTranscript(body);
+    if (lined.length) return lined;
+  }
+
+  const paragraphs = parseParagraphTranscript(body);
+  if (paragraphs.length) return paragraphs;
+
+  const single = parseSpeakerSegment(body);
+  return single ? [single] : [];
 }
 
 function TranscriptView({ transcript }: { transcript: string }) {
