@@ -25,7 +25,9 @@ function json(body: unknown, status = 200) {
 }
 
 function ok() {
-  return new Response("", { status: 204 });
+  // 200 with a null body. NB: a 204 is a "null body status" and the Response
+  // constructor throws if given any body (even ""), which would surface as a 500.
+  return new Response(null, { status: 200 });
 }
 
 function formOrJson(raw: string): Record<string, string> {
@@ -121,14 +123,22 @@ async function fetchKbContext(profileId: string, query: string): Promise<string 
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "GET") return json({ ok: true });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  // Vonage delivers inbound SMS as GET (query params) by default on the legacy
+  // SMS API, or POST (form/JSON) if configured / via the Messages API. Accept
+  // all of them. Start from the query string, then merge any request body.
+  const url = new URL(req.url);
+  const params: Record<string, string> = {};
+  for (const [k, v] of url.searchParams.entries()) params[k] = v;
 
-  let params: Record<string, string>;
-  try {
-    params = formOrJson(await req.text());
-  } catch {
-    return ok();
+  if (req.method === "POST") {
+    try {
+      const bodyParams = formOrJson(await req.text());
+      for (const [k, v] of Object.entries(bodyParams)) params[k] = v;
+    } catch {
+      // ignore unparseable body; query params may still carry the message
+    }
+  } else if (req.method !== "GET") {
+    return json({ error: "Method not allowed" }, 405);
   }
 
   // Vonage inbound SMS (moHttpUrl): msisdn = sender, to = our number, text = body
@@ -137,7 +147,13 @@ Deno.serve(async (req) => {
   const body    = (params["text"] ?? params["Body"] ?? "").trim();
   const messageId = params["messageId"] ?? params["message-uuid"] ?? "";
 
-  if (!fromRaw || !toRaw || !body) return ok();
+  // No SMS payload → treat as a health check / delivery-receipt ping.
+  if (!fromRaw || !toRaw || !body) {
+    console.log("[wisecall-sms-inbound] non-message request", req.method, JSON.stringify(params).slice(0, 200));
+    return ok();
+  }
+
+  console.log("[wisecall-sms-inbound] inbound", req.method, "from", fromRaw, "to", toRaw);
 
   const fromNumber = normaliseE164(fromRaw);
   const toNumber   = normaliseE164(toRaw);
