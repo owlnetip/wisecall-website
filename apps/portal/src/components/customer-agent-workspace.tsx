@@ -58,7 +58,7 @@ import {
   updateAgent,
 } from "@/app/actions/agents";
 import { provisionSmsNumber } from "@/app/actions/sms";
-import type { AgentSmsNumber } from "@/lib/agents";
+import type { AgentSmsNumber, AgentWhatsappNumber } from "@/lib/agents";
 import {
   deleteKnowledgeBaseSource,
   ingestKnowledgeBaseSource,
@@ -1321,6 +1321,7 @@ export function CustomerAgentWorkspace({
   livechatChannel,
   smsChannel,
   smsNumbers,
+  whatsappNumbers,
   impersonating,
   initialInsights,
   analysisEnabled = false,
@@ -1339,6 +1340,7 @@ export function CustomerAgentWorkspace({
   livechatChannel?: ChannelUsage; // bundled live-chat allowance + usage
   smsChannel?: ChannelUsage; // bundled SMS allowance + usage
   smsNumbers?: AgentSmsNumber[]; // already-provisioned Vonage SMS numbers
+  whatsappNumbers?: AgentWhatsappNumber[]; // already-provisioned WhatsApp numbers
   impersonating?: { email: string }; // admin viewing as this customer
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
@@ -1967,6 +1969,10 @@ export function CustomerAgentWorkspace({
                 onDelete={isAdmin ? deleteSelected : undefined}
                 adminMode={adminMode}
                 planName={planName}
+                smsNumber={smsNumbers?.find((n) => n.profileId === selectedAssistant.id)?.smsNumber}
+                whatsappNumber={
+                  whatsappNumbers?.find((n) => n.profileId === selectedAssistant.id)?.whatsappNumber
+                }
               />
             )}
 
@@ -2342,6 +2348,8 @@ function AssistantDetail({
   onDelete,
   adminMode = false,
   planName,
+  smsNumber,
+  whatsappNumber,
 }: {
   assistant: Assistant;
   tab: DetailTab;
@@ -2362,6 +2370,8 @@ function AssistantDetail({
   onDelete?: () => void;
   adminMode?: boolean;
   planName?: string;
+  smsNumber?: string;
+  whatsappNumber?: string;
 }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   return (
@@ -2444,6 +2454,8 @@ function AssistantDetail({
 
       <RoutingCard
         routing={assistant.routing}
+        smsNumber={smsNumber}
+        whatsappNumber={whatsappNumber}
         isProvisioning={isProvisioning}
         error={provisionError}
         onProvision={onProvision}
@@ -4171,11 +4183,15 @@ function TranscriptView({ transcript }: { transcript: string }) {
 
 function RoutingCard({
   routing,
+  smsNumber,
+  whatsappNumber,
   isProvisioning,
   error,
   onProvision,
 }: {
   routing: AgentRouting;
+  smsNumber?: string;
+  whatsappNumber?: string;
   isProvisioning: boolean;
   error: string | null;
   onProvision: () => void;
@@ -4196,16 +4212,42 @@ function RoutingCard({
 
   return (
     <div className="mb-8 rounded-[14px] border border-black/10 bg-[#fbfcfc] px-5 py-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Phone className="h-5 w-5 text-[#148b8e]" />
-          <div>
-            <p className="flex items-center gap-2 font-black">
-              <span className={`h-2 w-2 rounded-full ${dot}`} />
-              {heading}
-            </p>
-            <p className="mt-0.5 text-sm text-[#66716e]">{sub}</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Phone className="h-5 w-5 text-[#148b8e]" />
+            <div>
+              <p className="flex items-center gap-2 font-black">
+                <span className={`h-2 w-2 rounded-full ${dot}`} />
+                {heading}
+              </p>
+              <p className="mt-0.5 text-sm text-[#66716e]">{sub}</p>
+            </div>
           </div>
+          {smsNumber ? (
+            <div className="flex items-center gap-3">
+              <MessageSquare className="h-5 w-5 text-[#7c3aed]" />
+              <div>
+                <p className="flex items-center gap-2 font-black">
+                  <span className="h-2 w-2 rounded-full bg-[#16a66a]" />
+                  {smsNumber}
+                </p>
+                <p className="mt-0.5 text-sm text-[#66716e]">SMS messages &amp; notifications</p>
+              </div>
+            </div>
+          ) : null}
+          {whatsappNumber ? (
+            <div className="flex items-center gap-3">
+              <MessageCircle className="h-5 w-5 text-[#14823f]" />
+              <div>
+                <p className="flex items-center gap-2 font-black">
+                  <span className="h-2 w-2 rounded-full bg-[#16a66a]" />
+                  {whatsappNumber}
+                </p>
+                <p className="mt-0.5 text-sm text-[#66716e]">WhatsApp messaging</p>
+              </div>
+            </div>
+          ) : null}
         </div>
         {live && (
           <a

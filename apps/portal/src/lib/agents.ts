@@ -425,9 +425,9 @@ export async function getAllAgents(): Promise<Assistant[] | null> {
 }
 
 export type AgentSmsNumber = { profileId: string; smsNumber: string };
+export type AgentWhatsappNumber = { profileId: string; whatsappNumber: string; displayName?: string };
 
-// Returns the active SMS numbers assigned to the user's agents.
-export async function getSmsNumbersForUser(userId: string): Promise<AgentSmsNumber[]> {
+async function getProfileIdsForUser(userId: string): Promise<string[]> {
   const supabase = getServiceSupabase();
   if (!supabase) return [];
 
@@ -435,17 +435,22 @@ export async function getSmsNumbersForUser(userId: string): Promise<AgentSmsNumb
     .from("wisecall_profiles")
     .select("id")
     .eq("metadata->>owner_id", userId);
-  const ids = (profiles ?? []).map((p) => p.id as string);
-  if (!ids.length) return [];
+  return (profiles ?? []).map((p) => p.id as string);
+}
+
+export async function getSmsNumbersForProfiles(profileIds: string[]): Promise<AgentSmsNumber[]> {
+  if (!profileIds.length) return [];
+  const supabase = getServiceSupabase();
+  if (!supabase) return [];
 
   const { data, error } = await supabase
     .from("wisecall_sms_numbers")
     .select("profile_id, sms_number")
-    .in("profile_id", ids)
+    .in("profile_id", profileIds)
     .eq("status", "active");
 
   if (error) {
-    console.error("getSmsNumbersForUser failed:", error.message);
+    console.error("getSmsNumbersForProfiles failed:", error.message);
     return [];
   }
 
@@ -453,6 +458,45 @@ export async function getSmsNumbersForUser(userId: string): Promise<AgentSmsNumb
     profileId: row.profile_id as string,
     smsNumber: row.sms_number as string,
   }));
+}
+
+export async function getWhatsappNumbersForProfiles(
+  profileIds: string[],
+): Promise<AgentWhatsappNumber[]> {
+  if (!profileIds.length) return [];
+  const supabase = getServiceSupabase();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("wisecall_whatsapp_numbers")
+    .select("profile_id, whatsapp_number, display_name")
+    .in("profile_id", profileIds)
+    .eq("status", "active");
+
+  if (error) {
+    console.error("getWhatsappNumbersForProfiles failed:", error.message);
+    return [];
+  }
+
+  return (data ?? [])
+    .filter((row) => row.whatsapp_number)
+    .map((row) => ({
+      profileId: row.profile_id as string,
+      whatsappNumber: row.whatsapp_number as string,
+      displayName: (row.display_name as string | null) ?? undefined,
+    }));
+}
+
+// Returns the active SMS numbers assigned to the user's agents.
+export async function getSmsNumbersForUser(userId: string): Promise<AgentSmsNumber[]> {
+  const ids = await getProfileIdsForUser(userId);
+  return getSmsNumbersForProfiles(ids);
+}
+
+// Returns the active WhatsApp numbers assigned to the user's agents.
+export async function getWhatsappNumbersForUser(userId: string): Promise<AgentWhatsappNumber[]> {
+  const ids = await getProfileIdsForUser(userId);
+  return getWhatsappNumbersForProfiles(ids);
 }
 
 // Admin only: recent call logs across all agents.

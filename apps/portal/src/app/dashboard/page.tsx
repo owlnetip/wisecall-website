@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
-import { getAgentsForUser, getCallLogsForUser, getSmsNumbersForUser } from "@/lib/agents";
+import { getAgentsForUser, getCallLogsForUser, getSmsNumbersForUser, getWhatsappNumbersForUser } from "@/lib/agents";
 import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, getCallUsage, getWhatsappUsage, getLivechatUsage, getSmsUsage, reconcileBillingFromStripe } from "@/lib/billing";
 import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
     }
   };
 
-  const [agents, callLogs, contacts, trial, insights, smsNumbers] = await Promise.all([
+  const [agents, callLogs, contacts, trial, insights, smsNumbers, whatsappNumbers] = await Promise.all([
     safe("agents", getAgentsForUser(effectiveUserId), []),
     safe("callLogs", getCallLogsForUser(effectiveUserId), []),
     safe("contacts", getContactsForUser(effectiveUserId), []),
@@ -87,6 +87,7 @@ export default async function DashboardPage() {
     // Default range matches the AI Insights view's default ("Last 7 days").
     safe("insights", getInsightsForUser(effectiveUserId, "7d"), emptyInsights("7d", false)),
     safe("smsNumbers", getSmsNumbersForUser(effectiveUserId), []),
+    safe("whatsappNumbers", getWhatsappNumbersForUser(effectiveUserId), []),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.
@@ -123,6 +124,7 @@ export default async function DashboardPage() {
       livechatChannel={livechatChannel}
       smsChannel={smsChannel}
       smsNumbers={smsNumbers}
+      whatsappNumbers={whatsappNumbers}
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getAllAgents, getAllCallLogs } from "@/lib/agents";
+import { getAllAgents, getAllCallLogs, getSmsNumbersForProfiles, getWhatsappNumbersForProfiles } from "@/lib/agents";
 import { isAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,12 @@ export default async function AdminPage() {
 
   const [agents, callLogs] = await Promise.all([getAllAgents(), getAllCallLogs()]);
 
+  const profileIds = (agents ?? []).map((agent) => agent.id);
+  const [smsNumbers, whatsappNumbers] = await Promise.all([
+    getSmsNumbersForProfiles(profileIds),
+    getWhatsappNumbersForProfiles(profileIds),
+  ]);
+
   // Real per-agent call counts from the logs, matched on profile id.
   const counts = callLogs.reduce<Record<string, number>>((acc, log) => {
     acc[log.profileId] = (acc[log.profileId] ?? 0) + 1;
@@ -31,6 +37,8 @@ export default async function AdminPage() {
     <CustomerAgentWorkspace
       initialAssistants={enriched ?? undefined}
       callLogs={callLogs}
+      smsNumbers={smsNumbers}
+      whatsappNumbers={whatsappNumbers}
       userEmail={user.email}
       isAdmin
       adminMode
