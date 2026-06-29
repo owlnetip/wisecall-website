@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/admin";
+import { DEMO_KB_SOURCES } from "@/lib/demo-knowledge-base";
 import { getSupabaseConfig } from "@/lib/env";
 import { getServiceSupabase } from "@/lib/supabase";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -64,6 +65,14 @@ export type KnowledgeBaseMutationResult = {
 export type KnowledgeBaseSearchResult = {
   ok: boolean;
   chunks: KnowledgeSearchChunk[];
+  error?: string;
+};
+
+export type KnowledgeBaseSeedResult = {
+  ok: boolean;
+  added: number;
+  skipped: number;
+  totalChunks: number;
   error?: string;
 };
 
@@ -345,4 +354,59 @@ export async function searchKnowledgeBase(
     ok: true,
     chunks: Array.isArray(data.chunks) ? (data.chunks as KnowledgeSearchChunk[]) : [],
   };
+}
+
+export async function seedDemoKnowledgeBase(agentId: string): Promise<KnowledgeBaseSeedResult> {
+  const access = await getAccessibleProfile(agentId);
+  if (!access.ok) {
+    return { ok: false, added: 0, skipped: 0, totalChunks: 0, error: access.error };
+  }
+
+  const existing = await listKnowledgeBaseSources(agentId);
+  if (!existing.ok) {
+    return {
+      ok: false,
+      added: 0,
+      skipped: 0,
+      totalChunks: 0,
+      error: existing.error ?? "Could not read existing sources.",
+    };
+  }
+
+  const existingTitles = new Set(existing.sources.map((source) => source.title));
+  let added = 0;
+  let skipped = 0;
+  let totalChunks = 0;
+
+  for (const source of DEMO_KB_SOURCES) {
+    if (existingTitles.has(source.title)) {
+      skipped += 1;
+      continue;
+    }
+
+    const result = await ingestKnowledgeBaseSource({
+      agentId,
+      sourceType: "paste",
+      title: source.title,
+      text: source.text,
+      category: source.category,
+    });
+
+    if (!result.ok) {
+      return {
+        ok: false,
+        added,
+        skipped,
+        totalChunks,
+        error: result.error ?? `Could not index "${source.title}".`,
+      };
+    }
+
+    added += 1;
+    totalChunks += result.chunksAdded ?? 0;
+    existingTitles.add(source.title);
+  }
+
+  revalidatePath("/dashboard");
+  return { ok: true, added, skipped, totalChunks };
 }

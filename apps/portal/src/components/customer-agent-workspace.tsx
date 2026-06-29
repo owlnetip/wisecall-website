@@ -64,11 +64,13 @@ import {
   ingestKnowledgeBaseSource,
   listKnowledgeBaseSources,
   searchKnowledgeBase,
+  seedDemoKnowledgeBase,
   type KnowledgeBaseJob,
   type KnowledgeBaseSource,
   type KnowledgeBaseSourceType,
   type KnowledgeSearchChunk,
 } from "@/app/actions/knowledge-base";
+import { DEMO_KB_TITLE_PREFIX } from "@/lib/demo-knowledge-base";
 import type { CallLog, CallChannel } from "@/lib/agents";
 import { friendlyOutcome } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
@@ -991,6 +993,158 @@ function AgentSmsRow({
   );
 }
 
+function AgentPhoneRow({
+  assistant,
+  isProvisioning,
+  onProvision,
+}: {
+  assistant: Assistant;
+  isProvisioning: boolean;
+  onProvision: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const routing = assistant.routing;
+  const live = routing.status === "live" && Boolean(routing.number);
+  const pending = routing.status === "pending";
+
+  function copy() {
+    if (!routing.number) return;
+    navigator.clipboard?.writeText(routing.number).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      },
+      () => {},
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
+      <p className="mb-2 truncate text-sm font-bold text-[#111716]">{assistant.name}</p>
+      {live ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="min-w-0 flex-1 truncate rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#111716]">
+            {routing.number}
+          </code>
+          <button
+            type="button"
+            onClick={copy}
+            className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+          <a
+            href={`tel:${routing.number.replace(/[^\d+]/g, "")}`}
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#7de8eb] px-4 text-sm font-black text-[#0c1717] transition hover:opacity-90"
+          >
+            <Phone className="h-4 w-4" />
+            Call to test
+          </a>
+        </div>
+      ) : pending ? (
+        <div className="rounded-lg border border-[#f3dfae] bg-[#fff8eb] px-3 py-2 text-sm text-[#8a5a00]">
+          Setting up your phone number — usually ready within 5 minutes. Refresh to check.
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={isProvisioning}
+          onClick={onProvision}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-4 py-2 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+        >
+          {isProvisioning ? "Assigning…" : "Assign number"}
+          {!isProvisioning && <ChevronRight className="h-4 w-4" />}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PhoneChannel({
+  assistants,
+  usage,
+  onRoutingUpdate,
+}: {
+  assistants: Assistant[];
+  usage?: CallUsage;
+  onRoutingUpdate: (profileId: string, routing: AgentRouting) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [provisioningId, setProvisioningId] = useState<string | null>(null);
+  const [provisionError, setProvisionError] = useState<string | null>(null);
+
+  async function handleProvision(profileId: string) {
+    setProvisioningId(profileId);
+    setProvisionError(null);
+    const result = await provisionNumber(profileId);
+    if (result.ok && result.routing) {
+      onRoutingUpdate(profileId, result.routing);
+    } else {
+      setProvisionError(result.error ?? "Could not assign a number yet.");
+    }
+    setProvisioningId(null);
+  }
+
+  return (
+    <div className="rounded-[14px] border border-black/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="flex w-full items-start gap-4 px-5 py-4 text-left"
+      >
+        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+          <Phone className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-[#111716]">Phone</p>
+          <p className="text-sm text-[#66716e]">Your AI receptionist answers and routes calls.</p>
+        </div>
+        {usage ? (
+          <div className="self-center">
+            <ChannelUsageBadge
+              used={usage.used}
+              allowance={usage.allowance}
+              overage={usage.overage}
+              unit="calls"
+            />
+          </div>
+        ) : (
+          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+            Included
+          </span>
+        )}
+        <ChevronDown
+          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? (
+        <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
+          <p className="mb-1 text-xs text-[#66716e]">
+            Each agent gets its own UK phone number. Customers call in and the AI answers —
+            every conversation is saved to Call History and Contacts.
+          </p>
+          {provisionError ? (
+            <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-[#c0392b]">{provisionError}</p>
+          ) : null}
+          {assistants.length ? (
+            assistants.map((assistant) => (
+              <AgentPhoneRow
+                key={assistant.id}
+                assistant={assistant}
+                isProvisioning={provisioningId === assistant.id}
+                onProvision={() => void handleProvision(assistant.id)}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-[#66716e]">Create an agent to get a phone number.</p>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function SMSChannel({
   assistants,
   usage,
@@ -1095,6 +1249,7 @@ function ChannelsHub({
   smsNumbers,
   assistants,
   userEmail,
+  onRoutingUpdate,
 }: {
   emailChannel?: EmailChannelUsage;
   callUsage?: CallUsage;
@@ -1104,6 +1259,7 @@ function ChannelsHub({
   smsNumbers: AgentSmsNumber[];
   assistants: Assistant[];
   userEmail?: string;
+  onRoutingUpdate: (profileId: string, routing: AgentRouting) => void;
 }) {
   return (
     <div className="mx-auto max-w-3xl">
@@ -1116,30 +1272,7 @@ function ChannelsHub({
       </div>
 
       <div className="space-y-3">
-        {/* Phone — always included */}
-        <div className="flex items-start gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4">
-          <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
-            <Phone className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-black text-[#111716]">Phone</p>
-            <p className="text-sm text-[#66716e]">Your AI receptionist answers and routes calls.</p>
-          </div>
-          {callUsage ? (
-            <div className="self-center">
-              <ChannelUsageBadge
-                used={callUsage.used}
-                allowance={callUsage.allowance}
-                overage={callUsage.overage}
-                unit="calls"
-              />
-            </div>
-          ) : (
-            <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
-              Included
-            </span>
-          )}
-        </div>
+        <PhoneChannel assistants={assistants} usage={callUsage} onRoutingUpdate={onRoutingUpdate} />
 
         {/* Website chat — included, expandable to per-agent embed codes */}
         <WebsiteChatChannel assistants={assistants} usage={livechatChannel} />
@@ -1607,6 +1740,21 @@ export function CustomerAgentWorkspace({
     });
   }
 
+  function updateAssistantRouting(profileId: string, routing: AgentRouting) {
+    setAssistants((prev) =>
+      prev.map((assistant) =>
+        assistant.id === profileId
+          ? {
+              ...assistant,
+              routing,
+              phoneNumber: routing.number || (routing.status === "pending" ? "Setting up…" : "Number pending"),
+              status: routing.status === "live" ? "Live" : "Setup",
+            }
+          : assistant,
+      ),
+    );
+  }
+
   function isNavActive(item: { view: View; label: string }): boolean {
     if (item.label === "Assistants") return view === "assistants" || view === "detail";
     if (item.label === "Call History") return view === "calls";
@@ -2017,6 +2165,7 @@ export function CustomerAgentWorkspace({
                 smsNumbers={smsNumbers ?? []}
                 assistants={assistants}
                 userEmail={userEmail}
+                onRoutingUpdate={updateAssistantRouting}
               />
             )}
           </div>
@@ -2658,6 +2807,7 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
   const [isSearching, startSearch] = useTransition();
 
   const totalChunks = sources.reduce((sum, source) => sum + source.chunkCount, 0);
+  const hasDemoSources = sources.some((source) => source.title.startsWith(DEMO_KB_TITLE_PREFIX));
 
   async function load() {
     setLoading(true);
@@ -2748,6 +2898,26 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
     });
   }
 
+  function loadDemoContent() {
+    setMutationError(null);
+    setMutationOk(null);
+    startMutation(async () => {
+      const result = await seedDemoKnowledgeBase(assistant.id);
+      if (!result.ok) {
+        setMutationError(result.error ?? "Could not load demo content.");
+        return;
+      }
+      if (result.added === 0) {
+        setMutationOk("Demo content is already loaded");
+      } else {
+        setMutationOk(
+          `${result.added} demo source${result.added === 1 ? "" : "s"} indexed (${result.totalChunks} chunk${result.totalChunks === 1 ? "" : "s"})`,
+        );
+      }
+      await load();
+    });
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-[18px] border border-black/10 bg-white">
@@ -2761,15 +2931,28 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
               {sources.length} source{sources.length === 1 ? "" : "s"} · {totalChunks} indexed chunk{totalChunks === 1 ? "" : "s"}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/10 bg-white px-4 py-2.5 text-sm font-black text-[#111716] transition hover:bg-[#f7f8f7] disabled:opacity-60"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {!hasDemoSources ? (
+              <button
+                type="button"
+                onClick={loadDemoContent}
+                disabled={isMutating}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#148b8e]/30 bg-[#eaf8f8] px-4 py-2.5 text-sm font-black text-[#0f6b6e] transition hover:bg-[#dff3f3] disabled:opacity-60"
+              >
+                {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                Load demo content
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void load()}
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/10 bg-white px-4 py-2.5 text-sm font-black text-[#111716] transition hover:bg-[#f7f8f7] disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
         </div>
 
         <div className="p-5">
@@ -2831,6 +3014,15 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
               <p className="mx-auto mt-1 max-w-md text-sm text-[#66716e]">
                 Add a web page, sitemap, pasted notes or text file to make retrieval available for this agent.
               </p>
+              <button
+                type="button"
+                onClick={loadDemoContent}
+                disabled={isMutating}
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+              >
+                {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                Load demo content
+              </button>
             </div>
           )}
         </div>
