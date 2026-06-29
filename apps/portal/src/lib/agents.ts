@@ -307,10 +307,19 @@ function channelFromRow(row: CallRow): CallChannel {
   const meta = (row.metadata as Record<string, unknown> | null) ?? {};
   const raw = String(meta.channel ?? "").toLowerCase();
   if (raw === "whatsapp" || raw === "sms" || raw === "email" || raw === "chat") return raw;
+
+  // Fallback for rows logged before metadata.channel existed (or when the column
+  // isn't persisted) — infer from the outcome/summary the edge functions write.
+  const outcome = String(row.outcome ?? "").toLowerCase();
+  const summary = String(row.summary ?? "").toLowerCase();
+  if (outcome.includes("whatsapp") || summary.startsWith("whatsapp:")) return "whatsapp";
+  if (outcome.includes("sms") || summary.startsWith("sms:")) return "sms";
+  if (outcome.includes("email") || summary.startsWith("email:")) return "email";
+
   // Website live chat predates per-channel tagging — it tags itself via the
   // edge-function source and a "live_chat" outcome instead of metadata.channel.
   if (String(meta.source ?? "") === "wisecall-live-chat") return "chat";
-  if (String(row.outcome ?? "").toLowerCase().startsWith("live_chat")) return "chat";
+  if (outcome.startsWith("live_chat")) return "chat";
   return "phone";
 }
 
