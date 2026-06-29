@@ -91,7 +91,7 @@ import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 import { OutboundManager } from "@/components/outbound-manager";
 
-type View = "home" | "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
+type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -1159,7 +1159,6 @@ function ChannelsHub({
 }
 
 const navItems: { view: View; label: string; icon: LucideIcon }[] = [
-  { view: "home", label: "Home", icon: Grid2X2 },
   { view: "insights", label: "AI Insights", icon: Sparkles },
   { view: "assistants", label: "Assistants", icon: Bot },
   { view: "calls", label: "Call History", icon: History },
@@ -1350,7 +1349,7 @@ export function CustomerAgentWorkspace({
   const [selectedId, setSelectedId] = useState(
     (initialAssistants ?? demoAssistants)[0]?.id ?? "",
   );
-  const [view, setView] = useState<View>("assistants");
+  const [view, setView] = useState<View>("insights");
   const [detailTab, setDetailTab] = useState<DetailTab>("behaviour");
   const [searchTerm, setSearchTerm] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -1413,8 +1412,6 @@ export function CustomerAgentWorkspace({
         .includes(query),
     );
   }, [assistants, searchTerm]);
-
-  const totalCalls = assistants.reduce((total, assistant) => total + assistant.calls, 0);
 
   function updateSelected(patch: Partial<Assistant>) {
     setAssistants((current) =>
@@ -1613,7 +1610,6 @@ export function CustomerAgentWorkspace({
   function isNavActive(item: { view: View; label: string }): boolean {
     if (item.label === "Assistants") return view === "assistants" || view === "detail";
     if (item.label === "Call History") return view === "calls";
-    if (item.label === "Home") return view === "home";
     if (item.label === "AI Insights") return view === "insights";
     if (item.label === "Contacts") return view === "contacts";
     if (item.label === "Channels") return view === "channels";
@@ -1714,22 +1710,40 @@ export function CustomerAgentWorkspace({
                   </a>
                 )}
                 {adminMode ? (
-                  <a
-                    href="/dashboard"
-                    className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
-                  >
-                    <Grid2X2 className="h-5 w-5 flex-shrink-0" />
-                    My dashboard
-                  </a>
-                ) : (
-                  isAdmin && (
+                  <>
                     <a
-                      href="/admin"
+                      href="/dashboard"
                       className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
                     >
-                      <ShieldCheck className="h-5 w-5 flex-shrink-0" />
-                      Admin
+                      <Grid2X2 className="h-5 w-5 flex-shrink-0" />
+                      My dashboard
                     </a>
+                    <a
+                      href="/admin/partners"
+                      className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                    >
+                      <Users className="h-5 w-5 flex-shrink-0" />
+                      Partners
+                    </a>
+                  </>
+                ) : (
+                  isAdmin && (
+                    <>
+                      <a
+                        href="/admin"
+                        className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                      >
+                        <ShieldCheck className="h-5 w-5 flex-shrink-0" />
+                        Admin
+                      </a>
+                      <a
+                        href="/admin/partners"
+                        className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                      >
+                        <Users className="h-5 w-5 flex-shrink-0" />
+                        Partners
+                      </a>
+                    </>
                   )
                 )}
               </nav>
@@ -1795,22 +1809,40 @@ export function CustomerAgentWorkspace({
             )}
 
             {adminMode ? (
-              <a
-                href="/dashboard"
-                className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
-              >
-                <Grid2X2 className="h-5 w-5 flex-shrink-0" />
-                My dashboard
-              </a>
-            ) : (
-              isAdmin && (
+              <>
                 <a
-                  href="/admin"
+                  href="/dashboard"
                   className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
                 >
-                  <ShieldCheck className="h-5 w-5 flex-shrink-0" />
-                  Admin
+                  <Grid2X2 className="h-5 w-5 flex-shrink-0" />
+                  My dashboard
                 </a>
+                <a
+                  href="/admin/partners"
+                  className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                >
+                  <Users className="h-5 w-5 flex-shrink-0" />
+                  Partners
+                </a>
+              </>
+            ) : (
+              isAdmin && (
+                <>
+                  <a
+                    href="/admin"
+                    className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                  >
+                    <ShieldCheck className="h-5 w-5 flex-shrink-0" />
+                    Admin
+                  </a>
+                  <a
+                    href="/admin/partners"
+                    className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                  >
+                    <Users className="h-5 w-5 flex-shrink-0" />
+                    Partners
+                  </a>
+                </>
               )
             )}
           </nav>
@@ -1840,13 +1872,13 @@ export function CustomerAgentWorkspace({
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <span>Home</span>
-              {view === "insights" && (
-                <>
-                  <ChevronRight className="h-4 w-4" />
-                  <span>AI Insights</span>
-                </>
-              )}
+              <button
+                type="button"
+                onClick={() => setView("insights")}
+                className={view === "insights" ? "text-[#111716]" : "transition hover:text-[#111716]"}
+              >
+                Home
+              </button>
               {(view === "assistants" || view === "detail") && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -1898,15 +1930,6 @@ export function CustomerAgentWorkspace({
           </header>
 
           <div className="px-5 py-8 lg:px-10">
-            {view === "home" && (
-              <HomeOverview
-                totalCalls={totalCalls}
-                assistants={assistants.length}
-                onOpenAssistants={() => setView("assistants")}
-                onOpenInsights={() => setView("insights")}
-              />
-            )}
-
             {view === "insights" && (
               <AiInsights
                 initial={initialInsights}
@@ -2094,81 +2117,6 @@ export function CustomerAgentWorkspace({
       {selectedCall && (
         <CallDetailModal log={selectedCall} onClose={() => setSelectedCall(null)} />
       )}
-    </div>
-  );
-}
-
-function HomeOverview({
-  totalCalls,
-  assistants,
-  onOpenAssistants,
-  onOpenInsights,
-}: {
-  totalCalls: number;
-  assistants: number;
-  onOpenAssistants: () => void;
-  onOpenInsights: () => void;
-}) {
-  return (
-    <div>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-4xl font-black">Home</h1>
-          <p className="mt-2 text-[#66716e]">Your WiseCall activity for this month.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={onOpenInsights}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#111716]/15 bg-white px-5 py-3 text-sm font-black text-[#111716] transition hover:bg-[#f2f4f3]"
-          >
-            <Sparkles className="h-4 w-4 text-[#148b8e]" />
-            AI Insights
-          </button>
-          <button
-            type="button"
-            onClick={onOpenAssistants}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
-          >
-            Open assistants
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <section className="rounded-[18px] border border-black/10 bg-white">
-        <div className="grid border-b border-black/10 sm:grid-cols-[1fr_120px_120px]">
-          <div className="p-6">
-            <h2 className="text-2xl font-black">Call History</h2>
-            <p className="mt-1 text-[#7a8582]">June 2026</p>
-          </div>
-          <StatCell label="Calls" value={totalCalls} />
-          <StatCell label="Agents" value={assistants} />
-        </div>
-        <div className="h-[280px] p-6">
-          <div className="relative h-full overflow-hidden rounded-lg bg-[#f7f8f7]">
-            <svg viewBox="0 0 640 220" className="h-full w-full">
-              <path
-                d="M30 176 C140 176 214 176 300 176 C342 176 350 128 382 128 C416 128 408 176 432 176 C462 176 448 66 480 56"
-                fill="none"
-                stroke="#41c9ce"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-              <path
-                d="M30 176 C140 176 214 176 300 176 C342 176 350 128 382 128 C416 128 408 176 432 176 C462 176 448 66 480 56 L480 205 L30 205 Z"
-                fill="url(#chartFill)"
-              />
-              <defs>
-                <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#41c9ce" stopOpacity="0.24" />
-                  <stop offset="100%" stopColor="#41c9ce" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
@@ -4860,14 +4808,5 @@ function StatusPill({ status }: { status: Assistant["status"] }) {
     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${styles[status]}`}>
       {status}
     </span>
-  );
-}
-
-function StatCell({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="border-t border-black/10 p-6 sm:border-l sm:border-t-0">
-      <p className="text-sm font-bold text-[#7a8582]">{label}</p>
-      <p className="mt-2 text-3xl font-black">{value}</p>
-    </div>
   );
 }
