@@ -4060,8 +4060,8 @@ function CallDetailModal({ log, onClose }: { log: CallLog; onClose: () => void }
 type TranscriptTurn = { speaker: "agent" | "caller"; text: string };
 
 const CALLER_LABEL =
-  /^(?:customer(?:\s*\([^)]+\))?|user|caller|human|visitor)\s*:\s*(.*)$/is;
-const AGENT_LABEL = /^(?:assistant|agent|ai|bot|wisecall)\s*:\s*(.*)$/is;
+  /^(?:customer(?:\s*\([^)]+\))?|user|caller|human|visitor)\s*:\s*([\s\S]*)$/i;
+const AGENT_LABEL = /^(?:assistant|agent|ai|bot|wisecall)\s*:\s*([\s\S]*)$/i;
 const CHANNEL_CUSTOMER = /(?:^|\n)(Customer(?:\s*\([^)]+\))?\s*:\s*)/gi;
 
 function speakerFromLabel(label: string): TranscriptTurn["speaker"] {
