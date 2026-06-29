@@ -24,7 +24,7 @@ const PLANS: Plan[] = [
     allowances: [
       "100 AI calls / month",
       "100 AI email replies / month",
-      "100 WhatsApp conversations / month",
+      "250 WhatsApp conversations / month",
       "100 live chat conversations / month",
     ],
   },

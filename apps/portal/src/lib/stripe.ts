@@ -61,7 +61,7 @@ export const PLAN_EMAIL_INCLUDED: Record<PlanId, number> = {
 };
 
 export const PLAN_WHATSAPP_INCLUDED: Record<PlanId, number> = {
-  starter: 100,
+  starter: 250,
   professional: 500,
   business: 2000,
 };
