@@ -38,12 +38,19 @@ export async function provisionSmsNumber(profileId: string): Promise<SmsProvisio
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
     if (!supabaseUrl || !serviceKey) return { ok: false, error: "Server not configured." };
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${serviceKey}`,
+      apikey: serviceKey,
+      "Content-Type": "application/json",
+    };
+    // Shared provision secret — robust to Supabase service-role key rotations
+    // (same scheme as the MOR provisioning action).
+    const provisionSecret = process.env.WISECALL_PROVISION_SECRET?.trim();
+    if (provisionSecret) headers["x-wisecall-provision-secret"] = provisionSecret;
+
     const res = await fetch(`${supabaseUrl}/functions/v1/wisecall-provision-sms`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({ profile_id: profileId }),
     });
 

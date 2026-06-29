@@ -5,17 +5,56 @@
 // set moHttpUrl webhook → insert into wisecall_sms_numbers → return { sms_number }.
 //
 // Uses VONAGE_API_KEY and VONAGE_API_SECRET from Supabase secrets (already set).
-// Deploy with --no-verify-jwt; the function validates the caller via service-role key.
+// Deploy with --no-verify-jwt; the function validates the caller via the shared
+// WISECALL_PROVISION_SECRET (same scheme as wisecall-provision-mor-agent), which
+// is robust to Supabase service-role key rotations.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const VONAGE_REST = "https://rest.nexmo.com";
+
+// SHA-256 of the shared provision secret, baked in so the function authenticates
+// the portal even when WISECALL_PROVISION_SECRET isn't set as a Supabase secret.
+// Matches the default in wisecall-provision-mor-agent.
+const PROVISION_SECRET_SHA256_DEFAULT =
+  "aaf533c44f417d85b4d813e30c046290a6ec444cc765cd5ee303e9c1d0dd7ed3";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+async function sha256(message: string): Promise<string> {
+  const data = new TextEncoder().encode(message);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// Authorise the caller: either the service-role key (apikey/bearer) or the shared
+// provision secret header. Mirrors wisecall-provision-mor-agent.
+async function isAuthorised(req: Request): Promise<boolean> {
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const provisionSecret = Deno.env.get("WISECALL_PROVISION_SECRET")?.trim() ?? "";
+  const provisionSecretSha256 =
+    Deno.env.get("WISECALL_PROVISION_SECRET_SHA256")?.trim() || PROVISION_SECRET_SHA256_DEFAULT;
+
+  const authHeader = (req.headers.get("authorization") || "").trim();
+  const bearerKey = authHeader.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7).trim()
+    : "";
+  const providedKey = (req.headers.get("apikey") || bearerKey).trim();
+  const providedSecret = (req.headers.get("x-wisecall-provision-secret") || "").trim();
+
+  if (serviceKey && providedKey === serviceKey) return true;
+  if (provisionSecret && providedSecret === provisionSecret) return true;
+  if (providedSecret && provisionSecretSha256 && (await sha256(providedSecret)) === provisionSecretSha256) {
+    return true;
+  }
+  return false;
 }
 
 function vonageCreds() {
@@ -70,11 +109,7 @@ async function setWebhook(msisdn: string, moHttpUrl: string): Promise<void> {
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
-  // Validate caller is using the service-role key (not anon).
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const callerKey = authHeader.replace(/^Bearer\s+/i, "");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  if (!serviceKey || callerKey !== serviceKey) {
+  if (!(await isAuthorised(req))) {
     return json({ error: "Unauthorized" }, 401);
   }
 
@@ -89,7 +124,7 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    serviceKey,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
   // Return existing number if already provisioned.
