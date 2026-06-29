@@ -147,6 +147,22 @@
     /* Stat number font */
     .stat-num { font-variant-numeric: tabular-nums; }
     [data-lucide] { width: 1em; height: 1em; }
+    /* Video */
+    .video-frame { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 1.25rem; border: 1px solid rgba(125, 232, 235, 0.15); box-shadow: 0 24px 60px rgba(0,0,0,0.35); background: rgba(0,0,0,0.18); }
+    .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    .video-placeholder {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+      background: linear-gradient(135deg, rgba(23,41,41,0.92) 0%, rgba(26,53,53,0.88) 50%, rgba(18,104,106,0.35) 100%);
+      text-align: center; padding: 2rem;
+    }
+    .video-placeholder-icon {
+      width: 4.5rem; height: 4.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      background: rgba(125, 232, 235, 0.15); border: 1px solid rgba(125, 232, 235, 0.35);
+      box-shadow: 0 0 40px rgba(125, 232, 235, 0.2);
+    }
+    @media (max-width: 1023px) {
+      .hero-demo-panel .orb-stage { width: 200px; height: 200px; }
+    }
   </style>
 
   <script>
@@ -225,40 +241,89 @@
     </div>
   </div>
 
-  <!-- ───── HERO ───── -->
-  <section class="relative min-h-screen flex items-center overflow-hidden px-6 pt-24 pb-16">
+  <!-- ───── HERO + LIVE DEMO ───── -->
+  <section class="relative min-h-screen flex items-center overflow-hidden px-6 pt-24 pb-16" id="live-demo">
     <div class="absolute inset-0 bg-gradient-to-br from-[#172929] via-[#1a3535] to-[#172929]"></div>
     <div class="absolute top-24 left-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
     <div class="absolute bottom-16 right-1/4 w-80 h-80 bg-[#7de8eb] rounded-full blur-[120px] opacity-15 pointer-events-none"></div>
 
-    <div class="relative z-10 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
-      <!-- Left: copy -->
-      <div>
-        <div class="motion inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-8" data-anim="fade-up">
+    <div class="relative z-10 max-w-7xl mx-auto w-full flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+      <!-- Intro: headline first on all breakpoints -->
+      <div class="order-1 lg:col-start-1 lg:row-start-1 w-full">
+        <div class="motion inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-6 lg:mb-8" data-anim="fade-up">
           <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
           <span class="text-sm text-white/80">AI-Powered Communications Platform</span>
         </div>
 
-        <h1 class="motion text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight" data-anim="fade-up" style="transition-delay:0.05s">
+        <h1 class="motion text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 lg:mb-6 leading-tight" data-anim="fade-up" style="transition-delay:0.05s">
           Your business,<br>
           <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">always reachable.</span>
         </h1>
 
-        <p class="motion text-xl text-white/70 leading-relaxed mb-3 max-w-xl" data-anim="fade-up" style="transition-delay:0.1s">
-          WiseCall is your AI receptionist. It answers calls, qualifies enquiries, books appointments and captures information around the clock. We give you a dedicated number, no phone system needed, and route each call to the right person, taking a message if no one's available.
+        <p class="motion text-lg sm:text-xl text-white/70 leading-relaxed max-w-xl" data-anim="fade-up" style="transition-delay:0.1s">
+          WiseCall is your AI receptionist. It answers calls, qualifies enquiries and captures information around the clock. No phone system needed.
         </p>
-        <p class="motion text-sm text-white/50 mb-10" data-anim="fade-up" style="transition-delay:0.12s">No phone system needed. Your own number, or connect your existing PBX. One monthly price.</p>
+      </div>
 
-        <div class="motion flex flex-col sm:flex-row gap-4 mb-12" data-anim="fade-up" style="transition-delay:0.15s">
+      <!-- Live demo: second on mobile (above CTAs), right column on desktop -->
+      <div class="motion order-2 lg:order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 w-full hero-demo-panel" data-anim="fade-left" style="transition-delay:0.1s">
+        <div class="max-w-md mx-auto text-center">
+          <span class="inline-flex items-center gap-2 text-sm text-[#7de8eb] font-semibold">
+            <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
+            Live Demo
+          </span>
+          <h2 class="font-bold text-white text-2xl sm:text-3xl mt-3 mb-2">Hear it for yourself</h2>
+          <p class="text-white/55 text-sm mb-6 lg:hidden">Tap below to call the WiseCall demo agent straight from your phone.</p>
+          <p class="text-white/55 text-sm mb-6 hidden lg:block">Enter your mobile and the WiseCall demo agent calls you back.</p>
+
+          <!-- Mobile: tap-to-call orb -->
+          <div class="lg:hidden flex flex-col items-center">
+            <a href="tel:+441135222277" class="orb-stage mb-6" aria-label="Call the WiseCall demo">
+              <span class="orb">
+                <span class="orb-swirl"></span>
+                <span class="orb-core"></span>
+              </span>
+            </a>
+            <a href="tel:+441135222277" class="mbtn inline-flex items-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)] transition-shadow">
+              <i data-lucide="phone-call" class="w-5 h-5"></i>
+              Call the demo
+            </a>
+            <p class="text-white/40 text-sm mt-4">+44 113 522 2277</p>
+          </div>
+
+          <!-- Desktop: callback form -->
+          <form id="demoCallbackForm" class="hidden lg:flex flex-col items-center" novalidate>
+            <div class="orb-stage is-static mb-8" aria-hidden="true">
+              <span class="orb">
+                <span class="orb-swirl"></span>
+                <span class="orb-core"></span>
+              </span>
+            </div>
+
+            <div class="w-full max-w-sm flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 backdrop-blur-sm focus-within:border-[#7de8eb]/70 focus-within:bg-white/10 transition-colors">
+              <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+              <input id="demoCallbackPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile number" aria-label="Mobile number for demo callback" class="demo-phone-input min-w-0 flex-1 outline-none font-semibold text-base tracking-wide">
+              <button id="demoCallbackButton" type="submit" class="shrink-0 rounded-full bg-[#7de8eb] px-4 py-2 text-[#172929] text-sm font-bold hover:bg-[#9cf1f3] transition-colors">Call me</button>
+            </div>
+          </form>
+          <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-4" aria-live="polite"></p>
+          <p class="text-white/40 text-sm mt-2 hidden lg:block">
+            Prefer to dial in? <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white">+44 113 522 2277</a>.
+          </p>
+        </div>
+      </div>
+
+      <!-- CTAs + trust badges: third on mobile, left column below intro on desktop -->
+      <div class="order-3 lg:col-start-1 lg:row-start-2 w-full">
+        <div class="motion flex flex-col sm:flex-row gap-4 mb-8 lg:mb-10" data-anim="fade-up" style="transition-delay:0.15s">
           <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
             Start Free Trial <i data-lucide="arrow-right" class="w-5 h-5"></i>
           </a>
-          <a href="#how-it-works" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
-            How It Works
+          <a href="#setup-video" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
+            See How Setup Works
           </a>
         </div>
 
-        <!-- Trust badges -->
         <div class="motion grid grid-cols-2 sm:grid-cols-4 gap-3" data-anim="fade-up" style="transition-delay:0.2s">
           <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
             <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb]"></i>
@@ -278,11 +343,21 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Right: phone mockup -->
+  <!-- ───── CALL PREVIEW ───── -->
+  <section class="relative py-20 px-6 overflow-hidden" id="call-preview">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+      <div class="motion text-center lg:text-left" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">In Action</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-white mt-2 mb-4">Every call handled like your best receptionist</h2>
+        <p class="text-lg text-white/70 max-w-lg mx-auto lg:mx-0">WiseCall qualifies callers, books appointments and routes urgent enquiries. Your team gets a full summary after every call.</p>
+      </div>
+
       <div class="motion" data-anim="fade-left" style="transition-delay:0.1s">
         <div class="relative max-w-sm mx-auto rounded-2xl border border-[#7de8eb]/20 bg-white/5 backdrop-blur-sm p-6 shadow-[0_0_60px_rgba(125,232,235,0.12)]">
-          <!-- Caller info -->
           <div class="text-center mb-5">
             <div class="w-20 h-20 rounded-full mx-auto mb-3 border border-[#7de8eb]/30 bg-[#172929] flex items-center justify-center overflow-hidden">
               <img src="owl-logo.png" alt="WiseCall" class="w-16 h-16 object-contain">
@@ -294,7 +369,6 @@
             </span>
           </div>
 
-          <!-- Rotating scenarios -->
           <div id="heroMessages" class="rounded-xl bg-[#172929]/60 border border-[#7de8eb]/10 p-4 min-h-[120px]">
             <div class="scenario active">
               <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Dental Practice</span>
@@ -322,7 +396,6 @@
             </div>
           </div>
 
-          <!-- Call controls -->
           <div class="flex justify-center gap-6 mt-5">
             <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
               <i data-lucide="mic" class="w-5 h-5 text-white/60"></i>
@@ -339,56 +412,26 @@
     </div>
   </section>
 
-  <!-- ───── LIVE DEMO ───── -->
-  <section class="light relative py-24 px-6" id="live-demo">
+  <!-- ───── SETUP VIDEO ───── -->
+  <section class="light relative py-20 px-6 overflow-hidden" id="setup-video">
     <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
-    <div class="relative z-10 max-w-2xl mx-auto text-center">
-      <div class="motion" data-anim="fade-up">
-        <span class="inline-flex items-center gap-2 text-sm text-[#7de8eb] font-semibold">
-          <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
-          Live Demo
-        </span>
-        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Hear it for yourself</h2>
-        <p class="text-xl text-white/70 mb-12 md:hidden">Tap below to call the WiseCall demo agent straight from your phone.</p>
-        <p class="text-xl text-white/70 mb-12 hidden md:block">Enter your mobile and the WiseCall demo agent calls you back.</p>
+    <div class="relative z-10 max-w-4xl mx-auto">
+      <div class="motion text-center mb-10" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Quick Setup</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Live in minutes, not months</h2>
+        <p class="text-xl text-white/70 max-w-2xl mx-auto">Sign up, configure your agent and go live. No phone system, no engineers, no lengthy onboarding.</p>
       </div>
-
-      <!-- Mobile: tap-to-call orb -->
-      <div class="motion md:hidden flex flex-col items-center" data-anim="scale-in" style="transition-delay:0.1s">
-        <a href="tel:+441135222277" class="orb-stage mb-8" aria-label="Call the WiseCall demo">
-          <span class="orb">
-            <span class="orb-swirl"></span>
-            <span class="orb-core"></span>
-          </span>
-        </a>
-        <a href="tel:+441135222277" class="inline-flex items-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)] transition-shadow">
-          <i data-lucide="phone-call" class="w-5 h-5"></i>
-          Call the demo
-        </a>
-        <p class="text-white/40 text-sm mt-4">+44 113 522 2277</p>
-      </div>
-
-      <!-- Desktop: callback form -->
-      <div class="motion hidden md:flex flex-col items-center" data-anim="scale-in" style="transition-delay:0.1s">
-        <form id="demoCallbackForm" class="flex flex-col items-center" novalidate>
-          <div class="orb-stage is-static mb-8" aria-hidden="true">
-            <span class="orb">
-              <span class="orb-swirl"></span>
-              <span class="orb-core"></span>
-            </span>
+      <div class="motion video-frame" data-anim="scale-in" style="transition-delay:0.1s" id="setupVideoFrame">
+        <!-- Replace the placeholder below with your embed when the video is ready:
+             <iframe src="YOUR_VIDEO_EMBED_URL" loading="lazy" title="WiseCall setup walkthrough" allowfullscreen allow="encrypted-media; fullscreen;"></iframe>
+        -->
+        <div class="video-placeholder" aria-hidden="true">
+          <div class="video-placeholder-icon">
+            <i data-lucide="play" class="w-7 h-7 text-[#7de8eb] ml-1"></i>
           </div>
-
-          <div class="demo-dial w-full max-w-sm flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 backdrop-blur-sm focus-within:border-[#7de8eb]/70 focus-within:bg-white/10 transition-colors">
-            <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
-            <input id="demoCallbackPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile number" aria-label="Mobile number for demo callback" class="demo-phone-input min-w-0 flex-1 outline-none font-semibold text-base tracking-wide">
-            <button id="demoCallbackButton" type="submit" class="shrink-0 rounded-full bg-[#7de8eb] px-4 py-2 text-[#172929] text-sm font-bold hover:bg-[#9cf1f3] transition-colors">Call me</button>
-          </div>
-        </form>
-
-        <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-4" aria-live="polite"></p>
-        <p class="text-white/40 text-sm mt-2">
-          Prefer to dial in? <a href="tel:+441135222277" class="font-bold text-[#172929] hover:text-[#0a8a8e] transition-colors">+44 113 522 2277</a>.
-        </p>
+          <p class="text-white font-semibold text-lg">Setup walkthrough coming soon</p>
+          <p class="text-white/55 text-sm max-w-sm">A short look at how fast it is to get WiseCall answering your calls.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -1080,7 +1123,7 @@
       return /^(07\d{9}|447\d{9})$/.test(digits);
     }
 
-    demoCallbackForm.addEventListener('submit', async (event) => {
+    demoCallbackForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
 
       const phone = demoCallbackPhone.value.trim();
@@ -1138,16 +1181,18 @@
     let currentScenario = 0;
     let rotationPaused = false;
 
-    function rotateScenarios() {
-      if (rotationPaused) return;
-      scenarios[currentScenario].classList.remove('active');
-      currentScenario = (currentScenario + 1) % scenarios.length;
-      scenarios[currentScenario].classList.add('active');
-    }
+    if (scenarioContainer && scenarios.length) {
+      function rotateScenarios() {
+        if (rotationPaused) return;
+        scenarios[currentScenario].classList.remove('active');
+        currentScenario = (currentScenario + 1) % scenarios.length;
+        scenarios[currentScenario].classList.add('active');
+      }
 
-    setInterval(rotateScenarios, 5000);
-    scenarioContainer.addEventListener('mouseenter', () => { rotationPaused = true; });
-    scenarioContainer.addEventListener('mouseleave', () => { rotationPaused = false; });
+      setInterval(rotateScenarios, 5000);
+      scenarioContainer.addEventListener('mouseenter', () => { rotationPaused = true; });
+      scenarioContainer.addEventListener('mouseleave', () => { rotationPaused = false; });
+    }
 
     // Contact / Demo Modal
     const modal = document.getElementById('contactModal');
