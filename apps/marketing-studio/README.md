@@ -14,6 +14,8 @@ Internal AI Marketing Command Centre for WiseCall and Owlnet.
 - `/` — workspace picker (WiseCall / Owlnet)
 - `/login` — admin sign-in
 - `/[brand]` — Brand Brain workspace
+- `/[brand]/research` — Research Centre (Phase 2)
+- `/[brand]/campaigns` — Campaign planner / calendar (Phase 2)
 - `/[brand]/drafts` — Draft Studio
 - `/[brand]/library` — Content Library
 

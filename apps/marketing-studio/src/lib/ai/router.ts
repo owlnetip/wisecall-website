@@ -5,7 +5,10 @@ export type AiTask =
   | "brand_fact_extract"
   | "social_post_draft"
   | "blog_outline"
-  | "final_polish";
+  | "final_polish"
+  | "research_extract"
+  | "research_synthesis"
+  | "campaign_plan";
 
 export type ModelPolicy = {
   task: AiTask;
@@ -41,9 +44,27 @@ const POLICIES: Record<AiTask, ModelPolicy> = {
     fallback: "openai/gpt-5.4",
     maxOutputTokens: 2048,
   },
+  research_extract: {
+    task: "research_extract",
+    model: "openai/gpt-5.4-mini",
+    fallback: "anthropic/claude-haiku-4.5",
+    maxOutputTokens: 3072,
+  },
+  research_synthesis: {
+    task: "research_synthesis",
+    model: "openai/gpt-5.4",
+    fallback: "anthropic/claude-sonnet-4.6",
+    maxOutputTokens: 4096,
+  },
+  campaign_plan: {
+    task: "campaign_plan",
+    model: "anthropic/claude-sonnet-4.6",
+    fallback: "openai/gpt-5.4",
+    maxOutputTokens: 8192,
+  },
 };
 
-export const PROMPT_VERSION = "phase1-v1";
+export const PROMPT_VERSION = "phase2-v1";
 
 export function getPolicy(task: AiTask): ModelPolicy {
   return POLICIES[task];

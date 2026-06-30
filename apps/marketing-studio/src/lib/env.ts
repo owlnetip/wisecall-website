@@ -30,3 +30,7 @@ export function getDailyBudgetCents() {
   const parsed = raw ? Number.parseInt(raw, 10) : 500;
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
 }
+
+export function getTavilyApiKey() {
+  return process.env.TAVILY_API_KEY ?? null;
+}

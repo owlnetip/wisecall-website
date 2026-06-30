@@ -78,3 +78,64 @@ export type DraftResult = {
   hashtags: string[];
   notes: string;
 };
+
+export type Competitor = {
+  id: string;
+  brand_id: string;
+  name: string;
+  website_url: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type ResearchRun = {
+  id: string;
+  brand_id: string;
+  topic: string;
+  status: "running" | "completed" | "failed";
+  summary: string | null;
+  model: string | null;
+  sources: { title?: string; url?: string; snippet?: string }[];
+  created_at: string;
+};
+
+export type ResearchFinding = {
+  id: string;
+  run_id: string;
+  brand_id: string;
+  category: "trend" | "competitor" | "keyword" | "opportunity" | "audience_insight";
+  title: string;
+  summary: string;
+  source_url: string | null;
+  relevance_score: number | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+};
+
+export type Campaign = {
+  id: string;
+  brand_id: string;
+  name: string;
+  goal: string | null;
+  duration_days: number;
+  status: "draft" | "active" | "completed";
+  model: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CampaignIdea = {
+  id: string;
+  campaign_id: string;
+  brand_id: string;
+  day_offset: number;
+  platform: ContentPlatform;
+  topic: string;
+  hook: string | null;
+  audience: string | null;
+  cta: string | null;
+  rationale: string | null;
+  status: "suggested" | "approved" | "rejected" | "drafted";
+  content_item_id: string | null;
+  created_at: string;
+};

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth";
 import type { BrandSlug } from "@/lib/marketing/types";
-import { Brain, FileText, Library, LogOut } from "lucide-react";
+import { Brain, Calendar, FileText, Library, LogOut, Search } from "lucide-react";
 
 export function WorkspaceNav({
   brand,
@@ -10,10 +10,12 @@ export function WorkspaceNav({
 }: {
   brand: BrandSlug;
   brandName: string;
-  active: "brain" | "drafts" | "library";
+  active: "brain" | "research" | "campaigns" | "drafts" | "library";
 }) {
   const links = [
     { href: `/${brand}`, key: "brain" as const, label: "Brand Brain", icon: Brain },
+    { href: `/${brand}/research`, key: "research" as const, label: "Research", icon: Search },
+    { href: `/${brand}/campaigns`, key: "campaigns" as const, label: "Campaigns", icon: Calendar },
     { href: `/${brand}/drafts`, key: "drafts" as const, label: "Draft Studio", icon: FileText },
     { href: `/${brand}/library`, key: "library" as const, label: "Content Library", icon: Library },
   ];

@@ -13,8 +13,7 @@ export default async function HomePage() {
         <p className="text-xs uppercase tracking-[0.2em] text-accent">Internal tool</p>
         <h1 className="mt-2 text-3xl font-bold text-white">AI Marketing Studio</h1>
         <p className="mt-3 max-w-2xl text-muted">
-          Brand Brain and content drafts for WiseCall and Owlnet. Phase 1: research-backed
-          copy generation with human approval before publishing.
+          Brand Brain, research, campaigns, and content drafts for WiseCall and Owlnet.
         </p>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
