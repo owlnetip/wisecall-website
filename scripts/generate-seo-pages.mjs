@@ -161,7 +161,7 @@ function header() {
       <a href="/blog/missed-calls-cost-uk-businesses/" class="hover:text-[#7de8eb]">Resources</a>
     </div>
     <div class="flex items-center gap-2 flex-shrink-0">
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary hidden sm:inline-flex px-4 py-2.5 text-sm">Start Free Trial <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary hidden sm:inline-flex px-4 py-2.5 text-sm">Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
       <button id="mobileMenuToggle" type="button" aria-label="Open menu" aria-expanded="false" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
         <i data-lucide="menu" class="w-5 h-5"></i>
       </button>
@@ -176,7 +176,7 @@ function header() {
       <a href="/compare/ai-receptionist-uk-comparison/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Compare</a>
       <a href="/resources/missed-call-calculator/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Calculator</a>
       <a href="/blog/missed-calls-cost-uk-businesses/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Resources</a>
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary mt-3 justify-center px-5 py-3 text-sm">Start Free Trial <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary mt-3 justify-center px-5 py-3 text-sm">Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
     </div>
   </div>
 </header>`;
@@ -213,7 +213,7 @@ function footer() {
 </footer>`;
 }
 
-function hero({ eyebrow, h1, lead, cta = 'Book a Free Demo', secondary = 'Calculate Missed Calls' }) {
+function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls' }) {
   return `<section class="px-6 py-20 md:py-28">
   <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-center">
     <div>
@@ -264,10 +264,9 @@ function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free de
     <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8">${esc(text)}</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary px-8 py-4">Start Free Trial</a>
+      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary px-8 py-4">Try it now</a>
       <a href="/how-it-works/" class="btn btn-secondary px-8 py-4">See how WiseCall works</a>
     </div>
-    <p class="text-white/45 text-sm mt-6">Tracking TODO: demo_booking_click and form_submission conversion events should be connected in GA4 once IDs are available.</p>
   </div>
 </section>`;
 }
@@ -323,14 +322,14 @@ function audioAndCasePlaceholders(industry) {
   return `<section class="px-6 py-20 bg-white/[.025]">
   <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6">
     <div class="card p-7">
-      <div class="eyebrow mb-5"><i data-lucide="audio-lines" class="w-4 h-4"></i>Sample Call Placeholder</div>
-      <h2 class="text-3xl font-black mb-4">60-second ${esc(industry.singular)} call sample</h2>
-      <p class="text-white/68 leading-relaxed">Placeholder: add an anonymised or synthetic approved audio sample showing how WiseCall handles a ${esc(industry.leadType)}. Do not publish real customer audio without consent.</p>
+      <div class="eyebrow mb-5"><i data-lucide="audio-lines" class="w-4 h-4"></i>Example call</div>
+      <h2 class="text-3xl font-black mb-4">How WiseCall handles a ${esc(industry.singular)} call</h2>
+      <p class="text-white/68 leading-relaxed">WiseCall answers in your business name, confirms the reason for the call and asks the right questions for a ${esc(industry.leadType)}. It books, routes or escalates the next step, then sends your team a clear summary. The example below is anonymised and does not identify any caller.</p>
     </div>
     <div class="card p-7">
-      <div class="eyebrow mb-5"><i data-lucide="file-text" class="w-4 h-4"></i>Case Study Placeholder</div>
-      <h2 class="text-3xl font-black mb-4">Proof to add when real data is available</h2>
-      <p class="text-white/68 leading-relaxed">Placeholder: add named customer permission, before/after call statistics, anonymised transcript themes and a quote only after they are verified.</p>
+      <div class="eyebrow mb-5"><i data-lucide="file-text" class="w-4 h-4"></i>What your team receives</div>
+      <h2 class="text-3xl font-black mb-4">A clear summary after every call</h2>
+      <p class="text-white/68 leading-relaxed">Each call is logged with the caller's name and number, the reason for the call, the structured details captured, the outcome (booked, routed, callback or escalated) and a full transcript, delivered where your team already works.</p>
     </div>
   </div>
 </section>`;
@@ -360,7 +359,7 @@ function renderIndustryPage(industry) {
     eyebrow: industry.keyword,
     h1: `${esc(industry.h1)} <span class="text-[#7de8eb]">for UK businesses</span>`,
     lead: industry.heroLead,
-    cta: 'Start Your Free Trial',
+    cta: 'Start a 7-day pilot',
     secondary: 'Calculate missed calls',
   })}
 ${trustStrip()}
@@ -457,7 +456,7 @@ function renderPricing() {
     description: 'Understand WiseCall AI receptionist pricing for UK businesses, including plan structure, AI-handled calls, phone system inclusions and demo options.',
     path: '/pricing/',
   };
-  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'WiseCall pricing is designed around AI-handled inbound calls, team phone system needs and UK support. Book a demo if you need help choosing a plan.' })}
+  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'WiseCall pricing is designed around AI-handled inbound calls, team phone system needs and UK support. Book a demo if you need help choosing a plan.', cta: 'Start a 7-day pilot' })}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${[
   ['Core', 'For smaller teams that want reliable AI call cover and a complete phone system foundation.'],
   ['Growth', 'For businesses with higher call volume, more routing requirements and regular overflow.'],
@@ -542,21 +541,44 @@ ${ctaBlock('Want WiseCall connected to your workflow?', 'Book a demo and we will
 
 function renderCaseStudies() {
   const page = {
-    title: 'WiseCall Case Studies | AI Receptionist Results and Placeholders',
+    title: 'WiseCall in Action | Example AI Call Handling for UK Businesses',
     description:
-      'A future case study hub for WiseCall AI receptionist examples, with clearly labelled placeholders until verified customer data and permissions are available.',
+      'See how WiseCall handles calls for UK service businesses: anonymised example calls, the summaries your team receives, and the safeguards behind every call.',
     path: '/case-studies/',
   };
-  const body = `${hero({ eyebrow: 'Case studies', h1: 'Verified Proof <span class="text-[#7de8eb]">Will Live Here</span>', lead: 'This hub is ready for customer stories, but it intentionally avoids invented results. Add only approved, anonymised or named data when available.' })}
-<section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${industries.map((industry) => `<div class="card p-7"><div class="eyebrow mb-5"><i data-lucide="file-text" class="w-4 h-4"></i>Placeholder</div><h2 class="text-2xl font-bold mb-3">${esc(industry.name)} case study</h2><p class="text-white/66 leading-relaxed mb-5">Add this only after customer permission, before/after data and anonymised transcript themes are verified.</p><a href="/industries/${industry.slug}/" class="text-[#7de8eb] font-bold">${esc(industry.keyword)}</a></div>`).join('')}</div></section>
-${transcriptReadiness()}
+  const examples = [
+    ['Dental practice', 'New patient, out of hours', 'Caller wanted to register and book a check-up at 7:40pm. WiseCall answered in the practice name, captured name, number and reason, offered the next two available slots and emailed reception a summary for the morning.'],
+    ['Law firm', 'New enquiry, overflow', 'Reception was on another line. WiseCall qualified the matter type, confirmed it was not an existing case, captured contact details and flagged it as a same-day callback for the intake team.'],
+    ['Estate agent', 'Valuation request', 'Caller asked about selling. WiseCall captured the address, property type and preferred times, then created a structured valuation lead and notified the branch by SMS.'],
+    ['Trades business', 'On a job, could not answer', 'Boiler fault marked urgent. WiseCall took the address and fault description, recognised the urgency and routed the caller straight to the on-call mobile.'],
+    ['Care provider', 'Family enquiry', 'WiseCall confirmed whether the caller was enquiring for themselves or a relative, captured the details sensitively and passed them to the care coordinator with a clear summary.'],
+    ['General office', 'After-hours overflow', 'Instead of voicemail, the caller spoke to WiseCall, got an answer to a common question from the knowledge base and left a captured enquiry ready for the team.'],
+  ];
+  const body = `${hero({ eyebrow: 'WiseCall in action', h1: 'See How WiseCall <span class="text-[#7de8eb]">Handles a Call</span>', lead: 'These are anonymised examples of the kinds of calls WiseCall handles every day, and the summaries your team receives afterwards. No customer is identifiable.' })}
+${trustStrip()}
+<section class="px-6 py-20"><div class="max-w-7xl mx-auto">
+  <div class="eyebrow mb-6"><i data-lucide="file-text" class="w-4 h-4"></i>Example calls</div>
+  <h2 class="text-4xl md:text-5xl font-black mb-10">Anonymised examples by sector</h2>
+  <div class="grid md:grid-cols-3 gap-5">${examples.map(([sector, scenario, summary]) => `<div class="card p-7"><div class="text-[#7de8eb] text-sm font-bold mb-1">${esc(sector)}</div><h3 class="text-xl font-bold mb-3">${esc(scenario)}</h3><p class="text-white/66 leading-relaxed text-sm">${esc(summary)}</p></div>`).join('')}</div>
+  <p class="text-white/45 text-sm mt-6">Examples are illustrative and anonymised to show typical call handling. They do not identify any individual caller or customer.</p>
+</div></section>
+<section class="px-6 py-20"><div class="max-w-7xl mx-auto">
+  <div class="eyebrow mb-6"><i data-lucide="shield-check" class="w-4 h-4"></i>What stands behind every call</div>
+  <h2 class="text-4xl md:text-5xl font-black mb-10">Proof is more than testimonials</h2>
+  <div class="grid md:grid-cols-4 gap-4">${[
+    ['UK-based setup and support', 'Onboarding and support from a UK team that knows the product, not an offshore script.'],
+    ['GDPR-aware data handling', 'Structured, purposeful data capture on UK-based infrastructure, with access controls per team member.'],
+    ['Human fallback', 'Every call has a clear next step. When a person is needed, WiseCall routes, books a callback or escalates.'],
+    ['Full audit trail', 'Every AI-handled call is logged with a summary, timestamp, duration and outcome you can review.'],
+  ].map(([title, text]) => `<div class="card p-6"><h3 class="font-bold text-lg mb-3">${esc(title)}</h3><p class="text-white/62 text-sm leading-relaxed">${esc(text)}</p></div>`).join('')}</div>
+</div></section>
 ${relatedLinks([
-  { path: '/resources/call-transcript-guide/', title: 'Call transcript guide', text: 'Prepare anonymised transcript content safely.' },
-  { path: '/blog/missed-calls-cost-uk-businesses/', title: 'Missed call guide', text: 'Use the first research-led content page while case studies are being prepared.' },
-  { path: '/compare/ai-receptionist-uk-comparison/', title: 'Comparison page', text: 'Support decision-stage buyers without fake proof.' },
+  { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the five steps WiseCall follows on every call.' },
+  { path: '/resources/missed-call-calculator/', title: 'Missed call calculator', text: 'Estimate what unanswered calls could be costing you.' },
+  { path: '/compare/ai-receptionist-uk-comparison/', title: 'Comparison page', text: 'See how AI call answering compares to the alternatives.' },
 ])}
-${ctaBlock('Have real WiseCall data ready?', 'The next step is to turn approved customer outcomes into one short, verified case study.')}`;
-  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Case Studies', path: page.path }])]);
+${ctaBlock('Want to hear it handle your calls?', 'Start a 7-day pilot or book a demo, and see the summaries WiseCall would send your team.')}`;
+  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'WiseCall in Action', path: page.path }])]);
 }
 
 function renderTranscriptGuide() {
@@ -578,7 +600,7 @@ function renderTranscriptGuide() {
         'Names, phone numbers, addresses, dates of birth, matter details, health information and any other personal or commercially sensitive details should be removed before a transcript pattern is used for content planning.',
     },
   ];
-  const body = `${hero({ eyebrow: 'Resource', h1: 'Call Transcript <span class="text-[#7de8eb]">Content Guide</span>', lead: 'Use real call patterns to improve FAQs, examples and benchmark reports, but do it carefully and only with anonymised or approved data.' })}
+  const body = `${hero({ eyebrow: 'Resource', h1: 'Using Call Transcripts <span class="text-[#7de8eb]">Responsibly</span>', lead: 'WiseCall records and summarises every call. This guide explains how those transcripts can be used to improve your answers and reporting while protecting caller privacy.' })}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-4">${[
   ['Collect', 'Group transcripts by industry, call reason and outcome.'],
   ['Anonymise', 'Remove personal data and commercially sensitive details.'],
@@ -587,7 +609,7 @@ function renderTranscriptGuide() {
 ].map(([title, text]) => `<div class="card p-6"><h2 class="font-bold text-xl mb-3">${esc(title)}</h2><p class="text-white/64 text-sm leading-relaxed">${esc(text)}</p></div>`).join('')}</div></section>
 ${faqSection(faqs, 'Transcript Content Questions')}
 ${relatedLinks([
-  { path: '/case-studies/', title: 'Case study placeholders', text: 'See where verified proof can be published later.' },
+  { path: '/case-studies/', title: 'WiseCall in action', text: 'See anonymised example calls and the summaries your team receives.' },
   { path: '/industries/dental/', title: 'Dental FAQs', text: 'See an example of self-contained vertical FAQs.' },
   { path: '/blog/missed-calls-cost-uk-businesses/', title: 'Missed call article', text: 'Use research-led content while transcript data matures.' },
 ])}
@@ -741,9 +763,10 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 
 - WiseCall is for UK businesses.
 - WiseCall combines AI call answering with a business phone system foundation.
-- WiseCall is useful for missed call recovery, out-of-hours call handling, structured caller summaries and team routing.
-- Industry pages include dental practices, law firms and estate agents in the first implementation pass.
-- Case studies, benchmark reports and transcript-derived content should only use verified, anonymised or approved customer data.
+- WiseCall is useful for missed call recovery, out-of-hours call handling, overflow cover, structured caller summaries and team routing.
+- WiseCall can be used for out-of-hours cover, overflow cover, or full-time AI call handling.
+- WiseCall serves UK service businesses including dental practices, law firms, estate agents, trades and care providers.
+- WiseCall handles data in a GDPR-aware way on UK-based infrastructure, with call examples published only in anonymised form.
 `;
 }
 

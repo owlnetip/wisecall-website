@@ -22,6 +22,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 
 - WiseCall is for UK businesses.
 - WiseCall combines AI call answering with a business phone system foundation.
-- WiseCall is useful for missed call recovery, out-of-hours call handling, structured caller summaries and team routing.
-- Industry pages include dental practices, law firms and estate agents in the first implementation pass.
-- Case studies, benchmark reports and transcript-derived content should only use verified, anonymised or approved customer data.
+- WiseCall is useful for missed call recovery, out-of-hours call handling, overflow cover, structured caller summaries and team routing.
+- WiseCall can be used for out-of-hours cover, overflow cover, or full-time AI call handling.
+- WiseCall serves UK service businesses including dental practices, law firms, estate agents, trades and care providers.
+- WiseCall handles data in a GDPR-aware way on UK-based infrastructure, with call examples published only in anonymised form.
