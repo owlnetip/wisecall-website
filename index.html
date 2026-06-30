@@ -149,17 +149,8 @@
     [data-lucide] { width: 1em; height: 1em; }
     /* Video */
     .video-frame { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 1.25rem; border: 1px solid rgba(125, 232, 235, 0.15); box-shadow: 0 24px 60px rgba(0,0,0,0.35); background: rgba(0,0,0,0.18); }
-    .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
-    .video-placeholder {
-      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
-      background: linear-gradient(135deg, rgba(23,41,41,0.92) 0%, rgba(26,53,53,0.88) 50%, rgba(18,104,106,0.35) 100%);
-      text-align: center; padding: 2rem;
-    }
-    .video-placeholder-icon {
-      width: 4.5rem; height: 4.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      background: rgba(125, 232, 235, 0.15); border: 1px solid rgba(125, 232, 235, 0.35);
-      box-shadow: 0 0 40px rgba(125, 232, 235, 0.2);
-    }
+    .video-frame iframe,
+    .video-frame video { position: absolute; inset: 0; width: 100%; height: 100%; border: none; object-fit: cover; background: #0f1f1f; }
     @media (max-width: 1023px) {
       .hero-demo-panel .orb-stage { width: 200px; height: 200px; }
     }
@@ -422,16 +413,10 @@
         <p class="text-xl text-white/70 max-w-2xl mx-auto">Sign up, configure your agent and go live. No phone system, no engineers, no lengthy onboarding.</p>
       </div>
       <div class="motion video-frame" data-anim="scale-in" style="transition-delay:0.1s" id="setupVideoFrame">
-        <!-- Replace the placeholder below with your embed when the video is ready:
-             <iframe src="YOUR_VIDEO_EMBED_URL" loading="lazy" title="WiseCall setup walkthrough" allowfullscreen allow="encrypted-media; fullscreen;"></iframe>
-        -->
-        <div class="video-placeholder" aria-hidden="true">
-          <div class="video-placeholder-icon">
-            <i data-lucide="play" class="w-7 h-7 text-[#7de8eb] ml-1"></i>
-          </div>
-          <p class="text-white font-semibold text-lg">Setup walkthrough coming soon</p>
-          <p class="text-white/55 text-sm max-w-sm">A short look at how fast it is to get WiseCall answering your calls.</p>
-        </div>
+        <video controls playsinline preload="metadata" title="WiseCall unified AI agent overview" aria-label="WiseCall product overview video">
+          <source src="videos/One_Unified_AI_Agent_trimmed_presenter_end_with_music_QUIET_1080p.mp4" type="video/mp4">
+          Your browser does not support embedded video.
+        </video>
       </div>
     </div>
   </section>
