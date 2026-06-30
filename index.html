@@ -96,13 +96,6 @@
     .scenario { display: none; }
     .scenario.active { display: block; animation: fadeScenario 0.45s ease forwards; }
     @keyframes fadeScenario { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    /* Sector tabs */
-    .sector-tab { padding: 0.45rem 1rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); border: 1px solid rgba(125,232,235,0.15); cursor: pointer; transition: color 0.2s, background-color 0.2s, border-color 0.2s; }
-    .sector-tab:hover { color: #fff; border-color: rgba(125,232,235,0.4); }
-    .sector-tab.is-active { color: #0f2a2b; background: #7de8eb; border-color: #7de8eb; }
-    #callShowcase { transition: opacity 0.3s ease; }
-    #callShowcase.is-swapping { opacity: 0.35; }
-    .transcript-turn + .transcript-turn { margin-top: 0.625rem; }
     /* Pulse dot */
     @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     .pulse-dot { animation: pulse-soft 2.2s ease-in-out infinite; }
@@ -374,150 +367,64 @@
     </div>
   </section>
 
-  <!-- ───── WHAT HAPPENS ON EVERY CALL ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="every-call">
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#7de8eb] rounded-full blur-[200px] opacity-[0.08] pointer-events-none"></div>
-    <div class="relative z-10 max-w-7xl mx-auto">
-      <div class="motion text-center mb-16" data-anim="fade-up">
-        <span class="text-sm text-[#7de8eb] font-semibold">On every call</span>
-        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">What happens on every call</h2>
-        <p class="text-xl text-white/70 max-w-3xl mx-auto">The same reliable path, every time — whether it's overflow, out-of-hours or your full-time front desk.</p>
+  <!-- ───── CALL PREVIEW ───── -->
+  <section class="relative py-20 px-6 overflow-hidden" id="call-preview">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+      <div class="motion text-center lg:text-left" data-anim="fade-up">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Every call handled like your best receptionist</h2>
+        <p class="text-lg text-white/70 max-w-lg mx-auto lg:mx-0">WiseCall qualifies callers, books appointments and routes urgent enquiries. Your team gets a full summary after every call.</p>
       </div>
 
-      <!-- 5-step flow -->
-      <div class="motion grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-20" data-anim="fade-up" style="transition-delay:0.05s">
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="phone-incoming" class="w-5 h-5 text-[#7de8eb]"></i></div>
-            <span class="text-[#7de8eb]/40 font-bold text-2xl">01</span>
-          </div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">Answer</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Picks up in your business name, 24/7 — no rings to voicemail.</p>
-        </div>
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="message-circle-question" class="w-5 h-5 text-[#7de8eb]"></i></div>
-            <span class="text-[#7de8eb]/40 font-bold text-2xl">02</span>
-          </div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">Qualify</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Asks the right questions to understand who's calling and why.</p>
-        </div>
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="clipboard-list" class="w-5 h-5 text-[#7de8eb]"></i></div>
-            <span class="text-[#7de8eb]/40 font-bold text-2xl">03</span>
-          </div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">Capture</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Records the caller's details in a clean, structured summary.</p>
-        </div>
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="git-branch" class="w-5 h-5 text-[#7de8eb]"></i></div>
-            <span class="text-[#7de8eb]/40 font-bold text-2xl">04</span>
-          </div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">Book or route</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Books the next step, routes to the right person, or escalates if urgent.</p>
-        </div>
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="file-text" class="w-5 h-5 text-[#7de8eb]"></i></div>
-            <span class="text-[#7de8eb]/40 font-bold text-2xl">05</span>
-          </div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">Summarise</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Sends your team a clear summary the moment the call ends.</p>
-        </div>
-      </div>
-
-      <!-- Sector tabs -->
-      <div class="motion flex flex-wrap justify-center gap-2 mb-8" id="sectorTabs" data-anim="fade-up" style="transition-delay:0.08s">
-        <button type="button" class="sector-tab is-active" data-sector="0">Dental</button>
-        <button type="button" class="sector-tab" data-sector="1">Legal</button>
-        <button type="button" class="sector-tab" data-sector="2">Property</button>
-        <button type="button" class="sector-tab" data-sector="3">Trades</button>
-        <button type="button" class="sector-tab" data-sector="4">Care</button>
-      </div>
-
-      <!-- WiseCall-specific visual showcase: during → after (sector-aware) -->
-      <div id="callShowcase" class="motion grid lg:grid-cols-[1fr_auto_1fr] gap-5 lg:gap-6 items-stretch max-w-5xl mx-auto" data-anim="fade-up" style="transition-delay:0.1s">
-
-        <!-- DURING THE CALL -->
-        <div class="h-full flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/15 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-          <div class="flex items-center justify-between mb-5">
-            <div class="flex items-center gap-3">
-              <span class="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#7de8eb]/15">
-                <i data-lucide="phone-incoming" class="w-5 h-5 text-[#7de8eb]"></i>
-              </span>
-              <div class="min-w-0">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-[#7de8eb]">Incoming call</p>
-                <p id="sc-number" class="text-white font-semibold text-sm truncate">+44 7700 900482</p>
-              </div>
+      <div class="motion" data-anim="fade-left" style="transition-delay:0.1s">
+        <div class="relative max-w-sm mx-auto rounded-2xl border border-[#7de8eb]/20 bg-white/5 backdrop-blur-sm p-6 shadow-[0_0_60px_rgba(125,232,235,0.12)]">
+          <div class="text-center mb-5">
+            <div class="w-20 h-20 rounded-full mx-auto mb-3 border border-[#7de8eb]/30 bg-[#172929] flex items-center justify-center overflow-hidden">
+              <img src="owl-logo.png" alt="WiseCall" class="w-16 h-16 object-contain">
             </div>
-            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#7de8eb]"><span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>Live</span>
+            <h3 class="font-bold text-white text-lg mb-1">WiseCall AI</h3>
+            <span class="inline-flex items-center gap-1.5 text-sm text-[#7de8eb]">
+              <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
+              Handling Call
+            </span>
           </div>
-          <p class="text-white/50 text-xs">Answering as <span id="sc-business" class="text-white/85 font-medium">Bright Smile Dental</span></p>
 
-          <div class="my-5 border-t border-white/10"></div>
-
-          <p class="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-3">Caller intent</p>
-          <div id="sc-intent" class="flex flex-wrap gap-2 mb-3">
-            <span class="px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold">New patient</span>
-            <span class="px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold">Booking</span>
-            <span class="px-2.5 py-1 rounded-full bg-white/10 text-white/70 text-xs font-semibold">Not urgent</span>
-          </div>
-          <p id="sc-quote" class="text-white/60 text-sm italic leading-relaxed">"I'd like to register and book a check-up."</p>
-
-          <div class="mt-auto pt-5">
-            <div class="border-t border-white/10 mb-3"></div>
-            <p class="text-white/45 text-xs flex items-start gap-2"><i data-lucide="git-branch" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i><span id="sc-route">Routes the next step automatically — urgent calls go straight to your on-call mobile.</span></p>
-          </div>
-        </div>
-
-        <!-- connector -->
-        <div class="hidden lg:flex items-center justify-center">
-          <span class="w-10 h-10 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/25 flex items-center justify-center"><i data-lucide="arrow-right" class="w-5 h-5 text-[#7de8eb]"></i></span>
-        </div>
-
-        <!-- AFTER THE CALL -->
-        <div class="h-full flex flex-col rounded-2xl bg-gradient-to-br from-[#7de8eb]/[0.10] to-transparent border border-[#7de8eb]/30 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.4)]">
-          <div class="flex items-center justify-between mb-5">
-            <div class="flex items-center gap-2">
-              <i data-lucide="messages-square" class="w-5 h-5 text-[#7de8eb]"></i>
-              <p class="text-white font-bold text-sm">Call transcript</p>
+          <div id="heroMessages" class="rounded-xl bg-[#172929]/60 border border-[#7de8eb]/10 p-4 min-h-[120px]">
+            <div class="scenario active">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Dental Practice</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"We have an appointment on Thursday at 2pm with Dr. Patel. Shall I book that for you?"</p>
             </div>
-            <span id="sc-duration" class="text-white/40 text-xs">2m 14s</span>
-          </div>
-          <div id="sc-transcript" class="flex-1 space-y-2.5 text-sm overflow-hidden">
-            <div class="transcript-turn flex justify-end">
-              <div class="max-w-[88%] rounded-2xl rounded-br-sm bg-[#172929] border border-white/10 px-3.5 py-2.5">
-                <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb] mb-0.5">Caller</p>
-                <p class="text-white/85 text-sm leading-relaxed">Hi, I’d like to register as a new patient and book a check-up.</p>
-              </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Property</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"I can arrange a callback from our lettings team this afternoon. What's the best number to reach you?"</p>
             </div>
-            <div class="transcript-turn flex justify-start">
-              <div class="max-w-[88%] rounded-2xl rounded-bl-sm bg-[#7de8eb]/12 px-3.5 py-2.5">
-                <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]/80 mb-0.5">Agent</p>
-                <p class="text-white/85 text-sm leading-relaxed">Of course — I can help with that. Are you looking for NHS or private treatment?</p>
-              </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Legal Services</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"I'll take your details and make sure a member of the team contacts you before close of play today."</p>
             </div>
-            <div class="transcript-turn flex justify-end">
-              <div class="max-w-[88%] rounded-2xl rounded-br-sm bg-[#172929] border border-white/10 px-3.5 py-2.5">
-                <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb] mb-0.5">Caller</p>
-                <p class="text-white/85 text-sm leading-relaxed">Private, please. Do you have anything on a Wednesday morning?</p>
-              </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Care Provider</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"I can pass your details to the care coordinator right away. Are you calling on behalf of yourself or a family member?"</p>
             </div>
-            <div class="transcript-turn flex justify-start">
-              <div class="max-w-[88%] rounded-2xl rounded-bl-sm bg-[#7de8eb]/12 px-3.5 py-2.5">
-                <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]/80 mb-0.5">Agent</p>
-                <p class="text-white/85 text-sm leading-relaxed">Let me take your details and we’ll find a slot that works.</p>
-              </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">Trades</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"A call-out Monday morning works. Can I take the address and a brief description of the issue?"</p>
+            </div>
+            <div class="scenario">
+              <span class="inline-block px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold mb-3">General Enquiry</span>
+              <p class="text-white/85 text-sm leading-relaxed italic">"I'll note that down and make sure someone gets back to you with a confirmed time. Can I take a name?"</p>
             </div>
           </div>
 
-          <div class="mt-auto pt-5">
-            <div class="border-t border-white/10 mb-3"></div>
-            <div class="flex flex-wrap gap-2">
-              <span class="inline-flex items-center gap-1.5 text-xs text-white/65"><i data-lucide="send" class="w-3.5 h-3.5 text-[#7de8eb]"></i><span id="sc-deliver">Summary emailed to reception</span></span>
-              <span class="inline-flex items-center gap-1.5 text-xs text-white/65"><i data-lucide="bell" class="w-3.5 h-3.5 text-[#7de8eb]"></i>SMS sent to caller</span>
+          <div class="flex justify-center gap-6 mt-5">
+            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+              <i data-lucide="mic" class="w-5 h-5 text-white/60"></i>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-red-500/80 flex items-center justify-center">
+              <i data-lucide="phone-off" class="w-5 h-5 text-white"></i>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+              <i data-lucide="volume-2" class="w-5 h-5 text-white/60"></i>
             </div>
           </div>
         </div>
@@ -1300,117 +1207,23 @@
       });
     });
 
-    // Sector-aware call showcase rotation
-    const callShowcase = document.getElementById('callShowcase');
-    const sectorTabs = document.getElementById('sectorTabs');
-    if (callShowcase && sectorTabs) {
-      const transcriptBubble = (speaker, text) => {
-        const isCaller = speaker === 'caller';
-        const align = isCaller ? 'justify-end' : 'justify-start';
-        const bubble = isCaller
-          ? 'rounded-2xl rounded-br-sm bg-[#172929] border border-white/10'
-          : 'rounded-2xl rounded-bl-sm bg-[#7de8eb]/12';
-        const label = isCaller ? 'text-[#7de8eb]' : 'text-[#7de8eb]/80';
-        const role = isCaller ? 'Caller' : 'Agent';
-        return `<div class="transcript-turn flex ${align}"><div class="max-w-[88%] ${bubble} px-3.5 py-2.5"><p class="text-[10px] font-bold uppercase tracking-wide ${label} mb-0.5">${role}</p><p class="text-white/85 text-sm leading-relaxed">${text}</p></div></div>`;
-      };
-      const renderTranscript = (turns) => turns.map((t) => transcriptBubble(t.speaker, t.text)).join('');
+    // Hero scenario rotation
+    const scenarios = document.querySelectorAll('.scenario');
+    const scenarioContainer = document.getElementById('heroMessages');
+    let currentScenario = 0;
+    let rotationPaused = false;
 
-      const sectors = [
-        {
-          number: '+44 7700 900482', business: 'Bright Smile Dental',
-          intent: ['New patient', 'Booking'], tag: 'Not urgent', urgent: false,
-          quote: '"I’d like to register and book a check-up."',
-          route: 'Routes the next step automatically — urgent calls go straight to your on-call mobile.',
-          duration: '2m 14s', deliver: 'Summary emailed to reception',
-          transcript: [
-            { speaker: 'caller', text: 'Hi, I’d like to register as a new patient and book a check-up.' },
-            { speaker: 'agent', text: 'Of course — I can help with that. Are you looking for NHS or private treatment?' },
-            { speaker: 'caller', text: 'Private, please. Do you have anything on a Wednesday morning?' },
-            { speaker: 'agent', text: 'Let me take your details and we’ll find a slot that works.' },
-          ],
-        },
-        {
-          number: '+44 7700 900913', business: 'Hale & Co Solicitors',
-          intent: ['New enquiry', 'Conveyancing'], tag: 'Callback', urgent: false,
-          quote: '"I’m buying a flat and need a quote for conveyancing."',
-          route: 'Qualifies the matter, checks it’s not an existing case, then routes to your intake team.',
-          duration: '3m 02s', deliver: 'Summary emailed to the office',
-          transcript: [
-            { speaker: 'caller', text: 'I’m buying a flat and need a quote for conveyancing.' },
-            { speaker: 'agent', text: 'I can help with that. Is this a new enquiry or are you already a client with us?' },
-            { speaker: 'caller', text: 'New enquiry. I’m hoping to exchange within the next few months.' },
-            { speaker: 'agent', text: 'Thank you. I’ll capture the details and arrange a callback from our intake team.' },
-          ],
-        },
-        {
-          number: '+44 7700 900184', business: 'Marsh & Park Estate Agents',
-          intent: ['Valuation', 'Selling'], tag: 'This week', urgent: false,
-          quote: '"I’d like to book a valuation for my house."',
-          route: 'Captures the property details and books straight into your branch diary.',
-          duration: '2m 48s', deliver: 'Lead added to your CRM',
-          transcript: [
-            { speaker: 'caller', text: 'I’d like to book a valuation for my house — we’re thinking of selling.' },
-            { speaker: 'agent', text: 'Happy to help. Can I take the property address and when you’d like someone to visit?' },
-            { speaker: 'caller', text: 'It’s a three-bed semi in Headingley. This week would be ideal if possible.' },
-            { speaker: 'agent', text: 'Thank you. Let me check availability and take your contact details.' },
-          ],
-        },
-        {
-          number: '+44 7700 900627', business: 'Northgate Plumbing & Heating',
-          intent: ['Boiler fault', 'Call-out'], tag: 'Urgent', urgent: true,
-          quote: '"My boiler’s leaking and there’s no hot water."',
-          route: 'Recognised as urgent — routed straight to your on-call engineer’s mobile.',
-          duration: '1m 51s', deliver: 'Summary sent to your mobile',
-          transcript: [
-            { speaker: 'caller', text: 'My boiler’s leaking and there’s no hot water — can someone come out today?' },
-            { speaker: 'agent', text: 'I’m sorry to hear that. I’ll treat this as urgent. Can I take your address and when someone can access the property?' },
-            { speaker: 'caller', text: '14 Oak Lane, LS6. I’ll be home all afternoon.' },
-            { speaker: 'agent', text: 'Thank you. I’m passing this straight to our on-call engineer now.' },
-          ],
-        },
-        {
-          number: '+44 7700 900471', business: 'Oakfield Care',
-          intent: ['Family enquiry', 'Respite'], tag: 'Sensitive', urgent: false,
-          quote: '"I’m looking into respite care for my mother."',
-          route: 'Captures the details sensitively and passes them to the right care coordinator.',
-          duration: '3m 26s', deliver: 'Summary emailed to the team',
-          transcript: [
-            { speaker: 'caller', text: 'I’m looking into respite care for my mother — could someone call me back?' },
-            { speaker: 'agent', text: 'Of course. I’ll take a few details so we can connect you with the right coordinator.' },
-            { speaker: 'caller', text: 'She needs support for a couple of weeks while I’m away next month.' },
-            { speaker: 'agent', text: 'Thank you. I’ll pass this to our care team and they’ll be in touch.' },
-          ],
-        },
-      ];
-      const tabs = Array.from(sectorTabs.querySelectorAll('.sector-tab'));
-      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-      let current = 0, paused = false;
-
-      function renderSector(i) {
-        const s = sectors[i];
-        callShowcase.classList.add('is-swapping');
-        setTimeout(() => {
-          set('sc-number', s.number); set('sc-business', s.business); set('sc-quote', s.quote);
-          set('sc-route', s.route); set('sc-duration', s.duration); set('sc-deliver', s.deliver);
-          const transcriptEl = document.getElementById('sc-transcript');
-          if (transcriptEl) transcriptEl.innerHTML = renderTranscript(s.transcript);
-          const intentEl = document.getElementById('sc-intent');
-          if (intentEl) {
-            const chips = s.intent.map((t) => `<span class="px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold">${t}</span>`).join('');
-            const tagCls = s.urgent ? 'bg-red-500/15 text-red-300' : 'bg-white/10 text-white/70';
-            intentEl.innerHTML = chips + `<span class="px-2.5 py-1 rounded-full ${tagCls} text-xs font-semibold">${s.tag}</span>`;
-          }
-          tabs.forEach((t, idx) => t.classList.toggle('is-active', idx === i));
-          callShowcase.classList.remove('is-swapping');
-        }, 200);
+    if (scenarioContainer && scenarios.length) {
+      function rotateScenarios() {
+        if (rotationPaused) return;
+        scenarios[currentScenario].classList.remove('active');
+        currentScenario = (currentScenario + 1) % scenarios.length;
+        scenarios[currentScenario].classList.add('active');
       }
 
-      tabs.forEach((t) => t.addEventListener('click', () => {
-        current = Number(t.dataset.sector); renderSector(current); paused = true;
-      }));
-      callShowcase.addEventListener('mouseenter', () => { paused = true; });
-      setInterval(() => { if (paused) return; current = (current + 1) % sectors.length; renderSector(current); }, 4500);
+      setInterval(rotateScenarios, 5000);
+      scenarioContainer.addEventListener('mouseenter', () => { rotationPaused = true; });
+      scenarioContainer.addEventListener('mouseleave', () => { rotationPaused = false; });
     }
 
     // Setup video: play on overlay click, reveal native controls
