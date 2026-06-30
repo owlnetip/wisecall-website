@@ -206,8 +206,12 @@ function footer() {
       </ul>
     </div>
     <div>
-      <h2 class="text-white font-bold mb-3 text-base">AI Search Notes</h2>
-      <p class="text-white/60 leading-relaxed">FAQ answers are written as standalone answers for Google snippets, ChatGPT, Perplexity, Gemini and Copilot extraction.</p>
+      <h2 class="text-white font-bold mb-3 text-base">Company</h2>
+      <ul class="space-y-2 text-white/60">
+        <li><a href="/" class="hover:text-[#7de8eb]">Home</a></li>
+        <li><a href="/privacy-policy" class="hover:text-[#7de8eb]">Privacy policy</a></li>
+        <li><a href="/terms" class="hover:text-[#7de8eb]">Terms</a></li>
+      </ul>
     </div>
   </div>
 </footer>`;
@@ -335,23 +339,6 @@ function audioAndCasePlaceholders(industry) {
 </section>`;
 }
 
-function transcriptReadiness() {
-  return `<section class="px-6 py-20">
-  <div class="max-w-7xl mx-auto">
-    <div class="eyebrow mb-6"><i data-lucide="database" class="w-4 h-4"></i>Transcript-to-content readiness</div>
-    <h2 class="text-4xl md:text-5xl font-black mb-8">Future content that should come from real call data</h2>
-    <div class="grid md:grid-cols-4 gap-4">
-      ${[
-        ['Anonymised call examples', 'Use approved, anonymised patterns from real calls to explain common caller needs.'],
-        ['Transcript-derived FAQs', 'Turn repeated caller questions into self-contained FAQ answers for AI search.'],
-        ['Call statistics', 'Publish only aggregated, verified call-handling metrics once enough data exists.'],
-        ['Quarterly benchmark reports', 'Create industry benchmark reports from anonymised WiseCall data when statistically meaningful.'],
-      ].map(([title, text]) => `<div class="card p-6"><h3 class="font-bold text-lg mb-3">${esc(title)}</h3><p class="text-white/62 text-sm leading-relaxed">${esc(text)}</p></div>`).join('')}
-    </div>
-  </div>
-</section>`;
-}
-
 function renderIndustryPage(industry) {
   const page = { title: industry.title, description: industry.description, path: `/industries/${industry.slug}/` };
   const faqs = [...industry.faqs, ...globalFaqs.slice(0, 2)];
@@ -394,13 +381,12 @@ ${trustStrip()}
 ${audioAndCasePlaceholders(industry)}
 ${missedCallCalculatorBlock()}
 ${faqSection(faqs, `Common Questions from ${industry.name}`)}
-${transcriptReadiness()}
 ${relatedLinks([
   { path: '/pricing/', title: `Pricing for ${industry.name}`, text: 'See how WiseCall plans work for UK businesses.' },
   { path: '/how-it-works/', title: 'How WiseCall handles a call', text: 'Understand the call flow, routing and summaries.' },
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'AI receptionist UK comparison', text: 'Compare WiseCall with common alternatives.' },
 ])}
-${ctaBlock(`Ready to capture more ${industry.leadType}s?`, `Book a free demo and see how WiseCall can support your ${industry.singular}.`)}`;
+${ctaBlock(`Ready to capture more ${industry.leadType.replace(/y$/, 'ies')}?`, `Book a free demo and see how WiseCall can support your ${industry.singular}.`)}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: '/industries/' }, { name: industry.name, path: page.path }]), faqSchema(faqs)]);
 }
 
