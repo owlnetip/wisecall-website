@@ -1,4 +1,4 @@
-// wisecall-trial-final-reminder — sends the SECOND, final trial reminder ~24h
+// wisecall-trial-final-reminder - sends the SECOND, final trial reminder ~24h
 // before a trial ends, in addition to the ~3-day reminder fired by Stripe's
 // customer.subscription.trial_will_end webhook. Stripe only emits trial_will_end
 // once, so this 24h nudge has to be cron-driven.
@@ -15,7 +15,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Monthly list price (excl. VAT) per plan — mirrors lib/stripe.ts. Used to word
+// Monthly list price (excl. VAT) per plan - mirrors lib/stripe.ts. Used to word
 // the reminder; the authoritative charge is whatever Stripe bills.
 const PLAN_PRICE_GBP: Record<string, number> = { core: 249, growth: 399, pro: 699 };
 const PLAN_NAME: Record<string, string> = {
@@ -80,7 +80,7 @@ Deno.serve(async (req: Request) => {
       email = u?.user?.email ?? null;
     } catch (_e) { /* email optional */ }
     const phone = (row.notification_phone as string | null) ?? null;
-    if (!email && !phone) continue; // no way to reach them — leave for a later run
+    if (!email && !phone) continue; // no way to reach them - leave for a later run
 
     const endDate = row.trial_end
       ? new Date(row.trial_end as string).toLocaleDateString("en-GB", {

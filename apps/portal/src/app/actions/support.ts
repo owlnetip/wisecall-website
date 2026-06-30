@@ -33,7 +33,7 @@ export async function raiseSupportTicket(input: { subject: string; message: stri
   const description = [
     message,
     "",
-    "—",
+    "-",
     `Raised from the WiseCall portal by ${fromEmail}.`,
   ].join("\n");
 

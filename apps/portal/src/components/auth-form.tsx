@@ -71,9 +71,11 @@ function Owl({ eyeOffset, passwordFocused, blinking }: OwlProps) {
 export function AuthForm({
   mode,
   redirectAfterSignIn = "/dashboard",
+  referralCode,
 }: {
   mode: "signin" | "signup";
   redirectAfterSignIn?: string;
+  referralCode?: string;
 }) {
   const isSignup = mode === "signup";
   const formRedirect = isSignup ? "/billing" : redirectAfterSignIn;
@@ -181,6 +183,9 @@ export function AuthForm({
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="intent" value={mode} />
             <input type="hidden" name="redirect" value={formRedirect} />
+            {isSignup && referralCode ? (
+              <input type="hidden" name="referral_code" value={referralCode} />
+            ) : null}
 
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.5)" }}>

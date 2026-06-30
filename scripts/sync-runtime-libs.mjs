@@ -15,7 +15,7 @@ const copies = [
 
 for (const [srcName, destName] of copies) {
   const src = readFileSync(join(edgeLib, srcName), "utf8");
-  const banner = `// ${destName} — synced from wisecall-edge/src/lib/${srcName}\n// Run: npm run sync:portal (from wisecall-edge/) or node scripts/sync-runtime-libs.mjs\n\n`;
+  const banner = `// ${destName} - synced from wisecall-edge/src/lib/${srcName}\n// Run: npm run sync:portal (from wisecall-edge/) or node scripts/sync-runtime-libs.mjs\n\n`;
   writeFileSync(join(portalLib, destName), banner + src);
   console.log(`synced ${srcName} → apps/portal/src/lib/${destName}`);
 }

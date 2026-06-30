@@ -6,7 +6,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 //
 // Given a completed call's transcript + summary, this asks Claude for a single,
 // strict-JSON verdict and stores it back on the wisecall_call_logs row. The
-// dashboard "AI Insights" view then aggregates these stored fields per tenant —
+// dashboard "AI Insights" view then aggregates these stored fields per tenant -
 // it never calls the model, so the dashboard stays fast and cheap.
 //
 // SECURITY: this module is server-only. The prompt and the API key never reach
@@ -129,7 +129,7 @@ function normalise(raw: Record<string, unknown>): CallAnalysis {
 }
 
 // Calls Claude and returns a validated CallAnalysis. Uses a forced tool call so
-// the model can only ever answer as a single strict-JSON object — there is no
+// the model can only ever answer as a single strict-JSON object - there is no
 // free-text channel to parse or sanitise.
 export async function analyzeTranscript(input: {
   transcript: string;
@@ -268,7 +268,7 @@ export async function analyzeTranscript(input: {
             ? `Business: ${input.businessName}`
             : "Business: a UK small business",
           "",
-          "Analyse this completed call. Be accurate and conservative — only flag a complaint, lead, booking or unanswered question if the transcript clearly supports it.",
+          "Analyse this completed call. Be accurate and conservative - only flag a complaint, lead, booking or unanswered question if the transcript clearly supports it.",
           input.summary ? `\nCall summary (from the system):\n${input.summary}` : "",
           "\n--- TRANSCRIPT ---",
           transcript,

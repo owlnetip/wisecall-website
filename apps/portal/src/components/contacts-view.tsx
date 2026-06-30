@@ -25,7 +25,7 @@ function initials(name: string, phone: string): string {
 }
 
 function relativeDate(iso: string): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
   const now = Date.now();
   const diff = now - d.getTime();
@@ -40,7 +40,7 @@ function relativeDate(iso: string): string {
 }
 
 function absoluteDate(iso: string): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
@@ -249,7 +249,7 @@ function ContactDetail({
               setNotes(e.target.value);
               setSaved(false);
             }}
-            placeholder="Add private notes about this contact — visible only to you."
+            placeholder="Add private notes about this contact - visible only to you."
             className="w-full rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2 text-sm text-[#111716] placeholder:text-[#9aa5a2] focus:outline-none focus:ring-2 focus:ring-[#148b8e]/40"
           />
           <div className="mt-2 flex flex-wrap items-center gap-3">

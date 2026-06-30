@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Always 200 to Twilio for handled cases — non-200 triggers retries.
+  // Always 200 to Twilio for handled cases - non-200 triggers retries.
   try {
     // Twilio inbound WhatsApp payload is application/x-www-form-urlencoded:
     // From=whatsapp:+447..., To=whatsapp:+44..., Body=..., ProfileName=...
@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
 
     const memoryLines: string[] = [];
     if (contact) {
-      memoryLines.push("[CONTACT MEMORY — you have dealt with this person before]");
+      memoryLines.push("[CONTACT MEMORY - you have dealt with this person before]");
       if (contact.name) memoryLines.push(`Name: ${contact.name}`);
       memoryLines.push(`Previous calls: ${contact.call_count}, previous emails: ${contact.email_count}`);
       if (contact.ai_summary) memoryLines.push(`History: ${contact.ai_summary}`);
@@ -336,7 +336,7 @@ Deno.serve(async (req) => {
       profile.business_context ? `\nBusiness knowledge:\n${profile.business_context}` : "",
       kbContext ? `\n${kbContext}` : "",
       memoryLines.length ? `\n${memoryLines.join("\n")}` : "",
-      "\nReturn ONLY the message text to send back — no quotes, no labels.",
+      "\nReturn ONLY the message text to send back - no quotes, no labels.",
     ]
       .filter(Boolean)
       .join("\n");
@@ -352,11 +352,11 @@ Deno.serve(async (req) => {
         replyText = await callOpenAi(systemPrompt, userMessage);
       } catch (fallbackError) {
         console.error("[wisecall-whatsapp-inbound] fallback LLM error:", (fallbackError as Error).message);
-        replyText = `Thanks for your message — the ${businessName} team will be in touch shortly.`;
+        replyText = `Thanks for your message - the ${businessName} team will be in touch shortly.`;
       }
     }
     if (!replyText) {
-      replyText = `Thanks for your message — the ${businessName} team will be in touch shortly.`;
+      replyText = `Thanks for your message - the ${businessName} team will be in touch shortly.`;
     }
 
     try {

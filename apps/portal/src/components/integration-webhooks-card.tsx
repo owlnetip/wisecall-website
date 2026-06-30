@@ -175,7 +175,7 @@ function WebhookCard({
             rows={2}
             placeholder={
               hook.condition === "during_call"
-                ? "What this does — helps the AI know when to call it."
+                ? "What this does - helps the AI know when to call it."
                 : "Optional note for your team."
             }
             className="w-full rounded-lg border border-black/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#111716]"
@@ -233,7 +233,7 @@ function WebhookCard({
         <ul className="mt-2 space-y-1">
           {webhookTemplateTokens.map((item) => (
             <li key={item.token}>
-              <code className="rounded bg-white px-1">{item.token}</code> — {item.label}
+              <code className="rounded bg-white px-1">{item.token}</code> - {item.label}
             </li>
           ))}
         </ul>
@@ -284,7 +284,7 @@ export function IntegrationWebhooksCard({
         <div className="min-w-0 flex-1">
           <p className="font-black">Custom integrations</p>
           <p className="mt-1 text-sm text-[#66716e]">
-            Connect your CRM, practice software or automation — like Fonio and Telzino.
+            Connect your CRM, practice software or automation - like Fonio and Telzino.
             Configure webhooks that run before, during or after each call.
           </p>
         </div>

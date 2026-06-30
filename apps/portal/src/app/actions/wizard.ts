@@ -107,7 +107,7 @@ async function fetchSiteTextDirect(url: string): Promise<string> {
 }
 
 // Fallback for Cloudflare-protected or bot-blocked sites. Uses the same Jina
-// stack as kb-search embeddings — get a free key at https://jina.ai/?sui=apikey.
+// stack as kb-search embeddings - get a free key at https://jina.ai/?sui=apikey.
 async function fetchSiteTextViaJina(url: string): Promise<string> {
   const apiKey = process.env.JINA_API_KEY;
   const controller = new AbortController();
@@ -141,7 +141,7 @@ async function fetchSiteText(url: string): Promise<string> {
     const direct = await fetchSiteTextDirect(url);
     if (direct.length >= 80) return direct;
   } catch {
-    // Direct fetch often fails on Cloudflare/WAF-protected sites — try Reader.
+    // Direct fetch often fails on Cloudflare/WAF-protected sites - try Reader.
   }
   return fetchSiteTextViaJina(url);
 }
@@ -213,7 +213,7 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
               greeting: {
                 type: "string",
                 description:
-                  "The exact first sentence the assistant says when answering, naming the business. Start with a neutral greeting — 'Hi', 'Hello' or 'Welcome' — and NEVER a time-of-day greeting like 'Good morning' or 'Good afternoon'. Do not use a personal name. One short sentence.",
+                  "The exact first sentence the assistant says when answering, naming the business. Start with a neutral greeting - 'Hi', 'Hello' or 'Welcome' - and NEVER a time-of-day greeting like 'Good morning' or 'Good afternoon'. Do not use a personal name. One short sentence.",
               },
               prompt: {
                 type: "string",
@@ -258,7 +258,7 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
       messages: [
         {
           role: "user",
-          content: `You are setting up an AI phone receptionist for a UK business. Below is the text scraped from their website (${url}). Draft a complete, ready-to-review configuration. Be specific to THIS business — use its real name, services and tone. If something isn't on the site, make a sensible professional default rather than inventing facts. Only fill opening hours if they are actually stated.\n\n--- WEBSITE TEXT ---\n${siteText}`,
+          content: `You are setting up an AI phone receptionist for a UK business. Below is the text scraped from their website (${url}). Draft a complete, ready-to-review configuration. Be specific to THIS business - use its real name, services and tone. If something isn't on the site, make a sensible professional default rather than inventing facts. Only fill opening hours if they are actually stated.\n\n--- WEBSITE TEXT ---\n${siteText}`,
         },
       ],
     });
@@ -320,8 +320,8 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
         website: url,
         templateId: matchTemplateId(str("industry"), str("businessContext")),
         voice: "",
-        // Pre-fill the messages inbox with the account holder's email — the most
-        // common answer — so most users just confirm it in the wizard.
+        // Pre-fill the messages inbox with the account holder's email - the most
+        // common answer - so most users just confirm it in the wizard.
         defaultEmail: user.email ?? "",
         contacts: [],
       },
@@ -401,7 +401,7 @@ const EMIT_AGENT_DRAFT_TOOL: Anthropic.Messages.Tool = {
       greeting: {
         type: "string",
         description:
-          "The exact first sentence the assistant says when answering, naming the business. Start with a neutral greeting — 'Hi', 'Hello' or 'Welcome' — NEVER a time-of-day greeting. One short sentence.",
+          "The exact first sentence the assistant says when answering, naming the business. Start with a neutral greeting - 'Hi', 'Hello' or 'Welcome' - NEVER a time-of-day greeting. One short sentence.",
       },
       prompt: {
         type: "string",
@@ -434,7 +434,7 @@ const EMIT_AGENT_DRAFT_TOOL: Anthropic.Messages.Tool = {
 };
 
 // Builds an AgentDraft from manually-entered business details instead of a website scan.
-// The AI call is identical — we just feed it structured text instead of scraped HTML.
+// The AI call is identical - we just feed it structured text instead of scraped HTML.
 export async function draftAgentFromInputs(inputs: BusinessInputs): Promise<DraftResult> {
   const auth = await createSupabaseServerClient();
   const {

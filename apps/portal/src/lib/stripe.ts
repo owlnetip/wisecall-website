@@ -31,7 +31,7 @@ export const STARTER_PRICE = process.env.STRIPE_STARTER_PRICE || "price_1TmcN7F6
 export const PROFESSIONAL_PRICE = process.env.STRIPE_PROFESSIONAL_PRICE || "price_1TmcN8F6ZlidDG7dq22YymbJ"; // £199/mo
 export const BUSINESS_PRICE = process.env.STRIPE_BUSINESS_PRICE || "price_1TmcN9F6ZlidDG7d5abmEf41"; // £399/mo
 
-// Legacy plans — kept active for existing subscribers, not offered to new signups.
+// Legacy plans - kept active for existing subscribers, not offered to new signups.
 export const CORE_PRICE = process.env.STRIPE_CORE_PRICE || "price_1Tj5TaF6ZlidDG7dJc4YYOEu"; // £249/mo
 export const GROWTH_PRICE = process.env.STRIPE_GROWTH_PRICE || "price_1Tj5TbF6ZlidDG7dVqVvOiV4"; // £399/mo
 export const PRO_PRICE = process.env.STRIPE_PRO_PRICE || "price_1Tj5TdF6ZlidDG7d4Asvpqsa"; // £699/mo
@@ -132,7 +132,7 @@ export function planDisplayName(plan: string | null | undefined): string {
       return "Professional";
     case "business":
       return "Business";
-    // Legacy plan names — existing subscribers
+    // Legacy plan names - existing subscribers
     case "core":
       return "Core (legacy)";
     case "growth":
@@ -146,7 +146,7 @@ export function planDisplayName(plan: string | null | undefined): string {
   }
 }
 
-// Checkout line items for a plan — a single licensed price with manual 20% VAT.
+// Checkout line items for a plan - a single licensed price with manual 20% VAT.
 export function lineItemsForPlan(plan: PlanId): Stripe.Checkout.SessionCreateParams.LineItem[] {
   return [{ price: PLAN_PRICE[plan], quantity: 1, tax_rates: [VAT_RATE] }];
 }

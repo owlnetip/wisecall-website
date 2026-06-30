@@ -1,4 +1,4 @@
-// wisecall-pool-replenish — tops up the GB number pool when it runs low.
+// wisecall-pool-replenish - tops up the GB number pool when it runs low.
 //
 // Triggered on a schedule (pg_cron → net.http_post) and/or on demand. When the
 // number of FREE numbers in wisecall_number_pool drops below the threshold, it
@@ -62,7 +62,7 @@ async function assignWaitingAgents(
     const { data: number } = await supabase.rpc("wisecall_assign_pool_number", {
       p_profile_id: row.id,
     });
-    if (!number) break; // pool drained — stop, remaining stay pending for next run
+    if (!number) break; // pool drained - stop, remaining stay pending for next run
     const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
     delete metadata.awaiting_number;
     await supabase
@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
     if (code === "20100") {
       await alertEmail(
         "WiseCall pool: top up Telnyx credit",
-        `The number pool is low (${free} free) and auto-replenish couldn't order ${need} more — Telnyx reported insufficient funds.\n\n${detail}\n\nTop up the Telnyx balance and it'll order on the next run.`,
+        `The number pool is low (${free} free) and auto-replenish couldn't order ${need} more - Telnyx reported insufficient funds.\n\n${detail}\n\nTop up the Telnyx balance and it'll order on the next run.`,
       );
       return json({ ok: false, reason: "insufficient_funds", free, need, detail });
     }
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
   const orderedNumbers: string[] = (order.data?.phone_numbers ?? []).map((p: any) => p.phone_number);
 
   // Give Telnyx a moment to activate (requirement group is approved → fast), then
-  // fetch ids. Seed regardless — telnyx_id is only used for management, not routing.
+  // fetch ids. Seed regardless - telnyx_id is only used for management, not routing.
   await new Promise((r) => setTimeout(r, 6000));
   const idByNumber: Record<string, string> = {};
   try {
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
     for (const pn of data) {
       if (orderedNumbers.includes(pn.phone_number)) idByNumber[pn.phone_number] = pn.id;
     }
-  } catch (_e) { /* best effort — telnyx_id isn't needed for routing */ }
+  } catch (_e) { /* best effort - telnyx_id isn't needed for routing */ }
 
   const rows = orderedNumbers.map((n) => ({
     phone_number: n,

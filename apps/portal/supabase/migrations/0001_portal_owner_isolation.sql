@@ -24,7 +24,7 @@ create index if not exists wisecall_profiles_owner_id_idx
 -- row of wisecall_profiles (including secrets like dentally_api_key). If the
 -- live Lovable portal / demo pages rely on that anon access, enabling the
 -- policies below WILL break them until those apps are updated to authenticate.
--- The portal itself does NOT need this — it already scopes every query by
+-- The portal itself does NOT need this - it already scopes every query by
 -- owner_id server-side with the service role. Enable this only once you've
 -- confirmed nothing else depends on anon reads.
 --

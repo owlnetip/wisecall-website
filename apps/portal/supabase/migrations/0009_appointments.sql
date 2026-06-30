@@ -1,4 +1,4 @@
--- WiseCall appointment booking — calendar connectors + bookable services + bookings.
+-- WiseCall appointment booking - calendar connectors + bookable services + bookings.
 -- Native Google Calendar / Microsoft 365 integration. All service-role only
 -- (no RLS-exposed token reads). Tokens are sensitive; access via the service key
 -- only and consider pgsodium encryption as a hardening follow-up.

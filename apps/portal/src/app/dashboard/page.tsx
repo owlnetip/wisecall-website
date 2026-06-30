@@ -13,6 +13,7 @@ import {
 } from "@/lib/enrich-contacts";
 import { backfillInferredContactNames } from "@/app/actions/contacts";
 import { isAdmin } from "@/lib/admin";
+import { isPartner } from "@/lib/partner";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
 import { getInsightsForUser, emptyInsights } from "@/lib/insights";
 import { isAnalysisConfigured } from "@/lib/call-analysis";
@@ -26,6 +27,12 @@ export default async function DashboardPage() {
   // Middleware already guards this route, but double-check here.
   if (!user) {
     redirect("/?redirect=/dashboard");
+  }
+
+  // Partners (resellers) have no agents of their own - send them to their
+  // console. Admins are never partners, so this never traps an admin.
+  if (isPartner(user) && !isAdmin(user)) {
+    redirect("/partner");
   }
 
   const admin = isAdmin(user);
@@ -69,7 +76,7 @@ export default async function DashboardPage() {
 
   // Load every panel independently and degrade gracefully: a transient failure
   // in one fetch (cold start, a Supabase/insights hiccup) must NOT 500 the whole
-  // dashboard and force a refresh — render what we have and log the rest.
+  // dashboard and force a refresh - render what we have and log the rest.
   const safe = async <T,>(label: string, p: Promise<T>, fallback: T): Promise<T> => {
     try {
       return await p;

@@ -1,5 +1,5 @@
 -- Self-serve pooled phone-number provisioning. Pre-bought GB numbers sit here as
--- 'free'; on first agent creation a free one is assigned (pure DB — the numbers
+-- 'free'; on first agent creation a free one is assigned (pure DB - the numbers
 -- already point at the shared TeXML app and the runtime routes by called number),
 -- and is reclaimed to 'free' on agent delete / subscription cancel for reuse.
 

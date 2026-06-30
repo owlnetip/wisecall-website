@@ -54,7 +54,7 @@ begin
   v_over  := coalesce(v_over, 0);
 
   if v_allow > 0 and v_used >= v_allow then
-    -- Past the included allowance — overage
+    -- Past the included allowance - overage
     update public.wisecall_billing
       set calls_overage_period = v_over + 1,
           updated_at = now()
