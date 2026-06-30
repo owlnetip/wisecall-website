@@ -102,6 +102,7 @@
     .sector-tab.is-active { color: #0f2a2b; background: #7de8eb; border-color: #7de8eb; }
     #callShowcase { transition: opacity 0.3s ease; }
     #callShowcase.is-swapping { opacity: 0.35; }
+    .transcript-turn + .transcript-turn { margin-top: 0.625rem; }
     /* Pulse dot */
     @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     .pulse-dot { animation: pulse-soft 2.2s ease-in-out infinite; }
@@ -480,25 +481,35 @@
         <div class="h-full flex flex-col rounded-2xl bg-gradient-to-br from-[#7de8eb]/[0.10] to-transparent border border-[#7de8eb]/30 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.4)]">
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center gap-2">
-              <i data-lucide="file-text" class="w-5 h-5 text-[#7de8eb]"></i>
-              <p class="text-white font-bold text-sm">Call summary</p>
+              <i data-lucide="messages-square" class="w-5 h-5 text-[#7de8eb]"></i>
+              <p class="text-white font-bold text-sm">Call transcript</p>
             </div>
             <span id="sc-duration" class="text-white/40 text-xs">2m 14s</span>
           </div>
-          <div class="space-y-2.5 text-sm">
-            <div class="flex justify-between gap-3"><span class="text-white/45">Caller</span><span id="sc-caller" class="text-white/85 font-medium text-right">Sarah Doe · 07700 900482</span></div>
-            <div class="flex justify-between gap-3"><span class="text-white/45">Reason</span><span id="sc-reason" class="text-white/85 font-medium text-right">New patient registration</span></div>
-            <div class="flex justify-between gap-3"><span class="text-white/45">Captured</span><span id="sc-captured" class="text-white/85 font-medium text-right">DOB, address, NHS/private</span></div>
-            <div class="flex justify-between gap-3"><span class="text-white/45">Outcome</span><span id="sc-outcome" class="text-[#7de8eb] font-semibold text-right">Appointment booked</span></div>
-          </div>
-
-          <div class="my-5 border-t border-white/10"></div>
-
-          <div class="flex items-center gap-3">
-            <i data-lucide="calendar-check" class="w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
-            <div>
-              <p id="sc-appt-title" class="text-white font-semibold text-sm leading-tight">Thu 12 Jun · 2:00pm</p>
-              <p id="sc-appt-sub" class="text-white/55 text-xs">Check-up with Dr Patel</p>
+          <div id="sc-transcript" class="flex-1 space-y-2.5 text-sm overflow-hidden">
+            <div class="transcript-turn flex justify-end">
+              <div class="max-w-[88%] rounded-2xl rounded-br-sm bg-[#172929] border border-white/10 px-3.5 py-2.5">
+                <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb] mb-0.5">Caller</p>
+                <p class="text-white/85 text-sm leading-relaxed">Hi, I’d like to register as a new patient and book a check-up.</p>
+              </div>
+            </div>
+            <div class="transcript-turn flex justify-start">
+              <div class="max-w-[88%] rounded-2xl rounded-bl-sm bg-[#7de8eb]/12 px-3.5 py-2.5">
+                <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]/80 mb-0.5">Agent</p>
+                <p class="text-white/85 text-sm leading-relaxed">Of course — I can help with that. Are you looking for NHS or private treatment?</p>
+              </div>
+            </div>
+            <div class="transcript-turn flex justify-end">
+              <div class="max-w-[88%] rounded-2xl rounded-br-sm bg-[#172929] border border-white/10 px-3.5 py-2.5">
+                <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb] mb-0.5">Caller</p>
+                <p class="text-white/85 text-sm leading-relaxed">Private, please. Do you have anything on a Wednesday morning?</p>
+              </div>
+            </div>
+            <div class="transcript-turn flex justify-start">
+              <div class="max-w-[88%] rounded-2xl rounded-bl-sm bg-[#7de8eb]/12 px-3.5 py-2.5">
+                <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]/80 mb-0.5">Agent</p>
+                <p class="text-white/85 text-sm leading-relaxed">Let me take your details and we’ll find a slot that works.</p>
+              </div>
             </div>
           </div>
 
@@ -645,19 +656,18 @@
           <ul class="space-y-3 mb-8">
             <li class="flex items-start gap-3 text-white/75"><i data-lucide="check-circle" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Caller name, number and reason for calling</li>
             <li class="flex items-start gap-3 text-white/75"><i data-lucide="check-circle" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Key details captured during the call</li>
-            <li class="flex items-start gap-3 text-white/75"><i data-lucide="check-circle" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Outcome and recommended next step</li>
             <li class="flex items-start gap-3 text-white/75"><i data-lucide="check-circle" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Full transcript available in your dashboard</li>
           </ul>
-          <p class="text-white/45 text-sm">Summary below is anonymised. Caller names and business details are illustrative only.</p>
+          <p class="text-white/45 text-sm">Transcript below is anonymised. Caller names and business details are illustrative only.</p>
         </div>
 
-        <!-- Sample summary card -->
+        <!-- Sample transcript card -->
         <div class="motion" data-anim="scale-in" style="transition-delay:0.1s">
           <div class="rounded-2xl bg-white/5 border border-[#7de8eb]/20 overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
             <!-- Header bar -->
             <div class="bg-[#1a3535] border-b border-[#7de8eb]/15 px-5 py-3.5 flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center flex-shrink-0">
-                <i data-lucide="phone-incoming" class="w-4 h-4 text-[#172929]"></i>
+                <i data-lucide="messages-square" class="w-4 h-4 text-[#172929]"></i>
               </div>
               <div>
                 <p class="text-white font-semibold text-sm">Incoming call handled</p>
@@ -665,33 +675,31 @@
               </div>
               <span class="ml-auto inline-flex items-center gap-1 text-[#7de8eb] text-xs font-semibold bg-[#7de8eb]/10 rounded-full px-2.5 py-1"><span class="w-1.5 h-1.5 rounded-full bg-[#7de8eb]"></span>Captured</span>
             </div>
-            <!-- Body -->
-            <div class="px-5 py-5 space-y-4">
-              <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-lg bg-white/[.04] border border-white/8 px-4 py-3">
-                  <p class="text-white/45 text-xs mb-1">Caller</p>
-                  <p class="text-white font-medium text-sm">Sarah M.</p>
-                </div>
-                <div class="rounded-lg bg-white/[.04] border border-white/8 px-4 py-3">
-                  <p class="text-white/45 text-xs mb-1">Number</p>
-                  <p class="text-white font-medium text-sm">07xxx xxx xxx</p>
+            <!-- Transcript -->
+            <div class="px-5 py-5 space-y-2.5">
+              <div class="flex justify-end">
+                <div class="max-w-[88%] rounded-2xl rounded-br-sm bg-[#172929] border border-white/10 px-3.5 py-2.5">
+                  <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb] mb-0.5">Caller</p>
+                  <p class="text-white/85 text-sm leading-relaxed">Hi, I’m looking to register as a new patient and book an initial consultation for a crown.</p>
                 </div>
               </div>
-              <div class="rounded-lg bg-white/[.04] border border-white/8 px-4 py-3">
-                <p class="text-white/45 text-xs mb-1">Reason for calling</p>
-                <p class="text-white/90 text-sm leading-relaxed">New patient enquiry — wants to book an initial consultation for a crown. Had treatment elsewhere previously and is looking to change practice.</p>
+              <div class="flex justify-start">
+                <div class="max-w-[88%] rounded-2xl rounded-bl-sm bg-[#7de8eb]/12 px-3.5 py-2.5">
+                  <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]/80 mb-0.5">Agent</p>
+                  <p class="text-white/85 text-sm leading-relaxed">Of course — I can help with that. Are you looking for NHS or private treatment?</p>
+                </div>
               </div>
-              <div class="rounded-lg bg-white/[.04] border border-white/8 px-4 py-3">
-                <p class="text-white/45 text-xs mb-1">Details captured</p>
-                <ul class="text-white/75 text-sm space-y-1 mt-1">
-                  <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#7de8eb]"></i>Preferred appointment day: Wednesday mornings</li>
-                  <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#7de8eb]"></i>On NHS or private: private patient</li>
-                  <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#7de8eb]"></i>Urgency: within the next 2–3 weeks</li>
-                </ul>
+              <div class="flex justify-end">
+                <div class="max-w-[88%] rounded-2xl rounded-br-sm bg-[#172929] border border-white/10 px-3.5 py-2.5">
+                  <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb] mb-0.5">Caller</p>
+                  <p class="text-white/85 text-sm leading-relaxed">Private, please. I had treatment elsewhere and I’m looking to change practice. Do you have anything on a Wednesday morning?</p>
+                </div>
               </div>
-              <div class="rounded-lg bg-gradient-to-br from-[#7de8eb]/[.08] to-transparent border border-[#7de8eb]/25 px-4 py-3">
-                <p class="text-white/45 text-xs mb-1">Recommended next step</p>
-                <p class="text-[#7de8eb] text-sm font-medium">Call back to confirm a Wednesday morning appointment slot — high-intent new patient enquiry.</p>
+              <div class="flex justify-start">
+                <div class="max-w-[88%] rounded-2xl rounded-bl-sm bg-[#7de8eb]/12 px-3.5 py-2.5">
+                  <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]/80 mb-0.5">Agent</p>
+                  <p class="text-white/85 text-sm leading-relaxed">Thank you. Let me take your details and we’ll find a suitable appointment slot.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -1296,51 +1304,83 @@
     const callShowcase = document.getElementById('callShowcase');
     const sectorTabs = document.getElementById('sectorTabs');
     if (callShowcase && sectorTabs) {
+      const transcriptBubble = (speaker, text) => {
+        const isCaller = speaker === 'caller';
+        const align = isCaller ? 'justify-end' : 'justify-start';
+        const bubble = isCaller
+          ? 'rounded-2xl rounded-br-sm bg-[#172929] border border-white/10'
+          : 'rounded-2xl rounded-bl-sm bg-[#7de8eb]/12';
+        const label = isCaller ? 'text-[#7de8eb]' : 'text-[#7de8eb]/80';
+        const role = isCaller ? 'Caller' : 'Agent';
+        return `<div class="transcript-turn flex ${align}"><div class="max-w-[88%] ${bubble} px-3.5 py-2.5"><p class="text-[10px] font-bold uppercase tracking-wide ${label} mb-0.5">${role}</p><p class="text-white/85 text-sm leading-relaxed">${text}</p></div></div>`;
+      };
+      const renderTranscript = (turns) => turns.map((t) => transcriptBubble(t.speaker, t.text)).join('');
+
       const sectors = [
         {
           number: '+44 7700 900482', business: 'Bright Smile Dental',
           intent: ['New patient', 'Booking'], tag: 'Not urgent', urgent: false,
           quote: '"I’d like to register and book a check-up."',
           route: 'Routes the next step automatically — urgent calls go straight to your on-call mobile.',
-          duration: '2m 14s', caller: 'Sarah Doe · 07700 900482', reason: 'New patient registration',
-          captured: 'DOB, address, NHS/private', outcome: 'Appointment booked',
-          apptTitle: 'Thu 12 Jun · 2:00pm', apptSub: 'Check-up with Dr Patel', deliver: 'Summary emailed to reception',
+          duration: '2m 14s', deliver: 'Summary emailed to reception',
+          transcript: [
+            { speaker: 'caller', text: 'Hi, I’d like to register as a new patient and book a check-up.' },
+            { speaker: 'agent', text: 'Of course — I can help with that. Are you looking for NHS or private treatment?' },
+            { speaker: 'caller', text: 'Private, please. Do you have anything on a Wednesday morning?' },
+            { speaker: 'agent', text: 'Let me take your details and we’ll find a slot that works.' },
+          ],
         },
         {
           number: '+44 7700 900913', business: 'Hale & Co Solicitors',
           intent: ['New enquiry', 'Conveyancing'], tag: 'Callback', urgent: false,
           quote: '"I’m buying a flat and need a quote for conveyancing."',
           route: 'Qualifies the matter, checks it’s not an existing case, then routes to your intake team.',
-          duration: '3m 02s', caller: 'James Reid · 07700 900913', reason: 'Conveyancing enquiry',
-          captured: 'Matter type, budget, timescale', outcome: 'Callback booked',
-          apptTitle: 'Today · 4:30pm', apptSub: 'Callback from the intake team', deliver: 'Summary emailed to the office',
+          duration: '3m 02s', deliver: 'Summary emailed to the office',
+          transcript: [
+            { speaker: 'caller', text: 'I’m buying a flat and need a quote for conveyancing.' },
+            { speaker: 'agent', text: 'I can help with that. Is this a new enquiry or are you already a client with us?' },
+            { speaker: 'caller', text: 'New enquiry. I’m hoping to exchange within the next few months.' },
+            { speaker: 'agent', text: 'Thank you. I’ll capture the details and arrange a callback from our intake team.' },
+          ],
         },
         {
           number: '+44 7700 900184', business: 'Marsh & Park Estate Agents',
           intent: ['Valuation', 'Selling'], tag: 'This week', urgent: false,
           quote: '"I’d like to book a valuation for my house."',
           route: 'Captures the property details and books straight into your branch diary.',
-          duration: '2m 48s', caller: 'Priya Shah · 07700 900184', reason: 'Valuation request',
-          captured: 'Address, property type, timing', outcome: 'Valuation booked',
-          apptTitle: 'Sat 14 Jun · 11:00am', apptSub: 'Valuation with the sales team', deliver: 'Lead added to your CRM',
+          duration: '2m 48s', deliver: 'Lead added to your CRM',
+          transcript: [
+            { speaker: 'caller', text: 'I’d like to book a valuation for my house — we’re thinking of selling.' },
+            { speaker: 'agent', text: 'Happy to help. Can I take the property address and when you’d like someone to visit?' },
+            { speaker: 'caller', text: 'It’s a three-bed semi in Headingley. This week would be ideal if possible.' },
+            { speaker: 'agent', text: 'Thank you. Let me check availability and take your contact details.' },
+          ],
         },
         {
           number: '+44 7700 900627', business: 'Northgate Plumbing & Heating',
           intent: ['Boiler fault', 'Call-out'], tag: 'Urgent', urgent: true,
           quote: '"My boiler’s leaking and there’s no hot water."',
           route: 'Recognised as urgent — routed straight to your on-call engineer’s mobile.',
-          duration: '1m 51s', caller: 'Tom Allen · 07700 900627', reason: 'Emergency boiler call-out',
-          captured: 'Address, fault, access times', outcome: 'Routed to on-call',
-          apptTitle: 'Today · ASAP', apptSub: 'Engineer call-out arranged', deliver: 'Summary sent to your mobile',
+          duration: '1m 51s', deliver: 'Summary sent to your mobile',
+          transcript: [
+            { speaker: 'caller', text: 'My boiler’s leaking and there’s no hot water — can someone come out today?' },
+            { speaker: 'agent', text: 'I’m sorry to hear that. I’ll treat this as urgent. Can I take your address and when someone can access the property?' },
+            { speaker: 'caller', text: '14 Oak Lane, LS6. I’ll be home all afternoon.' },
+            { speaker: 'agent', text: 'Thank you. I’m passing this straight to our on-call engineer now.' },
+          ],
         },
         {
           number: '+44 7700 900471', business: 'Oakfield Care',
           intent: ['Family enquiry', 'Respite'], tag: 'Sensitive', urgent: false,
           quote: '"I’m looking into respite care for my mother."',
           route: 'Captures the details sensitively and passes them to the right care coordinator.',
-          duration: '3m 26s', caller: 'Helen Burns · 07700 900471', reason: 'Respite care enquiry',
-          captured: 'Resident needs, dates, contact', outcome: 'Passed to coordinator',
-          apptTitle: 'Tomorrow · 10:00am', apptSub: 'Callback from the care coordinator', deliver: 'Summary emailed to the team',
+          duration: '3m 26s', deliver: 'Summary emailed to the team',
+          transcript: [
+            { speaker: 'caller', text: 'I’m looking into respite care for my mother — could someone call me back?' },
+            { speaker: 'agent', text: 'Of course. I’ll take a few details so we can connect you with the right coordinator.' },
+            { speaker: 'caller', text: 'She needs support for a couple of weeks while I’m away next month.' },
+            { speaker: 'agent', text: 'Thank you. I’ll pass this to our care team and they’ll be in touch.' },
+          ],
         },
       ];
       const tabs = Array.from(sectorTabs.querySelectorAll('.sector-tab'));
@@ -1352,9 +1392,9 @@
         callShowcase.classList.add('is-swapping');
         setTimeout(() => {
           set('sc-number', s.number); set('sc-business', s.business); set('sc-quote', s.quote);
-          set('sc-route', s.route); set('sc-duration', s.duration); set('sc-caller', s.caller);
-          set('sc-reason', s.reason); set('sc-captured', s.captured); set('sc-outcome', s.outcome);
-          set('sc-appt-title', s.apptTitle); set('sc-appt-sub', s.apptSub); set('sc-deliver', s.deliver);
+          set('sc-route', s.route); set('sc-duration', s.duration); set('sc-deliver', s.deliver);
+          const transcriptEl = document.getElementById('sc-transcript');
+          if (transcriptEl) transcriptEl.innerHTML = renderTranscript(s.transcript);
           const intentEl = document.getElementById('sc-intent');
           if (intentEl) {
             const chips = s.intent.map((t) => `<span class="px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold">${t}</span>`).join('');
