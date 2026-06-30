@@ -2,6 +2,21 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/industries/dental",
+      "destination": "/dental",
+      "permanent": true
+    },
+    {
+      "source": "/industries/legal",
+      "destination": "/legal",
+      "permanent": true
+    },
+    {
+      "source": "/industries/estate-agents",
+      "destination": "/property",
+      "permanent": true
+    },
+    {
       "source": "/estate-agents",
       "destination": "/property",
       "permanent": true
