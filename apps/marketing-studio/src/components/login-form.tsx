@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { signInAction, type AuthState } from "@/app/actions/auth";
 
 export function LoginForm({
@@ -13,6 +13,13 @@ export function LoginForm({
   const [state, formAction, isPending] = useActionState<AuthState, FormData>(signInAction, {
     error: initialError,
   });
+
+  useEffect(() => {
+    if (state.ok) {
+      // Hard navigation ensures Supabase auth cookies are present before middleware runs.
+      window.location.assign(redirectTo);
+    }
+  }, [state.ok, redirectTo]);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4" style={{ background: "#172929" }}>
@@ -66,10 +73,10 @@ export function LoginForm({
 
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || state.ok}
             className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-background disabled:opacity-60"
           >
-            {isPending ? "Signing in…" : "Sign in"}
+            {state.ok ? "Redirecting…" : isPending ? "Signing in…" : "Sign in"}
           </button>
         </form>
       </div>

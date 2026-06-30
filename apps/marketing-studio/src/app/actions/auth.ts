@@ -4,12 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type AuthState = { error?: string; message?: string };
-
-function safeRedirect(target: FormDataEntryValue | null): string {
-  const value = typeof target === "string" ? target : "";
-  return value.startsWith("/") && !value.startsWith("//") ? value : "/";
-}
+export type AuthState = { error?: string; message?: string; ok?: boolean };
 
 export async function signInAction(
   _prev: AuthState,
@@ -17,7 +12,6 @@ export async function signInAction(
 ): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const redirectTo = safeRedirect(formData.get("redirect"));
 
   if (!email || !password) {
     return { error: "Enter your email and password." };
@@ -31,7 +25,7 @@ export async function signInAction(
   }
 
   revalidatePath("/", "layout");
-  redirect(redirectTo);
+  return { ok: true };
 }
 
 export async function signOutAction() {

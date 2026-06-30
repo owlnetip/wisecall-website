@@ -85,6 +85,20 @@ alter table public.marketing_content_items enable row level security;
 alter table public.marketing_content_versions enable row level security;
 alter table public.marketing_model_runs enable row level security;
 
+create or replace function public.is_wisecall_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin',
+    false
+  );
+$$;
+
 create policy "Admins manage marketing brands"
   on public.marketing_brands for all
   using (public.is_wisecall_admin())
