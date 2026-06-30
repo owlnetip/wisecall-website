@@ -148,9 +148,16 @@
     .stat-num { font-variant-numeric: tabular-nums; }
     [data-lucide] { width: 1em; height: 1em; }
     /* Video */
-    .video-frame { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 1.25rem; border: 1px solid rgba(125, 232, 235, 0.15); box-shadow: 0 24px 60px rgba(0,0,0,0.35); background: rgba(0,0,0,0.18); }
+    .video-frame { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 1.5rem; border: 1px solid rgba(125, 232, 235, 0.22); box-shadow: 0 40px 110px rgba(0,0,0,0.55), 0 0 0 1px rgba(125,232,235,0.08), 0 0 80px rgba(125,232,235,0.12); background: #0f1f1f; }
     .video-frame iframe,
     .video-frame video { position: absolute; inset: 0; width: 100%; height: 100%; border: none; object-fit: cover; background: #0f1f1f; }
+    /* Play overlay (fonio-style) */
+    .video-play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 0; padding: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(15,31,31,0.15) 0%, rgba(15,31,31,0.35) 100%); transition: background 0.3s ease, opacity 0.35s ease; }
+    .video-play-overlay:hover { background: linear-gradient(180deg, rgba(15,31,31,0.05) 0%, rgba(15,31,31,0.25) 100%); }
+    .video-play-overlay.is-hidden { opacity: 0; pointer-events: none; }
+    .video-play-btn { width: 5.5rem; height: 5.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(125, 232, 235, 0.95); box-shadow: 0 0 0 12px rgba(125,232,235,0.18), 0 18px 50px rgba(0,0,0,0.4); transition: transform 0.25s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.25s ease; }
+    .video-play-overlay:hover .video-play-btn { transform: scale(1.06); box-shadow: 0 0 0 16px rgba(125,232,235,0.22), 0 22px 60px rgba(0,0,0,0.45); }
+    @media (max-width: 640px) { .video-play-btn { width: 4.25rem; height: 4.25rem; } }
     @media (max-width: 1023px) {
       .hero-demo-panel .orb-stage { width: 200px; height: 200px; }
     }
@@ -337,6 +344,29 @@
     </div>
   </section>
 
+  <!-- ───── SETUP VIDEO ───── -->
+  <section class="light relative pt-10 pb-24 px-6 overflow-hidden" id="setup-video">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
+    <div class="relative z-10 max-w-6xl mx-auto">
+      <div class="motion text-center mb-8 md:mb-10" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Watch the 2-minute tour</span>
+        <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mt-2 mb-4">See WiseCall in action</h2>
+        <p class="text-xl text-white/70 max-w-2xl mx-auto">One AI agent that answers, qualifies and routes every enquiry across your channels — live in minutes, with no phone system, engineers or lengthy onboarding.</p>
+      </div>
+      <div class="motion video-frame" data-anim="scale-in" style="transition-delay:0.1s" id="setupVideoFrame">
+        <video id="setupVideo" playsinline preload="metadata" title="WiseCall unified AI agent overview" aria-label="WiseCall product overview video">
+          <source src="videos/One_Unified_AI_Agent_trimmed_presenter_end_with_music_QUIET_1080p.mp4" type="video/mp4">
+          Your browser does not support embedded video.
+        </video>
+        <button type="button" class="video-play-overlay" id="setupVideoPlay" aria-label="Play the WiseCall overview video">
+          <span class="video-play-btn">
+            <i data-lucide="play" class="w-8 h-8 text-[#0f2a2b] ml-1"></i>
+          </span>
+        </button>
+      </div>
+    </div>
+  </section>
+
   <!-- ───── CALL PREVIEW ───── -->
   <section class="relative py-20 px-6 overflow-hidden" id="call-preview">
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
@@ -399,24 +429,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ───── SETUP VIDEO ───── -->
-  <section class="light relative py-20 px-6 overflow-hidden" id="setup-video">
-    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
-    <div class="relative z-10 max-w-4xl mx-auto">
-      <div class="motion text-center mb-10" data-anim="fade-up">
-        <span class="text-sm text-[#7de8eb] font-semibold">Quick Setup</span>
-        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Live in minutes, not months</h2>
-        <p class="text-xl text-white/70 max-w-2xl mx-auto">Sign up, configure your agent and go live. No phone system, no engineers, no lengthy onboarding.</p>
-      </div>
-      <div class="motion video-frame" data-anim="scale-in" style="transition-delay:0.1s" id="setupVideoFrame">
-        <video controls playsinline preload="metadata" title="WiseCall unified AI agent overview" aria-label="WiseCall product overview video">
-          <source src="videos/One_Unified_AI_Agent_trimmed_presenter_end_with_music_QUIET_1080p.mp4" type="video/mp4">
-          Your browser does not support embedded video.
-        </video>
       </div>
     </div>
   </section>
@@ -1177,6 +1189,20 @@
       setInterval(rotateScenarios, 5000);
       scenarioContainer.addEventListener('mouseenter', () => { rotationPaused = true; });
       scenarioContainer.addEventListener('mouseleave', () => { rotationPaused = false; });
+    }
+
+    // Setup video: play on overlay click, reveal native controls
+    const setupVideo = document.getElementById('setupVideo');
+    const setupVideoPlay = document.getElementById('setupVideoPlay');
+    if (setupVideo && setupVideoPlay) {
+      setupVideoPlay.addEventListener('click', () => {
+        setupVideo.setAttribute('controls', '');
+        setupVideo.play();
+        setupVideoPlay.classList.add('is-hidden');
+      });
+      setupVideo.addEventListener('pause', () => {
+        if (setupVideo.currentTime === 0) setupVideoPlay.classList.remove('is-hidden');
+      });
     }
 
     // Contact / Demo Modal
