@@ -658,48 +658,48 @@
             <li class="flex items-start gap-3 text-white/75"><i data-lucide="check-circle" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Key details captured during the call</li>
             <li class="flex items-start gap-3 text-white/75"><i data-lucide="check-circle" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Full transcript available in your dashboard</li>
           </ul>
-          <p class="text-white/45 text-sm">Transcript below is anonymised. Caller names and business details are illustrative only.</p>
+          <p class="text-white/45 text-sm">Example below is anonymised. Caller names and business details are illustrative only.</p>
         </div>
 
-        <!-- Sample transcript card -->
+        <!-- Sample summary card -->
         <div class="motion" data-anim="scale-in" style="transition-delay:0.1s">
           <div class="rounded-2xl bg-white/5 border border-[#7de8eb]/20 overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
             <!-- Header bar -->
             <div class="bg-[#1a3535] border-b border-[#7de8eb]/15 px-5 py-3.5 flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center flex-shrink-0">
-                <i data-lucide="messages-square" class="w-4 h-4 text-[#172929]"></i>
+                <i data-lucide="file-text" class="w-4 h-4 text-[#172929]"></i>
               </div>
               <div>
-                <p class="text-white font-semibold text-sm">Incoming call handled</p>
+                <p class="text-white font-semibold text-sm">Call summary</p>
                 <p class="text-white/45 text-xs">Today, 11:47 &middot; 2 min 14 sec</p>
               </div>
               <span class="ml-auto inline-flex items-center gap-1 text-[#7de8eb] text-xs font-semibold bg-[#7de8eb]/10 rounded-full px-2.5 py-1"><span class="w-1.5 h-1.5 rounded-full bg-[#7de8eb]"></span>Captured</span>
             </div>
-            <!-- Transcript -->
-            <div class="px-5 py-5 space-y-2.5">
-              <div class="flex justify-end">
-                <div class="max-w-[88%] rounded-2xl rounded-br-sm bg-[#172929] border border-white/10 px-3.5 py-2.5">
-                  <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb] mb-0.5">Caller</p>
-                  <p class="text-white/85 text-sm leading-relaxed">Hi, I’m looking to register as a new patient and book an initial consultation for a crown.</p>
-                </div>
+            <!-- Summary fields -->
+            <div class="px-5 py-5 space-y-3 text-sm">
+              <div class="flex items-start gap-3">
+                <span class="text-white/40 w-28 flex-shrink-0 pt-0.5">Caller</span>
+                <span class="text-white font-medium">Sarah M. &middot; 07700 9•• •••</span>
               </div>
-              <div class="flex justify-start">
-                <div class="max-w-[88%] rounded-2xl rounded-bl-sm bg-[#7de8eb]/12 px-3.5 py-2.5">
-                  <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]/80 mb-0.5">Agent</p>
-                  <p class="text-white/85 text-sm leading-relaxed">Of course — I can help with that. Are you looking for NHS or private treatment?</p>
-                </div>
+              <div class="flex items-start gap-3">
+                <span class="text-white/40 w-28 flex-shrink-0 pt-0.5">Reason</span>
+                <span class="text-white/85">New patient registration — initial crown consultation</span>
               </div>
-              <div class="flex justify-end">
-                <div class="max-w-[88%] rounded-2xl rounded-br-sm bg-[#172929] border border-white/10 px-3.5 py-2.5">
-                  <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb] mb-0.5">Caller</p>
-                  <p class="text-white/85 text-sm leading-relaxed">Private, please. I had treatment elsewhere and I’m looking to change practice. Do you have anything on a Wednesday morning?</p>
-                </div>
+              <div class="flex items-start gap-3">
+                <span class="text-white/40 w-28 flex-shrink-0 pt-0.5">Patient type</span>
+                <span class="text-white/85">Private</span>
               </div>
-              <div class="flex justify-start">
-                <div class="max-w-[88%] rounded-2xl rounded-bl-sm bg-[#7de8eb]/12 px-3.5 py-2.5">
-                  <p class="text-[10px] font-bold uppercase tracking-wide text-[#7de8eb]/80 mb-0.5">Agent</p>
-                  <p class="text-white/85 text-sm leading-relaxed">Thank you. Let me take your details and we’ll find a suitable appointment slot.</p>
-                </div>
+              <div class="flex items-start gap-3">
+                <span class="text-white/40 w-28 flex-shrink-0 pt-0.5">Availability</span>
+                <span class="text-white/85">Wednesday mornings preferred</span>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-white/40 w-28 flex-shrink-0 pt-0.5">Urgency</span>
+                <span class="text-white/85">2–3 weeks</span>
+              </div>
+              <div class="flex items-start gap-3 rounded-lg bg-[#7de8eb]/8 border border-[#7de8eb]/20 px-3 py-2.5 -mx-1">
+                <i data-lucide="arrow-right-circle" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <span class="text-white/90"><span class="text-[#7de8eb] font-semibold">Next step:</span> Book initial consultation — Wednesday AM slot. Send confirmation to patient.</span>
               </div>
             </div>
           </div>
