@@ -6,17 +6,20 @@ import {
   Sparkles,
   X,
   ArrowLeft,
+  ArrowRight,
   Check,
   Globe,
-  Mic,
   Mail,
-  Users,
   Plus,
   Trash2,
   PhoneForwarded,
   Play,
   Square,
+  Bot,
+  Stethoscope,
+  ShieldCheck,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { draftAgentFromWebsite, draftAgentFromInputs, type AgentDraft, type BusinessInputs } from "@/app/actions/wizard";
 import { testVoice } from "@/app/actions/agents";
 import { OfficeHoursGrid } from "./office-hours-card";
@@ -29,8 +32,7 @@ type Step =
   | "review"
   | "hours"
   | "voice"
-  | "email"
-  | "team";
+  | "handoff";
 
 type Voice = { id: string; label: string; blurb: string };
 
@@ -43,8 +45,28 @@ const STEP_TITLES: Record<Step, string> = {
   review: "Review the draft",
   hours: "Opening hours",
   voice: "Voice & greeting",
-  email: "Messages inbox",
-  team: "Your team",
+  handoff: "Messages & team",
+};
+
+// Presentation metadata per template: an icon and the plain-English list of
+// what the assistant will actually do. The dental template reads like a
+// workflow, not a prompt: patients are looked up, booked, rescheduled and
+// triaged without the practice lifting a finger.
+const TEMPLATE_META: Record<string, { icon: LucideIcon; chips: string[]; note?: string }> = {
+  receptionist: {
+    icon: Bot,
+    chips: ["Answers FAQs", "Takes messages", "Routes urgent calls"],
+  },
+  dentally: {
+    icon: Stethoscope,
+    chips: [
+      "Looks up patients",
+      "Books, reschedules & cancels",
+      "Registers new patients",
+      "Emergency triage",
+    ],
+    note: "Connects to your Dentally diary — real appointments, booked live on the call.",
+  },
 };
 
 // Re-applies a template's prompt/greeting (and seeds its starter contacts +
@@ -166,8 +188,8 @@ export function SetupWizard({
   }, [generating]);
 
   const flow: Step[] = manualMode
-    ? ["basics", "template", "review", "hours", "voice", "email", "team"]
-    : ["website", "template", "review", "hours", "voice", "email", "team"];
+    ? ["basics", "template", "review", "hours", "voice", "handoff"]
+    : ["website", "template", "review", "hours", "voice", "handoff"];
   const stepIndex = Math.max(0, flow.indexOf(step));
   const totalSteps = flow.length;
 
@@ -221,6 +243,11 @@ export function SetupWizard({
 
   function finish() {
     if (!draft) return;
+    const email = draft.defaultEmail.trim();
+    if (email && !email.includes("@")) {
+      setError("That doesn't look like a valid email address.");
+      return;
+    }
     setError(null);
     startSubmit(async () => {
       const res = await onSubmit(draft);
@@ -254,532 +281,568 @@ export function SetupWizard({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm">
-      <div className="mt-8 w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-black/10 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#148b8e]/12 text-[#148b8e]">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="font-black text-[#111716]">Set up your AI receptionist</p>
-              <p className="text-xs text-[#66716e]">
-                Step {stepIndex + 1} of {totalSteps} · {STEP_TITLES[step]}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3]"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 flex bg-surface">
+      {/* Step rail: where you are, what's left, and why it's safe. */}
+      <aside className="hidden w-[300px] flex-shrink-0 flex-col bg-gradient-to-b from-[#172929] to-[#0e1b1b] px-7 py-8 lg:flex">
+        <span className="text-xl font-black text-white">
+          Wise<span className="text-[#7de8eb]">Call</span>
+        </span>
+        <p className="mt-6 text-lg font-black leading-snug text-white">
+          Set up your AI receptionist
+        </p>
+        <p className="mt-1.5 text-sm leading-relaxed text-[#94b4b2]">
+          A few minutes now, then your phone answers itself.
+        </p>
 
-        {/* Progress bar */}
-        <div className="h-1 w-full bg-[#eef1f0]">
+        <ol className="mt-8 flex-1 space-y-1">
+          {flow.map((s, idx) => {
+            const done = idx < stepIndex;
+            const current = idx === stepIndex;
+            return (
+              <li
+                key={s}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition ${
+                  current ? "bg-[#7de8eb]/10 text-white" : done ? "text-[#7de8eb]" : "text-[#5f7a78]"
+                }`}
+              >
+                <span
+                  className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-black transition ${
+                    done
+                      ? "bg-[#7de8eb] text-[#0e1b1b]"
+                      : current
+                        ? "border-2 border-[#7de8eb] text-[#7de8eb]"
+                        : "border border-[#3a5250] text-[#5f7a78]"
+                  }`}
+                >
+                  {done ? <Check className="anim-pop h-3.5 w-3.5" /> : idx + 1}
+                </span>
+                {STEP_TITLES[s]}
+              </li>
+            );
+          })}
+        </ol>
+
+        <div className="rounded-xl bg-[#1a3535] px-4 py-3.5">
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#7de8eb]">
+            <ShieldCheck className="h-4 w-4" />
+            Nothing goes live yet
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[#94b4b2]">
+            You review everything before your assistant takes its first call, and you can change
+            any of it later.
+          </p>
+        </div>
+      </aside>
+
+      {/* Content column */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-between gap-4 border-b border-line bg-card px-4 py-3 sm:px-8">
+          <div className="min-w-0">
+            <p className="text-sm font-black text-ink">{STEP_TITLES[step]}</p>
+            <p className="text-xs text-ink-soft">
+              Step {stepIndex + 1} of {totalSteps}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="hidden h-1.5 w-36 overflow-hidden rounded-full bg-card-tint sm:block">
+              <div
+                className="h-full rounded-full bg-teal transition-all duration-500 ease-out"
+                style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="press flex h-9 w-9 items-center justify-center rounded-lg text-ink-faint transition hover:bg-card-tint hover:text-ink"
+              aria-label="Close setup"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </header>
+        {/* Mobile progress */}
+        <div className="h-1 w-full bg-card-tint sm:hidden">
           <div
-            className="h-1 rounded-r-full bg-[#148b8e] transition-all"
+            className="h-1 rounded-r-full bg-teal transition-all duration-500 ease-out"
             style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }}
           />
         </div>
 
-        <div className="px-6 py-6">
-          {/* STEP: website */}
-          {step === "website" && (
-            <div>
-              <h3 className="text-lg font-black text-[#111716]">Paste your business website</h3>
-              <p className="mt-1 text-sm text-[#66716e]">
-                We&apos;ll read it and draft your receptionist, business details, what it says, how it
-                answers and your opening hours. You review everything before it goes live.
-              </p>
-              <div className="mt-4 flex items-center gap-2 rounded-xl border border-black/10 px-3 focus-within:border-[#148b8e]">
-                <Globe className="h-4 w-4 flex-shrink-0 text-[#9aa5a2]" />
-                <input
-                  type="url"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && website.trim() && !generating) generate();
-                  }}
-                  placeholder="yourbusiness.co.uk"
-                  className="h-12 w-full bg-transparent text-[#111716] outline-none placeholder:text-[#9aa5a2]"
-                  autoFocus
-                />
-              </div>
-              {error && <p className="mt-3 text-sm font-medium text-red-600">{error}</p>}
-              <button
-                type="button"
-                onClick={generate}
-                disabled={generating || !website.trim()}
-                className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> {loadingSteps[loadingPhase]}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" /> Generate my receptionist
-                  </>
-                )}
-              </button>
-              {generating && (
-                <p className="mt-3 text-center text-xs text-[#9aa5a2]">
-                  This usually takes 15–30 seconds
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={startManual}
-                className="mt-3 w-full text-center text-sm font-semibold text-[#66716e] underline-offset-2 hover:underline"
-              >
-                No website? Set up manually instead
-              </button>
-            </div>
-          )}
-
-          {/* STEP: basics (manual only) */}
-          {step === "basics" && (
-            <div className="space-y-4">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div key={step} className="anim-rise mx-auto w-full max-w-2xl px-4 py-8 sm:px-8 sm:py-12">
+            {/* STEP: website */}
+            {step === "website" && (
               <div>
-                <h3 className="text-lg font-black text-[#111716]">Tell us about your business</h3>
-                <p className="mt-1 text-sm text-[#66716e]">
-                  Fill in what you know, we&apos;ll use it to build your receptionist. Leave anything blank that doesn&apos;t apply.
+                <h2 className="text-2xl font-black text-ink sm:text-3xl">
+                  Paste your website, we&apos;ll do the rest
+                </h2>
+                <p className="mt-2 text-ink-soft">
+                  We read your site and draft the whole receptionist — what it says, what it
+                  knows, even your opening hours. You review everything before it answers a
+                  single call.
                 </p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label="Business name *"
-                  value={manualInputs.businessName}
-                  placeholder="e.g. Northwind Dental"
-                  onChange={(v) => setManualInputs((p) => ({ ...p, businessName: v }))}
-                />
-                <Field
-                  label="Industry / type of business"
-                  value={manualInputs.industry}
-                  placeholder="e.g. Dental practice, Law firm, Estate agent"
-                  onChange={(v) => setManualInputs((p) => ({ ...p, industry: v }))}
-                />
-              </div>
-              <TextArea
-                label="Services & treatments"
-                value={manualInputs.services}
-                placeholder="e.g. General dentistry, implants, orthodontics, whitening"
-                onChange={(v) => setManualInputs((p) => ({ ...p, services: v }))}
-                rows={3}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label="Address & parking"
-                  value={manualInputs.address}
-                  placeholder="e.g. 12 High Street, Leeds LS1 4AB"
-                  onChange={(v) => setManualInputs((p) => ({ ...p, address: v }))}
-                />
-                <Field
-                  label="Opening hours"
-                  value={manualInputs.openingHoursText}
-                  placeholder="e.g. Mon–Fri 9am–5:30pm, Sat 9am–1pm"
-                  onChange={(v) => setManualInputs((p) => ({ ...p, openingHoursText: v }))}
-                />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label="Pricing"
-                  value={manualInputs.pricing}
-                  placeholder="e.g. Consultation from £50, implants from £1,800"
-                  onChange={(v) => setManualInputs((p) => ({ ...p, pricing: v }))}
-                />
-                <Field
-                  label="Payments, insurance & registration"
-                  value={manualInputs.payments}
-                  placeholder="e.g. NHS & private, card, finance plans"
-                  onChange={(v) => setManualInputs((p) => ({ ...p, payments: v }))}
-                />
-              </div>
-              <TextArea
-                label="Anything else callers commonly ask"
-                value={manualInputs.extra}
-                placeholder="e.g. Free parking on-site, wheelchair accessible, new patients welcome"
-                onChange={(v) => setManualInputs((p) => ({ ...p, extra: v }))}
-                rows={2}
-              />
-              {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-              <button
-                type="button"
-                onClick={() => {
-                  if (!manualInputs.businessName.trim()) {
-                    setError("Add your business name to continue.");
-                    return;
-                  }
-                  setError(null);
-                  startGenerateManual(async () => {
-                    const res = await draftAgentFromInputs(manualInputs);
-                    if (!res.ok || !res.draft) {
-                      setError(res.error ?? "Couldn't build the agent.");
-                      return;
-                    }
-                    aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
-                    setDraft(res.draft);
-                    goNext();
-                  });
-                }}
-                disabled={generatingManual || !manualInputs.businessName.trim()}
-                className="mt-1 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
-              >
-                {generatingManual ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Building your receptionist…</>
-                ) : (
-                  <><Sparkles className="h-4 w-4" /> Build my receptionist</>
+                <div className="mt-6 flex items-center gap-2 rounded-xl border border-line-strong bg-card px-3 shadow-card transition focus-within:border-teal">
+                  <Globe className="h-4 w-4 flex-shrink-0 text-ink-faint" />
+                  <input
+                    type="url"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && website.trim() && !generating) generate();
+                    }}
+                    placeholder="yourbusiness.co.uk"
+                    className="h-14 w-full bg-transparent text-lg text-ink outline-none placeholder:text-ink-faint"
+                    autoFocus
+                  />
+                </div>
+                {error && <p className="mt-3 text-sm font-medium text-danger">{error}</p>}
+                <button
+                  type="button"
+                  onClick={generate}
+                  disabled={generating || !website.trim()}
+                  className="press mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-ink px-5 font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> {loadingSteps[loadingPhase]}
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" /> Build my receptionist
+                    </>
+                  )}
+                </button>
+                {generating && (
+                  <p className="anim-fade mt-3 text-center text-xs text-ink-faint">
+                    This usually takes 15–30 seconds
+                  </p>
                 )}
-              </button>
-              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={startManual}
+                  className="mt-4 w-full text-center text-sm font-semibold text-ink-soft underline-offset-2 hover:underline"
+                >
+                  No website? Set up manually instead
+                </button>
+              </div>
+            )}
+
+            {/* STEP: basics (manual only) */}
+            {step === "basics" && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-2xl font-black text-ink sm:text-3xl">Tell us about your business</h2>
+                  <p className="mt-2 text-ink-soft">
+                    Fill in what you know, we&apos;ll use it to build your receptionist. Leave
+                    anything blank that doesn&apos;t apply.
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field
+                    label="Business name *"
+                    value={manualInputs.businessName}
+                    placeholder="e.g. Northwind Dental"
+                    onChange={(v) => setManualInputs((p) => ({ ...p, businessName: v }))}
+                  />
+                  <Field
+                    label="Industry / type of business"
+                    value={manualInputs.industry}
+                    placeholder="e.g. Dental practice, Law firm, Estate agent"
+                    onChange={(v) => setManualInputs((p) => ({ ...p, industry: v }))}
+                  />
+                </div>
+                <TextArea
+                  label="Services & treatments"
+                  value={manualInputs.services}
+                  placeholder="e.g. General dentistry, implants, orthodontics, whitening"
+                  onChange={(v) => setManualInputs((p) => ({ ...p, services: v }))}
+                  rows={3}
+                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field
+                    label="Address & parking"
+                    value={manualInputs.address}
+                    placeholder="e.g. 12 High Street, Leeds LS1 4AB"
+                    onChange={(v) => setManualInputs((p) => ({ ...p, address: v }))}
+                  />
+                  <Field
+                    label="Opening hours"
+                    value={manualInputs.openingHoursText}
+                    placeholder="e.g. Mon–Fri 9am–5:30pm, Sat 9am–1pm"
+                    onChange={(v) => setManualInputs((p) => ({ ...p, openingHoursText: v }))}
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field
+                    label="Pricing"
+                    value={manualInputs.pricing}
+                    placeholder="e.g. Consultation from £50, implants from £1,800"
+                    onChange={(v) => setManualInputs((p) => ({ ...p, pricing: v }))}
+                  />
+                  <Field
+                    label="Payments, insurance & registration"
+                    value={manualInputs.payments}
+                    placeholder="e.g. NHS & private, card, finance plans"
+                    onChange={(v) => setManualInputs((p) => ({ ...p, payments: v }))}
+                  />
+                </div>
+                <TextArea
+                  label="Anything else callers commonly ask"
+                  value={manualInputs.extra}
+                  placeholder="e.g. Free parking on-site, wheelchair accessible, new patients welcome"
+                  onChange={(v) => setManualInputs((p) => ({ ...p, extra: v }))}
+                  rows={2}
+                />
+                {error && <p className="text-sm font-medium text-danger">{error}</p>}
                 <button
                   type="button"
                   onClick={() => {
-                    setManualMode(false);
-                    setStep("website");
+                    if (!manualInputs.businessName.trim()) {
+                      setError("Add your business name to continue.");
+                      return;
+                    }
+                    setError(null);
+                    startGenerateManual(async () => {
+                      const res = await draftAgentFromInputs(manualInputs);
+                      if (!res.ok || !res.draft) {
+                        setError(res.error ?? "Couldn't build the agent.");
+                        return;
+                      }
+                      aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
+                      setDraft(res.draft);
+                      goNext();
+                    });
                   }}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#66716e] hover:text-[#111716]"
+                  disabled={generatingManual || !manualInputs.businessName.trim()}
+                  className="press mt-1 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-ink px-5 font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Back
+                  {generatingManual ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Building your receptionist…</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4" /> Build my receptionist</>
+                  )}
                 </button>
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManualMode(false);
+                      setStep("website");
+                    }}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* STEP: template */}
-          {step === "template" && draft && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-black text-[#111716]">What kind of assistant is this?</h3>
-                <p className="mt-1 text-sm text-[#66716e]">
-                  We pre-selected the best match. This sets what your assistant can do, you can
-                  fine-tune everything next.
-                </p>
+            {/* STEP: template */}
+            {step === "template" && draft && (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-2xl font-black text-ink sm:text-3xl">
+                    What kind of assistant is this?
+                  </h2>
+                  <p className="mt-2 text-ink-soft">
+                    We pre-selected the best match. This sets what your assistant can actually
+                    do on a call — you can fine-tune everything next.
+                  </p>
+                </div>
+                <div className="stagger grid gap-3">
+                  {availableTemplates.map((t) => {
+                    const active = draft.templateId === t.id;
+                    const meta = TEMPLATE_META[t.id] ?? TEMPLATE_META.receptionist;
+                    const MetaIcon = meta.icon;
+                    const suggested =
+                      t.id !== "receptionist" &&
+                      `${draft.industry}`.toLowerCase().includes(t.industry.toLowerCase());
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => selectTemplate(t)}
+                        className={`press rounded-2xl border p-5 text-left transition ${
+                          active
+                            ? "border-teal bg-teal-wash ring-1 ring-teal"
+                            : "border-line bg-card shadow-card hover:border-teal/50"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
+                              active ? "bg-teal text-white" : "bg-card-tint text-teal"
+                            }`}
+                          >
+                            <MetaIcon className="h-5 w-5" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-black text-ink">{t.label}</span>
+                              <span className="flex items-center gap-2">
+                                {suggested && (
+                                  <span className="rounded-full bg-good-wash px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-good">
+                                    Suggested for you
+                                  </span>
+                                )}
+                                {active && (
+                                  <span className="anim-pop flex h-5 w-5 items-center justify-center rounded-full bg-teal text-white">
+                                    <Check className="h-3 w-3" />
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-sm text-ink-soft">{t.description}</p>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {meta.chips.map((chip) => (
+                                <span
+                                  key={chip}
+                                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                    active ? "bg-white text-teal-deep" : "bg-card-tint text-ink-soft"
+                                  }`}
+                                >
+                                  {chip}
+                                </span>
+                              ))}
+                            </div>
+                            {meta.note && (
+                              <p className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-teal-deep">
+                                <Sparkles className="h-3.5 w-3.5" />
+                                {meta.note}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <WizardFooter
+                  onBack={() => (manualMode ? goBack() : setStep("website"))}
+                  onNext={goNext}
+                  nextLabel="Review the draft"
+                />
               </div>
-              <div className="grid gap-3">
-                {availableTemplates.map((t) => {
-                  const active = draft.templateId === t.id;
-                  const suggested =
-                    t.id !== "receptionist" &&
-                    `${draft.industry}`.toLowerCase().includes(t.industry.toLowerCase());
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => selectTemplate(t)}
-                      className={`rounded-xl border p-4 text-left transition ${
-                        active
-                          ? "border-[#148b8e] bg-[#148b8e]/[0.06] ring-1 ring-[#148b8e]"
-                          : "border-black/10 hover:border-[#148b8e]/50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-[#111716]">{t.label}</span>
+            )}
+
+            {/* STEP: review */}
+            {step === "review" && draft && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-2xl font-black text-ink sm:text-3xl">Here&apos;s the draft</h2>
+                  <p className="mt-2 text-ink-soft">
+                    Tweak anything — this is exactly how your assistant behaves and what it
+                    knows.
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Business name" value={draft.businessName} onChange={(v) => patchDraft({ businessName: v })} />
+                  <Field label="Assistant name" value={draft.receptionistName} onChange={(v) => patchDraft({ receptionistName: v })} />
+                </div>
+                <TextArea label="How it should behave (prompt)" value={draft.prompt} onChange={(v) => patchDraft({ prompt: v })} rows={10} />
+                <TextArea label="What it knows about your business" value={draft.knowledge} onChange={(v) => patchDraft({ knowledge: v })} rows={6} />
+                {error && <p className="text-sm font-medium text-danger">{error}</p>}
+                <WizardFooter onBack={goBack} onNext={goNext} nextLabel="Opening hours" />
+              </div>
+            )}
+
+            {/* STEP: hours */}
+            {step === "hours" && draft && (
+              <div>
+                <h2 className="text-2xl font-black text-ink sm:text-3xl">When are you open?</h2>
+                <p className="mt-2 mb-5 text-ink-soft">
+                  Outside these hours the receptionist takes a detailed message and emails it to
+                  you — no missed enquiries. We pre-filled anything we found on your site. Leave
+                  all days closed to skip after-hours handling.
+                </p>
+                <OfficeHoursGrid
+                  hours={draft.officeHours}
+                  onChange={(officeHours) => patchDraft({ officeHours })}
+                />
+                {error && <p className="mt-3 text-sm font-medium text-danger">{error}</p>}
+                <WizardFooter onBack={goBack} onNext={goNext} nextLabel="Pick a voice" />
+              </div>
+            )}
+
+            {/* STEP: voice & greeting */}
+            {step === "voice" && draft && (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-2xl font-black text-ink sm:text-3xl">How should it sound?</h2>
+                  <p className="mt-2 text-ink-soft">
+                    Tap play to hear each voice. This is how your assistant sounds to callers,
+                    and you can change it any time.
+                  </p>
+                </div>
+                <div className="stagger grid gap-2 sm:grid-cols-2">
+                  {voices.map((v) => {
+                    const active = selectedVoiceId === v.id;
+                    const isPlaying = playingVoice === v.id;
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => patchDraft({ voice: v.id })}
+                        className={`press flex items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
+                          active
+                            ? "border-teal bg-teal-wash ring-1 ring-teal"
+                            : "border-line bg-card shadow-card hover:border-teal/50"
+                        }`}
+                      >
+                        <span>
+                          <span className="block font-bold text-ink">{v.label}</span>
+                          <span className="block text-xs text-ink-soft">{v.blurb}</span>
+                        </span>
                         <span className="flex items-center gap-2">
-                          {suggested && (
-                            <span className="rounded-full bg-[#16a66a]/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#16a66a]">
-                              Suggested
-                            </span>
-                          )}
+                          <span
+                            role="button"
+                            onClick={(e) => previewVoice(v.id, e)}
+                            className="press flex h-8 w-8 items-center justify-center rounded-full border border-line bg-card text-ink-soft transition hover:border-teal hover:text-teal"
+                            title={isPlaying ? "Stop" : "Preview voice"}
+                          >
+                            {isPlaying ? (
+                              <Square className="h-3 w-3 fill-current" />
+                            ) : (
+                              <Play className="h-3 w-3 fill-current" />
+                            )}
+                          </span>
                           {active && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#148b8e] text-white">
+                            <span className="anim-pop flex h-5 w-5 items-center justify-center rounded-full bg-teal text-white">
                               <Check className="h-3 w-3" />
                             </span>
                           )}
                         </span>
-                      </div>
-                      <p className="mt-1 text-sm text-[#66716e]">{t.description}</p>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
+                <TextArea
+                  label="Greeting (the first thing callers hear)"
+                  value={draft.greeting}
+                  onChange={(v) => patchDraft({ greeting: v })}
+                  rows={3}
+                />
+                {error && <p className="text-sm font-medium text-danger">{error}</p>}
+                <WizardFooter onBack={goBack} onNext={goNext} nextLabel="Messages & team" />
               </div>
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={() => (manualMode ? goBack() : setStep("website"))}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#66716e] hover:text-[#111716]"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="inline-flex h-10 items-center rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130]"
-                >
-                  Next: review
-                </button>
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* STEP: review */}
-          {step === "review" && draft && (
-            <div className="space-y-4">
-              <p className="text-sm text-[#66716e]">
-                Here&apos;s the draft. Tweak anything, this is exactly how your assistant behaves and
-                what it knows.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Business name" value={draft.businessName} onChange={(v) => patchDraft({ businessName: v })} />
-                <Field label="Assistant name" value={draft.receptionistName} onChange={(v) => patchDraft({ receptionistName: v })} />
-              </div>
-              <TextArea label="How it should behave (prompt)" value={draft.prompt} onChange={(v) => patchDraft({ prompt: v })} rows={10} />
-              <TextArea label="What it knows about your business" value={draft.knowledge} onChange={(v) => patchDraft({ knowledge: v })} rows={6} />
-              {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={goBack}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#66716e] hover:text-[#111716]"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="inline-flex h-10 items-center rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130]"
-                >
-                  Next: opening hours
-                </button>
-              </div>
-            </div>
-          )}
+            {/* STEP: handoff — where messages go + who calls can reach. One step,
+                because they answer the same question: "when the AI needs a human,
+                what happens?" */}
+            {step === "handoff" && draft && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-black text-ink sm:text-3xl">
+                    When the AI needs a human
+                  </h2>
+                  <p className="mt-2 text-ink-soft">
+                    Tell us where messages should land and who urgent calls can reach. You can
+                    skip the team part and add people later.
+                  </p>
+                </div>
 
-          {/* STEP: hours */}
-          {step === "hours" && draft && (
-            <div>
-              <h3 className="text-lg font-black text-[#111716]">When are you open?</h3>
-              <p className="mt-1 mb-4 text-sm text-[#66716e]">
-                Outside these hours the receptionist takes a detailed message and emails it to you, no
-                missed enquiries. We pre-filled anything we found on your site. Leave all days closed to
-                skip after-hours handling.
-              </p>
-              <OfficeHoursGrid
-                hours={draft.officeHours}
-                onChange={(officeHours) => patchDraft({ officeHours })}
-              />
-              {error && <p className="mt-3 text-sm font-medium text-red-600">{error}</p>}
-              <div className="mt-6 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={goBack}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#66716e] hover:text-[#111716]"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="inline-flex h-10 items-center rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130]"
-                >
-                  Next: voice
-                </button>
-              </div>
-            </div>
-          )}
+                <label className="block">
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
+                    Main email for messages &amp; transcripts
+                  </span>
+                  <div className="flex items-center gap-2 rounded-xl border border-line-strong bg-card px-3 shadow-card transition focus-within:border-teal">
+                    <Mail className="h-4 w-4 flex-shrink-0 text-ink-faint" />
+                    <input
+                      type="email"
+                      value={draft.defaultEmail}
+                      onChange={(e) => patchDraft({ defaultEmail: e.target.value })}
+                      placeholder="you@yourbusiness.co.uk"
+                      className="h-12 w-full bg-transparent text-ink outline-none placeholder:text-ink-faint"
+                    />
+                  </div>
+                </label>
 
-          {/* STEP: voice & greeting */}
-          {step === "voice" && draft && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="flex items-center gap-2 text-lg font-black text-[#111716]">
-                  <Mic className="h-4 w-4 text-[#148b8e]" /> Pick a voice
-                </h3>
-                <p className="mt-1 text-sm text-[#66716e]">
-                  This is how your assistant sounds to callers. You can change it any time.
-                </p>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {voices.map((v) => {
-                  const active = selectedVoiceId === v.id;
-                  const isPlaying = playingVoice === v.id;
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => patchDraft({ voice: v.id })}
-                      className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
-                        active
-                          ? "border-[#148b8e] bg-[#148b8e]/[0.06] ring-1 ring-[#148b8e]"
-                          : "border-black/10 hover:border-[#148b8e]/50"
-                      }`}
-                    >
-                      <span>
-                        <span className="block font-bold text-[#111716]">{v.label}</span>
-                        <span className="block text-xs text-[#66716e]">{v.blurb}</span>
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span
-                          role="button"
-                          onClick={(e) => previewVoice(v.id, e)}
-                          className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 bg-white text-[#66716e] transition hover:border-[#148b8e] hover:text-[#148b8e]"
-                          title={isPlaying ? "Stop" : "Preview voice"}
-                        >
-                          {isPlaying ? (
-                            <Square className="h-3 w-3 fill-current" />
-                          ) : (
-                            <Play className="h-3 w-3 fill-current" />
-                          )}
-                        </span>
-                        {active && (
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#148b8e] text-white">
-                            <Check className="h-3 w-3" />
-                          </span>
-                        )}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <TextArea
-                label="Greeting (the first thing callers hear)"
-                value={draft.greeting}
-                onChange={(v) => patchDraft({ greeting: v })}
-                rows={3}
-              />
-              {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={goBack}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#66716e] hover:text-[#111716]"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="inline-flex h-10 items-center rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130]"
-                >
-                  Next: messages
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP: messages email */}
-          {step === "email" && draft && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="flex items-center gap-2 text-lg font-black text-[#111716]">
-                  <Mail className="h-4 w-4 text-[#148b8e]" /> Where should messages go?
-                </h3>
-                <p className="mt-1 text-sm text-[#66716e]">
-                  We&apos;ll email call messages, voicemails and transcripts here. You can add more
-                  recipients per colleague in the next step.
-                </p>
-              </div>
-              <label className="block">
-                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#66716e]">
-                  Main email for messages &amp; transcripts
-                </span>
-                <div className="flex items-center gap-2 rounded-xl border border-black/10 px-3 focus-within:border-[#148b8e]">
-                  <Mail className="h-4 w-4 flex-shrink-0 text-[#9aa5a2]" />
-                  <input
-                    type="email"
-                    value={draft.defaultEmail}
-                    onChange={(e) => patchDraft({ defaultEmail: e.target.value })}
-                    placeholder="you@yourbusiness.co.uk"
-                    className="h-11 w-full bg-transparent text-[#111716] outline-none placeholder:text-[#9aa5a2]"
-                    autoFocus
+                <div>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                    Colleagues for transfers &amp; alerts (optional)
+                  </p>
+                  <TeamEditor
+                    contacts={draft.contacts}
+                    onChange={(contacts) => patchDraft({ contacts })}
                   />
                 </div>
-              </label>
-              {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-              <div className="flex items-center justify-between pt-1">
+
+                <div className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3 text-sm text-[#1f5f60]">
+                  <span className="font-bold">Last step.</span> When you finish, we create your
+                  assistant and connect a phone number automatically — it&apos;ll be ready to
+                  take calls.
+                </div>
+
+                {error && <p className="text-sm font-medium text-danger">{error}</p>}
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={goBack}
+                    disabled={submitting}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink disabled:opacity-50"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={finish}
+                    disabled={submitting}
+                    className="press inline-flex h-12 items-center gap-2 rounded-xl bg-good px-6 font-black text-white transition hover:bg-[#0e7a4d] disabled:opacity-60"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Setting up &amp; connecting number…
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4" /> Finish &amp; connect number
+                      </>
+                    )}
+                  </button>
+                </div>
                 <button
                   type="button"
-                  onClick={goBack}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#66716e] hover:text-[#111716]"
+                  onClick={onManual}
+                  className="w-full text-center text-xs font-semibold text-ink-faint underline-offset-2 hover:underline"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const email = draft.defaultEmail.trim();
-                    if (email && !email.includes("@")) {
-                      setError("That doesn't look like a valid email address.");
-                      return;
-                    }
-                    setError(null);
-                    goNext();
-                  }}
-                  className="inline-flex h-10 items-center rounded-xl bg-[#111716] px-5 font-black text-white transition hover:bg-[#263130]"
-                >
-                  Next: your team
+                  Prefer the classic editor? Switch to advanced setup
                 </button>
               </div>
-            </div>
-          )}
-
-          {/* STEP: team */}
-          {step === "team" && draft && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="flex items-center gap-2 text-lg font-black text-[#111716]">
-                  <Users className="h-4 w-4 text-[#148b8e]" /> Add your team
-                </h3>
-                <p className="mt-1 text-sm text-[#66716e]">
-                  Colleagues the assistant can transfer urgent calls to or email messages about. Add
-                  keywords (e.g. &quot;accounts&quot;, &quot;emergency&quot;) and we&apos;ll route the
-                  right calls to the right person. Optional, you can skip and add people later.
-                </p>
-              </div>
-
-              <TeamEditor
-                contacts={draft.contacts}
-                onChange={(contacts) => patchDraft({ contacts })}
-              />
-
-              <div className="rounded-xl border border-[#148b8e]/20 bg-[#148b8e]/[0.05] px-4 py-3 text-sm text-[#1f5f60]">
-                <span className="font-bold">Last step.</span> When you finish, we&apos;ll create your
-                assistant and connect a phone number automatically, it&apos;ll be ready to take calls.
-              </div>
-
-              {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={goBack}
-                  disabled={submitting}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#66716e] hover:text-[#111716] disabled:opacity-50"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={finish}
-                  disabled={submitting}
-                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#16a66a] px-6 font-black text-white transition hover:bg-[#138a58] disabled:opacity-60"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Setting up &amp; connecting number…
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4" /> Finish &amp; connect number
-                    </>
-                  )}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={onManual}
-                className="w-full text-center text-xs font-semibold text-[#9aa5a2] underline-offset-2 hover:underline"
-              >
-                Prefer the classic editor? Switch to advanced setup
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function WizardFooter({
+  onBack,
+  onNext,
+  nextLabel,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  nextLabel: string;
+}) {
+  return (
+    <div className="flex items-center justify-between pt-2">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition hover:text-ink"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
+      <button
+        type="button"
+        onClick={onNext}
+        className="press inline-flex h-11 items-center gap-2 rounded-xl bg-ink px-5 font-black text-white transition hover:bg-[#263130]"
+      >
+        {nextLabel}
+        <ArrowRight className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -829,15 +892,15 @@ function TeamEditor({
   return (
     <div className="space-y-3">
       {contacts.map((c) => (
-        <div key={c.id} className="rounded-xl border border-black/10 p-3">
+        <div key={c.id} className="anim-scale-in rounded-xl border border-line bg-card p-3 shadow-card">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#66716e]">
+            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink-soft">
               <PhoneForwarded className="h-3.5 w-3.5" /> Colleague
             </span>
             <button
               type="button"
               onClick={() => remove(c.id)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-[#9aa5a2] transition hover:bg-[#f2f4f3] hover:text-red-600"
+              className="press flex h-7 w-7 items-center justify-center rounded-lg text-ink-faint transition hover:bg-danger-wash hover:text-danger"
               aria-label="Remove colleague"
             >
               <Trash2 className="h-4 w-4" />
@@ -848,19 +911,19 @@ function TeamEditor({
               value={c.name}
               onChange={(e) => update(c.id, { name: e.target.value })}
               placeholder="Name (e.g. Practice manager)"
-              className="h-10 w-full rounded-lg border border-black/10 px-3 text-sm text-[#111716] outline-none focus:border-[#148b8e]"
+              className="h-10 w-full rounded-lg border border-line bg-card px-3 text-sm text-ink outline-none transition focus:border-teal"
             />
             <input
               value={c.phone}
               onChange={(e) => update(c.id, { phone: e.target.value })}
               placeholder="Mobile / phone (for transfers)"
-              className="h-10 w-full rounded-lg border border-black/10 px-3 text-sm text-[#111716] outline-none focus:border-[#148b8e]"
+              className="h-10 w-full rounded-lg border border-line bg-card px-3 text-sm text-ink outline-none transition focus:border-teal"
             />
             <input
               value={c.email}
               onChange={(e) => update(c.id, { email: e.target.value })}
               placeholder="Email (for message alerts)"
-              className="h-10 w-full rounded-lg border border-black/10 px-3 text-sm text-[#111716] outline-none focus:border-[#148b8e]"
+              className="h-10 w-full rounded-lg border border-line bg-card px-3 text-sm text-ink outline-none transition focus:border-teal"
             />
             <input
               value={c.keywords.join(", ")}
@@ -873,7 +936,7 @@ function TeamEditor({
                 })
               }
               placeholder="Keywords (accounts, emergency…)"
-              className="h-10 w-full rounded-lg border border-black/10 px-3 text-sm text-[#111716] outline-none focus:border-[#148b8e]"
+              className="h-10 w-full rounded-lg border border-line bg-card px-3 text-sm text-ink outline-none transition focus:border-teal"
             />
           </div>
         </div>
@@ -881,7 +944,7 @@ function TeamEditor({
       <button
         type="button"
         onClick={add}
-        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#148b8e]/40 text-sm font-bold text-[#148b8e] transition hover:bg-[#148b8e]/[0.05]"
+        className="press inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-teal/40 text-sm font-bold text-teal transition hover:bg-teal-wash"
       >
         <Plus className="h-4 w-4" /> Add a colleague
       </button>
@@ -902,12 +965,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#66716e]">{label}</span>
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full rounded-xl border border-black/10 px-3 text-[#111716] outline-none focus:border-[#148b8e]"
+        className="h-11 w-full rounded-xl border border-line-strong bg-card px-3 text-ink outline-none transition focus:border-teal"
       />
     </label>
   );
@@ -928,13 +991,13 @@ function TextArea({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#66716e]">{label}</span>
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">{label}</span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed text-[#111716] outline-none focus:border-[#148b8e]"
+        className="w-full rounded-xl border border-line-strong bg-card px-3 py-2 text-sm leading-relaxed text-ink outline-none transition focus:border-teal"
       />
     </label>
   );

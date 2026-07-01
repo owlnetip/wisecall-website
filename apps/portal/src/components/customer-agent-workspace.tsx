@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronRight,
   CirclePlus,
+  Copy,
   CreditCard,
   Flame,
   FileText,
@@ -17,6 +18,7 @@ import {
   Hand,
   HelpCircle,
   History,
+  Inbox,
   Layers,
   Link2,
   Loader2,
@@ -29,6 +31,7 @@ import {
   MoreHorizontal,
   Phone,
   PhoneMissed,
+  PhoneOutgoing,
   Play,
   Plus,
   RefreshCw,
@@ -1292,10 +1295,10 @@ function ChannelsHub({
 }
 
 const navItems: { view: View; label: string; icon: LucideIcon }[] = [
-  { view: "insights", label: "AI Insights", icon: Sparkles },
-  { view: "assistants", label: "Assistants", icon: Bot },
-  { view: "calls", label: "Call History", icon: History },
+  { view: "insights", label: "Home", icon: Sparkles },
+  { view: "calls", label: "Inbox", icon: Inbox },
   { view: "contacts", label: "Contacts", icon: Users },
+  { view: "assistants", label: "Agents", icon: Bot },
   { view: "channels", label: "Channels", icon: Layers },
 ];
 
@@ -1498,7 +1501,7 @@ export function CustomerAgentWorkspace({
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [selectedCall, setSelectedCall] = useState<CallLog | null>(null);
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [provisionError, setProvisionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isCreating, startCreate] = useTransition();
@@ -1756,16 +1759,12 @@ export function CustomerAgentWorkspace({
   }
 
   function isNavActive(item: { view: View; label: string }): boolean {
-    if (item.label === "Assistants") return view === "assistants" || view === "detail";
-    if (item.label === "Call History") return view === "calls";
-    if (item.label === "AI Insights") return view === "insights";
-    if (item.label === "Contacts") return view === "contacts";
-    if (item.label === "Channels") return view === "channels";
-    return false;
+    if (item.view === "assistants") return view === "assistants" || view === "detail";
+    return view === item.view;
   }
 
   return (
-    <div className="min-h-screen bg-[#e9efed] px-0 py-0 text-[#111716] lg:px-6 lg:py-6">
+    <div className="min-h-screen bg-surface px-0 py-0 text-ink lg:px-6 lg:py-6">
       {impersonating ? (
         <div className="mx-auto mb-3 flex max-w-[1920px] flex-wrap items-center justify-between gap-3 rounded-xl bg-[#7a2e2e] px-4 py-2.5 text-sm font-semibold text-white">
           <span>
@@ -1784,10 +1783,10 @@ export function CustomerAgentWorkspace({
       {trial ? (
         <div className="mx-auto mb-3 max-w-[1920px] px-4 lg:px-0">
           <div
-            className={`flex flex-col gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold sm:flex-row sm:items-center sm:justify-between ${
+            className={`flex flex-col gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-card sm:flex-row sm:items-center sm:justify-between ${
               trial.blocked
-                ? "bg-[#fdecec] text-[#9b1c1c]"
-                : "bg-[#eefbfb] text-[#0e4b4d]"
+                ? "bg-danger-wash text-[#9b1c1c]"
+                : "bg-teal-wash text-[#0e4b4d]"
             }`}
           >
             <span>
@@ -2030,13 +2029,13 @@ export function CustomerAgentWorkspace({
               {(view === "assistants" || view === "detail") && (
                 <>
                   <ChevronRight className="h-4 w-4" />
-                  <span>Assistants</span>
+                  <span>Agents</span>
                 </>
               )}
               {view === "calls" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
-                  <span>Call History</span>
+                  <span>Inbox</span>
                 </>
               )}
               {view === "contacts" && (
@@ -2077,16 +2076,16 @@ export function CustomerAgentWorkspace({
             </div>
           </header>
 
-          <div className="px-5 py-8 lg:px-10">
+          <div key={view} className="anim-fade px-4 pb-24 pt-6 sm:px-5 sm:py-8 md:pb-8 lg:px-10">
             {view === "insights" && (
               <AiInsights
                 initial={initialInsights}
                 analysisEnabled={analysisEnabled}
                 onViewCalls={() => setView("calls")}
                 onOpenCall={(callId) => {
-                  const log = callLogs.find((c) => c.id === callId);
-                  if (log) setSelectedCall(log);
-                  else setView("calls");
+                  // One click from an insight straight into the conversation.
+                  setSelectedCallId(callLogs.some((c) => c.id === callId) ? callId : null);
+                  setView("calls");
                 }}
               />
             )}
@@ -2148,7 +2147,11 @@ export function CustomerAgentWorkspace({
             )}
 
             {view === "calls" && (
-              <CallHistory callLogs={callLogs} onOpen={(log) => setSelectedCall(log)} />
+              <UnifiedInbox
+                callLogs={callLogs}
+                selectedId={selectedCallId}
+                onSelect={setSelectedCallId}
+              />
             )}
 
             {view === "contacts" && (
@@ -2171,6 +2174,29 @@ export function CustomerAgentWorkspace({
           </div>
         </main>
       </div>
+
+      {/* Mobile bottom tab bar: the five core destinations are always one thumb
+          tap away. Secondary items (billing, admin, support) stay in the drawer. */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-md items-stretch justify-around">
+          {navItems.map((item) => {
+            const active = isNavActive(item);
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => setView(item.view)}
+                className={`press flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 pb-2 pt-2.5 text-[10px] font-bold transition ${
+                  active ? "text-teal" : "text-ink-faint"
+                }`}
+              >
+                <item.icon className={`h-5 w-5 ${active ? "anim-pop" : ""}`} />
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {ticketOpen && <RaiseTicketModal onClose={() => setTicketOpen(false)} />}
 
@@ -2263,9 +2289,6 @@ export function CustomerAgentWorkspace({
         />
       )}
 
-      {selectedCall && (
-        <CallDetailModal log={selectedCall} onClose={() => setSelectedCall(null)} />
-      )}
     </div>
   );
 }
@@ -2303,20 +2326,20 @@ function AssistantsList({
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-4xl font-black">{adminMode ? "All agents" : "Assistants"}</h1>
+          <h1 className="text-2xl font-black sm:text-3xl">{adminMode ? "All agents" : "Agents"}</h1>
           <p className="mt-2 text-[#66716e]">
             {adminMode
               ? "Every WiseCall agent across all customers. Open any to edit."
-              : "Create and manage the agents on your account."}
+              : "Create and manage the AI agents on your account."}
           </p>
         </div>
         <button
           type="button"
           onClick={onCreate}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+          className="press inline-flex items-center justify-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
         >
           <Plus className="h-4 w-4" />
-          Create Assistant
+          New agent
         </button>
       </div>
 
@@ -3532,7 +3555,7 @@ function CollapsibleSection({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className="mt-6 rounded-[18px] border border-black/10 bg-white">
+    <section className="mt-6 rounded-2xl border border-line bg-card shadow-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -3558,7 +3581,9 @@ function CollapsibleSection({
           className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open ? <div className="border-t border-black/5 px-5 pb-5 pt-4 sm:px-6">{children}</div> : null}
+      {open ? (
+        <div className="anim-fade border-t border-line px-5 pb-5 pt-4 sm:px-6">{children}</div>
+      ) : null}
     </section>
   );
 }
@@ -3632,27 +3657,29 @@ function AiInsights({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analysisEnabled, insights?.pendingAnalysis]);
 
+  // Time-of-day greeting: the dashboard should read like a briefing, not a
+  // report. "Good morning — here's what your AI handled."
+  const hour = new Date().getHours();
+  const dayPart = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
   const header = (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-black sm:text-4xl">
-          <Sparkles className="h-6 w-6 text-[#148b8e]" />
-          AI Insights
-        </h1>
-        <p className="mt-2 text-[#66716e]">
-          What your callers wanted, and what needs your attention.
+        <h1 className="text-2xl font-black text-ink sm:text-3xl">{dayPart}</h1>
+        <p className="mt-1 text-sm text-ink-soft sm:text-base">
+          Here&apos;s what your AI receptionist handled and what needs you.
         </p>
       </div>
-      <div className="inline-flex rounded-lg border border-black/10 bg-white p-1">
+      <div className="inline-flex self-start rounded-xl border border-line bg-card p-1 shadow-card">
         {INSIGHT_RANGES.map((r) => (
           <button
             key={r.value}
             type="button"
             onClick={() => selectRange(r.value)}
-            className={`rounded-md px-4 py-2 text-sm font-bold transition ${
+            className={`press rounded-lg px-4 py-2 text-sm font-bold transition ${
               range === r.value
-                ? "bg-[#111716] text-white"
-                : "text-[#66716e] hover:bg-[#f2f4f3]"
+                ? "bg-ink text-white shadow-card"
+                : "text-ink-soft hover:bg-card-tint"
             }`}
           >
             {r.label}
@@ -3664,11 +3691,18 @@ function AiInsights({
 
   if (loading && !insights) {
     return (
-      <div>
+      <div className="anim-fade">
         {header}
-        <div className="flex items-center justify-center rounded-[18px] border border-black/10 bg-white px-5 py-24 text-[#66716e]">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Loading insights…
+        <div className="skeleton mb-6 h-28 w-full" />
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="skeleton h-32" />
+          <div className="skeleton h-32" />
+          <div className="skeleton h-32" />
+          <div className="skeleton h-32" />
+        </div>
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div className="skeleton h-52" />
+          <div className="skeleton h-52" />
         </div>
       </div>
     );
@@ -3676,15 +3710,15 @@ function AiInsights({
 
   if (error && !insights) {
     return (
-      <div>
+      <div className="anim-rise">
         {header}
-        <div className="rounded-[18px] border border-black/10 bg-white px-5 py-16 text-center">
-          <p className="font-black text-[#111716]">We couldn&apos;t load your insights.</p>
-          <p className="mt-1 text-sm text-[#66716e]">{error}</p>
+        <div className="rounded-2xl border border-line bg-card px-5 py-16 text-center shadow-card">
+          <p className="font-black text-ink">We couldn&apos;t load your insights.</p>
+          <p className="mt-1 text-sm text-ink-soft">{error}</p>
           <button
             type="button"
             onClick={() => load(range)}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#111716] px-4 py-2 text-sm font-black text-white transition hover:bg-[#263130]"
+            className="press mt-4 inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-black text-white transition hover:bg-[#263130]"
           >
             <RefreshCw className="h-4 w-4" /> Try again
           </button>
@@ -3698,19 +3732,19 @@ function AiInsights({
   // Empty state, no calls at all yet, or none in the chosen range.
   if (i.totalCalls === 0) {
     return (
-      <div>
+      <div className="anim-rise">
         {header}
-        <div className="rounded-[18px] border border-dashed border-black/15 bg-white px-5 py-20 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#e6fbfc]">
-            <Sparkles className="h-7 w-7 text-[#148b8e]" />
+        <div className="rounded-2xl border border-dashed border-line-strong bg-card px-5 py-20 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-wash">
+            <Sparkles className="h-7 w-7 text-teal" />
           </div>
-          <p className="text-lg font-black text-[#111716]">
-            {i.hasAnyCalls ? "No calls in this period" : "No insights yet"}
+          <p className="text-lg font-black text-ink">
+            {i.hasAnyCalls ? "No calls in this period" : "Quiet in here — for now"}
           </p>
-          <p className="mx-auto mt-2 max-w-md text-[#66716e]">
+          <p className="mx-auto mt-2 max-w-md text-ink-soft">
             {i.hasAnyCalls
               ? "Try a longer date range to see insights from earlier calls."
-              : "Once your AI agent has handled calls, insights will appear here."}
+              : "As soon as your AI agent takes its first call, this becomes your daily briefing: what callers wanted, bookings won and anything that needs you."}
           </p>
         </div>
       </div>
@@ -3720,51 +3754,44 @@ function AiInsights({
   const analysedKnown = i.analysedCalls > 0;
 
   return (
-    <div>
+    <div className="anim-rise">
       {header}
 
-      {/* AI-generated weekly summary */}
-      <section className="mb-6 rounded-[18px] border border-[#148b8e]/25 bg-gradient-to-br from-[#f3fbfb] to-white px-5 py-5 sm:px-6">
-        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#148b8e]">
+      {/* AI-generated briefing */}
+      <section className="mb-6 rounded-2xl border border-teal/20 bg-gradient-to-br from-[#f0fafa] via-card to-card px-5 py-5 shadow-card sm:px-6">
+        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-teal">
           <Sparkles className="h-4 w-4" />
-          Here&apos;s what changed in your calls
+          Your AI briefing
         </p>
-        <p className="mt-2 text-base leading-relaxed text-[#111716] sm:text-lg">{i.summary}</p>
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink sm:text-lg">{i.summary}</p>
         {analysing && (
-          <p className="mt-3 flex items-center gap-2 text-sm text-[#66716e]">
+          <p className="mt-3 flex items-center gap-2 text-sm text-ink-soft">
             <Loader2 className="h-4 w-4 animate-spin" />
             Analysing your recent calls… numbers will update shortly.
           </p>
         )}
         {!analysisEnabled && i.pendingAnalysis > 0 && (
-          <p className="mt-3 text-sm text-[#66716e]">
+          <p className="mt-3 text-sm text-ink-soft">
             {i.pendingAnalysis} call{i.pendingAnalysis === 1 ? "" : "s"} not yet analysed (AI
             analysis isn&apos;t switched on).
           </p>
         )}
       </section>
 
-      {/* Headline cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* Four headline numbers, everything else is a quiet chip row below. */}
+      <div className="stagger grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <InsightCard
-          label="Calls handled"
+          label="Conversations"
           value={i.totalCalls}
-          icon={PhoneMissed}
-          accent="#148b8e"
+          icon={Inbox}
+          accent="#0f8285"
           onClick={onViewCalls}
         />
         <InsightCard
-          label="Missed / escalated"
-          value={i.missedOrEscalated}
-          icon={AlertTriangle}
-          accent="#c2620a"
-          onClick={onViewCalls}
-        />
-        <InsightCard
-          label="Bookings"
+          label="Bookings won"
           value={i.bookingCount}
           icon={CalendarCheck}
-          accent="#16a66a"
+          accent="#12915c"
           onClick={onViewCalls}
         />
         <InsightCard
@@ -3775,36 +3802,27 @@ function AiInsights({
           onClick={onViewCalls}
         />
         <InsightCard
-          label="Conversion rate"
-          value={`${i.conversionRate}%`}
-          icon={TrendingUp}
-          accent="#16a66a"
-          hint="Bookings + leads"
+          label="Need your attention"
+          value={i.attention.length}
+          icon={AlertTriangle}
+          accent={i.attention.length > 0 ? "#c2620a" : "#12915c"}
+          hint={i.attention.length > 0 ? "See the list below" : "All clear"}
         />
-        <InsightCard
-          label="Urgent calls"
-          value={i.urgentCount}
-          icon={Flame}
-          accent="#c2620a"
-        />
-        <InsightCard
-          label="Complaints"
-          value={i.complaintCount}
-          icon={ThumbsDown}
-          accent="#c0392b"
-        />
-        <InsightCard
-          label="Unanswered questions"
-          value={i.unansweredQuestions.length}
-          icon={HelpCircle}
-          accent="#7a5b00"
-        />
+      </div>
+
+      {/* Secondary metrics: present but not shouting. */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <StatChip icon={TrendingUp} label="Conversion" value={`${i.conversionRate}%`} />
+        <StatChip icon={PhoneMissed} label="Missed / escalated" value={i.missedOrEscalated} />
+        <StatChip icon={Flame} label="Urgent" value={i.urgentCount} />
+        <StatChip icon={ThumbsDown} label="Complaints" value={i.complaintCount} />
+        <StatChip icon={HelpCircle} label="Unanswered" value={i.unansweredQuestions.length} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {/* Sentiment split */}
-        <section className="rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-black text-[#111716]">How callers felt</h2>
+        <section className="rounded-2xl border border-line bg-card p-5 shadow-card sm:p-6">
+          <h2 className="text-lg font-black text-ink">How callers felt</h2>
           {analysedKnown ? (
             <>
               <SentimentBar sentiment={i.sentiment} />
@@ -3837,8 +3855,8 @@ function AiInsights({
         </section>
 
         {/* Top call reasons */}
-        <section className="rounded-[18px] border border-black/10 bg-white p-5 sm:p-6">
-          <h2 className="text-lg font-black text-[#111716]">Top reasons people called</h2>
+        <section className="rounded-2xl border border-line bg-card p-5 shadow-card sm:p-6">
+          <h2 className="text-lg font-black text-ink">Top reasons people called</h2>
           {i.topReasons.length > 0 ? (
             <ul className="mt-4 space-y-3">
               {i.topReasons.map((reason) => (
@@ -3874,8 +3892,9 @@ function AiInsights({
             ))}
           </ul>
         ) : (
-          <p className="rounded-lg bg-[#f3fbf6] px-4 py-6 text-center text-sm font-semibold text-[#16a66a]">
-            Nothing needs your attention right now. 🎉
+          <p className="flex items-center justify-center gap-2 rounded-xl bg-good-wash px-4 py-6 text-center text-sm font-semibold text-good">
+            <Check className="h-4 w-4" />
+            Nothing needs your attention right now.
           </p>
         )}
       </CollapsibleSection>
@@ -3936,26 +3955,45 @@ function InsightCard({
     <>
       <div className="flex items-start justify-between">
         <span
-          className="flex h-9 w-9 items-center justify-center rounded-lg"
+          className="flex h-9 w-9 items-center justify-center rounded-xl"
           style={{ backgroundColor: `${accent}1a`, color: accent }}
         >
           <Icon className="h-5 w-5" />
         </span>
-        {onClick && <ChevronRight className="h-4 w-4 text-[#9aa5a2]" />}
+        {onClick && <ChevronRight className="h-4 w-4 text-ink-faint" />}
       </div>
-      <p className="mt-3 text-2xl font-black text-[#111716] sm:text-3xl">{value}</p>
-      <p className="mt-0.5 text-sm font-semibold text-[#66716e]">{label}</p>
-      {hint && <p className="mt-0.5 text-xs text-[#9aa5a2]">{hint}</p>}
+      <p className="mt-3 text-2xl font-black tabular-nums text-ink sm:text-3xl">{value}</p>
+      <p className="mt-0.5 text-sm font-semibold text-ink-soft">{label}</p>
+      {hint && <p className="mt-0.5 text-xs text-ink-faint">{hint}</p>}
     </>
   );
   const base =
-    "rounded-[16px] border border-black/10 bg-white p-4 text-left transition sm:p-5";
+    "rounded-2xl border border-line bg-card p-4 text-left shadow-card sm:p-5";
   return onClick ? (
-    <button type="button" onClick={onClick} className={`${base} hover:bg-[#f7f8f7]`}>
+    <button type="button" onClick={onClick} className={`${base} lift press w-full`}>
       {inner}
     </button>
   ) : (
     <div className={base}>{inner}</div>
+  );
+}
+
+// A quiet, secondary metric. Anything not worth a headline card lives here.
+function StatChip({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number | string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1.5 text-xs font-semibold text-ink-soft shadow-card">
+      <Icon className="h-3.5 w-3.5 text-ink-faint" />
+      {label}
+      <span className="font-black tabular-nums text-ink">{value}</span>
+    </span>
   );
 }
 
@@ -3964,13 +4002,21 @@ function SentimentBar({
 }: {
   sentiment: { positive: number; neutral: number; negative: number };
 }) {
+  // Widths animate from zero on mount, a small moment of life that also makes
+  // the proportions easier to read as they settle.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
   const total = sentiment.positive + sentiment.neutral + sentiment.negative;
-  const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
+  const pct = (n: number) => (total > 0 && mounted ? (n / total) * 100 : 0);
+  const seg = "h-full transition-all duration-700 ease-out";
   return (
-    <div className="mt-4 flex h-4 w-full overflow-hidden rounded-full bg-[#f2f4f3]">
-      <div style={{ width: `${pct(sentiment.positive)}%` }} className="bg-[#16a66a]" />
-      <div style={{ width: `${pct(sentiment.neutral)}%` }} className="bg-[#c9d1ce]" />
-      <div style={{ width: `${pct(sentiment.negative)}%` }} className="bg-[#c0392b]" />
+    <div className="mt-4 flex h-4 w-full overflow-hidden rounded-full bg-card-tint">
+      <div style={{ width: `${pct(sentiment.positive)}%` }} className={`${seg} bg-good`} />
+      <div style={{ width: `${pct(sentiment.neutral)}%` }} className={`${seg} bg-[#c9d1ce]`} />
+      <div style={{ width: `${pct(sentiment.negative)}%` }} className={`${seg} bg-danger`} />
     </div>
   );
 }
@@ -4004,7 +4050,12 @@ function TopReasonRow({
   max: number;
   onClick: () => void;
 }) {
-  const width = max > 0 ? Math.max(6, (reason.count / max) * 100) : 0;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+  const width = max > 0 && mounted ? Math.max(6, (reason.count / max) * 100) : 0;
   return (
     <li>
       <button
@@ -4012,16 +4063,16 @@ function TopReasonRow({
         onClick={onClick}
         className="group flex w-full items-center gap-3 text-left"
       >
-        <span className="w-36 flex-shrink-0 truncate text-sm font-semibold text-[#111716] sm:w-44">
+        <span className="w-36 flex-shrink-0 truncate text-sm font-semibold text-ink sm:w-44">
           {reason.label}
         </span>
-        <span className="relative h-3 flex-1 overflow-hidden rounded-full bg-[#f2f4f3]">
+        <span className="relative h-3 flex-1 overflow-hidden rounded-full bg-card-tint">
           <span
-            className="absolute inset-y-0 left-0 rounded-full bg-[#41c9ce] transition-all group-hover:bg-[#148b8e]"
+            className="absolute inset-y-0 left-0 rounded-full bg-[#41c9ce] transition-all duration-700 ease-out group-hover:bg-teal"
             style={{ width: `${width}%` }}
           />
         </span>
-        <span className="w-8 flex-shrink-0 text-right text-sm font-black text-[#111716]">
+        <span className="w-8 flex-shrink-0 text-right text-sm font-black tabular-nums text-ink">
           {reason.count}
         </span>
       </button>
@@ -4114,133 +4165,306 @@ function ChannelIcon({ channel }: { channel: CallChannel }) {
   );
 }
 
-function CallHistory({
-  callLogs,
-  onOpen,
+// ── Unified Inbox ───────────────────────────────────────────────────────────
+// Every conversation the AI has handled — phone, WhatsApp, SMS, email and web
+// chat — in one two-pane inbox. Filterable list on the left, the full AI call
+// detail (summary, outcome, transcript, quick actions) on the right. On mobile
+// the detail slides over the list like a native mail app, so it's always one
+// tap from list to conversation and one tap back.
+
+function relativeWhen(iso: string): string {
+  if (!iso) return "-";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+function looksLikePhone(caller: string): boolean {
+  return /^\+?[\d\s()-]{7,}$/.test(caller.trim());
+}
+
+function InboxRow({
+  log,
+  selected,
+  onClick,
 }: {
-  callLogs: CallLog[];
-  onOpen: (log: CallLog) => void;
+  log: CallLog;
+  selected: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-black sm:text-4xl">Call History</h1>
-        <p className="mt-2 text-[#66716e]">
-          {callLogs.length} call{callLogs.length !== 1 ? "s" : ""} handled by your agents.
-        </p>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`press flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition ${
+        selected ? "bg-teal-wash" : "hover:bg-[#f2f4f3]"
+      }`}
+    >
+      <ChannelIcon channel={log.channel} />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-sm font-bold text-ink">{log.caller || "Unknown"}</span>
+          <span className="flex-shrink-0 text-xs tabular-nums text-ink-faint">
+            {relativeWhen(log.startedAt)}
+          </span>
+        </span>
+        <span className="mt-0.5 block truncate text-xs text-ink-soft">
+          {log.summary || friendlyOutcome(log.outcome)}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function CopyChip({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        navigator.clipboard?.writeText(value).then(
+          () => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          },
+          () => {},
+        )
+      }
+      className="press inline-flex h-9 items-center gap-2 rounded-lg border border-line bg-card px-3 text-xs font-bold text-ink-soft transition hover:border-line-strong hover:text-ink"
+    >
+      {copied ? <Check className="anim-pop h-3.5 w-3.5 text-good" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Copied" : label}
+    </button>
+  );
+}
+
+function ConversationDetail({ log, onBack }: { log: CallLog; onBack: () => void }) {
+  const meta = channelMeta[log.channel] ?? channelMeta.phone;
+  const isPhone = looksLikePhone(log.caller);
+  return (
+    <div key={log.id} className="anim-fade flex h-full min-h-0 flex-col overflow-y-auto">
+      {/* Mobile back */}
+      <div className="sticky top-0 z-10 border-b border-line bg-card px-3 py-2 lg:hidden">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-bold text-teal"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Inbox
+        </button>
       </div>
 
-      <section className="overflow-hidden rounded-[18px] border border-black/10 bg-white">
-        <div className="grid grid-cols-[1fr_200px_130px_80px] border-b border-black/10 bg-[#fbfcfc] px-5 py-4 text-sm font-bold text-[#66716e] max-md:hidden">
-          <span>Caller</span>
-          <span>Summary</span>
-          <span>Outcome</span>
-          <span>Length</span>
+      <div className="border-b border-line px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <ChannelIcon channel={log.channel} />
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-lg font-black text-ink">{log.caller || "Unknown"}</h2>
+            <p className="text-xs text-ink-soft">
+              {meta.label} · {formatWhen(log.startedAt)}
+              {log.durationLabel && log.durationLabel !== "-" ? ` · ${log.durationLabel}` : ""}
+              {log.agentName ? ` · answered by ${log.agentName}` : ""}
+            </p>
+          </div>
         </div>
-        {callLogs.length > 0 ? (
-          <>
-            <div className="divide-y divide-black/10 md:hidden">
-              {callLogs.map((log) => (
-                <button
-                  type="button"
-                  key={log.id}
-                  onClick={() => onOpen(log)}
-                  className="flex w-full flex-col gap-3 px-4 py-4 text-left transition hover:bg-[#f7f8f7]"
-                >
-                  <div className="flex items-center gap-3">
-                    <ChannelIcon channel={log.channel} />
-                    <div>
-                      <span className="block font-black">{log.caller}</span>
-                      <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
-                    </div>
-                  </div>
-                  <MobileField label="Summary">
-                    <span className="text-sm text-[#66716e]">{log.summary || "-"}</span>
-                  </MobileField>
-                  <div className="grid grid-cols-2 gap-3">
-                    <MobileField label="Outcome">
-                      <span className="text-sm text-[#66716e]">{friendlyOutcome(log.outcome)}</span>
-                    </MobileField>
-                    <MobileField label="Length">
-                      <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
-                    </MobileField>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <div className="hidden divide-y divide-black/10 md:block">
-              {callLogs.map((log) => (
-                <button
-                  type="button"
-                  key={log.id}
-                  onClick={() => onOpen(log)}
-                  className="grid w-full grid-cols-[1fr_200px_130px_80px] gap-4 px-5 py-4 text-left transition hover:bg-[#f7f8f7]"
-                >
-                  <span className="flex items-center gap-3">
-                    <ChannelIcon channel={log.channel} />
-                    <span>
-                      <span className="block font-black">{log.caller}</span>
-                      <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
-                    </span>
-                  </span>
-                  <span className="truncate text-sm text-[#66716e]">{log.summary || "-"}</span>
-                  <span className="text-sm text-[#66716e]">{friendlyOutcome(log.outcome)}</span>
-                  <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="px-5 py-16 text-center text-[#66716e]">No calls yet.</div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {isPhone && (
+            <a
+              href={`tel:${log.caller.replace(/[^\d+]/g, "")}`}
+              className="press inline-flex h-9 items-center gap-2 rounded-lg bg-ink px-4 text-xs font-black text-white transition hover:bg-[#263130]"
+            >
+              <PhoneOutgoing className="h-3.5 w-3.5" />
+              Call back
+            </a>
+          )}
+          {log.caller && (
+            <CopyChip value={log.caller} label={isPhone ? "Copy number" : "Copy address"} />
+          )}
+          {log.outcome && (
+            <span className="inline-flex h-9 items-center rounded-lg bg-card-tint px-3 text-xs font-bold text-ink-soft">
+              {friendlyOutcome(log.outcome)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-5 px-4 py-4 sm:px-6 sm:py-5">
+        {log.summary && (
+          <div className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-teal">
+              <Sparkles className="h-3.5 w-3.5" />
+              AI summary
+            </p>
+            <p className="text-sm leading-relaxed text-[#0e4b4d]">{log.summary}</p>
+          </div>
         )}
-      </section>
+        {log.transcript ? (
+          <div>
+            <p className="mb-2 text-[11px] font-black uppercase tracking-wide text-ink-faint">
+              Conversation
+            </p>
+            <TranscriptView transcript={log.transcript} />
+          </div>
+        ) : (
+          <p className="rounded-xl bg-card-tint px-4 py-6 text-center text-sm text-ink-faint">
+            No transcript was recorded for this conversation.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
 
-function CallDetailModal({ log, onClose }: { log: CallLog; onClose: () => void }) {
-  return (
-    <div className={MODAL_OVERLAY}>
-      <div className={`${MODAL_PANEL} max-w-2xl`}>
-        <div className="flex items-start justify-between border-b border-black/10 px-7 py-5">
-          <div>
-            <h2 className="text-xl font-black">{log.caller}</h2>
-            <p className="mt-1 text-sm text-[#66716e]">
-              {formatWhen(log.startedAt)} · {log.durationLabel}
-            </p>
+const INBOX_FILTERS: { value: "all" | CallChannel; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "phone", label: "Calls" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "sms", label: "SMS" },
+  { value: "email", label: "Email" },
+  { value: "chat", label: "Web chat" },
+];
+
+function UnifiedInbox({
+  callLogs,
+  selectedId,
+  onSelect,
+}: {
+  callLogs: CallLog[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | CallChannel>("all");
+  // When arriving from an insight with a call pre-selected, mobile should land
+  // straight on the conversation, not the list.
+  const [mobileDetail, setMobileDetail] = useState(Boolean(selectedId));
+
+  const present = useMemo(() => new Set(callLogs.map((l) => l.channel)), [callLogs]);
+  const filters = INBOX_FILTERS.filter((f) => f.value === "all" || present.has(f.value));
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return callLogs.filter((log) => {
+      if (filter !== "all" && log.channel !== filter) return false;
+      if (!q) return true;
+      return [log.caller, log.summary, log.agentName, friendlyOutcome(log.outcome)]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [callLogs, search, filter]);
+
+  // Zero-click default: on desktop the newest conversation is open as soon as
+  // you land, mobile still starts on the list.
+  const selected = callLogs.find((l) => l.id === selectedId) ?? filtered[0] ?? null;
+
+  if (callLogs.length === 0) {
+    return (
+      <div className="anim-rise mx-auto max-w-2xl">
+        <h1 className="text-2xl font-black text-ink sm:text-3xl">Inbox</h1>
+        <div className="mt-6 rounded-2xl border border-dashed border-line-strong bg-card px-5 py-20 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-wash">
+            <Inbox className="h-7 w-7 text-teal" />
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <p className="text-lg font-black text-ink">Your inbox is ready</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
+            Every call, WhatsApp, SMS, email and web chat your AI handles will land here, with
+            a summary and full transcript. Try calling your agent&apos;s number to see it work.
+          </p>
         </div>
-        <div className="space-y-5 overflow-y-auto px-7 py-6">
-          {log.outcome && (
-            <div>
-              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[#7a8582]">
-                Outcome
-              </p>
-              <p className="text-sm">{friendlyOutcome(log.outcome)}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="anim-rise">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black text-ink sm:text-3xl">Inbox</h1>
+          <p className="mt-1 text-sm text-ink-soft">
+            Every conversation your AI has handled, on every channel.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-card lg:h-[calc(100dvh-13.5rem)] lg:min-h-[540px] lg:flex-row">
+        {/* List pane */}
+        <div
+          className={`flex min-h-0 flex-col border-line lg:w-[360px] lg:flex-shrink-0 lg:border-r ${
+            mobileDetail ? "hidden lg:flex" : "flex"
+          }`}
+        >
+          <div className="border-b border-line p-3">
+            <div className="flex items-center gap-2 rounded-lg border border-line bg-card-tint px-3 py-2.5 transition focus-within:border-teal">
+              <Search className="h-4 w-4 flex-shrink-0 text-ink-faint" />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search conversations…"
+                className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-faint sm:text-sm"
+              />
             </div>
-          )}
-          {log.summary && (
-            <div>
-              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[#7a8582]">
-                Summary
+            {filters.length > 2 && (
+              <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5">
+                {filters.map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setFilter(f.value)}
+                    className={`press flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold transition ${
+                      filter === f.value
+                        ? "bg-ink text-white"
+                        : "bg-card-tint text-ink-soft hover:bg-[#eef1f0]"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            {filtered.length > 0 ? (
+              filtered.map((log) => (
+                <InboxRow
+                  key={log.id}
+                  log={log}
+                  selected={log.id === selected?.id}
+                  onClick={() => {
+                    onSelect(log.id);
+                    setMobileDetail(true);
+                  }}
+                />
+              ))
+            ) : (
+              <p className="px-3 py-8 text-center text-sm text-ink-faint">
+                No conversations match.
               </p>
-              <p className="text-sm leading-relaxed">{log.summary}</p>
-            </div>
-          )}
-          {log.transcript && (
-            <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[#7a8582]">
-                Transcript
-              </p>
-              <TranscriptView transcript={log.transcript} />
+            )}
+          </div>
+        </div>
+
+        {/* Detail pane */}
+        <div
+          className={`min-h-0 flex-1 overflow-hidden ${
+            mobileDetail ? "flex flex-col" : "hidden lg:flex lg:flex-col"
+          }`}
+        >
+          {selected ? (
+            <ConversationDetail log={selected} onBack={() => setMobileDetail(false)} />
+          ) : (
+            <div className="hidden h-full min-h-[240px] items-center justify-center px-4 lg:flex">
+              <div className="text-center">
+                <History className="mx-auto mb-2 h-6 w-6 text-ink-faint" />
+                <p className="text-sm text-ink-faint">Select a conversation to read it</p>
+              </div>
             </div>
           )}
         </div>
@@ -4413,7 +4637,7 @@ function parseTranscript(raw: string): TranscriptTurn[] {
 function TranscriptView({ transcript }: { transcript: string }) {
   const turns = parseTranscript(transcript);
   return (
-    <div className="space-y-2.5 rounded-lg bg-[#f7f8f7] p-4">
+    <div className="stagger space-y-2.5 rounded-xl bg-card-tint p-4">
       {turns.map((turn, index) => {
         const isCaller = turn.speaker === "caller";
         return (
@@ -4422,17 +4646,17 @@ function TranscriptView({ transcript }: { transcript: string }) {
               className={`max-w-[82%] rounded-2xl px-4 py-2.5 ${
                 isCaller
                   ? "rounded-br-sm bg-[#172929] text-white"
-                  : "rounded-bl-sm bg-[#e6fbfc] text-[#111716]"
+                  : "rounded-bl-sm border border-line bg-card text-ink shadow-card"
               }`}
             >
               <p
                 className={`mb-0.5 text-[11px] font-black uppercase tracking-wide ${
-                  isCaller ? "text-[#7de8eb]" : "text-[#148b8e]"
+                  isCaller ? "text-[#7de8eb]" : "text-teal"
                 }`}
               >
-                {isCaller ? "Caller" : "Agent"}
+                {isCaller ? "Caller" : "AI agent"}
               </p>
-              <p className="text-sm leading-relaxed">{turn.text}</p>
+              <p className="whitespace-pre-line text-sm leading-relaxed">{turn.text}</p>
             </div>
           </div>
         );
