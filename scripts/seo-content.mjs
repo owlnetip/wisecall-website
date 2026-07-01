@@ -291,6 +291,66 @@ export const comparisonRows = [
   ['Best fit', 'UK businesses needing consistent call capture', 'Teams wanting fully human reception', 'Low-volume businesses using voicemail'],
 ];
 
+export const comparisonPages = [
+  {
+    slug: 'wisecall-vs-voicemail',
+    keyword: 'voicemail alternative',
+    title: 'WiseCall vs Voicemail | AI Receptionist Alternative to Voicemail UK',
+    description:
+      'Most callers hang up rather than leave a voicemail. See what changes for a UK business when WiseCall answers instead of a recorded message.',
+    eyebrow: 'Comparison',
+    h1: 'WiseCall vs <span class="text-[#7de8eb]">Voicemail</span>',
+    lead: 'Voicemail depends on the caller leaving a message and someone finding time to listen to it. WiseCall answers the call.',
+    subject: 'Voicemail',
+    columns: ['What happens', 'WiseCall', 'Voicemail'],
+    rows: [
+      ['When the phone isn’t answered', 'WiseCall answers immediately, every time', 'The caller hears a recorded message and has to leave one'],
+      ['Caller behaviour', 'The caller speaks to an agent and gets a real answer', 'Most callers hang up rather than leave a message'],
+      ['Information captured', 'Structured details: name, reason, urgency, contact, next step', 'Whatever the caller manages to say in one message, if they leave one'],
+      ['Follow-up speed', 'A summary and next step reach your team immediately', 'Depends on when someone next checks messages'],
+      ['Urgent calls', 'Can escalate to a human straight away, based on your rules', 'Sits in the same queue as everything else'],
+      ['Caller experience', 'Feels like a proper answer from your business', 'Feels like being brushed off'],
+    ],
+    faqs: [
+      { question: 'Is an AI receptionist better than voicemail?', answer: 'For most UK businesses, yes. An AI receptionist answers immediately, asks questions and captures structured details, while voicemail depends on the caller being willing to leave a message and someone finding time to act on it.' },
+      { question: 'Do people actually leave voicemails?', answer: 'Far fewer than businesses expect. Most callers who reach voicemail simply hang up and either try again later, call a competitor, or give up. WiseCall answers before that decision has to be made.' },
+      { question: 'Will callers know they are talking to AI?', answer: 'WiseCall answers in your business name and can be configured to be upfront about being an AI assistant if you want it to be. The priority is a fast, useful answer rather than pretending to be something it is not.' },
+      { question: 'What happens if WiseCall cannot help with a call?', answer: 'WiseCall follows your business-approved escalation rules — it can offer a callback, take a detailed message, or route urgent calls to a human, so a call that voicemail would have lost still gets a proper next step.' },
+    ],
+    ctaTitle: 'Stop losing callers to voicemail',
+    ctaText: 'Start a 7-day pilot and see what WiseCall would have captured from the calls voicemail is currently losing.',
+  },
+  {
+    slug: 'wisecall-vs-answering-service',
+    keyword: 'AI receptionist vs answering service',
+    title: 'WiseCall vs Answering Service | AI Receptionist vs Human Call Answering UK',
+    description:
+      'Compare WiseCall’s AI receptionist with traditional human answering services on availability, cost, consistency and the detail captured on every call.',
+    eyebrow: 'Comparison',
+    h1: 'WiseCall vs <span class="text-[#7de8eb]">Answering Service</span>',
+    lead: 'Traditional answering services take a message. WiseCall answers, asks the right questions, and hands your team a structured summary.',
+    subject: 'Answering service',
+    columns: ['What matters', 'WiseCall', 'Traditional answering service'],
+    rows: [
+      ['Availability', '24/7, no shift gaps', 'Usually business hours, or evenings and weekends at a premium'],
+      ['Cost model', 'A fixed monthly plan with a clear call allowance', 'Often billed per minute or per call, harder to predict'],
+      ['Consistency', 'Follows the same approved script and questions every call', 'Depends on which operator picks up'],
+      ['Detail captured', 'Structured fields: reason, urgency, contact, next step', 'A free-text message, quality varies by operator'],
+      ['Escalation', 'Follows your rules automatically, every time', 'Depends on the operator recognising urgency'],
+      ['Setup time', 'Live in days', 'Often weeks of scripting and operator training'],
+      ['Genuinely complex calls', 'Escalates to your team rather than improvising', 'A live human voice, which can be an advantage for nuanced conversations'],
+    ],
+    faqs: [
+      { question: 'Is an AI receptionist as good as a human answering service?', answer: 'For structured, repeatable calls — enquiries, bookings, out-of-hours messages — WiseCall is faster, more consistent and captures more usable detail. For a genuinely nuanced or sensitive conversation, a human is still better; WiseCall is built to recognise that and escalate rather than improvise.' },
+      { question: 'What happens with a call WiseCall cannot handle?', answer: 'WiseCall follows business-approved escalation rules: it can transfer to a person, offer a callback, or take a detailed message and flag it as urgent, so difficult calls still get a proper next step instead of a generic message.' },
+      { question: 'Is WiseCall cheaper than an answering service?', answer: 'WiseCall plans are a fixed monthly price with a clear call allowance, which is usually more predictable than per-minute or per-call answering service billing, especially once call volume grows.' },
+      { question: 'Can WiseCall sound like our business, not a generic AI voice?', answer: 'Yes. WiseCall answers in your business name using a greeting and call rules you approve, rather than a shared generic script used across many unrelated businesses.' },
+    ],
+    ctaTitle: 'Try it on real calls before you decide',
+    ctaText: 'Start a 7-day pilot and compare what WiseCall captures against your current answering service, side by side.',
+  },
+];
+
 export const blogPosts = [
   {
     slug: 'missed-calls-cost-uk-businesses',

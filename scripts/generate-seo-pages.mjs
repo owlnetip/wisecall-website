@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import {
   blogPosts,
+  comparisonPages,
   comparisonRows,
   futureIndustries,
   globalFaqs,
@@ -477,9 +478,9 @@ ${faqSection([
   { question: 'What happens if we receive more AI calls than our plan includes?', answer: 'If your business regularly exceeds its monthly allowance, we will recommend moving to a more suitable plan. Book a demo and we can advise based on your call volume.' },
 ], 'Pricing Questions')}
 ${relatedLinks([
-  { path: '/compare/ai-receptionist-uk-comparison/', title: 'Compare AI receptionist options', text: 'See how WiseCall compares with human reception and voicemail-led alternatives.' },
+  { path: '/compare/wisecall-vs-answering-service/', title: 'WiseCall vs answering service', text: 'See the cost and coverage difference against a traditional answering service.' },
+  { path: '/compare/wisecall-vs-voicemail/', title: 'WiseCall vs voicemail', text: 'See what changes when WiseCall answers instead of a recorded message.' },
   { path: '/resources/missed-call-calculator/', title: 'Calculate missed call value', text: 'Estimate the opportunity cost of unanswered calls before choosing a plan.' },
-  { path: '/industries/', title: 'Industry examples', text: 'See how WiseCall applies to different UK sectors.' },
 ])}
 ${ctaBlock('Need help choosing a plan?', 'Book a free 15-minute demo and we will recommend a plan based on your current call volume.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Pricing', path: page.path }])]);
@@ -500,10 +501,28 @@ ${faqSection([
 ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
-  { path: '/industries/legal/', title: 'AI receptionist for law firms', text: 'Explore a high-intent professional services use case.' },
+  ...comparisonPages.map((c) => ({ path: `/compare/${c.slug}/`, title: `WiseCall vs ${c.subject}`, text: `A focused comparison against ${c.subject.toLowerCase()}.` })),
 ])}
 ${ctaBlock('Compare WiseCall against your current setup', 'Book a demo and we will map WiseCall against your current call handling process.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: 'AI Receptionist UK Comparison', path: page.path }])]);
+}
+
+function renderComparisonPage(comparison) {
+  const page = {
+    title: comparison.title,
+    description: comparison.description,
+    path: `/compare/${comparison.slug}/`,
+  };
+  const body = `${hero({ eyebrow: comparison.eyebrow, h1: comparison.h1, lead: comparison.lead, cta: 'Start a 7-day pilot' })}
+<section class="px-6 py-20"><div class="max-w-7xl mx-auto overflow-x-auto card p-3"><table class="w-full text-left text-sm"><thead><tr class="text-[#7de8eb]">${comparison.columns.map((col) => `<th class="p-4">${esc(col)}</th>`).join('')}</tr></thead><tbody>${comparison.rows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell) => `<td class="p-4 text-white/72">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
+${faqSection(comparison.faqs, `${page.title.split('|')[0].trim()} Questions`)}
+${relatedLinks([
+  { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
+  { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
+  { path: '/compare/ai-receptionist-uk-comparison/', title: 'AI receptionist UK comparison', text: 'See the broader comparison against human reception and voicemail.' },
+])}
+${ctaBlock(comparison.ctaTitle, comparison.ctaText)}`;
+  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: page.title.split('|')[0].trim(), path: page.path }]), faqSchema(comparison.faqs)]);
 }
 
 function renderCalculator() {
@@ -725,6 +744,7 @@ function allRoutes() {
     '/industries/',
     ...industries.map((industry) => `/industries/${industry.slug}/`),
     '/compare/ai-receptionist-uk-comparison/',
+    ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
     '/resources/missed-call-calculator/',
     '/resources/call-transcript-guide/',
     '/blog/missed-calls-cost-uk-businesses/',
@@ -764,6 +784,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Legal and professional services: ${site.url}/industries/legal/
 - Estate agents: ${site.url}/industries/estate-agents/
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
+${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
 - Missed call calculator: ${site.url}/resources/missed-call-calculator/
 - Call transcript guide: ${site.url}/resources/call-transcript-guide/
 - Missed calls guide: ${site.url}/blog/missed-calls-cost-uk-businesses/
@@ -799,6 +820,7 @@ async function generate() {
   await write('integrations/index.html', renderIntegrations());
   await write('case-studies/index.html', renderCaseStudies());
   await write('compare/ai-receptionist-uk-comparison/index.html', renderComparison());
+  await Promise.all(comparisonPages.map((comparison) => write(`compare/${comparison.slug}/index.html`, renderComparisonPage(comparison))));
   await write('resources/missed-call-calculator/index.html', renderCalculator());
   await write('resources/call-transcript-guide/index.html', renderTranscriptGuide());
   await write('blog/missed-calls-cost-uk-businesses/index.html', renderBlogPost());
