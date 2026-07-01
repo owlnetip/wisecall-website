@@ -190,7 +190,7 @@ function footer() {
       <p class="text-white/60 leading-relaxed">${esc(site.description)}</p>
     </div>
     <div>
-      <h2 class="text-white font-bold mb-3 text-base">Priority Pages</h2>
+      <h2 class="text-white font-bold mb-3 text-base">Explore</h2>
       <ul class="space-y-2 text-white/60">
         <li><a href="/how-it-works/" class="hover:text-[#7de8eb]">How WiseCall handles calls</a></li>
         <li><a href="/pricing/" class="hover:text-[#7de8eb]">WiseCall pricing</a></li>
@@ -401,8 +401,8 @@ ${trustStrip()}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">
 ${industries.map((industry) => `<a href="/industries/${industry.slug}/" class="card p-7 block hover:border-[#7de8eb]/40"><h2 class="text-2xl font-bold mb-3">${esc(industry.name)}</h2><p class="text-white/65 leading-relaxed">${esc(industry.description)}</p><span class="inline-flex mt-5 text-[#7de8eb] font-bold">View ${esc(industry.keyword)}</span></a>`).join('')}
 </div></section>
-<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">Future industry pages</h2><p class="text-white/68 mb-6">The content architecture is ready for these pages once real copy, integrations and FAQs are approved.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
-${ctaBlock('Need an industry page built next?', 'WiseCall can extend this structure for care homes, restaurants, schools and telecoms resellers without duplicating page code.')}`;
+<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these — get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
+${ctaBlock('Don’t see your industry?', 'Book a demo and we will show you how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: page.path }])]);
 }
 
@@ -436,22 +436,45 @@ ${ctaBlock('Want to hear how WiseCall would answer your calls?', 'Book a demo an
   }, faqSchema(globalFaqs)]);
 }
 
+const pricingPlans = [
+  {
+    name: 'Starter',
+    price: '£99',
+    tagline: 'Small businesses, sole traders and teams who want to stop missing calls',
+    calls: '100 AI Calls',
+    included: ['100 AI Email Replies', '250 WhatsApp Messages', '100 Live Chat Conversations', '100 SMS Messages and Notifications'],
+  },
+  {
+    name: 'Professional',
+    price: '£199',
+    tagline: 'Growing businesses with regular inbound enquiries',
+    calls: '300 AI Calls',
+    included: ['500 AI Email Replies', '800 WhatsApp Messages', '300 Live Chat Conversations', '300 SMS Messages and Notifications'],
+    popular: true,
+  },
+  {
+    name: 'Business',
+    price: '£399',
+    tagline: 'Busy teams, multi-site businesses and companies with high call volume',
+    calls: '750 AI Calls',
+    included: ['2,000 AI Email Replies', '2,500 WhatsApp Messages', '1,000 Live Chat Conversations', '750 SMS Messages and Notifications'],
+  },
+];
+
 function renderPricing() {
   const page = {
     title: 'WiseCall Pricing UK | AI Receptionist Plans',
-    description: 'Understand WiseCall AI receptionist pricing for UK businesses, including plan structure, AI-handled calls, phone system inclusions and demo options.',
+    description: 'WiseCall AI receptionist pricing for UK businesses: Starter £99, Professional £199 and Business £399 per month, plus a 7-day pilot before the 12-month term begins.',
     path: '/pricing/',
   };
-  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'WiseCall pricing is designed around AI-handled inbound calls, team phone system needs and UK support. Book a demo if you need help choosing a plan.', cta: 'Start a 7-day pilot' })}
-<section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${[
-  ['Core', 'For smaller teams that want reliable AI call cover and a complete phone system foundation.'],
-  ['Growth', 'For businesses with higher call volume, more routing requirements and regular overflow.'],
-  ['Pro', 'For larger teams or businesses with significant call volume and room to scale.'],
-].map(([name, text]) => `<div class="card-strong p-7"><h2 class="text-2xl font-bold mb-3">${esc(name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(text)}</p><ul class="space-y-2 text-white/70">${['AI receptionist', 'Phone system included', 'UK outbound calling allowance', 'Call summaries and transcripts'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul></div>`).join('')}</div></section>
+  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'One AI front desk covering voice, email, WhatsApp, live chat and SMS. Choose the plan that matches your call volume, or start a 7-day pilot before the 12-month term begins.', cta: 'Start a 7-day pilot' })}
+<section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${pricingPlans.map((plan) => `<div class="card-strong p-7 relative">${plan.popular ? '<span class="absolute -top-3 left-7 px-3 py-1 rounded-full bg-[#7de8eb] text-[#0f1f1f] text-xs font-bold">Most Popular</span>' : ''}<h2 class="text-2xl font-bold mb-3">${esc(plan.name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(plan.tagline)}</p><div class="mb-5"><span class="text-4xl font-black">${esc(plan.price)}</span><span class="text-white/60">/month</span><div class="text-white/50 text-sm mt-1">excl. VAT &middot; 12-month term</div></div><ul class="space-y-2 text-white/70 mb-6">${[plan.calls, ...plan.included, 'AI receptionist, 24/7', 'Call summaries and transcripts', 'Appointment booking', 'Call transfers and routing'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul><a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3">Start a 7-day pilot</a></div>`).join('')}</div>
+<div class="max-w-7xl mx-auto mt-8"><div class="card p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><h2 class="text-xl font-bold mb-2">Enterprise</h2><p class="text-white/68">Custom call volume, bespoke integrations and onboarding. Suited to larger teams, franchises, healthcare, legal, dental, property and multi-location businesses.</p></div><a href="/#contact" class="btn btn-secondary px-8 py-3 whitespace-nowrap">Talk to us</a></div></div>
+</section>
 ${faqSection([
-  { question: 'How does WiseCall pricing work?', answer: 'WiseCall pricing is based on the plan you choose, the number of AI-handled inbound calls included and the phone system requirements for your team. The best plan depends on your call volume and routing needs.' },
-  { question: 'Does the phone system cost extra?', answer: 'WiseCall plans include the AI receptionist and a complete business phone system foundation, so teams do not need to buy a separate basic phone system just to start.' },
-  { question: 'What happens if we receive more AI calls than our plan includes?', answer: 'If your business receives more AI-handled inbound calls than your monthly allowance, additional call handling can be charged as overage or moved to a more suitable plan.' },
+  { question: 'How does WiseCall pricing work?', answer: 'WiseCall pricing is based on the plan you choose (Starter, Professional or Business) and the number of AI-handled calls, emails, WhatsApp messages, live chat conversations and SMS notifications included each month. The best plan depends on your enquiry volume.' },
+  { question: 'What is included in every plan?', answer: 'Every plan includes a 24/7 AI receptionist, call summaries and transcripts, appointment booking, call transfers and routing, a dashboard, and a 7-day pilot before the 12-month term begins.' },
+  { question: 'What happens if we receive more AI calls than our plan includes?', answer: 'If your business regularly exceeds its monthly allowance, we will recommend moving to a more suitable plan. Book a demo and we can advise based on your call volume.' },
 ], 'Pricing Questions')}
 ${relatedLinks([
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'Compare AI receptionist options', text: 'See how WiseCall compares with human reception and voicemail-led alternatives.' },
