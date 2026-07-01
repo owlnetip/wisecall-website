@@ -1,4 +1,4 @@
-// Per-agent custom webhooks — before_call, during_call, after_call.
+// Per-agent custom webhooks, before_call, during_call, after_call.
 
 const DEFAULT_TIMEOUT_MS = 8000;
 
@@ -105,7 +105,7 @@ function formatContextBlock(results) {
     lines.push(`${result.hook}:\n${body}`);
   }
   lines.push(
-    "Use this integration data naturally in the conversation — do not read JSON verbatim.",
+    "Use this integration data naturally in the conversation, do not read JSON verbatim.",
   );
   return lines.join("\n\n");
 }
@@ -143,7 +143,7 @@ function buildDuringCallTools(metadata, context) {
       props[key] = {
         type: "string",
         description: hasDefault
-          ? `Optional — defaults to ${param.value}`
+          ? `Optional, defaults to ${param.value}`
           : "Extract from the conversation",
       };
       if (!hasDefault) required.push(key);

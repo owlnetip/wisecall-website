@@ -9,7 +9,7 @@ import { getInsightsForUser, parseRange } from "@/lib/insights";
 // Returns the AI Insights roll-up for the signed-in tenant only. Auth is via the
 // Supabase session cookie; data is scoped server-side to the user's own agents
 // (see getInsightsForUser), so it can never leak another tenant's calls. All
-// aggregation is server-side — the client just renders the JSON.
+// aggregation is server-side, the client just renders the JSON.
 export async function GET(request: Request) {
   const session = await getEffectiveUser();
   if (!session) {

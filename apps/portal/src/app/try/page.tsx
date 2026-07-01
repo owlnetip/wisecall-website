@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Enter your number and the WiseCall AI receptionist will call you for a live demo.",
 };
 
-// Public "try the agent" page — no auth. Enter a mobile → /api/demo-callback →
+// Public "try the agent" page, no auth. Enter a mobile → /api/demo-callback →
 // the WiseCall demo agent calls back for a full conversation.
 export default function TryPage() {
   return (

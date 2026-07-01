@@ -1,4 +1,4 @@
-// Per-agent custom integration webhooks — before, during and after a call.
+// Per-agent custom integration webhooks, before, during and after a call.
 // Stored on wisecall_profiles.metadata.integration_webhooks and read by the
 // voice runtime (integrationWebhooks.runtime.js).
 
@@ -36,7 +36,7 @@ export const webhookConditions: {
   {
     value: "before_call",
     label: "Before call",
-    blurb: "Runs when a call connects, before the agent speaks — pre-fetch caller or CRM data.",
+    blurb: "Runs when a call connects, before the agent speaks: pre-fetch caller or CRM data.",
   },
   {
     value: "during_call",
@@ -46,7 +46,7 @@ export const webhookConditions: {
   {
     value: "after_call",
     label: "After call",
-    blurb: "Fires when the call ends — log to CRM, send summaries, trigger workflows.",
+    blurb: "Fires when the call ends, log to CRM, send summaries, trigger workflows.",
   },
 ];
 

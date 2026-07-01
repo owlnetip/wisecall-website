@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
     const plan = planLabel(row.plan);
 
     const smsText =
-      `WiseCall: You've used all ${cap} trial calls — your AI agent is paused. ` +
+      `WiseCall: You've used all ${cap} trial calls, your AI agent is paused. ` +
       `Manage or cancel before ${endDate} to avoid being charged: ${billingUrl}`;
 
     const emailHtml = `
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
       <p>Your AI receptionist is now <strong>paused</strong> and won't answer new calls until your subscription is active.</p>
       <p>Your trial ends on <strong>${endDate}</strong>. After that, billing starts unless you cancel.</p>
       <p><a href="${billingUrl}">Manage your subscription or cancel</a></p>
-      <p>— WiseCall</p>
+      <p>- WiseCall</p>
     `.trim();
 
     const results = {

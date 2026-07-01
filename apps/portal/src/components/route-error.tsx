@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-// Shared route error UI. Most server errors in this app are transient — a cold
+// Shared route error UI. Most server errors in this app are transient, a cold
 // start or a flaky Supabase/Stripe call in a server component, which is why a
 // manual refresh fixes them. So we auto-retry once before showing the wall,
 // turning the "server error, reload" annoyance into a self-healing blip.

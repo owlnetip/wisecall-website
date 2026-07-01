@@ -55,7 +55,7 @@ const PLANS: Plan[] = [
   },
 ];
 
-// Shared inclusions — identical across plans (mirrors the marketing pricing page).
+// Shared inclusions, identical across plans (mirrors the marketing pricing page).
 const INCLUSIONS = [
   "AI Receptionist 24/7",
   "AI Email Assistant",
@@ -139,7 +139,7 @@ export default async function BillingPage() {
             className="mx-auto mt-4 max-w-2xl rounded-xl px-4 py-3 text-xs leading-relaxed"
             style={{ background: "rgba(125,232,235,0.08)", color: "rgba(125,232,235,0.9)", border: "1px solid rgba(125,232,235,0.2)" }}
           >
-            <strong>7-day free trial on every plan</strong> — try the full product with up to{" "}
+            <strong>7-day free trial on every plan</strong>. Try the full product with up to{" "}
             <strong>{TRIAL_CALL_CAP} AI calls</strong>. Card required; billing starts after{" "}
             {TRIAL_DAYS} days unless you cancel.
           </p>

@@ -1,4 +1,4 @@
-/* WiseCall website chat widget — embed on any site:
+/* WiseCall website chat widget, embed on any site:
  *   <script src="https://wisecall.io/widget.js" data-agent="your-agent-slug" async></script>
  * Optional attributes: data-position="left", data-base="<custom fn url>".
  * Self-contained, no dependencies, isolated in a Shadow DOM so it can't clash
@@ -209,7 +209,7 @@
       .then(function (data) {
         typing(false);
         if (data && data.session_id) sessionId = data.session_id;
-        var reply = (data && data.reply) || "Sorry, I didn't catch that — could you try again?";
+        var reply = (data && data.reply) || "Sorry, I didn't catch that, could you try again?";
         bubble("assistant", reply);
         messages.push({ role: "assistant", content: reply });
       })

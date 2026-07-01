@@ -69,7 +69,7 @@ export default async function DashboardPage() {
 
   // Load every panel independently and degrade gracefully: a transient failure
   // in one fetch (cold start, a Supabase/insights hiccup) must NOT 500 the whole
-  // dashboard and force a refresh — render what we have and log the rest.
+  // dashboard and force a refresh, render what we have and log the rest.
   const safe = async <T,>(label: string, p: Promise<T>, fallback: T): Promise<T> => {
     try {
       return await p;

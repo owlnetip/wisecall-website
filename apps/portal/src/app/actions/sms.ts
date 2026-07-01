@@ -18,7 +18,7 @@ export async function provisionSmsNumber(profileId: string): Promise<SmsProvisio
     if (!service) return { ok: false, error: "Server not configured." };
 
     // Verify access: the signed-in user must own this profile, or be an admin.
-    // Mirrors updateAgent — fetch by id, then check owner_id, so admins (and the
+    // Mirrors updateAgent, fetch by id, then check owner_id, so admins (and the
     // admin viewing another customer's agents) aren't blocked. A combined
     // .eq("metadata->>owner_id", user.id) query would 404 for those cases.
     const { data: profile } = await service
@@ -43,7 +43,7 @@ export async function provisionSmsNumber(profileId: string): Promise<SmsProvisio
       apikey: serviceKey,
       "Content-Type": "application/json",
     };
-    // Shared provision secret — robust to Supabase service-role key rotations
+    // Shared provision secret, robust to Supabase service-role key rotations
     // (same scheme as the MOR provisioning action).
     const provisionSecret = process.env.WISECALL_PROVISION_SECRET?.trim();
     if (provisionSecret) headers["x-wisecall-provision-secret"] = provisionSecret;
@@ -62,6 +62,6 @@ export async function provisionSmsNumber(profileId: string): Promise<SmsProvisio
     return { ok: true, smsNumber: data.sms_number };
   } catch (err) {
     console.error("[provisionSmsNumber]", err instanceof Error ? err.message : err);
-    return { ok: false, error: "Failed to provision SMS number — please try again." };
+    return { ok: false, error: "Failed to provision SMS number, please try again." };
   }
 }

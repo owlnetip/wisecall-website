@@ -140,7 +140,7 @@ export function OfficeHoursCard({
             Out-of-hours message
           </label>
           <p className="mb-2 text-xs text-[#66716e]">
-            What the agent says when a call comes in outside your opening hours. You can still offer bookings, take messages, or anything else — the agent will follow whatever you write here.
+            What the agent says when a call comes in outside your opening hours. You can still offer bookings, take messages, or anything else, the agent will follow whatever you write here.
           </p>
           <textarea
             rows={4}

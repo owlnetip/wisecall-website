@@ -1,4 +1,4 @@
-// Call session orchestrator — wires contact memory + integration webhooks into the
+// Call session orchestrator, wires contact memory + integration webhooks into the
 // before / during / after call lifecycle.
 
 const { getSupabase } = require("./supabase");
@@ -53,7 +53,7 @@ function mergeIntegrationTools(session, builtInTools = []) {
 }
 
 /**
- * Run at call connect — after loading the profile, before the LLM session starts.
+ * Run at call connect, after loading the profile, before the LLM session starts.
  */
 async function prepareCallSession(profile, { callId, callerId }) {
   const profileId = profile.id;
@@ -114,7 +114,7 @@ async function handleIntegrationToolCall(session, toolName, aiParams = {}) {
 }
 
 /**
- * Run at hangup — persist the call log, update contact memory, fire after_call webhooks.
+ * Run at hangup, persist the call log, update contact memory, fire after_call webhooks.
  */
 async function finalizeCallSession(
   session,
@@ -151,12 +151,12 @@ async function finalizeCallSession(
     callLogId,
   });
 
-  // Best-effort — don't block hangup on a slow customer endpoint.
+  // Best-effort, don't block hangup on a slow customer endpoint.
   runAfterCallWebhooks(metadataProfile, context).catch((err) => {
     console.error("[callSession] after_call webhooks failed:", err.message);
   });
 
-  // Best-effort — the standard customer summary email is independent of custom webhooks.
+  // Best-effort, the standard customer summary email is independent of custom webhooks.
   sendCallEmailSummary(profile, session.context, {
     transcript,
     summary,

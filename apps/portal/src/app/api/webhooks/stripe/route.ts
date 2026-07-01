@@ -49,14 +49,14 @@ async function resolveOwnerId(
 }
 
 // Returns pooled numbers to the pool (and clears them off the owner's agents)
-// when the customer no longer has active access — i.e. a real cancellation, not
+// when the customer no longer has active access, i.e. a real cancellation, not
 // a plan switch (which also fires subscription.deleted for the superseded sub).
 async function reclaimOwnerNumbers(
   userId: string,
   service: ReturnType<typeof getServiceSupabase>,
 ): Promise<void> {
   if (!service) return;
-  // Still a paying/trialing customer (e.g. just switched plans) — keep their number.
+  // Still a paying/trialing customer (e.g. just switched plans), keep their number.
   if (hasActiveAccess(await getBillingForUser(userId))) return;
 
   const { data: profiles } = await service
@@ -229,7 +229,7 @@ async function handleDeletedSubscription(sub: Stripe.Subscription) {
     return;
   }
 
-  // Main plan cancelled — return pooled numbers for reuse (the helper no-ops
+  // Main plan cancelled, return pooled numbers for reuse (the helper no-ops
   // if the customer still has active access, e.g. a plan switch).
   await reclaimOwnerNumbers(userId, svc);
 }
@@ -326,11 +326,11 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice) {
       invoice: invoice.id,
       amount: amountPence,
       currency: "gbp",
-      description: `AI call overage — ${overageCount} call${overageCount === 1 ? "" : "s"} @ £${rateGbp.toFixed(2)} each`,
+      description: `AI call overage, ${overageCount} call${overageCount === 1 ? "" : "s"} @ £${rateGbp.toFixed(2)} each`,
       tax_rates: [VAT_RATE],
     });
     console.log(
-      `stripe webhook: added call overage item — ${overageCount} calls @ £${rateGbp} = £${(amountPence / 100).toFixed(2)} for user ${billing?.user_id}`,
+      `stripe webhook: added call overage item, ${overageCount} calls @ £${rateGbp} = £${(amountPence / 100).toFixed(2)} for user ${billing?.user_id}`,
     );
   } catch (err) {
     console.error(

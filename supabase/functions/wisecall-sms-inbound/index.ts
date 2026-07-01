@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
 
     const memoryLines: string[] = [];
     if (contact) {
-      memoryLines.push("[CONTACT MEMORY — you have dealt with this person before]");
+      memoryLines.push("[CONTACT MEMORY: you have dealt with this person before]");
       if (contact.name) memoryLines.push(`Name: ${contact.name}`);
       memoryLines.push(`Previous calls: ${contact.call_count}, previous emails: ${contact.email_count}`);
       if (contact.ai_summary) memoryLines.push(`History: ${contact.ai_summary}`);
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
       "*** SMS CHANNEL ***",
       "You are replying to a customer via SMS text message. Adjust accordingly:",
       "- Write a short, clear response (1-3 sentences max). No greetings or sign-offs.",
-      "- Use UK English. Be warm, concise and direct — text messages should be brief.",
+      "- Use UK English. Be warm, concise and direct: text messages should be brief.",
       "- Do not invent availability, prices or confirmations you cannot verify.",
       "- If something needs a human or a booking system, say the team will follow up.",
       "- Never mention that you are an AI unless asked directly.",
@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
       profile.business_context ? `\nBusiness knowledge:\n${profile.business_context}` : "",
       kbContext ? `\n${kbContext}` : "",
       memoryLines.length ? `\n${memoryLines.join("\n")}` : "",
-      "\nReturn ONLY the SMS text to send — no quotes, no labels, no formatting.",
+      "\nReturn ONLY the SMS text to send, no quotes, no labels, no formatting.",
     ]
       .filter(Boolean)
       .join("\n");
@@ -240,10 +240,10 @@ Deno.serve(async (req) => {
       replyText = await callClaude(systemPrompt, userMessage);
     } catch (e) {
       console.error("[wisecall-sms-inbound] LLM error:", (e as Error).message);
-      replyText = `Thanks for your message — the ${businessName} team will be in touch shortly.`;
+      replyText = `Thanks for your message, the ${businessName} team will be in touch shortly.`;
     }
     if (!replyText) {
-      replyText = `Thanks for your message — the ${businessName} team will be in touch shortly.`;
+      replyText = `Thanks for your message, the ${businessName} team will be in touch shortly.`;
     }
 
     try {

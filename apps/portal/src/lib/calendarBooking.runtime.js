@@ -1,4 +1,4 @@
-// calendarBooking.runtime.js — Cal.com + Calendly booking for WiseCall agents.
+// calendarBooking.runtime.js, Cal.com + Calendly booking for WiseCall agents.
 // Deploy to the voice runtime as src/integrations/calendarBooking.js.
 //
 // Connection shape (from wisecall_calendar_connections):

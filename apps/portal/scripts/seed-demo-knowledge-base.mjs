@@ -57,7 +57,7 @@ async function resolveAgentId() {
   }
 
   if (data.length > 1) {
-    console.log("Multiple profiles found — using the first:");
+    console.log("Multiple profiles found, using the first:");
     for (const row of data) {
       console.log(`  - ${row.id} (${row.business_name || row.profile_name || "unnamed"})`);
     }

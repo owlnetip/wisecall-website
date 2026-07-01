@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
 
   try {
     const msisdn = await searchUkNumber();
-    if (!msisdn) return json({ ok: false, error: "No UK SMS numbers available — try again shortly." }, 503);
+    if (!msisdn) return json({ ok: false, error: "No UK SMS numbers available, try again shortly." }, 503);
 
     await buyNumber(msisdn);
 

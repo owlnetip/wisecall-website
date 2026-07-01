@@ -40,7 +40,7 @@ export function RaiseTicketModal({ onClose }: { onClose: () => void }) {
             </div>
             <p className="text-lg font-black text-[#111716]">Ticket raised</p>
             <p className="mt-1 text-sm text-[#66716e]">
-              Our support team has it — reference <strong>{done.ticketNumber}</strong>. We&apos;ll be in touch by email.
+              Our support team has it, reference <strong>{done.ticketNumber}</strong>. We&apos;ll be in touch by email.
             </p>
             <button
               type="button"

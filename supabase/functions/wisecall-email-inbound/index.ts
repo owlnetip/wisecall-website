@@ -1,14 +1,14 @@
-// wisecall-email-inbound — the email channel for WiseCall agents.
+// wisecall-email-inbound, the email channel for WiseCall agents.
 //
 // Flow: a customer forwards their inbound mail to {slug}-{shortid}@in.wisecall.io.
 // Resend Inbound parses the email and POSTs it here. We resolve the agent, reply
 // with the same "brain" the phone agent uses (the agent's system_prompt + caller
 // memory), send the reply via Resend (threaded), and log it to the Contacts view
-// — one source of truth across phone + email.
+//, one source of truth across phone + email.
 //
 // Auth: Resend webhook URL must include ?secret=<WISECALL_EMAIL_INBOUND_SECRET>.
 //
-// ⚠️ RESEND QUIRKS — read before editing (these cost real debugging time):
+// ⚠️ RESEND QUIRKS, read before editing (these cost real debugging time):
 //
 //   1. The email.received webhook is METADATA ONLY (to/from/subject/email_id/
 //      message_id). It does NOT include the body, html, headers or attachments.
@@ -18,7 +18,7 @@
 //
 //   2. That retrieval needs a READ-CAPABLE Resend key. The shared RESEND_API_KEY
 //      is restricted to SENDING and returns 401 "This API key is restricted to
-//      only send emails". Use a Full-access key — here the `wisecal_api_key`
+//      only send emails". Use a Full-access key, here the `wisecal_api_key`
 //      secret. Read-key precedence: RESEND_INBOUND_API_KEY || wisecal_api_key ||
 //      RESEND_API_KEY. Do NOT "simplify" this back to RESEND_API_KEY.
 //
@@ -28,8 +28,8 @@
 //
 // Secrets used (already configured in this project):
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   wisecal_api_key  (Full-access Resend key — used to READ inbound bodies)
-//   RESEND_API_KEY   (send-only — used for the outbound reply)
+//   wisecal_api_key  (Full-access Resend key, used to READ inbound bodies)
+//   RESEND_API_KEY   (send-only, used for the outbound reply)
 //   CLAUDE_API_WISECASE                  (Anthropic key)
 //   WISECALL_EMAIL_INBOUND_SECRET        (shared secret in the webhook URL)
 //   WISECALL_EMAIL_INBOUND_DOMAIN        (optional; default "in.wisecall.io")
@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
 
   const email = extractEmail(payload);
 
-  // Resend's email.received webhook only carries METADATA — the body, headers and
+  // Resend's email.received webhook only carries METADATA, the body, headers and
   // attachments must be fetched separately via the Receiving API using email_id.
   // Needs a key with read access (RESEND_INBOUND_API_KEY); the send-only key 401s.
   const emailId = payload?.data?.email_id || payload?.data?.id || "";
@@ -303,7 +303,7 @@ Deno.serve(async (req) => {
     }
   }
   if (!email.from.email || email.to.length === 0) {
-    // Nothing actionable (e.g. a delivery/test ping) — ack so Resend stops retrying.
+    // Nothing actionable (e.g. a delivery/test ping), ack so Resend stops retrying.
     return json({ ok: true, skipped: "no from/to" });
   }
 
@@ -372,7 +372,7 @@ Deno.serve(async (req) => {
   // written replies, plus any memory we hold on this contact.
   const memoryLines: string[] = [];
   if (contact) {
-    memoryLines.push("[CONTACT MEMORY — you have dealt with this person before]");
+    memoryLines.push("[CONTACT MEMORY: you have dealt with this person before]");
     if (contact.name) memoryLines.push(`Name: ${contact.name}`);
     memoryLines.push(`Previous calls: ${contact.call_count}, previous emails: ${contact.email_count}`);
     if (contact.ai_summary) memoryLines.push(`History: ${contact.ai_summary}`);
@@ -407,7 +407,7 @@ Deno.serve(async (req) => {
     profile.business_context ? `\nBusiness knowledge:\n${profile.business_context}` : "",
     kbContext ? `\n${kbContext}` : "",
     memoryLines.length ? `\n${memoryLines.join("\n")}` : "",
-    "\nReturn ONLY the body of the email reply — no subject line, no email headers.",
+    "\nReturn ONLY the body of the email reply, no subject line, no email headers.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -421,7 +421,7 @@ Deno.serve(async (req) => {
     console.error("[wisecall-email-inbound] LLM error:", (e as Error).message);
     return json({ error: "LLM failed" }, 502);
   }
-  if (!replyText) replyText = `Thanks for your email — we've received it and the ${businessName} team will be in touch shortly.`;
+  if (!replyText) replyText = `Thanks for your email, we've received it and the ${businessName} team will be in touch shortly.`;
 
   // Send the threaded reply from the agent's address.
   const replySubject = /^re:/i.test(email.subject) ? email.subject : `Re: ${email.subject}`;

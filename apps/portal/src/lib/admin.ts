@@ -55,11 +55,11 @@ function phoneOf(row: ProfileRow): string {
   if (routing && typeof routing.number === "string" && routing.number) {
     return routing.number;
   }
-  return "—";
+  return "-";
 }
 
 // Builds the full cross-customer overview for the admin console. Service-role
-// only — every profile, with owner email resolved from the auth users list and
+// only, every profile, with owner email resolved from the auth users list and
 // call counts tallied per profile. Returns null when Supabase isn't configured.
 export async function getAdminOverview(): Promise<AdminOverview | null> {
   const supabase = getServiceSupabase();
@@ -106,7 +106,7 @@ export async function getAdminOverview(): Promise<AdminOverview | null> {
     if (ownerId) owners.add(ownerId);
     return {
       id: row.id,
-      business: row.business_name || row.clinic_name || "—",
+      business: row.business_name || row.clinic_name || "-",
       agentName: row.receptionist_name || row.profile_name || "Assistant",
       phone: phoneOf(row),
       status: row.is_active ? "Live" : "Setup",

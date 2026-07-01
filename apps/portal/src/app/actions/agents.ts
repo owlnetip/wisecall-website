@@ -172,7 +172,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
 
   if (process.env.WISECALL_ROUTING_PROVIDER === "mor_sip") {
     // MOR path: every new agent gets its own DDI from the MOR pool. No Telnyx
-    // involvement — existing Telnyx agents are completely untouched.
+    // involvement, existing Telnyx agents are completely untouched.
     try {
       const config = getSupabaseConfig();
       if (config) {
@@ -204,7 +204,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
       });
       if (assigned) {
         // A number was free: wire it up and go live. is_active MUST be set in the
-        // same write — the call runtime only matches profiles where is_active=true
+        // same write, the call runtime only matches profiles where is_active=true
         // (wisecallConfigStore), so a number without is_active answers "not
         // configured yet".
         await service
@@ -269,7 +269,7 @@ async function releaseMorNumber(profileId: string): Promise<string | null> {
 // Permanently removes an agent and returns its pooled DDI (if any) to the shared
 // pool so the next first-number agent can reuse it. Admin-only on purpose:
 // customers cancel by giving notice rather than self-serve deleting, so this is
-// only ever invoked from the backend/admin side — there is no client delete UI.
+// only ever invoked from the backend/admin side, there is no client delete UI.
 export async function deleteAgent(agentId: string): Promise<DeleteResult> {
   const auth = await createSupabaseServerClient();
   const {
@@ -301,7 +301,7 @@ export async function deleteAgent(agentId: string): Promise<DeleteResult> {
 
   // Free the pooled DDI (if one was assigned). Returns the freed number, or null
   // when the agent had no pool number. The agent is already gone, so a release
-  // failure must not fail the whole action — the number can still be reclaimed by
+  // failure must not fail the whole action, the number can still be reclaimed by
   // the Stripe-cancellation path or a replenish job.
   let releasedNumber: string | null = null;
   const { data: released, error: releaseError } = await service.rpc(
@@ -390,7 +390,7 @@ export async function updateAgent(
     // column write below is what actually reaches the phone agent.
     nextMetadata.out_of_hours_message = patch.outOfHoursMessage;
   }
-  // Website chat widget theming — wisecall-live-chat reads these metadata keys.
+  // Website chat widget theming, wisecall-live-chat reads these metadata keys.
   if (patch.chatAccentColor !== undefined) nextMetadata.chat_accent_color = patch.chatAccentColor;
   if (patch.chatBackgroundColor !== undefined) nextMetadata.chat_background_color = patch.chatBackgroundColor;
   if (patch.integrationWebhooks !== undefined) {
@@ -436,7 +436,7 @@ export type TestVoiceResult = {
 // each name maps to an env var (CARTESIA_VOICE_<NAME>). Until an id is set for a
 // voice, preview returns a clear message instead of failing.
 // The Cartesia model used for the in-portal voice preview. Kept in sync with the
-// live call pipeline — both default to Sonic 3.5. Override with CARTESIA_MODEL.
+// live call pipeline, both default to Sonic 3.5. Override with CARTESIA_MODEL.
 const CARTESIA_MODEL = process.env.CARTESIA_MODEL || "sonic-3.5";
 
 const CARTESIA_VOICES: Record<string, string | undefined> = {
@@ -581,11 +581,11 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
       return {
         ok: false,
         error:
-          "No telco provider is configured yet — we'll switch this on once the routing stack is confirmed.",
+          "No telco provider is configured yet, we'll switch this on once the routing stack is confirmed.",
       };
   }
 
-  // Reference for when a branch above succeeds — write the route and return it:
+  // Reference for when a branch above succeeds, write the route and return it:
   //
   //   const routing: AgentRouting = { provider, number, status: "live", ... };
   //   await service.from("wisecall_profiles")

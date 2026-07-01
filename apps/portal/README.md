@@ -29,7 +29,7 @@ questions, opportunities, a one-line manager summary) and stores it on the
 `wisecall_call_logs` row (columns added in migration `0008_call_ai_insights.sql`).
 
 The dashboard **AI Insights** view aggregates these stored fields per tenant and
-date range — it never calls the model, so it stays fast and cheap. Trigger the
+date range; it never calls the model, so it stays fast and cheap. Trigger the
 analysis one of these ways:
 
 - **After-call webhook** (preferred): point the call runtime at
