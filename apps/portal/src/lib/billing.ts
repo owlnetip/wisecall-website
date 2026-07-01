@@ -145,9 +145,9 @@ export async function reconcileBillingFromStripe(
   userId: string,
   billing: Billing | null,
 ): Promise<Billing | null> {
-  if (hasActiveAccess(billing)) return billing; // already good — no work needed
+  if (hasActiveAccess(billing)) return billing; // already good - no work needed
   const customerId = billing?.stripeCustomerId;
-  if (!customerId) return billing; // never started checkout — nothing to reconcile
+  if (!customerId) return billing; // never started checkout - nothing to reconcile
 
   const stripe = getStripe();
   const service = getServiceSupabase();
@@ -223,7 +223,7 @@ export function getEmailChannelUsage(
     used: billing?.emailUsedPeriod ?? 0,
     allowance,
     overage: billing?.emailOveragePeriod ?? 0,
-    monthlyPriceGbp: EMAIL_CHANNEL_MONTHLY_GBP, // 0 — bundled
+    monthlyPriceGbp: EMAIL_CHANNEL_MONTHLY_GBP, // 0 - bundled
     overagePriceGbp: EMAIL_OVERAGE_GBP,
     canPurchase: false, // email is bundled into every plan; never a separate purchase
   };

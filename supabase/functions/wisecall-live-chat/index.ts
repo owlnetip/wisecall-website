@@ -188,10 +188,10 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "Using knowledge:",
     "- ALWAYS attempt to answer or troubleshoot first. Do NOT jump straight to 'I'll pass this to the team' as your first response.",
     "- If a [KNOWLEDGE BASE] block is provided below, use it as the authoritative source and answer from it.",
-    "- If the question is not covered by the KB, use general knowledge to help — suggest troubleshooting steps, explain the issue, offer practical guidance.",
+    "- If the question is not covered by the KB, use general knowledge to help - suggest troubleshooting steps, explain the issue, offer practical guidance.",
     "- Only escalate to the support team when: (a) the problem needs account-specific access or system configuration you cannot see, OR (b) the visitor explicitly asks to speak to someone or raise a ticket, OR (c) you have genuinely tried to help and the issue remains unresolved.",
     "- When you do escalate, capture the visitor's name, best phone or email, and a clear description of the unresolved issue.",
-    "- Never invent business-specific details (prices, timescales, account config, contract terms) — for those, say you will check with the support team.",
+    "- Never invent business-specific details (prices, timescales, account config, contract terms) - for those, say you will check with the support team.",
     "- Use UK English.",
     "",
     `Opening greeting reference: ${greeting}`,
@@ -267,7 +267,7 @@ const KB_MIN_SIMILARITY = 0.35;
 // wisecall-kb-search function (which embeds with Jina and runs the match RPC,
 // scoped to this agent's profile id). Relevance-gated: returns a context block
 // built only from sufficiently-similar chunks, or null when nothing is a good
-// match. Never throws — KB lookup is best-effort and must not break the chat.
+// match. Never throws - KB lookup is best-effort and must not break the chat.
 async function fetchKbContext(profileId: string, query: string): Promise<string | null> {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");

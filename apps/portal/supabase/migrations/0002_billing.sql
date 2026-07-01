@@ -3,10 +3,10 @@
 -- Apply in Supabase Studio → SQL editor, or via `supabase db push`.
 --
 -- Adds:
---   1. public.wisecall_billing        — one row per customer (auth user)
---   2. trigger on wisecall_call_logs  — auto-disables a trialing customer's
+--   1. public.wisecall_billing        - one row per customer (auth user)
+--   2. trigger on wisecall_call_logs  - auto-disables a trialing customer's
 --                                       agents once they hit their call cap
---   3. wisecall_call_allowed(uuid)    — guard the phone runtime calls at call-start
+--   3. wisecall_call_allowed(uuid)    - guard the phone runtime calls at call-start
 
 -- ── 1. Billing table ────────────────────────────────────────────────────────
 create table if not exists public.wisecall_billing (
@@ -111,7 +111,7 @@ create trigger wisecall_trial_cap_trigger
 
 -- ── 3. Guard the phone runtime calls at call-start ──────────────────────────
 -- Returns false when the agent's owner is on a free trial and has hit the cap
--- (or has been flagged blocked). Returns true otherwise — including for paid
+-- (or has been flagged blocked). Returns true otherwise - including for paid
 -- customers and agents with no billing record (so nothing breaks if billing is
 -- absent). Call this from the runtime before answering; refuse the call on false.
 create or replace function public.wisecall_call_allowed(p_profile_id uuid)

@@ -1,9 +1,9 @@
 /* ============================================================================
-   WiseCall — per-section light mode
+   WiseCall - per-section light mode
    ----------------------------------------------------------------------------
    The site stays DARK by default (nav, hero, statement sections, footer).
    Add class="light" to any <section> to flip just that band to a clean light
-   scheme — giving the page a dark/light rhythm like the app portal.
+   scheme - giving the page a dark/light rhythm like the app portal.
 
    Everything here is scoped under `section.light`, so it never touches the
    dark sections. Accent cyan (#7de8eb) stays bright for FILLS; accent TEXT is

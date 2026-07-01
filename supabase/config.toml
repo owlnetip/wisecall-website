@@ -10,27 +10,38 @@ verify_jwt = true
 [functions.wisecall-live-chat]
 verify_jwt = false
 
-# Resend inbound webhook — authenticates via its own inbound secret, not a
+# Resend inbound webhook - authenticates via its own inbound secret, not a
 # Supabase JWT, so JWT verification must stay off or the webhook 401s.
 [functions.wisecall-email-inbound]
 verify_jwt = false
 
-# Internal provisioning — called from the Next.js server action with the
+# Internal provisioning - called from the Next.js server action with the
 # service-role apikey. The function body rejects non-service-role calls.
 [functions.wisecall-provision-mor-agent]
 verify_jwt = false
 
-# Twilio WhatsApp webhook — Twilio posts form-encoded webhooks verified by
+# Twilio WhatsApp webhook - Twilio posts form-encoded webhooks verified by
 # X-Twilio-Signature inside the function, so JWT verification must stay off.
 [functions.wisecall-whatsapp-inbound]
 verify_jwt = false
 
-# Vonage SMS inbound webhook — Vonage posts form-encoded messages; no Supabase
+# Vonage SMS inbound webhook - Vonage posts form-encoded messages; no Supabase
 # JWT in the request, so JWT verification must stay off.
 [functions.wisecall-sms-inbound]
 verify_jwt = false
 
-# Internal SMS number provisioning — called from the Next.js server action with
+# Internal SMS number provisioning - called from the Next.js server action with
 # the service-role key. The function body rejects non-service-role callers.
 [functions.wisecall-provision-sms]
+verify_jwt = false
+
+# Channel overage alert - called from the Stripe invoice.created webhook when a
+# customer exceeded a bundled channel allowance. Overage is free; this is
+# informational only. Auth via x-trigger-secret (WISECALL_TRIAL_REMINDER_SECRET).
+[functions.wisecall-channel-overage-alert]
+verify_jwt = false
+
+# SMS number cancellation - called from deleteAgent when an agent is deleted.
+# Cancels the Vonage number and removes the wisecall_sms_numbers row.
+[functions.wisecall-release-sms-number]
 verify_jwt = false

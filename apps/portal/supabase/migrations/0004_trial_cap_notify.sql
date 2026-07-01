@@ -84,7 +84,7 @@ as $$
   );
 $$;
 
--- Queue the cap-reached notification. Never raises — call logging must succeed.
+-- Queue the cap-reached notification. Never raises - call logging must succeed.
 create or replace function public.wisecall_queue_trial_cap_notification(p_owner uuid)
 returns void
 language plpgsql

@@ -129,7 +129,7 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
     });
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
-    setMsg({ kind: "ok", text: `Blast created — ${res.data.queued} calls queued.` });
+    setMsg({ kind: "ok", text: `Blast created - ${res.data.queued} calls queued.` });
     setParsed(null);
     setName("");
     await refresh();
@@ -157,7 +157,7 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
         </div>
         <p className="mb-4 text-sm text-[#66716e]">
           {businessName} will call each recipient with the objective below. Service reminders and
-          renewals only — keep it to people who expect to hear from you.
+          renewals only - keep it to people who expect to hear from you.
         </p>
 
         <label className="mb-1 block text-sm font-bold">Template</label>
@@ -185,7 +185,7 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
         <label className="mb-1 block text-sm font-bold">Recipients (CSV)</label>
         <label className="mb-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-black/20 px-4 py-4 text-sm font-bold text-[#66716e] hover:bg-[#f7f8f7]">
           <Upload className="h-4 w-4" />
-          {parsed ? `${recipientCount} recipients loaded — replace file` : "Upload CSV (number + name + merge fields)"}
+          {parsed ? `${recipientCount} recipients loaded - replace file` : "Upload CSV (number + name + merge fields)"}
           <input
             type="file"
             accept=".csv,text/csv"
@@ -209,7 +209,7 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
             <div>
               <label className="mb-1 block text-xs font-bold">Name column (optional)</label>
               <select className={input} value={nameCol} onChange={(e) => setNameCol(e.target.value)}>
-                <option value="">—</option>
+                <option value="">-</option>
                 {parsed.headers.map((h) => (
                   <option key={h} value={h}>
                     {h}
@@ -324,7 +324,7 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
                         <tbody>
                           {results[b.id].map((c) => (
                             <tr key={c.id} className="border-b border-black/5 last:border-0">
-                              <td className="py-1 pr-3 font-medium">{c.contactName || "—"}</td>
+                              <td className="py-1 pr-3 font-medium">{c.contactName || "-"}</td>
                               <td className="py-1 pr-3 text-[#66716e]">{c.toNumber}</td>
                               <td className="py-1 pr-3">{STATUS_LABEL[c.status] ?? c.status}</td>
                               <td className="py-1 text-[#8a938f]">{c.attempts} attempt(s)</td>

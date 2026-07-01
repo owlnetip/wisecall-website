@@ -199,7 +199,7 @@ export async function saveSipEndpoint(input: {
 
   // Don't use upsert: PostgREST defaults omitted columns to NULL, so a blank
   // password on an edit would try to write sip_password = NULL and trip the
-  // NOT NULL constraint. Branch explicitly — update never touches columns we
+  // NOT NULL constraint. Branch explicitly - update never touches columns we
   // didn't set, so leaving the password blank keeps the stored one.
   if (existing) {
     if (password) {

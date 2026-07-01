@@ -7,7 +7,7 @@
 -- them in. No existing column is altered or dropped.
 --
 -- `outcome` already exists on wisecall_call_logs (written by the runtime), so it
--- is intentionally NOT redefined here — the AI's own outcome lives inside
+-- is intentionally NOT redefined here - the AI's own outcome lives inside
 -- ai_analysis_json so we never clobber the runtime's value.
 
 alter table public.wisecall_call_logs

@@ -10,11 +10,12 @@ import {
   planEmailIncluded,
   planLivechatIncluded,
   planWhatsappIncluded,
+  planSmsIncluded,
   planOverageRateGbp,
 } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
-import { notifyTrialEnding } from "@/lib/notify";
+import { notifyTrialEnding, notifyChannelOverage } from "@/lib/notify";
 import { syncEmailChannelProfiles, getBillingForUser, hasActiveAccess } from "@/lib/billing";
 
 export const runtime = "nodejs";
@@ -49,14 +50,14 @@ async function resolveOwnerId(
 }
 
 // Returns pooled numbers to the pool (and clears them off the owner's agents)
-// when the customer no longer has active access — i.e. a real cancellation, not
+// when the customer no longer has active access - i.e. a real cancellation, not
 // a plan switch (which also fires subscription.deleted for the superseded sub).
 async function reclaimOwnerNumbers(
   userId: string,
   service: ReturnType<typeof getServiceSupabase>,
 ): Promise<void> {
   if (!service) return;
-  // Still a paying/trialing customer (e.g. just switched plans) — keep their number.
+  // Still a paying/trialing customer (e.g. just switched plans) - keep their number.
   if (hasActiveAccess(await getBillingForUser(userId))) return;
 
   const { data: profiles } = await service
@@ -86,6 +87,92 @@ async function reclaimOwnerNumbers(
       })
       .eq("id", p.id);
   }
+}
+
+// Looks up the partner that referred a customer, from the partner_code stashed
+// in the auth user's metadata at signup. Returns the partner id, or null.
+async function resolvePartnerIdForUser(
+  service: NonNullable<ReturnType<typeof getServiceSupabase>>,
+  userId: string,
+): Promise<string | null> {
+  try {
+    const { data } = await service.auth.admin.getUserById(userId);
+    const meta = (data?.user?.user_metadata as Record<string, unknown> | null) ?? null;
+    const code = typeof meta?.partner_code === "string" ? meta.partner_code.trim().toLowerCase() : "";
+    if (!code) return null;
+    const { data: partner } = await service
+      .from("wisecall_partners")
+      .select("id")
+      .eq("referral_code", code)
+      .eq("status", "active")
+      .maybeSingle();
+    return (partner?.id as string | undefined) ?? null;
+  } catch (err) {
+    console.error("stripe webhook: partner attribution lookup failed", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+// Records a recurring commission for a referred customer when their invoice is
+// paid. Commission is the partner's rate (default 30%) of the net subscription
+// revenue (invoice subtotal, ex-VAT). Idempotent - deduped on the invoice id.
+async function recordPartnerCommission(invoice: Stripe.Invoice) {
+  const service = getServiceSupabase();
+  if (!service) return;
+
+  const invoiceId = invoice.id;
+  if (!invoiceId) return;
+
+  const customerId = typeof invoice.customer === "string"
+    ? invoice.customer
+    : (invoice.customer as { id?: string } | null)?.id;
+  if (!customerId) return;
+
+  // Find the customer's billing row + their partner attribution.
+  const { data: billing } = await service
+    .from("wisecall_billing")
+    .select("user_id, partner_id")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  const partnerId = (billing?.partner_id as string | null) ?? null;
+  if (!partnerId || !billing?.user_id) return; // not a referred customer
+
+  // Net (ex-VAT) revenue this invoice represents. subtotal is before tax.
+  const basePence = typeof invoice.subtotal === "number" ? invoice.subtotal : 0;
+  if (basePence <= 0) return;
+
+  // Partner's commission rate (falls back to 30%).
+  const { data: partner } = await service
+    .from("wisecall_partners")
+    .select("commission_rate")
+    .eq("id", partnerId)
+    .maybeSingle();
+  const rate = partner ? Number(partner.commission_rate) : 0.3;
+  const commissionPence = Math.round(basePence * rate);
+  if (commissionPence <= 0) return;
+
+  // Insert; the unique constraint on stripe_invoice_id makes this idempotent.
+  const { error } = await service.from("wisecall_partner_commissions").insert({
+    partner_id: partnerId,
+    customer_user_id: billing.user_id,
+    stripe_invoice_id: invoiceId,
+    amount_base_pence: basePence,
+    commission_pence: commissionPence,
+    commission_rate: rate,
+    currency: invoice.currency ?? "gbp",
+    status: "pending",
+  });
+  if (error) {
+    // 23505 = unique violation (already recorded) - expected on retries.
+    if (!String(error.message).includes("duplicate") && error.code !== "23505") {
+      console.error("stripe webhook: failed to record partner commission", error.message);
+    }
+    return;
+  }
+  console.log(
+    `stripe webhook: recorded partner commission - £${(commissionPence / 100).toFixed(2)} ` +
+    `(${(rate * 100).toFixed(0)}% of £${(basePence / 100).toFixed(2)}) for partner ${partnerId} on invoice ${invoiceId}`,
+  );
 }
 
 async function fetchStripeCustomerPhone(
@@ -125,11 +212,19 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
   // Detect billing period change so we can reset usage counters for the new period.
   const { data: existing } = await service
     .from("wisecall_billing")
-    .select("calls_period_end")
+    .select("calls_period_end, partner_id")
     .eq("user_id", userId)
     .maybeSingle();
   const prevPeriodEnd = (existing?.calls_period_end as string | null) ?? null;
   const periodChanged = Boolean(newPeriodEnd && prevPeriodEnd && newPeriodEnd !== prevPeriodEnd);
+
+  // Partner attribution: stamp partner_id once, from the user's signup metadata.
+  // Resolved here (not at signup) so it lands on the billing row the dashboard
+  // and commission ledger both key off. Never overwrite an existing attribution.
+  let partnerId: string | null = (existing?.partner_id as string | null) ?? null;
+  if (!partnerId) {
+    partnerId = await resolvePartnerIdForUser(service, userId);
+  }
 
   await service.from("wisecall_billing").upsert(
     {
@@ -164,6 +259,7 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
           }
         : {}),
       ...(notificationPhone ? { notification_phone: notificationPhone } : {}),
+      ...(partnerId ? { partner_id: partnerId } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },
@@ -229,7 +325,7 @@ async function handleDeletedSubscription(sub: Stripe.Subscription) {
     return;
   }
 
-  // Main plan cancelled — return pooled numbers for reuse (the helper no-ops
+  // Main plan cancelled - return pooled numbers for reuse (the helper no-ops
   // if the customer still has active access, e.g. a plan switch).
   await reclaimOwnerNumbers(userId, svc);
 }
@@ -305,38 +401,95 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice) {
     : (invoice.customer as { id?: string } | null)?.id;
   if (!customerId) return;
 
-  // Look up their call overage for the closing period
+  // Look up usage for the closing period - calls (billed) + channels (free alert only).
   const { data: billing } = await service
     .from("wisecall_billing")
-    .select("user_id, plan, calls_overage_period")
+    .select("user_id, plan, calls_overage_period, sms_used_period, sms_overage_period, sms_monthly_allowance, email_used_period, email_overage_period, email_monthly_allowance, whatsapp_used_period, whatsapp_overage_period, whatsapp_monthly_allowance, livechat_used_period, livechat_overage_period, livechat_monthly_allowance")
     .eq("stripe_customer_id", customerId)
     .maybeSingle();
 
-  const overageCount = (billing?.calls_overage_period as number | null) ?? 0;
-  if (overageCount <= 0) return;
-
   const plan = (billing?.plan as string | null) ?? null;
-  const rateGbp = planOverageRateGbp(plan);
-  const amountPence = Math.round(overageCount * rateGbp * 100);
-  if (amountPence <= 0) return;
 
-  try {
-    await stripe.invoiceItems.create({
-      customer: customerId,
-      invoice: invoice.id,
-      amount: amountPence,
-      currency: "gbp",
-      description: `AI call overage — ${overageCount} call${overageCount === 1 ? "" : "s"} @ £${rateGbp.toFixed(2)} each`,
-      tax_rates: [VAT_RATE],
-    });
-    console.log(
-      `stripe webhook: added call overage item — ${overageCount} calls @ £${rateGbp} = £${(amountPence / 100).toFixed(2)} for user ${billing?.user_id}`,
-    );
-  } catch (err) {
-    console.error(
-      "stripe webhook: failed to add overage invoice item",
-      err instanceof Error ? err.message : err,
-    );
+  // ── 1. Call overage → invoice line item (billed) ───────────────────────────
+  const callOverage = (billing?.calls_overage_period as number | null) ?? 0;
+  if (callOverage > 0) {
+    const rateGbp = planOverageRateGbp(plan);
+    const amountPence = Math.round(callOverage * rateGbp * 100);
+    if (amountPence > 0) {
+      try {
+        await stripe.invoiceItems.create({
+          customer: customerId,
+          invoice: invoice.id,
+          amount: amountPence,
+          currency: "gbp",
+          description: `AI call overage - ${callOverage} call${callOverage === 1 ? "" : "s"} @ £${rateGbp.toFixed(2)} each`,
+          tax_rates: [VAT_RATE],
+        });
+        console.log(
+          `stripe webhook: added call overage item - ${callOverage} calls @ £${rateGbp} = £${(amountPence / 100).toFixed(2)} for user ${billing?.user_id}`,
+        );
+      } catch (err) {
+        console.error(
+          "stripe webhook: failed to add overage invoice item",
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+  }
+
+  // ── 2. Channel overage → informational email (free, no charge) ────────────
+  // Build rows only for channels that actually went over.
+  const channelRows: Array<{ name: string; allowance: number; used: number; overage: number }> = [];
+  const b = billing as Record<string, number | string | null> | null;
+
+  const channelDefs = [
+    {
+      name: "SMS",
+      used: (b?.sms_used_period as number | null) ?? 0,
+      overage: (b?.sms_overage_period as number | null) ?? 0,
+      allowance: (b?.sms_monthly_allowance as number | null) ?? planSmsIncluded(plan),
+    },
+    {
+      name: "Email",
+      used: (b?.email_used_period as number | null) ?? 0,
+      overage: (b?.email_overage_period as number | null) ?? 0,
+      allowance: (b?.email_monthly_allowance as number | null) ?? planEmailIncluded(plan),
+    },
+    {
+      name: "WhatsApp",
+      used: (b?.whatsapp_used_period as number | null) ?? 0,
+      overage: (b?.whatsapp_overage_period as number | null) ?? 0,
+      allowance: (b?.whatsapp_monthly_allowance as number | null) ?? planWhatsappIncluded(plan),
+    },
+    {
+      name: "Live Chat",
+      used: (b?.livechat_used_period as number | null) ?? 0,
+      overage: (b?.livechat_overage_period as number | null) ?? 0,
+      allowance: (b?.livechat_monthly_allowance as number | null) ?? planLivechatIncluded(plan),
+    },
+  ];
+
+  for (const ch of channelDefs) {
+    if (ch.overage > 0) channelRows.push(ch);
+  }
+
+  if (channelRows.length > 0 && billing?.user_id) {
+    try {
+      const { data: userData } = await service.auth.admin.getUserById(billing.user_id as string);
+      const email = userData?.user?.email ?? null;
+      if (email) {
+        await notifyChannelOverage({ email, plan, channels: channelRows });
+        console.log(
+          `stripe webhook: sent channel overage alert to ${email} for user ${billing.user_id} ` +
+          `(${channelRows.map((c) => `${c.name}: +${c.overage}`).join(", ")})`,
+        );
+      }
+    } catch (err) {
+      console.error(
+        "stripe webhook: channel overage alert failed",
+        err instanceof Error ? err.message : err,
+      );
+    }
   }
 }
 
@@ -453,6 +606,10 @@ export async function POST(req: Request) {
       }
       case "invoice.created": {
         await handleInvoiceCreated(event.data.object as Stripe.Invoice);
+        break;
+      }
+      case "invoice.payment_succeeded": {
+        await recordPartnerCommission(event.data.object as Stripe.Invoice);
         break;
       }
       default:

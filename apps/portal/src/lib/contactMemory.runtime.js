@@ -1,7 +1,7 @@
-// contactMemory.runtime.js — synced from wisecall-edge/src/lib/contactMemory.js
+// contactMemory.runtime.js - synced from wisecall-edge/src/lib/contactMemory.js
 // Run: npm run sync:portal (from wisecall-edge/) or node scripts/sync-runtime-libs.mjs
 
-// Contact memory — lookup before the call, upsert after saveCallLog.
+// Contact memory - lookup before the call, upsert after saveCallLog.
 
 const { getSupabase } = require("./supabase");
 
@@ -47,7 +47,7 @@ function buildContextBlock(contact) {
   if (contact.ai_summary) lines.push(`History: ${contact.ai_summary}`);
   if (contact.notes) lines.push(`Notes: ${contact.notes}`);
   lines.push(
-    "Use this to greet them by name (if known) and acknowledge their history naturally — don't read it out verbatim.",
+    "Use this to greet them by name (if known) and acknowledge their history naturally - don't read it out verbatim.",
   );
   return lines.join("\n");
 }

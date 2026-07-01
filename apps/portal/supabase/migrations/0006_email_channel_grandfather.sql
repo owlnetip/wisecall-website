@@ -10,7 +10,7 @@ set
   updated_at = now()
 where user_id = '7ab0c21f-4f77-44da-b90f-6386a46e5e8c'::uuid;
 
--- Charles Garth (owner id prefix b9633452 — verify one row matches before apply)
+-- Charles Garth (owner id prefix b9633452 - verify one row matches before apply)
 update public.wisecall_billing
 set
   email_channel_enabled = true,
