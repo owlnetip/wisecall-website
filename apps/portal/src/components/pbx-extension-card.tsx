@@ -18,21 +18,21 @@ import {
 } from "@/lib/pbx";
 
 const FIELD =
-  "w-full rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2 text-sm text-[#111716] placeholder:text-[#9aa5a2] focus:outline-none focus:ring-2 focus:ring-[#148b8e]/40";
-const LABEL = "mb-1 block text-sm font-bold text-[#111716]";
+  "w-full rounded-lg border border-line bg-card-tint px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-teal/40";
+const LABEL = "mb-1 block text-sm font-bold text-ink";
 
 function StatusBadge({ status, saved }: { status: SipRegistrationStatus | null; saved: boolean }) {
   const state = status?.state;
   if (state === "registered") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eafaf1] px-3 py-1 text-sm font-bold text-[#14823f]">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eafaf1] px-3 py-1 text-sm font-bold text-good">
         <CheckCircle2 className="h-4 w-4" /> Registered
       </span>
     );
   }
   if (state === "failed") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fdecec] px-3 py-1 text-sm font-bold text-[#9b1c1c]">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fdecec] px-3 py-1 text-sm font-bold text-danger">
         <XCircle className="h-4 w-4" /> Registration failed
       </span>
     );
@@ -46,13 +46,13 @@ function StatusBadge({ status, saved }: { status: SipRegistrationStatus | null; 
   }
   if (state === "disabled") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f2f4f3] px-3 py-1 text-sm font-bold text-[#66716e]">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-card-tint px-3 py-1 text-sm font-bold text-ink-soft">
         Disabled
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f2f4f3] px-3 py-1 text-sm font-bold text-[#66716e]">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-card-tint px-3 py-1 text-sm font-bold text-ink-soft">
       Not connected
     </span>
   );
@@ -168,13 +168,13 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
   const tlsSelected = transport === "tls";
 
   return (
-    <div className="mb-8 rounded-[14px] border border-black/10 bg-white px-5 py-4">
+    <div className="mb-8 rounded-xl border border-line bg-white px-5 py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Phone className="h-5 w-5 text-[#148b8e]" />
+          <Phone className="h-5 w-5 text-teal" />
           <div>
-            <p className="font-black text-[#111716]">Connect to your phone system (PBX)</p>
-            <p className="text-sm text-[#66716e]">
+            <p className="font-black text-ink">Connect to your phone system (PBX)</p>
+            <p className="text-sm text-ink-soft">
               Register this agent as an extension on your PBX so it answers calls routed to it.
             </p>
           </div>
@@ -183,7 +183,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
       </div>
 
       {loading ? (
-        <div className="mt-4 flex items-center gap-2 text-sm text-[#66716e]">
+        <div className="mt-4 flex items-center gap-2 text-sm text-ink-soft">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading…
         </div>
       ) : (
@@ -266,7 +266,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
             </div>
           </div>
 
-          <label className="mt-4 flex items-center gap-2 text-sm font-bold text-[#111716]">
+          <label className="mt-4 flex items-center gap-2 text-sm font-bold text-ink">
             <input
               type="checkbox"
               checked={isEnabled}
@@ -276,11 +276,11 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
             Enabled (uncheck to stop registering without deleting the settings)
           </label>
 
-          <div className="mt-4 rounded-lg border border-black/5 bg-[#f8fafa] px-3 py-3 text-xs text-[#66716e]">
-            On your PBX, allow registrations from <span className="font-bold text-[#111716]">{SIP_BRIDGE_PUBLIC_IP}</span> and
+          <div className="mt-4 rounded-lg border border-line bg-card-tint px-3 py-3 text-xs text-ink-soft">
+            On your PBX, allow registrations from <span className="font-bold text-ink">{SIP_BRIDGE_PUBLIC_IP}</span> and
             route the extension&apos;s inbound calls to it.
             {tlsSelected ? (
-              <> For TLS, use port <span className="font-bold text-[#111716]">5061</span> on the PBX address and open inbound TCP 5061 to the bridge. Media is encrypted automatically (SRTP) when your PBX offers it.</>
+              <> For TLS, use port <span className="font-bold text-ink">5061</span> on the PBX address and open inbound TCP 5061 to the bridge. Media is encrypted automatically (SRTP) when your PBX offers it.</>
             ) : null}
           </div>
 
@@ -289,7 +289,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
               type="button"
               onClick={save}
               disabled={pending}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-ink px-4 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
             >
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {pending ? "Saving…" : configured ? "Save changes" : "Connect PBX"}
@@ -308,11 +308,11 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
           </div>
 
           {status?.state === "failed" && status.lastError ? (
-            <p className="mt-3 text-sm text-red-600">Last error: {status.lastError}</p>
+            <p className="mt-3 text-sm text-danger">Last error: {status.lastError}</p>
           ) : null}
           {msg ? (
             <p
-              className={`mt-3 text-sm font-medium ${msg.ok ? "text-[#148b8e]" : "text-red-600"}`}
+              className={`mt-3 text-sm font-medium ${msg.ok ? "text-teal" : "text-danger"}`}
               aria-live="polite"
             >
               {msg.text}

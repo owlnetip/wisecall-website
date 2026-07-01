@@ -457,20 +457,20 @@ function ColorField({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 text-xs font-bold text-[#111716]">
-      <span className="w-20 text-[#66716e]">{label}</span>
+    <label className="flex items-center gap-2 text-xs font-bold text-ink">
+      <span className="w-20 text-ink-soft">{label}</span>
       <input
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-8 w-9 cursor-pointer rounded border border-black/10 bg-white p-0.5"
+        className="h-8 w-9 cursor-pointer rounded border border-line bg-white p-0.5"
         aria-label={`${label} colour`}
       />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-24 rounded-lg border border-black/10 bg-white px-2 py-1.5 font-mono text-xs text-[#111716] focus:outline-none focus:ring-2 focus:ring-[#148b8e]/40"
+        className="w-24 rounded-lg border border-line bg-white px-2 py-1.5 font-mono text-xs text-ink focus:outline-none focus:ring-2 focus:ring-teal/40"
       />
     </label>
   );
@@ -512,36 +512,36 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
   }
 
   return (
-    <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
+    <div className="rounded-xl border border-line bg-card-tint p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="truncate text-sm font-bold text-[#111716]">{assistant.name}</p>
+        <p className="truncate text-sm font-bold text-ink">{assistant.name}</p>
         <a
           href={`https://wisecall.io/widget-demo?agent=${encodeURIComponent(slug)}`}
           target="_blank"
           rel="noopener"
-          className="flex-shrink-0 text-xs font-bold text-[#148b8e] hover:underline"
+          className="flex-shrink-0 text-xs font-bold text-teal hover:underline"
         >
           Preview
         </a>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg border border-black/10 bg-[#0e1b1b] px-3 py-2 text-xs font-semibold text-[#7de8eb]">
+        <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg border border-line bg-[#0e1b1b] px-3 py-2 text-xs font-semibold text-[#7de8eb]">
           {embed}
         </code>
         <button
           type="button"
           onClick={copy}
-          className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+          className="inline-flex h-9 items-center rounded-lg bg-ink px-4 text-sm font-black text-white transition hover:bg-[#263130]"
         >
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
 
       {/* Brand colours + live preview */}
-      <div className="mt-3 flex flex-wrap items-start gap-4 border-t border-black/5 pt-3">
+      <div className="mt-3 flex flex-wrap items-start gap-4 border-t border-line pt-3">
         <div className="space-y-2">
-          <p className="text-xs font-black uppercase tracking-wide text-[#9aa5a2]">Match your brand</p>
+          <p className="text-xs font-black uppercase tracking-wide text-ink-faint">Match your brand</p>
           <ColorField label="Accent" value={accent} onChange={setAccent} />
           <ColorField label="Header" value={bg} onChange={setBg} />
           <div className="flex items-center gap-3 pt-1">
@@ -549,18 +549,18 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
               type="button"
               onClick={saveColors}
               disabled={pending || !dirty}
-              className="inline-flex h-8 items-center rounded-lg bg-[#111716] px-4 text-xs font-black text-white transition hover:bg-[#263130] disabled:opacity-50"
+              className="inline-flex h-8 items-center rounded-lg bg-ink px-4 text-xs font-black text-white transition hover:bg-[#263130] disabled:opacity-50"
             >
               {pending ? "Saving…" : "Save colours"}
             </button>
-            {saved && !dirty && <span className="text-xs font-medium text-[#148b8e]">Saved</span>}
-            {err && <span className="text-xs font-medium text-red-600">{err}</span>}
+            {saved && !dirty && <span className="text-xs font-medium text-teal">Saved</span>}
+            {err && <span className="text-xs font-medium text-danger">{err}</span>}
           </div>
         </div>
 
         {/* Mini live preview of the widget */}
         <div className="ml-auto">
-          <div className="w-[150px] overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+          <div className="w-[150px] overflow-hidden rounded-xl border border-line bg-white shadow-sm">
             <div className="flex items-center gap-2 px-3 py-2" style={{ background: bg }}>
               <span
                 className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black"
@@ -571,7 +571,7 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
               <span className="truncate text-[11px] font-bold text-white">{assistant.name}</span>
             </div>
             <div className="space-y-1.5 bg-[#f6f8f8] p-2">
-              <div className="max-w-[80%] rounded-lg rounded-bl-sm bg-white px-2 py-1 text-[10px] text-[#111716] shadow-sm">
+              <div className="max-w-[80%] rounded-lg rounded-bl-sm bg-white px-2 py-1 text-[10px] text-ink shadow-sm">
                 Hi! How can I help?
               </div>
               <div
@@ -582,7 +582,7 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
               </div>
             </div>
           </div>
-          <p className="mt-1 text-center text-[10px] text-[#9aa5a2]">Live preview</p>
+          <p className="mt-1 text-center text-[10px] text-ink-faint">Live preview</p>
         </div>
       </div>
     </div>
@@ -599,7 +599,7 @@ function EmailChannel({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-[14px] border border-black/10 bg-white">
+    <div className="rounded-xl border border-line bg-white">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -610,8 +610,8 @@ function EmailChannel({
           <Mail className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-black text-[#111716]">Email</p>
-          <p className="text-sm text-[#66716e]">
+          <p className="font-black text-ink">Email</p>
+          <p className="text-sm text-ink-soft">
             Forward your inbox and the same agent replies to emails and logs every contact.
           </p>
         </div>
@@ -625,24 +625,24 @@ function EmailChannel({
             />
           </div>
         ) : (
-          <span className="self-center flex-shrink-0 rounded-full bg-[#f2f4f3] px-3 py-1 text-xs font-bold text-[#7a8582]">
+          <span className="self-center flex-shrink-0 rounded-full bg-card-tint px-3 py-1 text-xs font-bold text-ink-soft">
             Start a plan to use
           </span>
         )}
         <ChevronDown
-          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`self-center h-5 w-5 flex-shrink-0 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open ? (
-        <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
-          <p className="mb-1 text-xs text-[#66716e]">
+        <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
+          <p className="mb-1 text-xs text-ink-soft">
             Set up a forwarding rule in your email provider (Gmail, Outlook, etc.) to the address
             below. The agent will reply using the same knowledge as your phone line.
           </p>
           {assistants.length ? (
             assistants.map((a) => <AgentEmailRow key={a.id} assistant={a} />)
           ) : (
-            <p className="text-sm text-[#66716e]">Create an agent to get its email forwarding address.</p>
+            <p className="text-sm text-ink-soft">Create an agent to get its email forwarding address.</p>
           )}
         </div>
       ) : null}
@@ -660,16 +660,16 @@ function AgentEmailRow({ assistant }: { assistant: Assistant }) {
     );
   }
   return (
-    <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
-      <p className="mb-2 truncate text-sm font-bold text-[#111716]">{assistant.name}</p>
+    <div className="rounded-xl border border-line bg-card-tint p-3">
+      <p className="mb-2 truncate text-sm font-bold text-ink">{assistant.name}</p>
       <div className="flex flex-wrap items-center gap-2">
-        <code className="flex-1 truncate rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#111716]">
+        <code className="flex-1 truncate rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold text-ink">
           {address}
         </code>
         <button
           type="button"
           onClick={copy}
-          className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+          className="inline-flex h-9 items-center rounded-lg bg-ink px-4 text-sm font-black text-white transition hover:bg-[#263130]"
         >
           {copied ? "Copied" : "Copy"}
         </button>
@@ -683,19 +683,19 @@ function WebsiteChatChannel({ assistants, usage }: { assistants: Assistant[]; us
   const [open, setOpen] = useState(false);
   const withSlug = assistants.filter((a) => a.slug);
   return (
-    <div className="rounded-[14px] border border-black/10 bg-white">
+    <div className="rounded-xl border border-line bg-white">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className="flex w-full items-start gap-4 px-5 py-4 text-left"
       >
-        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-teal-wash text-teal">
           <MessageSquareText className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-black text-[#111716]">Website chat</p>
-          <p className="text-sm text-[#66716e]">
+          <p className="font-black text-ink">Website chat</p>
+          <p className="text-sm text-ink-soft">
             Put your agent on your site as a chat bubble, one line of code.
           </p>
         </div>
@@ -709,24 +709,24 @@ function WebsiteChatChannel({ assistants, usage }: { assistants: Assistant[]; us
             />
           </div>
         ) : (
-          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-good">
             Included
           </span>
         )}
         <ChevronDown
-          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`self-center h-5 w-5 flex-shrink-0 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open ? (
-        <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
-          <p className="mb-1 text-xs text-[#66716e]">
-            Paste this just before <code className="rounded bg-[#f2f4f3] px-1">&lt;/body&gt;</code> on
+        <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
+          <p className="mb-1 text-xs text-ink-soft">
+            Paste this just before <code className="rounded bg-card-tint px-1">&lt;/body&gt;</code> on
             your website. Works on WordPress, Wix, Squarespace or any custom site.
           </p>
           {withSlug.length ? (
             withSlug.map((a) => <WidgetEmbedRow key={a.id} assistant={a} />)
           ) : (
-            <p className="text-sm text-[#66716e]">Create an agent to get its website embed code.</p>
+            <p className="text-sm text-ink-soft">Create an agent to get its website embed code.</p>
           )}
         </div>
       ) : null}
@@ -811,25 +811,25 @@ function WhatsAppChannel({
   const selectedAssistant = assistants.find((assistant) => assistant.id === selectedAssistantId) ?? assistants[0];
 
   return (
-    <div className="rounded-[14px] border border-black/10 bg-white">
+    <div className="rounded-xl border border-line bg-white">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         className="flex w-full items-start gap-4 px-5 py-4 text-left"
       >
-        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eafaf1] text-[#14823f]">
+        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eafaf1] text-good">
           <MessageSquareText className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-black text-[#111716]">WhatsApp</p>
-          <p className="text-sm text-[#66716e]">
+          <p className="font-black text-ink">WhatsApp</p>
+          <p className="text-sm text-ink-soft">
             Add WhatsApp to the same AI agent that handles calls, email and live chat.
           </p>
         </div>
         <div className="self-center flex flex-shrink-0 items-center gap-3">
           {usage?.enabled && usage.allowance > 0 ? (
-            <span className="text-xs font-semibold text-[#66716e]">
+            <span className="text-xs font-semibold text-ink-soft">
               {usage.used.toLocaleString()}/{usage.allowance.toLocaleString()} messages
               {usage.overage > 0 ? ` · ${usage.overage.toLocaleString()} over` : ""}
             </span>
@@ -839,24 +839,24 @@ function WhatsAppChannel({
           </span>
         </div>
         <ChevronDown
-          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`self-center h-5 w-5 flex-shrink-0 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
 
       {open ? (
-        <div className="space-y-4 border-t border-black/5 px-5 pb-5 pt-4">
-          <p className="text-sm leading-relaxed text-[#66716e]">
+        <div className="space-y-4 border-t border-line px-5 pb-5 pt-4">
+          <p className="text-sm leading-relaxed text-ink-soft">
             Inbound messages route to the same AI and save to Contacts, just like calls and email. Pick
             a setup route and we&apos;ll handle the Meta connection and webhook.
           </p>
 
           {assistants.length > 1 ? (
             <label className="block">
-              <span className="mb-1 block text-xs font-bold text-[#7a8582]">Connect to agent</span>
+              <span className="mb-1 block text-xs font-bold text-ink-soft">Connect to agent</span>
               <select
                 value={selectedAssistant?.id ?? ""}
                 onChange={(event) => setSelectedAssistantId(event.target.value)}
-                className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#111716] outline-none focus:border-[#148b8e] focus:ring-2 focus:ring-[#7de8eb]/40"
+                className="w-full rounded-xl border border-line bg-white px-3 py-2 text-sm font-semibold text-ink outline-none focus:border-teal focus:ring-2 focus:ring-[#7de8eb]/40"
               >
                 {assistants.map((assistant) => (
                   <option key={assistant.id} value={assistant.id}>
@@ -876,22 +876,22 @@ function WhatsAppChannel({
                   type="button"
                   onClick={() => setSetupPath(option.id)}
                   className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
-                    selected ? "border-[#148b8e] bg-[#effcfc]" : "border-black/10 bg-white hover:border-[#7de8eb]"
+                    selected ? "border-teal bg-[#effcfc]" : "border-line bg-white hover:border-[#7de8eb]"
                   }`}
                 >
                   <span
                     className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
-                      selected ? "border-[#148b8e] bg-[#148b8e] text-white" : "border-black/20 text-transparent"
+                      selected ? "border-teal bg-teal text-white" : "border-black/20 text-transparent"
                     }`}
                   >
                     <Check className="h-3.5 w-3.5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="font-bold text-[#111716]">
+                    <p className="font-bold text-ink">
                       {option.label}
-                      <span className="ml-2 text-xs font-semibold text-[#7a8582]">{option.badge}</span>
+                      <span className="ml-2 text-xs font-semibold text-ink-soft">{option.badge}</span>
                     </p>
-                    <p className="mt-0.5 text-sm leading-relaxed text-[#66716e]">{option.summary}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-ink-soft">{option.summary}</p>
                   </div>
                 </button>
               );
@@ -899,7 +899,7 @@ function WhatsAppChannel({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="max-w-md text-xs leading-relaxed text-[#7a8582]">
+            <p className="max-w-md text-xs leading-relaxed text-ink-soft">
               Needs Meta Business admin access.{" "}
               {setupPath === "own"
                 ? "Don't move a live number yet, we check it first."
@@ -907,7 +907,7 @@ function WhatsAppChannel({
             </p>
             <a
               href={buildWhatsAppSetupHref(setupPath, selectedAssistant, userEmail)}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#111716] px-4 py-2.5 text-sm font-black text-white hover:bg-[#1f3535]"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-black text-white hover:bg-[#1f3535]"
             >
               Request setup
               <ChevronRight className="h-4 w-4" />
@@ -935,11 +935,11 @@ function ChannelUsageBadge({
 }) {
   return (
     <div className="flex flex-shrink-0 items-center gap-3">
-      <span className="text-xs font-semibold text-[#66716e]">
+      <span className="text-xs font-semibold text-ink-soft">
         {used.toLocaleString()}/{allowance.toLocaleString()} {unit}
         {overage && overage > 0 ? ` · ${overage.toLocaleString()} over` : ""}
       </span>
-      <span className="rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+      <span className="rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-good">
         Included
       </span>
     </div>
@@ -966,17 +966,17 @@ function AgentSmsRow({
     );
   }
   return (
-    <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
-      <p className="mb-2 truncate text-sm font-bold text-[#111716]">{assistant.name}</p>
+    <div className="rounded-xl border border-line bg-card-tint p-3">
+      <p className="mb-2 truncate text-sm font-bold text-ink">{assistant.name}</p>
       {smsNumber ? (
         <div className="flex flex-wrap items-center gap-2">
-          <code className="flex-1 truncate rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#111716]">
+          <code className="flex-1 truncate rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold text-ink">
             {smsNumber}
           </code>
           <button
             type="button"
             onClick={copy}
-            className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+            className="inline-flex h-9 items-center rounded-lg bg-ink px-4 text-sm font-black text-white transition hover:bg-[#263130]"
           >
             {copied ? "Copied" : "Copy"}
           </button>
@@ -1022,17 +1022,17 @@ function AgentPhoneRow({
   }
 
   return (
-    <div className="rounded-xl border border-black/10 bg-[#f8fafa] p-3">
-      <p className="mb-2 truncate text-sm font-bold text-[#111716]">{assistant.name}</p>
+    <div className="rounded-xl border border-line bg-card-tint p-3">
+      <p className="mb-2 truncate text-sm font-bold text-ink">{assistant.name}</p>
       {live ? (
         <div className="flex flex-wrap items-center gap-2">
-          <code className="min-w-0 flex-1 truncate rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-[#111716]">
+          <code className="min-w-0 flex-1 truncate rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold text-ink">
             {routing.number}
           </code>
           <button
             type="button"
             onClick={copy}
-            className="inline-flex h-9 items-center rounded-lg bg-[#111716] px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+            className="inline-flex h-9 items-center rounded-lg bg-ink px-4 text-sm font-black text-white transition hover:bg-[#263130]"
           >
             {copied ? "Copied" : "Copy"}
           </button>
@@ -1053,7 +1053,7 @@ function AgentPhoneRow({
           type="button"
           disabled={isProvisioning}
           onClick={onProvision}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-4 py-2 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
         >
           {isProvisioning ? "Assigning…" : "Assign number"}
           {!isProvisioning && <ChevronRight className="h-4 w-4" />}
@@ -1089,19 +1089,19 @@ function PhoneChannel({
   }
 
   return (
-    <div className="rounded-[14px] border border-black/10 bg-white">
+    <div className="rounded-xl border border-line bg-white">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         className="flex w-full items-start gap-4 px-5 py-4 text-left"
       >
-        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+        <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-teal-wash text-teal">
           <Phone className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-black text-[#111716]">Phone</p>
-          <p className="text-sm text-[#66716e]">Your AI receptionist answers and routes calls.</p>
+          <p className="font-black text-ink">Phone</p>
+          <p className="text-sm text-ink-soft">Your AI receptionist answers and routes calls.</p>
         </div>
         {usage ? (
           <div className="self-center">
@@ -1113,22 +1113,22 @@ function PhoneChannel({
             />
           </div>
         ) : (
-          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-good">
             Included
           </span>
         )}
         <ChevronDown
-          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`self-center h-5 w-5 flex-shrink-0 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open ? (
-        <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
-          <p className="mb-1 text-xs text-[#66716e]">
+        <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
+          <p className="mb-1 text-xs text-ink-soft">
             Each agent gets its own UK phone number. Customers call in and the AI answers -
             every conversation is saved to Call History and Contacts.
           </p>
           {provisionError ? (
-            <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-[#c0392b]">{provisionError}</p>
+            <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-danger">{provisionError}</p>
           ) : null}
           {assistants.length ? (
             assistants.map((assistant) => (
@@ -1140,7 +1140,7 @@ function PhoneChannel({
               />
             ))
           ) : (
-            <p className="text-sm text-[#66716e]">Create an agent to get a phone number.</p>
+            <p className="text-sm text-ink-soft">Create an agent to get a phone number.</p>
           )}
         </div>
       ) : null}
@@ -1178,7 +1178,7 @@ function SMSChannel({
   }
 
   return (
-    <div className="rounded-[14px] border border-black/10 bg-white">
+    <div className="rounded-xl border border-line bg-white">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -1189,8 +1189,8 @@ function SMSChannel({
           <MessageSquare className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-black text-[#111716]">SMS</p>
-          <p className="text-sm text-[#66716e]">
+          <p className="font-black text-ink">SMS</p>
+          <p className="text-sm text-ink-soft">
             Reply to text messages using the same AI agent that handles calls, email and chat.
           </p>
         </div>
@@ -1204,22 +1204,22 @@ function SMSChannel({
             />
           </div>
         ) : (
-          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-[#14823f]">
+          <span className="self-center flex-shrink-0 rounded-full bg-[#eafaf1] px-3 py-1 text-xs font-bold text-good">
             Included
           </span>
         )}
         <ChevronDown
-          className={`self-center h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`self-center h-5 w-5 flex-shrink-0 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open ? (
-        <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
-          <p className="mb-1 text-xs text-[#66716e]">
+        <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
+          <p className="mb-1 text-xs text-ink-soft">
             Each agent gets its own UK mobile number. Customers text in and the AI replies instantly -
             every conversation is saved to Contacts alongside calls and emails.
           </p>
           {provisionError ? (
-            <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-[#c0392b]">{provisionError}</p>
+            <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-danger">{provisionError}</p>
           ) : null}
           {assistants.length ? (
             assistants.map((a) => {
@@ -1235,7 +1235,7 @@ function SMSChannel({
               );
             })
           ) : (
-            <p className="text-sm text-[#66716e]">Create an agent to get an SMS number.</p>
+            <p className="text-sm text-ink-soft">Create an agent to get an SMS number.</p>
           )}
         </div>
       ) : null}
@@ -1267,8 +1267,8 @@ function ChannelsHub({
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-black text-[#111716]">Channels</h1>
-        <p className="mt-1 text-sm text-[#66716e]">
+        <h1 className="text-2xl font-black text-ink">Channels</h1>
+        <p className="mt-1 text-sm text-ink-soft">
           One agent, every channel. Add a way for customers to reach you and the same AI handles it -
           logging every conversation to Contacts.
         </p>
@@ -1785,7 +1785,7 @@ export function CustomerAgentWorkspace({
           <div
             className={`flex flex-col gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-card sm:flex-row sm:items-center sm:justify-between ${
               trial.blocked
-                ? "bg-danger-wash text-[#9b1c1c]"
+                ? "bg-danger-wash text-danger"
                 : "bg-teal-wash text-[#0e4b4d]"
             }`}
           >
@@ -1805,7 +1805,7 @@ export function CustomerAgentWorkspace({
           </div>
         </div>
       ) : null}
-      <div className="mx-auto flex min-h-screen max-w-[1920px] overflow-hidden bg-white shadow-[0_24px_90px_rgba(17,23,22,0.14)] lg:min-h-[calc(100vh-48px)] lg:rounded-[22px] lg:border lg:border-black/10">
+      <div className="mx-auto flex min-h-screen max-w-[1920px] overflow-hidden bg-white shadow-[0_24px_90px_rgba(17,23,22,0.14)] lg:min-h-[calc(100vh-48px)] lg:rounded-[22px] lg:border lg:border-line">
         {/* Mobile nav drawer */}
         {mobileNavOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
@@ -1894,7 +1894,7 @@ export function CustomerAgentWorkspace({
                   )
                 )}
               </nav>
-              <div className="mx-4 mb-4 rounded-[18px] bg-[#1a3535] p-5 text-center">
+              <div className="mx-4 mb-4 rounded-2xl bg-[#1a3535] p-5 text-center">
                 <SupportOwl />
                 <p className="text-sm font-bold text-white">Need setup help?</p>
                 <button
@@ -1994,7 +1994,7 @@ export function CustomerAgentWorkspace({
             )}
           </nav>
 
-          <div className="m-4 rounded-[18px] bg-[#1a3535] p-5 text-center">
+          <div className="m-4 rounded-2xl bg-[#1a3535] p-5 text-center">
             <SupportOwl />
             <p className="text-sm font-bold text-white">Need setup help?</p>
             <button
@@ -2009,20 +2009,20 @@ export function CustomerAgentWorkspace({
 
         {/* Main */}
         <main className="min-w-0 flex-1 bg-white">
-          <header className="flex h-[72px] items-center justify-between border-b border-black/10 px-5 lg:px-8">
-            <div className="flex min-w-0 max-w-[calc(100vw-7rem)] items-center gap-2 overflow-x-auto whitespace-nowrap text-sm font-semibold text-[#7a8582] sm:max-w-none">
+          <header className="flex h-[72px] items-center justify-between border-b border-line px-5 lg:px-8">
+            <div className="flex min-w-0 max-w-[calc(100vw-7rem)] items-center gap-2 overflow-x-auto whitespace-nowrap text-sm font-semibold text-ink-soft sm:max-w-none">
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
                 aria-label="Open menu"
-                className="-ml-1 mr-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-[#111716] transition hover:bg-[#f2f4f3] md:hidden"
+                className="-ml-1 mr-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-ink transition hover:bg-card-tint md:hidden"
               >
                 <Menu className="h-5 w-5" />
               </button>
               <button
                 type="button"
                 onClick={() => setView("insights")}
-                className={view === "insights" ? "text-[#111716]" : "transition hover:text-[#111716]"}
+                className={view === "insights" ? "text-ink" : "transition hover:text-ink"}
               >
                 Home
               </button>
@@ -2053,21 +2053,21 @@ export function CustomerAgentWorkspace({
               {view === "detail" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
-                  <span className="truncate text-[#111716]">{selectedAssistant.name}</span>
+                  <span className="truncate text-ink">{selectedAssistant.name}</span>
                 </>
               )}
             </div>
             <div className="flex items-center gap-3">
               {userEmail && (
-                <span className="hidden text-sm text-[#7a8582] sm:block">{userEmail}</span>
+                <span className="hidden text-sm text-ink-soft sm:block">{userEmail}</span>
               )}
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-[#f2f4f3] text-sm font-black">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card-tint text-sm font-black">
                 {userEmail ? userEmail[0].toUpperCase() : "?"}
               </div>
               <form action={signOutAction}>
                 <button
                   type="submit"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-card-tint hover:text-ink"
                   aria-label="Sign out"
                 >
                   <LogOut className="h-4 w-4" />
@@ -2294,16 +2294,56 @@ export function CustomerAgentWorkspace({
 }
 
 const MODAL_OVERLAY =
-  "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/35 p-4";
+  "anim-fade fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/35 p-4 backdrop-blur-[2px]";
 const MODAL_PANEL =
-  "flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl";
+  "anim-scale-in flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-float";
 
-function MobileField({ label, children }: { label: string; children: React.ReactNode }) {
+// One agent = one card. The card answers the three questions that matter at a
+// glance — is it live, what number is it on, how busy has it been — and one
+// click opens the full editor.
+function AgentCard({
+  assistant,
+  adminMode,
+  onOpen,
+}: {
+  assistant: Assistant;
+  adminMode: boolean;
+  onOpen: () => void;
+}) {
+  const live = assistant.status === "Live";
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-bold uppercase tracking-wide text-[#9aa5a2]">{label}</span>
-      {children}
-    </div>
+    <button
+      type="button"
+      onClick={onOpen}
+      className="lift press flex w-full flex-col rounded-2xl border border-line bg-card p-5 text-left shadow-card"
+    >
+      <div className="flex w-full items-start justify-between gap-3">
+        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#172929] to-[#0e1b1b] text-base font-black text-[#7de8eb]">
+          {(assistant.name || "A").charAt(0).toUpperCase()}
+        </span>
+        <StatusPill status={assistant.status} />
+      </div>
+      <p className="mt-3 truncate text-base font-black text-ink">{assistant.name}</p>
+      <p className="mt-0.5 truncate text-sm text-ink-soft">
+        {assistant.businessName}
+        {assistant.industry ? ` · ${assistant.industry}` : ""}
+      </p>
+      {adminMode && (
+        <p className="mt-0.5 truncate text-xs text-ink-faint">
+          {assistant.ownerEmail ?? "Unassigned"}
+        </p>
+      )}
+      <div className="mt-4 flex w-full items-center justify-between gap-2 border-t border-line pt-3">
+        <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-ink-soft">
+          {live ? <span className="live-dot h-1.5 w-1.5 flex-shrink-0 rounded-full bg-good" /> : <Phone className="h-3.5 w-3.5 flex-shrink-0 text-ink-faint" />}
+          <span className="truncate font-mono">{assistant.phoneNumber}</span>
+        </span>
+        <span className="flex flex-shrink-0 items-center gap-1 text-xs font-bold tabular-nums text-ink-faint">
+          {assistant.calls > 0 ? `${assistant.calls} calls` : "No calls yet"}
+          <ChevronRight className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    </button>
   );
 }
 
@@ -2323,127 +2363,75 @@ function AssistantsList({
   onOpen: (assistantId: string) => void;
 }) {
   return (
-    <div>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="anim-rise">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black sm:text-3xl">{adminMode ? "All agents" : "Agents"}</h1>
-          <p className="mt-2 text-[#66716e]">
+          <h1 className="text-2xl font-black text-ink sm:text-3xl">
+            {adminMode ? "All agents" : "Agents"}
+          </h1>
+          <p className="mt-1 text-sm text-ink-soft">
             {adminMode
               ? "Every WiseCall agent across all customers. Open any to edit."
-              : "Create and manage the AI agents on your account."}
+              : "Your AI team — each agent answers its own number, on every channel."}
           </p>
         </div>
         <button
           type="button"
           onClick={onCreate}
-          className="press inline-flex items-center justify-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+          className="press inline-flex items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3 text-sm font-black text-white shadow-card transition hover:bg-[#263130]"
         >
           <Plus className="h-4 w-4" />
           New agent
         </button>
       </div>
 
-      <label className="mb-5 flex max-w-xl items-center gap-3 rounded-lg border border-black/10 bg-white px-4 py-3 shadow-sm">
-        <Search className="h-4 w-4 text-[#7a8582]" />
-        <input
-          value={searchTerm}
-          onChange={(event) => onSearch(event.target.value)}
-          placeholder="Search"
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#9aa4a1]"
-        />
-      </label>
+      {(assistants.length > 3 || searchTerm) && (
+        <label className="mb-5 flex max-w-md items-center gap-3 rounded-xl border border-line bg-card px-4 py-3 shadow-card transition focus-within:border-teal">
+          <Search className="h-4 w-4 text-ink-faint" />
+          <input
+            value={searchTerm}
+            onChange={(event) => onSearch(event.target.value)}
+            placeholder="Search agents…"
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-faint"
+          />
+        </label>
+      )}
 
-      <section className="overflow-hidden rounded-[18px] border border-black/10 bg-white">
-        <div
-          className={`grid border-b border-black/10 bg-[#fbfcfc] px-5 py-4 text-sm font-bold text-[#66716e] max-md:hidden ${
-            adminMode
-              ? "grid-cols-[1fr_190px_180px_120px_60px]"
-              : "grid-cols-[1fr_210px_130px_70px]"
-          }`}
-        >
-          <span>Name</span>
-          <span>Phone Number</span>
-          {adminMode && <span>Owner</span>}
-          <span>Status</span>
-          <span />
+      {assistants.length > 0 ? (
+        <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {assistants.map((assistant) => (
+            <AgentCard
+              key={assistant.id}
+              assistant={assistant}
+              adminMode={adminMode}
+              onOpen={() => onOpen(assistant.id)}
+            />
+          ))}
         </div>
-        {assistants.length > 0 ? (
-          <>
-            {/* Mobile: labelled cards */}
-            <div className="divide-y divide-black/10 md:hidden">
-              {assistants.map((assistant) => (
-                <button
-                  type="button"
-                  key={assistant.id}
-                  onClick={() => onOpen(assistant.id)}
-                  className="flex w-full flex-col gap-3 px-4 py-4 text-left transition hover:bg-[#f7f8f7]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <span>
-                      <span className="block font-black">{assistant.name}</span>
-                      <span className="mt-1 block text-sm text-[#66716e]">
-                        {assistant.businessName} - {assistant.industry}
-                      </span>
-                    </span>
-                    <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-[#7a8582]" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <MobileField label="Phone">
-                      <span className="font-mono text-sm text-[#66716e]">{assistant.phoneNumber}</span>
-                    </MobileField>
-                    {adminMode ? (
-                      <MobileField label="Owner">
-                        <span className="truncate text-sm text-[#66716e]">
-                          {assistant.ownerEmail ?? "Unassigned"}
-                        </span>
-                      </MobileField>
-                    ) : null}
-                    <MobileField label="Status">
-                      <StatusPill status={assistant.status} />
-                    </MobileField>
-                  </div>
-                </button>
-              ))}
-            </div>
-            {/* Desktop: table rows */}
-            <div className="hidden divide-y divide-black/10 md:block">
-              {assistants.map((assistant) => (
-                <button
-                  type="button"
-                  key={assistant.id}
-                  onClick={() => onOpen(assistant.id)}
-                  className={`grid w-full gap-4 px-5 py-5 text-left transition hover:bg-[#f7f8f7] ${
-                    adminMode
-                      ? "grid-cols-[1fr_190px_180px_120px_60px]"
-                      : "grid-cols-[1fr_210px_130px_70px]"
-                  }`}
-                >
-                  <span>
-                    <span className="block font-black">{assistant.name}</span>
-                    <span className="mt-1 block text-sm text-[#66716e]">
-                      {assistant.businessName} - {assistant.industry}
-                    </span>
-                  </span>
-                  <span className="font-mono text-sm text-[#66716e]">{assistant.phoneNumber}</span>
-                  {adminMode && (
-                    <span className="truncate text-sm text-[#66716e]">
-                      {assistant.ownerEmail ?? "Unassigned"}
-                    </span>
-                  )}
-                  <span>
-                    <StatusPill status={assistant.status} />
-                  </span>
-                  <span className="flex items-center justify-end">
-                    <ChevronRight className="h-5 w-5 text-[#7a8582]" />
-                  </span>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="px-5 py-16 text-center text-[#66716e]">No assistants found</div>
-        )}
-      </section>
+      ) : searchTerm ? (
+        <div className="rounded-2xl border border-line bg-card px-5 py-16 text-center text-ink-soft shadow-card">
+          No agents match &ldquo;{searchTerm}&rdquo;.
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-line-strong bg-card px-5 py-20 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-wash">
+            <Bot className="h-7 w-7 text-teal" />
+          </div>
+          <p className="text-lg font-black text-ink">Create your first AI agent</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
+            Paste your website and we&apos;ll draft the whole receptionist — voice, greeting and
+            knowledge — in about a minute.
+          </p>
+          <button
+            type="button"
+            onClick={onCreate}
+            className="press mt-5 inline-flex items-center gap-2 rounded-xl bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+          >
+            <Sparkles className="h-4 w-4" />
+            Set up my receptionist
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -2495,25 +2483,38 @@ function AssistantDetail({
 }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <button
-            type="button"
-            onClick={onBack}
-            className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#66716e] transition hover:text-[#111716]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Assistants
-          </button>
-          <h1 className="text-2xl font-black sm:text-4xl">Edit &apos;{assistant.name}&apos;</h1>
+    <div className="anim-rise mx-auto max-w-5xl">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-ink-soft transition hover:text-ink"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Agents
+      </button>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#172929] to-[#0e1b1b] text-xl font-black text-[#7de8eb] shadow-card">
+            {(assistant.name || "A").charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-3 text-2xl font-black text-ink sm:text-3xl">
+              <span className="truncate">{assistant.name}</span>
+              <StatusPill status={assistant.status} />
+            </h1>
+            <p className="mt-0.5 truncate text-sm text-ink-soft">
+              {assistant.businessName}
+              {assistant.industry ? ` · ${assistant.industry}` : ""}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {adminMode && assistant.ownerId ? (
             <form action={impersonateUser.bind(null, assistant.ownerId)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#263130]"
+                className="press inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#263130]"
                 title={`Open ${assistant.ownerEmail ?? "this customer"}'s account`}
               >
                 <LogOut className="h-4 w-4 rotate-180" />
@@ -2526,7 +2527,7 @@ function AssistantDetail({
               type="button"
               onClick={() => setDeleteConfirm(true)}
               disabled={isDeleting}
-              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:opacity-60"
+              className="press inline-flex items-center gap-2 rounded-lg border border-danger/20 bg-danger-wash px-4 py-2.5 text-sm font-black text-danger transition hover:bg-[#fbdad6] disabled:opacity-60"
             >
               {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               {isDeleting ? "Deleting…" : "Delete agent"}
@@ -2534,7 +2535,7 @@ function AssistantDetail({
           ) : null}
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-[#f2f4f3]"
+            className="press flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-card-tint"
             aria-label="More actions"
           >
             <MoreHorizontal className="h-5 w-5" />
@@ -2543,10 +2544,10 @@ function AssistantDetail({
       </div>
 
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-black text-[#111716]">Delete &apos;{assistant.name}&apos;?</h2>
-            <p className="mt-2 text-sm text-[#66716e]">
+        <div className="anim-fade fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="anim-scale-in w-full max-w-sm rounded-2xl bg-white p-6 shadow-float">
+            <h2 className="text-lg font-black text-ink">Delete &apos;{assistant.name}&apos;?</h2>
+            <p className="mt-2 text-sm text-ink-soft">
               This will permanently delete the agent. If it has a pooled number (+{assistant.phoneNumber.replace(/[^\d]/g, "")}), that number will be returned to the pool automatically.
             </p>
             <p className="mt-2 text-sm font-bold text-red-700">This cannot be undone.</p>
@@ -2554,7 +2555,7 @@ function AssistantDetail({
               <button
                 type="button"
                 onClick={() => setDeleteConfirm(false)}
-                className="rounded-lg border border-black/10 px-4 py-2 text-sm font-bold text-[#66716e] transition hover:bg-[#f2f4f3]"
+                className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-ink-soft transition hover:bg-card-tint"
               >
                 Cancel
               </button>
@@ -2589,16 +2590,16 @@ function AssistantDetail({
         timezone={assistant.timezone}
       />
 
-      <div className="mb-8 flex overflow-x-auto border-b border-black/10">
+      <div className="mb-8 flex gap-1 overflow-x-auto rounded-xl border border-line bg-card p-1 shadow-card">
         {(["behaviour", "knowledge", "routing", "outbound", "technical"] as DetailTab[]).map((item) => (
           <button
             type="button"
             key={item}
             onClick={() => onTabChange(item)}
-            className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-black transition ${
+            className={`press whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-bold transition ${
               tab === item
-                ? "border-[#111716] text-[#111716]"
-                : "border-transparent text-[#7a8582] hover:text-[#111716]"
+                ? "bg-ink text-white shadow-card"
+                : "text-ink-soft hover:bg-card-tint hover:text-ink"
             }`}
           >
             {
@@ -2615,42 +2616,42 @@ function AssistantDetail({
       </div>
 
       {tab === "behaviour" ? (
-        <div className="space-y-4">
+        <div key="behaviour" className="anim-fade space-y-4">
           <a
             href="/billing"
-            className="flex w-full items-center justify-between rounded-[14px] border border-black/10 bg-white px-5 py-4 text-left transition hover:bg-[#f7f8f7]"
+            className="lift press flex w-full items-center justify-between rounded-2xl border border-line bg-card px-5 py-4 text-left shadow-card"
           >
             <span className="flex items-center gap-3">
-              <Bot className="h-5 w-5 text-[#148b8e]" />
+              <Bot className="h-5 w-5 text-teal" />
               <span className="font-black">Plan</span>
             </span>
             <span className="flex items-center gap-3">
-              <span className="rounded-full border border-black/10 px-3 py-1 text-sm font-bold">
+              <span className="rounded-full border border-line px-3 py-1 text-sm font-bold">
                 {planName ?? "Choose plan"}
               </span>
-              <ChevronRight className="h-5 w-5 text-[#7a8582]" />
+              <ChevronRight className="h-5 w-5 text-ink-soft" />
             </span>
           </a>
 
           <button
             type="button"
             onClick={onGreeting}
-            className="flex w-full items-center justify-between gap-4 rounded-[14px] border border-black/10 bg-white px-5 py-4 text-left transition hover:bg-[#f7f8f7]"
+            className="lift press flex w-full items-center justify-between gap-4 rounded-2xl border border-line bg-card px-5 py-4 text-left shadow-card"
           >
             <span className="flex min-w-0 items-center gap-3">
-              <Hand className="h-5 w-5 flex-shrink-0 text-[#148b8e]" />
+              <Hand className="h-5 w-5 flex-shrink-0 text-teal" />
               <span className="min-w-0">
                 <span className="block font-black">Greeting message</span>
-                <span className="mt-1 block truncate text-sm text-[#7a8582]">
+                <span className="mt-1 block truncate text-sm text-ink-soft">
                   {assistant.greeting || "The first thing callers hear when they connect."}
                 </span>
               </span>
             </span>
-            <ChevronRight className="h-5 w-5 flex-shrink-0 text-[#7a8582]" />
+            <ChevronRight className="h-5 w-5 flex-shrink-0 text-ink-soft" />
           </button>
 
           <div className="pt-2">
-            <p className="mb-3 px-1 text-sm font-bold text-[#7a8582]">Voice</p>
+            <p className="mb-3 px-1 text-xs font-black uppercase tracking-wide text-ink-faint">Voice</p>
             <VoicePicker
               selected={assistant.voice}
               greeting={assistant.greeting}
@@ -2659,8 +2660,8 @@ function AssistantDetail({
           </div>
 
           <div className="pt-2">
-            <p className="mb-3 px-1 text-sm font-bold text-[#7a8582]">Abilities</p>
-            <div className="space-y-3">
+            <p className="mb-3 px-1 text-xs font-black uppercase tracking-wide text-ink-faint">Abilities</p>
+            <div className="stagger space-y-3">
               <AbilityRow
                 icon={MessageSquareText}
                 title="Answer Questions"
@@ -2701,7 +2702,9 @@ function AssistantDetail({
           </div>
         </div>
       ) : tab === "knowledge" ? (
-        <KnowledgeBaseTab assistant={assistant} />
+        <div key="knowledge" className="anim-fade">
+          <KnowledgeBaseTab assistant={assistant} />
+        </div>
       ) : tab === "routing" ? (
         <RoutingTab
           contacts={assistant.contacts}
@@ -2714,9 +2717,11 @@ function AssistantDetail({
           onSave={onSave}
         />
       ) : tab === "outbound" ? (
-        <OutboundManager profileId={assistant.id} businessName={assistant.businessName} />
+        <div key="outbound" className="anim-fade">
+          <OutboundManager profileId={assistant.id} businessName={assistant.businessName} />
+        </div>
       ) : (
-        <div>
+        <div key="technical" className="anim-fade">
           <PbxExtensionCard agentId={assistant.id} />
           <IntegrationWebhooksCard
             agentId={assistant.id}
@@ -2768,13 +2773,13 @@ function AssistantDetail({
               type="button"
               onClick={onSave}
               disabled={isPending}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
             >
               {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
               {isPending ? "Saving…" : saved ? "Saved" : "Save changes"}
             </button>
             {saveError && (
-              <p className="mt-2 text-sm text-red-600">{saveError}</p>
+              <p className="mt-2 text-sm text-danger">{saveError}</p>
             )}
           </div>
           </div>
@@ -2804,8 +2809,8 @@ function sourceTypeLabel(value: string): string {
 }
 
 function statusTone(status: string): string {
-  if (status === "completed") return "bg-[#eafaf1] text-[#14823f]";
-  if (status === "failed") return "bg-[#fdecec] text-[#9b1c1c]";
+  if (status === "completed") return "bg-[#eafaf1] text-good";
+  if (status === "failed") return "bg-[#fdecec] text-danger";
   return "bg-[#fff6e5] text-[#8a5a00]";
 }
 
@@ -2943,14 +2948,14 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[18px] border border-black/10 bg-white">
-        <div className="flex flex-col gap-4 border-b border-black/10 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <section className="rounded-2xl border border-line bg-white">
+        <div className="flex flex-col gap-4 border-b border-line px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="flex items-center gap-2 text-xl font-black">
-              <FileText className="h-5 w-5 text-[#148b8e]" />
+              <FileText className="h-5 w-5 text-teal" />
               Knowledge Base
             </h2>
-            <p className="mt-1 text-sm text-[#66716e]">
+            <p className="mt-1 text-sm text-ink-soft">
               {sources.length} source{sources.length === 1 ? "" : "s"} · {totalChunks} indexed chunk{totalChunks === 1 ? "" : "s"}
             </p>
           </div>
@@ -2960,7 +2965,7 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
                 type="button"
                 onClick={loadDemoContent}
                 disabled={isMutating}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#148b8e]/30 bg-[#eaf8f8] px-4 py-2.5 text-sm font-black text-[#0f6b6e] transition hover:bg-[#dff3f3] disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-teal/30 bg-teal-wash px-4 py-2.5 text-sm font-black text-[#0f6b6e] transition hover:bg-[#dff3f3] disabled:opacity-60"
               >
                 {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 Load demo content
@@ -2970,7 +2975,7 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
               type="button"
               onClick={() => void load()}
               disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-black/10 bg-white px-4 py-2.5 text-sm font-black text-[#111716] transition hover:bg-[#f7f8f7] disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-black text-ink transition hover:bg-card-tint disabled:opacity-60"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               Refresh
@@ -2980,45 +2985,45 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
 
         <div className="p-5">
           {loading ? (
-            <div className="flex items-center justify-center rounded-[14px] bg-[#f7f8f7] px-4 py-12 text-sm font-semibold text-[#66716e]">
+            <div className="flex items-center justify-center rounded-xl bg-card-tint px-4 py-12 text-sm font-semibold text-ink-soft">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Loading sources
             </div>
           ) : loadError ? (
-            <div className="rounded-[14px] border border-[#e7caca] bg-[#fff7f7] px-4 py-4 text-sm text-[#9b1c1c]">
+            <div className="rounded-xl border border-[#e7caca] bg-[#fff7f7] px-4 py-4 text-sm text-danger">
               {loadError}
             </div>
           ) : sources.length ? (
-            <div className="overflow-hidden rounded-[14px] border border-black/10">
-              <div className="grid grid-cols-[1fr_110px_90px_120px_48px] gap-3 border-b border-black/10 bg-[#fbfcfc] px-4 py-3 text-xs font-black uppercase tracking-wide text-[#66716e] max-md:hidden">
+            <div className="overflow-hidden rounded-xl border border-line">
+              <div className="grid grid-cols-[1fr_110px_90px_120px_48px] gap-3 border-b border-line bg-card-tint px-4 py-3 text-xs font-black uppercase tracking-wide text-ink-soft max-md:hidden">
                 <span>Source</span>
                 <span>Category</span>
                 <span>Chunks</span>
                 <span>Updated</span>
                 <span />
               </div>
-              <div className="divide-y divide-black/10">
+              <div className="divide-y divide-line">
                 {sources.map((source) => (
                   <div
                     key={source.source}
                     className="grid gap-3 px-4 py-4 md:grid-cols-[1fr_110px_90px_120px_48px] md:items-center"
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-black text-[#111716]">{source.title}</p>
-                      <p className="mt-1 flex min-w-0 items-center gap-1 truncate text-xs text-[#66716e]">
+                      <p className="truncate font-black text-ink">{source.title}</p>
+                      <p className="mt-1 flex min-w-0 items-center gap-1 truncate text-xs text-ink-soft">
                         <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="truncate">{source.source}</span>
                       </p>
                     </div>
-                    <span className="text-sm font-semibold text-[#66716e]">{source.category}</span>
-                    <span className="font-mono text-sm text-[#66716e]">{source.chunkCount}</span>
-                    <span className="text-xs text-[#66716e]">{formatWhen(source.latest)}</span>
+                    <span className="text-sm font-semibold text-ink-soft">{source.category}</span>
+                    <span className="font-mono text-sm text-ink-soft">{source.chunkCount}</span>
+                    <span className="text-xs text-ink-soft">{formatWhen(source.latest)}</span>
                     <button
                       type="button"
                       onClick={() => remove(source)}
                       disabled={isMutating && deletingSource === source.source}
                       aria-label={`Remove ${source.title}`}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#fdeaea] hover:text-[#c0392b] disabled:opacity-50"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-danger-wash hover:text-danger disabled:opacity-50"
                     >
                       {isMutating && deletingSource === source.source ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -3031,17 +3036,17 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
               </div>
             </div>
           ) : (
-            <div className="rounded-[14px] border border-dashed border-black/15 bg-[#fbfcfc] px-5 py-12 text-center">
-              <FileText className="mx-auto h-8 w-8 text-[#148b8e]" />
-              <p className="mt-3 font-black text-[#111716]">No indexed sources yet</p>
-              <p className="mx-auto mt-1 max-w-md text-sm text-[#66716e]">
+            <div className="rounded-xl border border-dashed border-line-strong bg-card-tint px-5 py-12 text-center">
+              <FileText className="mx-auto h-8 w-8 text-teal" />
+              <p className="mt-3 font-black text-ink">No indexed sources yet</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-ink-soft">
                 Add a web page, sitemap, pasted notes or text file to make retrieval available for this agent.
               </p>
               <button
                 type="button"
                 onClick={loadDemoContent}
                 disabled={isMutating}
-                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
               >
                 {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 Load demo content
@@ -3051,16 +3056,16 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
         </div>
       </section>
 
-      <section className="rounded-[18px] border border-black/10 bg-white p-5">
+      <section className="rounded-2xl border border-line bg-white p-5">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-black">Add source</h3>
-            <p className="mt-1 text-sm text-[#66716e]">Content is chunked, embedded and attached to {assistant.name}.</p>
+            <p className="mt-1 text-sm text-ink-soft">Content is chunked, embedded and attached to {assistant.name}.</p>
           </div>
           <select
             value={category}
             onChange={(event) => setCategory(event.target.value)}
-            className="h-10 rounded-lg border border-black/15 bg-white px-3 text-sm font-bold outline-none focus:border-[#111716]"
+            className="h-10 rounded-lg border border-line-strong bg-white px-3 text-sm font-bold outline-none focus:border-ink"
           >
             {KB_CATEGORIES.map((item) => (
               <option key={item} value={item}>
@@ -3070,14 +3075,14 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
           </select>
         </div>
 
-        <div className="mb-5 inline-flex rounded-lg border border-black/10 bg-[#f7f8f7] p-1">
+        <div className="mb-5 inline-flex rounded-lg border border-line bg-card-tint p-1">
           {(["paste", "url", "sitemap", "upload"] as KnowledgeBaseSourceType[]).map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => setSourceType(item)}
               className={`rounded-md px-3 py-2 text-sm font-black transition ${
-                sourceType === item ? "bg-[#111716] text-white" : "text-[#66716e] hover:bg-white"
+                sourceType === item ? "bg-ink text-white" : "text-ink-soft hover:bg-white"
               }`}
             >
               {sourceTypeLabel(item)}
@@ -3101,12 +3106,12 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
               placeholder="Refund policy"
             />
             {sourceType === "upload" ? (
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-[14px] border border-dashed border-black/20 bg-[#fbfcfc] px-4 py-8 text-center transition hover:bg-[#f7f8f7]">
-                <UploadCloud className="h-7 w-7 text-[#148b8e]" />
-                <span className="mt-2 text-sm font-black text-[#111716]">
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-black/20 bg-card-tint px-4 py-8 text-center transition hover:bg-card-tint">
+                <UploadCloud className="h-7 w-7 text-teal" />
+                <span className="mt-2 text-sm font-black text-ink">
                   {filename || "Choose a text file"}
                 </span>
-                <span className="mt-1 text-xs text-[#66716e]">TXT, Markdown, CSV, JSON or HTML</span>
+                <span className="mt-1 text-xs text-ink-soft">TXT, Markdown, CSV, JSON or HTML</span>
                 <input
                   type="file"
                   accept=".txt,.md,.markdown,.csv,.json,.html,.htm,text/*,application/json"
@@ -3122,7 +3127,7 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
                 onChange={(event) => setText(event.target.value)}
                 placeholder="Paste the policy, FAQ or notes here."
                 rows={8}
-                className="w-full resize-y rounded-lg border border-black/15 bg-white px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-[#9aa4a1] focus:border-[#111716]"
+                className="w-full resize-y rounded-lg border border-line-strong bg-white px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-ink-faint focus:border-ink"
               />
             </label>
           </div>
@@ -3133,17 +3138,17 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
             type="button"
             onClick={ingest}
             disabled={isMutating}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
           >
             {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             {isMutating ? "Indexing" : "Add to Knowledge Base"}
           </button>
-          {mutationOk ? <span className="text-sm font-bold text-[#14823f]">{mutationOk}</span> : null}
-          {mutationError ? <span className="text-sm font-bold text-[#9b1c1c]">{mutationError}</span> : null}
+          {mutationOk ? <span className="text-sm font-bold text-good">{mutationOk}</span> : null}
+          {mutationError ? <span className="text-sm font-bold text-danger">{mutationError}</span> : null}
         </div>
       </section>
 
-      <section className="rounded-[18px] border border-black/10 bg-white p-5">
+      <section className="rounded-2xl border border-line bg-white p-5">
         <h3 className="text-lg font-black">Test retrieval</h3>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input
@@ -3153,55 +3158,55 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
               if (event.key === "Enter") testSearch();
             }}
             placeholder="Ask a question this agent should answer"
-            className="h-12 min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+            className="h-12 min-w-0 flex-1 rounded-lg border border-line-strong bg-white px-4 text-sm outline-none transition focus:border-ink"
           />
           <button
             type="button"
             onClick={testSearch}
             disabled={isSearching || !query.trim()}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#111716] px-5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-ink px-5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
           >
             {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             Search
           </button>
         </div>
-        {searchError ? <p className="mt-3 text-sm font-bold text-[#9b1c1c]">{searchError}</p> : null}
+        {searchError ? <p className="mt-3 text-sm font-bold text-danger">{searchError}</p> : null}
         {searchChunks.length > 0 ? (
           <div className="mt-4 space-y-3">
             {searchChunks.map((chunk, index) => (
-              <div key={`${chunk.title}-${index}`} className="rounded-[14px] border border-black/10 bg-[#fbfcfc] p-4">
+              <div key={`${chunk.title}-${index}`} className="rounded-xl border border-line bg-card-tint p-4">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-black text-[#111716]">{chunk.title || "Untitled"}</p>
-                  <span className="font-mono text-xs font-bold text-[#66716e]">
+                  <p className="font-black text-ink">{chunk.title || "Untitled"}</p>
+                  <span className="font-mono text-xs font-bold text-ink-soft">
                     {chunk.similarity.toFixed(3)}
                   </span>
                 </div>
-                <p className="text-sm leading-6 text-[#66716e]">{truncate(chunk.content, 360)}</p>
+                <p className="text-sm leading-6 text-ink-soft">{truncate(chunk.content, 360)}</p>
               </div>
             ))}
           </div>
         ) : query && !isSearching && !searchError ? (
-          <p className="mt-3 text-sm text-[#66716e]">No matching chunks yet.</p>
+          <p className="mt-3 text-sm text-ink-soft">No matching chunks yet.</p>
         ) : null}
       </section>
 
       {jobs.length > 0 ? (
-        <section className="rounded-[18px] border border-black/10 bg-white p-5">
+        <section className="rounded-2xl border border-line bg-white p-5">
           <h3 className="text-lg font-black">Recent ingest jobs</h3>
-          <div className="mt-4 divide-y divide-black/10">
+          <div className="mt-4 divide-y divide-line">
             {jobs.map((job) => (
               <div key={job.id} className="flex flex-wrap items-center gap-3 py-3">
                 <span className={`rounded-full px-2.5 py-1 text-xs font-black ${statusTone(job.status)}`}>
                   {job.status || "running"}
                 </span>
-                <span className="font-bold text-[#111716]">
+                <span className="font-bold text-ink">
                   {job.sourceTitle || job.sourceUrl || sourceTypeLabel(job.sourceType)}
                 </span>
-                <span className="text-sm text-[#66716e]">
+                <span className="text-sm text-ink-soft">
                   {sourceTypeLabel(job.sourceType)} · {job.chunksAdded} chunk{job.chunksAdded === 1 ? "" : "s"} · {formatWhen(job.startedAt)}
                 </span>
                 {job.errorMessage ? (
-                  <span className="basis-full text-sm text-[#9b1c1c]">{job.errorMessage}</span>
+                  <span className="basis-full text-sm text-danger">{job.errorMessage}</span>
                 ) : null}
               </div>
             ))}
@@ -3254,22 +3259,22 @@ function RoutingTab({
   }
 
   return (
-    <div>
-      <div className="mb-5 flex items-start gap-3 rounded-[14px] border border-black/10 bg-[#fbfcfc] px-5 py-4">
-        <Users className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#148b8e]" />
-        <p className="text-sm text-[#66716e]">
+    <div className="anim-fade">
+      <div className="mb-5 flex items-start gap-3 rounded-2xl border border-teal/20 bg-teal-wash px-5 py-4">
+        <Users className="mt-0.5 h-5 w-5 flex-shrink-0 text-teal" />
+        <p className="text-sm text-[#0e4b4d]">
           Add the people or teams calls should reach. When a caller mentions any of a
           contact&apos;s keywords, the agent transfers them to that number and/or emails a
           summary.
         </p>
       </div>
 
-      <div className="mb-6 rounded-[14px] border border-black/10 bg-white p-5">
+      <div className="mb-6 rounded-2xl border border-line bg-card p-5 shadow-card">
         <span className="flex items-center gap-2 text-sm font-black">
-          <Mail className="h-4 w-4 text-[#148b8e]" />
+          <Mail className="h-4 w-4 text-teal" />
           Default routing inbox
         </span>
-        <p className="mt-1 mb-3 text-sm text-[#7a8582]">
+        <p className="mt-1 mb-3 text-sm text-ink-soft">
           A pooled address summaries fall back to, used by any contact set to “send to
           default”, and when no specific contact matches.
         </p>
@@ -3277,7 +3282,7 @@ function RoutingTab({
           value={defaultEmail}
           onChange={(event) => onDefaultEmailChange(event.target.value)}
           placeholder="info@yourbusiness.co.uk"
-          className="h-12 w-full max-w-md rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+          className="h-12 w-full max-w-md rounded-lg border border-line-strong bg-white px-4 text-sm outline-none transition focus:border-ink"
         />
       </div>
 
@@ -3294,7 +3299,7 @@ function RoutingTab({
           ))}
         </div>
       ) : (
-        <div className="rounded-[14px] border border-dashed border-black/15 bg-white px-5 py-10 text-center text-[#66716e]">
+        <div className="rounded-xl border border-dashed border-line-strong bg-white px-5 py-10 text-center text-ink-soft">
           No routing contacts yet. Add your first one below.
         </div>
       )}
@@ -3302,23 +3307,23 @@ function RoutingTab({
       <button
         type="button"
         onClick={add}
-        className="mt-4 inline-flex items-center gap-2 rounded-lg border border-dashed border-black/20 px-5 py-3 text-sm font-black text-[#148b8e] transition hover:bg-[#f7f8f7]"
+        className="mt-4 inline-flex items-center gap-2 rounded-lg border border-dashed border-black/20 px-5 py-3 text-sm font-black text-teal transition hover:bg-card-tint"
       >
         <Plus className="h-4 w-4" />
         Add contact
       </button>
 
-      <div className="mt-8 border-t border-black/10 pt-6">
+      <div className="mt-8 border-t border-line pt-6">
         <button
           type="button"
           onClick={onSave}
           disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
         >
           {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
           {isPending ? "Saving…" : saved ? "Saved" : "Save routing"}
         </button>
-        {saveError && <p className="mt-2 text-sm text-red-600">{saveError}</p>}
+        {saveError && <p className="mt-2 text-sm text-danger">{saveError}</p>}
       </div>
     </div>
   );
@@ -3336,17 +3341,17 @@ function ContactCard({
   onRemove: () => void;
 }) {
   return (
-    <div className="rounded-[14px] border border-black/10 bg-white p-5">
+    <div className="rounded-xl border border-line bg-white p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <span className="flex items-center gap-2 font-black">
-          <UserRound className="h-4 w-4 text-[#148b8e]" />
+          <UserRound className="h-4 w-4 text-teal" />
           {contact.name.trim() || "New contact"}
         </span>
         <button
           type="button"
           onClick={onRemove}
           aria-label="Remove contact"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#fdeaea] hover:text-[#c0392b]"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft transition hover:bg-danger-wash hover:text-danger"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -3362,7 +3367,7 @@ function ContactCard({
         <div className="sm:col-span-2">
           <span className="mb-2 block text-sm font-black">Email</span>
           {contact.useDefaultEmail ? (
-            <div className="flex h-12 items-center rounded-lg border border-dashed border-black/15 bg-[#fbfcfc] px-4 text-sm text-[#66716e]">
+            <div className="flex h-12 items-center rounded-lg border border-dashed border-line-strong bg-card-tint px-4 text-sm text-ink-soft">
               Summaries go to the default inbox
               {defaultEmail ? ` · ${defaultEmail}` : ""}
             </div>
@@ -3371,10 +3376,10 @@ function ContactCard({
               value={contact.email}
               onChange={(event) => onChange({ email: event.target.value })}
               placeholder="name@business.co.uk"
-              className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+              className="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-sm outline-none transition focus:border-ink"
             />
           )}
-          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm text-[#66716e]">
+          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
             <input
               type="checkbox"
               checked={contact.useDefaultEmail}
@@ -3429,8 +3434,8 @@ function RouteToggle({
       onClick={onClick}
       className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${
         active
-          ? "border-[#148b8e] bg-[#e6fbfc] text-[#0f6f72]"
-          : "border-black/15 bg-white text-[#7a8582] hover:bg-[#f7f8f7]"
+          ? "border-teal bg-teal-wash text-[#0f6f72]"
+          : "border-line-strong bg-white text-ink-soft hover:bg-card-tint"
       }`}
     >
       <Icon className="h-4 w-4" />
@@ -3462,18 +3467,18 @@ function KeywordInput({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-black/15 bg-white px-3 py-2.5 focus-within:border-[#111716]">
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line-strong bg-white px-3 py-2.5 focus-within:border-ink">
       {keywords.map((keyword) => (
         <span
           key={keyword}
-          className="inline-flex items-center gap-1.5 rounded-full bg-[#eef1f0] px-3 py-1 text-sm font-bold"
+          className="inline-flex items-center gap-1.5 rounded-full bg-card-tint px-3 py-1 text-sm font-bold"
         >
           {keyword}
           <button
             type="button"
             onClick={() => onChange(keywords.filter((k) => k !== keyword))}
             aria-label={`Remove ${keyword}`}
-            className="text-[#7a8582] transition hover:text-[#111716]"
+            className="text-ink-soft transition hover:text-ink"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -3496,7 +3501,7 @@ function KeywordInput({
         }}
         onBlur={() => commit(draft)}
         placeholder={keywords.length ? "Add another…" : "Type a keyword and press Enter"}
-        className="min-w-[150px] flex-1 bg-transparent text-sm outline-none placeholder:text-[#9aa4a1]"
+        className="min-w-[150px] flex-1 bg-transparent text-sm outline-none placeholder:text-ink-faint"
       />
     </div>
   );
@@ -3529,7 +3534,7 @@ const ATTENTION_STYLE: Record<
   AttentionItem["kind"],
   { label: string; icon: LucideIcon; tone: string }
 > = {
-  complaint: { label: "Complaint", icon: ThumbsDown, tone: "text-[#c0392b] bg-[#fdecea]" },
+  complaint: { label: "Complaint", icon: ThumbsDown, tone: "text-danger bg-[#fdecea]" },
   urgent: { label: "Urgent", icon: Flame, tone: "text-[#c2620a] bg-[#fdf1e3]" },
   unanswered: { label: "Unanswered", icon: HelpCircle, tone: "text-[#7a5b00] bg-[#fdf7e3]" },
 };
@@ -3564,7 +3569,7 @@ function CollapsibleSection({
       >
         <Icon className="h-5 w-5 flex-shrink-0" style={{ color: accent }} />
         <div className="min-w-0 flex-1">
-          <h2 className="flex items-center gap-2 text-lg font-black text-[#111716]">
+          <h2 className="flex items-center gap-2 text-lg font-black text-ink">
             {title}
             <span
               className="rounded-full px-2 py-0.5 text-xs font-bold"
@@ -3574,11 +3579,11 @@ function CollapsibleSection({
             </span>
           </h2>
           {subtitle && !open ? (
-            <p className="mt-0.5 truncate text-sm text-[#66716e]">{subtitle}</p>
+            <p className="mt-0.5 truncate text-sm text-ink-soft">{subtitle}</p>
           ) : null}
         </div>
         <ChevronDown
-          className={`h-5 w-5 flex-shrink-0 text-[#9aa5a2] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-5 w-5 flex-shrink-0 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open ? (
@@ -3831,24 +3836,24 @@ function AiInsights({
                   icon={ThumbsUp}
                   label="Positive"
                   value={i.sentiment.positive}
-                  tone="text-[#16a66a]"
+                  tone="text-good"
                 />
                 <SentimentStat
                   icon={MessageSquareText}
                   label="Neutral"
                   value={i.sentiment.neutral}
-                  tone="text-[#66716e]"
+                  tone="text-ink-soft"
                 />
                 <SentimentStat
                   icon={ThumbsDown}
                   label="Negative"
                   value={i.sentiment.negative}
-                  tone="text-[#c0392b]"
+                  tone="text-danger"
                 />
               </div>
             </>
           ) : (
-            <p className="mt-4 text-sm text-[#66716e]">
+            <p className="mt-4 text-sm text-ink-soft">
               Sentiment will appear once your calls have been analysed.
             </p>
           )}
@@ -3869,7 +3874,7 @@ function AiInsights({
               ))}
             </ul>
           ) : (
-            <p className="mt-4 text-sm text-[#66716e]">
+            <p className="mt-4 text-sm text-ink-soft">
               Call reasons will appear once your calls have been analysed.
             </p>
           )}
@@ -3886,7 +3891,7 @@ function AiInsights({
         subtitle="Complaints, urgent calls and unanswered questions"
       >
         {i.attention.length > 0 ? (
-          <ul className="divide-y divide-black/5">
+          <ul className="divide-y divide-line">
             {i.attention.map((item, idx) => (
               <AttentionRow key={`${item.callId}-${idx}`} item={item} onOpen={onOpenCall} />
             ))}
@@ -4033,10 +4038,10 @@ function SentimentStat({
   tone: string;
 }) {
   return (
-    <div className="rounded-lg bg-[#f7f8f7] py-3">
+    <div className="rounded-lg bg-card-tint py-3">
       <Icon className={`mx-auto h-5 w-5 ${tone}`} />
-      <p className="mt-1 text-xl font-black text-[#111716]">{value}</p>
-      <p className="text-xs font-semibold text-[#66716e]">{label}</p>
+      <p className="mt-1 text-xl font-black text-ink">{value}</p>
+      <p className="text-xs font-semibold text-ink-soft">{label}</p>
     </div>
   );
 }
@@ -4094,7 +4099,7 @@ function AttentionRow({
       <button
         type="button"
         onClick={() => onOpen(item.callId)}
-        className="flex w-full items-start gap-3 py-3 text-left transition hover:bg-[#f7f8f7]"
+        className="flex w-full items-start gap-3 py-3 text-left transition hover:bg-card-tint"
       >
         <span
           className={`mt-0.5 flex h-7 items-center gap-1 rounded-full px-2 text-[11px] font-black uppercase tracking-wide ${style.tone}`}
@@ -4103,14 +4108,14 @@ function AttentionRow({
           {style.label}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold text-[#111716]">
+          <span className="block truncate text-sm font-semibold text-ink">
             {item.detail}
           </span>
-          <span className="mt-0.5 block text-xs text-[#9aa5a2]">
+          <span className="mt-0.5 block text-xs text-ink-faint">
             {item.caller} · {formatWhen(item.startedAt)}
           </span>
         </span>
-        <ChevronRight className="mt-1 h-4 w-4 flex-shrink-0 text-[#9aa5a2]" />
+        <ChevronRight className="mt-1 h-4 w-4 flex-shrink-0 text-ink-faint" />
       </button>
     </li>
   );
@@ -4128,15 +4133,15 @@ function CallRefRow({
       <button
         type="button"
         onClick={() => onOpen(item.callId)}
-        className="flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[#f7f8f7]"
+        className="flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-card-tint"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-[#111716]">{item.detail}</span>
-          <span className="mt-0.5 block text-xs text-[#9aa5a2]">
+          <span className="block text-sm font-semibold text-ink">{item.detail}</span>
+          <span className="mt-0.5 block text-xs text-ink-faint">
             {item.caller} · {formatWhen(item.startedAt)}
           </span>
         </span>
-        <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#9aa5a2]" />
+        <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-faint" />
       </button>
     </li>
   );
@@ -4145,11 +4150,11 @@ function CallRefRow({
 // A small channel badge for the history list, at a glance, how the conversation
 // arrived (phone / WhatsApp / email / website chat).
 const channelMeta: Record<CallChannel, { Icon: LucideIcon; label: string; bg: string; fg: string }> = {
-  phone: { Icon: Phone, label: "Phone call", bg: "bg-[#eefbfb]", fg: "text-[#148b8e]" },
-  whatsapp: { Icon: MessageCircle, label: "WhatsApp", bg: "bg-[#eafaf1]", fg: "text-[#14823f]" },
+  phone: { Icon: Phone, label: "Phone call", bg: "bg-teal-wash", fg: "text-teal" },
+  whatsapp: { Icon: MessageCircle, label: "WhatsApp", bg: "bg-[#eafaf1]", fg: "text-good" },
   sms: { Icon: MessageSquare, label: "SMS", bg: "bg-[#f5f0ff]", fg: "text-[#7c3aed]" },
   email: { Icon: Mail, label: "Email", bg: "bg-[#eef2fb]", fg: "text-[#3b5bb5]" },
-  chat: { Icon: MessageSquareText, label: "Website chat", bg: "bg-[#eefbfb]", fg: "text-[#148b8e]" },
+  chat: { Icon: MessageSquareText, label: "Website chat", bg: "bg-teal-wash", fg: "text-teal" },
 };
 
 function ChannelIcon({ channel }: { channel: CallChannel }) {
@@ -4203,7 +4208,7 @@ function InboxRow({
       type="button"
       onClick={onClick}
       className={`press flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition ${
-        selected ? "bg-teal-wash" : "hover:bg-[#f2f4f3]"
+        selected ? "bg-teal-wash" : "hover:bg-card-tint"
       }`}
     >
       <ChannelIcon channel={log.channel} />
@@ -4421,7 +4426,7 @@ function UnifiedInbox({
                     className={`press flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold transition ${
                       filter === f.value
                         ? "bg-ink text-white"
-                        : "bg-card-tint text-ink-soft hover:bg-[#eef1f0]"
+                        : "bg-card-tint text-ink-soft hover:bg-card-tint"
                     }`}
                   >
                     {f.label}
@@ -4665,6 +4670,63 @@ function TranscriptView({ transcript }: { transcript: string }) {
   );
 }
 
+// One row per connected line: icon, number with a pulsing live dot, purpose,
+// and a copy affordance that appears on hover / keyboard focus.
+function NumberRow({
+  icon: Icon,
+  iconClass,
+  number,
+  purpose,
+  live = true,
+  pendingDot = false,
+}: {
+  icon: LucideIcon;
+  iconClass: string;
+  number: string;
+  purpose: string;
+  live?: boolean;
+  pendingDot?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  const copyable = /\d/.test(number);
+  return (
+    <div className="group flex items-center gap-3 py-2.5">
+      <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${iconClass}`}>
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-2 font-black text-ink">
+          <span
+            className={`h-2 w-2 flex-shrink-0 rounded-full ${
+              live ? "live-dot bg-good" : pendingDot ? "bg-warn" : "bg-ink-faint"
+            }`}
+          />
+          <span className="truncate font-mono text-[15px]">{number}</span>
+        </p>
+        <p className="mt-0.5 text-xs text-ink-soft">{purpose}</p>
+      </div>
+      {copyable && (
+        <button
+          type="button"
+          onClick={() =>
+            navigator.clipboard?.writeText(number).then(
+              () => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              },
+              () => {},
+            )
+          }
+          aria-label={`Copy ${number}`}
+          className="press flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-ink-faint opacity-0 transition hover:bg-card-tint hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
+        >
+          {copied ? <Check className="anim-pop h-4 w-4 text-good" /> : <Copy className="h-4 w-4" />}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function RoutingCard({
   routing,
   smsNumber,
@@ -4682,78 +4744,68 @@ function RoutingCard({
 }) {
   const live = routing.status === "live";
   const pending = routing.status === "pending";
-  const dot = live ? "bg-[#16a66a]" : pending ? "bg-[#d9920a]" : "bg-[#9aa4a1]";
-  const heading = live
-    ? routing.number
-    : pending
-      ? "Setting up your phone number"
-      : "No phone number assigned yet";
-  const sub = live
-    ? "Live and answering calls"
-    : pending
-      ? "WiseCall is provisioning your number, usually ready within 5 minutes. Refresh the page to check."
-      : "Assign a number to put this agent on a phone line.";
 
   return (
-    <div className="mb-8 rounded-[14px] border border-black/10 bg-[#fbfcfc] px-5 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <Phone className="h-5 w-5 text-[#148b8e]" />
-            <div>
-              <p className="flex items-center gap-2 font-black">
-                <span className={`h-2 w-2 rounded-full ${dot}`} />
-                {heading}
-              </p>
-              <p className="mt-0.5 text-sm text-[#66716e]">{sub}</p>
-            </div>
-          </div>
+    <div className="mb-6 rounded-2xl border border-line bg-card px-5 py-3 shadow-card">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="min-w-0 divide-y divide-line sm:flex-1">
+          <NumberRow
+            icon={Phone}
+            iconClass="bg-teal-wash text-teal"
+            number={live ? routing.number : pending ? "Setting up…" : "No number yet"}
+            purpose={
+              live
+                ? "Live and answering calls"
+                : pending
+                  ? "Provisioning — usually ready within 5 minutes"
+                  : "Assign a number to put this agent on a phone line"
+            }
+            live={live}
+            pendingDot={pending}
+          />
           {smsNumber ? (
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-5 w-5 text-[#7c3aed]" />
-              <div>
-                <p className="flex items-center gap-2 font-black">
-                  <span className="h-2 w-2 rounded-full bg-[#16a66a]" />
-                  {smsNumber}
-                </p>
-                <p className="mt-0.5 text-sm text-[#66716e]">SMS messages &amp; notifications</p>
-              </div>
-            </div>
+            <NumberRow
+              icon={MessageSquare}
+              iconClass="bg-[#f5f0ff] text-[#7c3aed]"
+              number={smsNumber}
+              purpose="SMS messages & notifications"
+            />
           ) : null}
           {whatsappNumber ? (
-            <div className="flex items-center gap-3">
-              <MessageCircle className="h-5 w-5 text-[#14823f]" />
-              <div>
-                <p className="flex items-center gap-2 font-black">
-                  <span className="h-2 w-2 rounded-full bg-[#16a66a]" />
-                  {whatsappNumber}
-                </p>
-                <p className="mt-0.5 text-sm text-[#66716e]">WhatsApp messaging</p>
-              </div>
-            </div>
+            <NumberRow
+              icon={MessageCircle}
+              iconClass="bg-good-wash text-good"
+              number={whatsappNumber}
+              purpose="WhatsApp messaging"
+            />
           ) : null}
         </div>
-        {live && (
+        {live ? (
           <a
             href={`tel:${routing.number.replace(/[^\d+]/g, "")}`}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#7de8eb] px-4 py-2.5 text-sm font-black text-[#0c1717] transition hover:opacity-90"
+            className="press inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-[#7de8eb] px-4 py-2.5 text-sm font-black text-[#0c1717] shadow-card transition hover:opacity-90"
           >
             <Phone className="h-4 w-4" />
             Call to test
           </a>
-        )}
-        {!live && (
+        ) : (
           <button
             type="button"
             onClick={onProvision}
             disabled={isProvisioning || pending}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+            className="press inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
           >
-            {isProvisioning ? "Assigning…" : "Assign number"}
+            {isProvisioning ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Assigning…
+              </>
+            ) : (
+              "Assign number"
+            )}
           </button>
         )}
       </div>
-      {error && <p className="mt-3 text-sm text-[#a3791b]">{error}</p>}
+      {error && <p className="mt-3 text-sm text-warn">{error}</p>}
     </div>
   );
 }
@@ -4778,19 +4830,31 @@ function AbilityRow({
     <Wrapper
       type={isButton ? "button" : undefined}
       onClick={onClick}
-      className={`flex w-full items-center gap-4 rounded-[14px] border border-dashed border-black/12 bg-white px-5 py-4 text-left transition ${
-        isButton ? "hover:bg-[#f7f8f7]" : ""
-      }`}
+      className={`flex w-full items-center gap-4 rounded-2xl border bg-card px-5 py-4 text-left shadow-card ${
+        enabled ? "border-line" : "border-dashed border-line-strong"
+      } ${isButton ? "lift press" : ""}`}
     >
-      <Icon className="h-5 w-5 flex-shrink-0 text-[#148b8e]" />
+      <span
+        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
+          enabled ? "bg-teal-wash text-teal" : "bg-card-tint text-ink-faint"
+        }`}
+      >
+        <Icon className="h-5 w-5" />
+      </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-black">{title}</span>
-        <span className="mt-1 block truncate text-sm text-[#7a8582]">{body}</span>
+        <span className="block font-black text-ink">{title}</span>
+        <span className="mt-0.5 block truncate text-sm text-ink-soft">{body}</span>
       </span>
       {enabled ? (
-        <Check className="h-5 w-5 flex-shrink-0 text-[#16a66a]" />
+        <span className="flex flex-shrink-0 items-center gap-1.5 rounded-full bg-good-wash px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-good">
+          <Check className="h-3.5 w-3.5" />
+          On
+        </span>
       ) : (
-        <CirclePlus className="h-5 w-5 flex-shrink-0 text-[#16a66a]" />
+        <span className="flex flex-shrink-0 items-center gap-1.5 rounded-full bg-card-tint px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-ink-soft">
+          <CirclePlus className="h-3.5 w-3.5" />
+          Set up
+        </span>
       )}
     </Wrapper>
   );
@@ -4821,20 +4885,20 @@ function CreateAssistantModal({
 }) {
   return (
     <div className={MODAL_OVERLAY}>
-      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-[18px] bg-white p-5 shadow-2xl sm:p-7">
+      <div className="anim-scale-in max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-float sm:p-7">
         <div className="mb-6 flex items-center justify-between gap-4">
           <h2 className="text-2xl font-black">Create Assistant</h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-card-tint hover:text-ink"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <p className="mb-3 text-sm font-bold text-[#7a8582]">Start from a template</p>
+        <p className="mb-3 text-sm font-bold text-ink-soft">Start from a template</p>
         <div className="mb-6 space-y-3">
           {agentTemplates.map((template) => {
             const selected = template.id === templateId;
@@ -4844,29 +4908,29 @@ function CreateAssistantModal({
                 key={template.id}
                 disabled={!template.available}
                 onClick={() => onTemplateChange(template.id)}
-                className={`flex w-full items-start gap-3 rounded-[14px] border px-5 py-4 text-left transition ${
+                className={`flex w-full items-start gap-3 rounded-xl border px-5 py-4 text-left transition ${
                   selected
-                    ? "border-[#148b8e] bg-[#e6fbfc]"
-                    : "border-black/10 bg-white hover:bg-[#f7f8f7]"
+                    ? "border-teal bg-teal-wash"
+                    : "border-line bg-white hover:bg-card-tint"
                 } ${template.available ? "" : "cursor-not-allowed opacity-50"}`}
               >
                 <span
                   className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
-                    selected ? "border-[#148b8e] bg-[#148b8e]" : "border-black/20"
+                    selected ? "border-teal bg-teal" : "border-black/20"
                   }`}
                 >
                   {selected && <Check className="h-3.5 w-3.5 text-white" />}
                 </span>
                 <span className="min-w-0">
                   <span className="block font-black">{template.label}</span>
-                  <span className="mt-1 block text-sm text-[#66716e]">
+                  <span className="mt-1 block text-sm text-ink-soft">
                     {template.description}
                   </span>
                 </span>
               </button>
             );
           })}
-          <p className="px-1 text-xs text-[#9aa4a1]">
+          <p className="px-1 text-xs text-ink-faint">
             More industry &amp; integration templates coming soon.
           </p>
         </div>
@@ -4881,14 +4945,14 @@ function CreateAssistantModal({
           <Field label="Business name" value={businessName} onChange={onBusinessChange} />
         </div>
 
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-4 text-sm text-danger">{error}</p>}
 
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={isCreating}
-            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9] disabled:opacity-60"
+            className="rounded-lg bg-card-tint px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9] disabled:opacity-60"
           >
             Cancel
           </button>
@@ -4896,7 +4960,7 @@ function CreateAssistantModal({
             type="button"
             onClick={onCreate}
             disabled={isCreating}
-            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+            className="rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
           >
             {isCreating ? "Creating…" : "Create Assistant"}
           </button>
@@ -4920,15 +4984,15 @@ function PromptModal({
   return (
     <div className={MODAL_OVERLAY}>
       <div className={`${MODAL_PANEL} max-w-4xl`}>
-        <div className="flex items-center justify-between border-b border-black/10 px-7 py-5">
+        <div className="flex items-center justify-between border-b border-line px-7 py-5">
           <div>
             <h2 className="text-2xl font-black">Custom Prompts</h2>
-            <p className="mt-1 text-sm text-[#66716e]">{assistant.name}</p>
+            <p className="mt-1 text-sm text-ink-soft">{assistant.name}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-card-tint hover:text-ink"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -4936,7 +5000,7 @@ function PromptModal({
         </div>
         <button
           type="button"
-          className="flex items-center justify-between border-b border-black/10 px-7 py-4 text-left font-black text-[#4c3bbd]"
+          className="flex items-center justify-between border-b border-line px-7 py-4 text-left font-black text-[#4c3bbd]"
         >
           <span className="inline-flex items-center gap-3">
             <Sparkles className="h-5 w-5" />
@@ -4949,18 +5013,18 @@ function PromptModal({
           onChange={(event) => onChange(event.target.value)}
           className="min-h-0 flex-1 resize-none border-0 px-7 py-6 text-base leading-7 outline-none"
         />
-        <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
+        <div className="flex justify-end gap-3 border-t border-line px-7 py-5">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
+            className="rounded-lg bg-card-tint px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+            className="rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
           >
             Save
           </button>
@@ -5026,7 +5090,7 @@ function VoicePicker({
 
   return (
     <div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="stagger grid gap-3 sm:grid-cols-2">
         {cartesiaVoices.map((voice) => {
           const isSelected = voice.id === selected;
           const isLoading = loadingVoice === voice.id;
@@ -5034,25 +5098,25 @@ function VoicePicker({
           return (
             <div
               key={voice.id}
-              className={`flex items-center gap-2 rounded-[14px] border px-4 py-3 transition ${
-                isSelected ? "border-[#148b8e] bg-[#e6fbfc]" : "border-black/10 bg-white"
+              className={`lift flex items-center gap-2 rounded-2xl border px-4 py-3 shadow-card transition ${
+                isSelected ? "border-teal bg-teal-wash ring-1 ring-teal" : "border-line bg-card"
               }`}
             >
               <button
                 type="button"
                 onClick={() => onSelect(voice.id)}
-                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                className="press flex min-w-0 flex-1 items-center gap-3 text-left"
               >
                 <span
-                  className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
-                    isSelected ? "border-[#148b8e] bg-[#148b8e]" : "border-black/20"
+                  className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border transition ${
+                    isSelected ? "border-teal bg-teal" : "border-line-strong"
                   }`}
                 >
-                  {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
+                  {isSelected && <Check className="anim-pop h-3.5 w-3.5 text-white" />}
                 </span>
                 <span className="min-w-0">
-                  <span className="block font-black">{voice.label}</span>
-                  <span className="mt-0.5 block truncate text-xs text-[#7a8582]">
+                  <span className="block font-black text-ink">{voice.label}</span>
+                  <span className="mt-0.5 block truncate text-xs text-ink-soft">
                     {voice.blurb}
                   </span>
                 </span>
@@ -5062,12 +5126,16 @@ function VoicePicker({
                 onClick={() => (isPlaying ? stop() : test(voice.id))}
                 disabled={isLoading}
                 aria-label={isPlaying ? `Stop ${voice.label}` : `Test ${voice.label}`}
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-black/10 bg-white text-[#148b8e] transition hover:bg-[#f2f4f3] disabled:opacity-60"
+                className={`press flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border transition disabled:opacity-60 ${
+                  isPlaying
+                    ? "border-teal bg-teal text-white"
+                    : "border-line bg-white text-teal hover:border-teal"
+                }`}
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : isPlaying ? (
-                  <Volume2 className="h-4 w-4" />
+                  <Volume2 className="h-4 w-4 animate-pulse" />
                 ) : (
                   <Play className="h-4 w-4" />
                 )}
@@ -5076,8 +5144,8 @@ function VoicePicker({
           );
         })}
       </div>
-      {error && <p className="mt-3 text-sm text-[#a3791b]">{error}</p>}
-      <p className="mt-3 px-1 text-xs text-[#9aa4a1]">
+      {error && <p className="mt-3 text-sm text-warn">{error}</p>}
+      <p className="mt-3 px-1 text-xs text-ink-faint">
         Tap a name to choose the voice, or the play button to hear it read this
         agent&apos;s greeting.
       </p>
@@ -5115,16 +5183,16 @@ function AbilityEditorModal({
 }) {
   return (
     <div className={MODAL_OVERLAY}>
-      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[18px] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-black/10 px-7 py-5">
+      <div className="anim-scale-in max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-float">
+        <div className="flex items-center justify-between border-b border-line px-7 py-5">
           <div>
             <h2 className="text-2xl font-black">{title}</h2>
-            <p className="mt-1 text-sm text-[#66716e]">{subtitle}</p>
+            <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-card-tint hover:text-ink"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -5138,7 +5206,7 @@ function AbilityEditorModal({
               autoFocus
               onChange={(event) => onChange(event.target.value)}
               placeholder={placeholder}
-              className="min-h-[180px] w-full resize-none rounded-lg border border-black/15 bg-white px-4 py-3 text-base leading-7 outline-none transition focus:border-[#111716]"
+              className="min-h-[180px] w-full resize-none rounded-lg border border-line-strong bg-white px-4 py-3 text-base leading-7 outline-none transition focus:border-ink"
             />
           ) : (
             <input
@@ -5146,22 +5214,22 @@ function AbilityEditorModal({
               autoFocus
               onChange={(event) => onChange(event.target.value)}
               placeholder={placeholder}
-              className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition focus:border-[#111716]"
+              className="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-sm outline-none transition focus:border-ink"
             />
           )}
         </div>
-        <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
+        <div className="flex justify-end gap-3 border-t border-line px-7 py-5">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
+            className="rounded-lg bg-card-tint px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+            className="rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
           >
             Save
           </button>
@@ -5189,10 +5257,10 @@ function KnowledgeModal({
   return (
     <div className={MODAL_OVERLAY}>
       <div className={`${MODAL_PANEL} max-w-2xl`}>
-        <div className="flex items-start justify-between border-b border-black/10 px-7 py-5">
+        <div className="flex items-start justify-between border-b border-line px-7 py-5">
           <div>
             <h2 className="text-2xl font-black">Answer Questions</h2>
-            <p className="mt-1 text-sm text-[#66716e]">
+            <p className="mt-1 text-sm text-ink-soft">
               Fill in what {assistant.name} should be able to tell callers. Leave any section
               blank if it doesn&apos;t apply.
             </p>
@@ -5200,7 +5268,7 @@ function KnowledgeModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-ink-soft transition hover:bg-card-tint hover:text-ink"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -5217,23 +5285,23 @@ function KnowledgeModal({
                 }
                 placeholder={section.placeholder}
                 rows={section.key === "other" ? 3 : 2}
-                className="w-full resize-none rounded-lg border border-black/15 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-[#111716] placeholder:text-[#9aa4a1]"
+                className="w-full resize-none rounded-lg border border-line-strong bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-ink placeholder:text-ink-faint"
               />
             </label>
           ))}
         </div>
-        <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
+        <div className="flex justify-end gap-3 border-t border-line px-7 py-5">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
+            className="rounded-lg bg-card-tint px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+            className="rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
           >
             Save
           </button>
@@ -5256,18 +5324,18 @@ function GreetingModal({
 }) {
   return (
     <div className={MODAL_OVERLAY}>
-      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[18px] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-black/10 px-7 py-5">
+      <div className="anim-scale-in max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-float">
+        <div className="flex items-center justify-between border-b border-line px-7 py-5">
           <div>
             <h2 className="text-2xl font-black">Greeting message</h2>
-            <p className="mt-1 text-sm text-[#66716e]">
+            <p className="mt-1 text-sm text-ink-soft">
               The first thing callers hear when {assistant.name} answers.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3] hover:text-[#111716]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition hover:bg-card-tint hover:text-ink"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -5279,24 +5347,24 @@ function GreetingModal({
             autoFocus
             onChange={(event) => onChange({ greeting: event.target.value })}
             placeholder="Hi, thanks for calling. How can I help you today?"
-            className="min-h-[140px] w-full resize-none rounded-lg border border-black/15 bg-white px-4 py-3 text-base leading-7 outline-none transition focus:border-[#111716]"
+            className="min-h-[140px] w-full resize-none rounded-lg border border-line-strong bg-white px-4 py-3 text-base leading-7 outline-none transition focus:border-ink"
           />
-          <p className="mt-3 text-xs text-[#9aa4a1]">
+          <p className="mt-3 text-xs text-ink-faint">
             Keep it short and natural, one or two sentences works best on the phone.
           </p>
         </div>
-        <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
+        <div className="flex justify-end gap-3 border-t border-line px-7 py-5">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-[#f2f4f3] px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
+            className="rounded-lg bg-card-tint px-5 py-3 text-sm font-black transition hover:bg-[#e7ebe9]"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="rounded-lg bg-[#111716] px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
+            className="rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130]"
           >
             Save
           </button>
@@ -5327,7 +5395,7 @@ function Field({
         autoFocus={autoFocus}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none transition placeholder:text-[#9aa4a1] focus:border-[#111716]"
+        className="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-sm outline-none transition placeholder:text-ink-faint focus:border-ink"
       />
     </label>
   );
@@ -5335,13 +5403,21 @@ function Field({
 
 function StatusPill({ status }: { status: Assistant["status"] }) {
   const styles = {
-    Live: "bg-[#e7f8ef] text-[#117a4d]",
-    Setup: "bg-[#e6fbfc] text-[#148b8e]",
-    Review: "bg-[#fff3d8] text-[#835c00]",
+    Live: "bg-good-wash text-good",
+    Setup: "bg-teal-wash text-teal",
+    Review: "bg-warn-wash text-warn",
+  };
+  const dot = {
+    Live: "live-dot bg-good",
+    Setup: "bg-teal",
+    Review: "bg-warn",
   };
 
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${styles[status]}`}>
+    <span
+      className={`inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${styles[status]}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${dot[status]}`} />
       {status}
     </span>
   );

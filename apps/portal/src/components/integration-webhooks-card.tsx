@@ -40,7 +40,7 @@ function KeyValueEditor({
   return (
     <div>
       <span className="mb-1 block text-sm font-black">{label}</span>
-      {hint ? <p className="mb-2 text-xs text-[#7a8582]">{hint}</p> : null}
+      {hint ? <p className="mb-2 text-xs text-ink-soft">{hint}</p> : null}
       {rows.length > 0 ? (
         <div className="space-y-2">
           {rows.map((row, index) => (
@@ -49,19 +49,19 @@ function KeyValueEditor({
                 value={row.key}
                 onChange={(e) => update(index, { key: e.target.value })}
                 placeholder="key"
-                className="h-10 min-w-[7rem] flex-1 rounded-lg border border-black/15 bg-white px-3 text-sm outline-none focus:border-[#111716]"
+                className="h-10 min-w-[7rem] flex-1 rounded-lg border border-line-strong bg-white px-3 text-sm outline-none focus:border-ink"
               />
               <input
                 value={row.value}
                 onChange={(e) => update(index, { value: e.target.value })}
                 placeholder={valuePlaceholder}
-                className="h-10 min-w-[10rem] flex-[2] rounded-lg border border-black/15 bg-white px-3 text-sm outline-none focus:border-[#111716]"
+                className="h-10 min-w-[10rem] flex-[2] rounded-lg border border-line-strong bg-white px-3 text-sm outline-none focus:border-ink"
               />
               <button
                 type="button"
                 onClick={() => remove(index)}
                 aria-label="Remove row"
-                className="flex h-10 w-10 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#fdeaea] hover:text-[#c0392b]"
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[#fdeaea] hover:text-danger"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -69,12 +69,12 @@ function KeyValueEditor({
           ))}
         </div>
       ) : (
-        <p className="text-xs text-[#9aa5a2]">None yet.</p>
+        <p className="text-xs text-ink-faint">None yet.</p>
       )}
       <button
         type="button"
         onClick={add}
-        className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#148b8e] hover:underline"
+        className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal hover:underline"
       >
         <Plus className="h-3.5 w-3.5" />
         Add {label.toLowerCase()}
@@ -93,11 +93,11 @@ function WebhookCard({
   onRemove: () => void;
 }) {
   return (
-    <div className="rounded-[14px] border border-black/10 bg-white p-5">
+    <div className="rounded-xl border border-line bg-white p-5">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-black">{hook.friendlyName.trim() || "New webhook"}</p>
-          <p className="mt-0.5 text-xs text-[#7a8582]">
+          <p className="mt-0.5 text-xs text-ink-soft">
             {webhookConditions.find((c) => c.value === hook.condition)?.label ?? hook.condition}
             {" · "}
             {hook.method}
@@ -105,7 +105,7 @@ function WebhookCard({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[#66716e]">
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
             <input
               type="checkbox"
               checked={hook.enabled}
@@ -118,7 +118,7 @@ function WebhookCard({
             type="button"
             onClick={onRemove}
             aria-label="Remove webhook"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#fdeaea] hover:text-[#c0392b]"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[#fdeaea] hover:text-danger"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -138,7 +138,7 @@ function WebhookCard({
               });
             }}
             placeholder="Look up patient"
-            className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none focus:border-[#111716]"
+            className="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-sm outline-none focus:border-ink"
           />
         </label>
 
@@ -148,7 +148,7 @@ function WebhookCard({
             value={hook.name}
             onChange={(e) => onChange({ name: slugifyWebhookName(e.target.value) })}
             placeholder="lookup_patient"
-            className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none focus:border-[#111716]"
+            className="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-sm outline-none focus:border-ink"
           />
         </label>
 
@@ -157,7 +157,7 @@ function WebhookCard({
           <select
             value={hook.condition}
             onChange={(e) => onChange({ condition: e.target.value as WebhookCondition })}
-            className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none focus:border-[#111716]"
+            className="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-sm outline-none focus:border-ink"
           >
             {webhookConditions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -178,7 +178,7 @@ function WebhookCard({
                 ? "What this does, helps the AI know when to call it."
                 : "Optional note for your team."
             }
-            className="w-full rounded-lg border border-black/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#111716]"
+            className="w-full rounded-lg border border-line-strong bg-white px-4 py-3 text-sm outline-none focus:border-ink"
           />
         </label>
 
@@ -187,7 +187,7 @@ function WebhookCard({
           <select
             value={hook.method}
             onChange={(e) => onChange({ method: e.target.value as WebhookHttpMethod })}
-            className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none focus:border-[#111716]"
+            className="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-sm outline-none focus:border-ink"
           >
             {webhookMethods.map((method) => (
               <option key={method} value={method}>
@@ -203,7 +203,7 @@ function WebhookCard({
             value={hook.url}
             onChange={(e) => onChange({ url: e.target.value })}
             placeholder="https://api.yourcrm.com/hooks/wisecall"
-            className="h-12 w-full rounded-lg border border-black/15 bg-white px-4 text-sm outline-none focus:border-[#111716]"
+            className="h-12 w-full rounded-lg border border-line-strong bg-white px-4 text-sm outline-none focus:border-ink"
           />
         </label>
       </div>
@@ -228,8 +228,8 @@ function WebhookCard({
         />
       </div>
 
-      <details className="mt-4 rounded-lg border border-black/10 bg-[#fbfcfc] px-4 py-3 text-xs text-[#66716e]">
-        <summary className="cursor-pointer font-bold text-[#111716]">Template tokens</summary>
+      <details className="mt-4 rounded-lg border border-line bg-card-tint px-4 py-3 text-xs text-ink-soft">
+        <summary className="cursor-pointer font-bold text-ink">Template tokens</summary>
         <ul className="mt-2 space-y-1">
           {webhookTemplateTokens.map((item) => (
             <li key={item.token}>
@@ -278,12 +278,12 @@ export function IntegrationWebhooksCard({
   }
 
   return (
-    <div className="mb-8 rounded-[14px] border border-black/10 bg-white p-5">
+    <div className="mb-8 rounded-xl border border-line bg-white p-5">
       <div className="mb-4 flex flex-wrap items-start gap-3">
-        <Webhook className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#148b8e]" />
+        <Webhook className="mt-0.5 h-5 w-5 flex-shrink-0 text-teal" />
         <div className="min-w-0 flex-1">
           <p className="font-black">Custom integrations</p>
-          <p className="mt-1 text-sm text-[#66716e]">
+          <p className="mt-1 text-sm text-ink-soft">
             Connect your CRM, practice software or automation, like Fonio and Telzino.
             Configure webhooks that run before, during or after each call.
           </p>
@@ -294,10 +294,10 @@ export function IntegrationWebhooksCard({
         {webhookConditions.map((item) => (
           <div
             key={item.value}
-            className="rounded-lg border border-black/10 bg-[#fbfcfc] px-4 py-3 text-sm"
+            className="rounded-lg border border-line bg-card-tint px-4 py-3 text-sm"
           >
-            <p className="font-black text-[#111716]">{item.label}</p>
-            <p className="mt-1 text-[#66716e]">{item.blurb}</p>
+            <p className="font-black text-ink">{item.label}</p>
+            <p className="mt-1 text-ink-soft">{item.blurb}</p>
           </div>
         ))}
       </div>
@@ -314,7 +314,7 @@ export function IntegrationWebhooksCard({
           ))}
         </div>
       ) : (
-        <div className="rounded-[14px] border border-dashed border-black/15 bg-[#fbfcfc] px-5 py-8 text-center text-sm text-[#66716e]">
+        <div className="rounded-xl border border-dashed border-line-strong bg-card-tint px-5 py-8 text-center text-sm text-ink-soft">
           No integration webhooks yet. Add one to POST caller data to your systems.
         </div>
       )}
@@ -323,7 +323,7 @@ export function IntegrationWebhooksCard({
         <button
           type="button"
           onClick={add}
-          className="inline-flex items-center gap-2 rounded-lg border border-dashed border-black/20 px-4 py-2.5 text-sm font-black text-[#148b8e] transition hover:bg-[#f7f8f7]"
+          className="inline-flex items-center gap-2 rounded-lg border border-dashed border-black/20 px-4 py-2.5 text-sm font-black text-teal transition hover:bg-card-tint"
         >
           <Plus className="h-4 w-4" />
           Add webhook
@@ -332,12 +332,12 @@ export function IntegrationWebhooksCard({
           type="button"
           onClick={save}
           disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
         >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {isPending ? "Saving…" : saved ? "Saved" : "Save integrations"}
         </button>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="text-sm text-danger">{error}</p> : null}
       </div>
     </div>
   );

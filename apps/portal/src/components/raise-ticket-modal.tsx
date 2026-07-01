@@ -28,24 +28,24 @@ export function RaiseTicketModal({ onClose }: { onClose: () => void }) {
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#7a8582] transition hover:bg-[#f2f4f3]"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft transition hover:bg-card-tint"
         >
           <X className="h-4 w-4" />
         </button>
 
         {done ? (
           <div className="py-4 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#eafaf1] text-[#14823f]">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#eafaf1] text-good">
               <Check className="h-6 w-6" />
             </div>
-            <p className="text-lg font-black text-[#111716]">Ticket raised</p>
-            <p className="mt-1 text-sm text-[#66716e]">
+            <p className="text-lg font-black text-ink">Ticket raised</p>
+            <p className="mt-1 text-sm text-ink-soft">
               Our support team has it, reference <strong>{done.ticketNumber}</strong>. We&apos;ll be in touch by email.
             </p>
             <button
               type="button"
               onClick={onClose}
-              className="mt-5 inline-flex h-10 items-center rounded-lg bg-[#111716] px-5 text-sm font-black text-white transition hover:bg-[#263130]"
+              className="mt-5 inline-flex h-10 items-center rounded-lg bg-ink px-5 text-sm font-black text-white transition hover:bg-[#263130]"
             >
               Done
             </button>
@@ -53,34 +53,34 @@ export function RaiseTicketModal({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eefbfb] text-[#148b8e]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-wash text-teal">
                 <LifeBuoy className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-black text-[#111716]">Raise a ticket</p>
-                <p className="text-xs text-[#66716e]">Goes straight to our support desk.</p>
+                <p className="font-black text-ink">Raise a ticket</p>
+                <p className="text-xs text-ink-soft">Goes straight to our support desk.</p>
               </div>
             </div>
 
-            <label className="mb-1 block text-sm font-bold text-[#111716]">Subject</label>
+            <label className="mb-1 block text-sm font-bold text-ink">Subject</label>
             <input
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="What do you need help with?"
-              className="mb-3 w-full rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2 text-sm text-[#111716] placeholder:text-[#9aa5a2] focus:outline-none focus:ring-2 focus:ring-[#148b8e]/40"
+              className="mb-3 w-full rounded-lg border border-line bg-card-tint px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-teal/40"
             />
 
-            <label className="mb-1 block text-sm font-bold text-[#111716]">Message</label>
+            <label className="mb-1 block text-sm font-bold text-ink">Message</label>
             <textarea
               rows={5}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Tell us what's happening and we'll help."
-              className="mb-3 w-full rounded-lg border border-black/10 bg-[#f8fafa] px-3 py-2 text-sm text-[#111716] placeholder:text-[#9aa5a2] focus:outline-none focus:ring-2 focus:ring-[#148b8e]/40"
+              className="mb-3 w-full rounded-lg border border-line bg-card-tint px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-teal/40"
             />
 
-            {error && <p className="mb-3 text-sm font-medium text-red-600">{error}</p>}
+            {error && <p className="mb-3 text-sm font-medium text-danger">{error}</p>}
 
             <button
               type="button"

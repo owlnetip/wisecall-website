@@ -144,18 +144,18 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
     }
   }
 
-  const card = "rounded-[14px] border border-black/10 bg-white p-5";
+  const card = "rounded-xl border border-line bg-white p-5";
   const input =
-    "w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-sm outline-none focus:border-[#111716]";
+    "w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm outline-none focus:border-ink";
 
   return (
     <div className="space-y-6">
       <div className={card}>
         <div className="mb-1 flex items-center gap-2">
-          <Phone className="h-5 w-5 text-[#111716]" />
+          <Phone className="h-5 w-5 text-ink" />
           <h3 className="text-lg font-black">New outbound blast</h3>
         </div>
-        <p className="mb-4 text-sm text-[#66716e]">
+        <p className="mb-4 text-sm text-ink-soft">
           {businessName} will call each recipient with the objective below. Service reminders and
           renewals only, keep it to people who expect to hear from you.
         </p>
@@ -183,7 +183,7 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
         </p>
 
         <label className="mb-1 block text-sm font-bold">Recipients (CSV)</label>
-        <label className="mb-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-black/20 px-4 py-4 text-sm font-bold text-[#66716e] hover:bg-[#f7f8f7]">
+        <label className="mb-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-black/20 px-4 py-4 text-sm font-bold text-ink-soft hover:bg-card-tint">
           <Upload className="h-4 w-4" />
           {parsed ? `${recipientCount} recipients loaded, replace file` : "Upload CSV (number + name + merge fields)"}
           <input
@@ -268,14 +268,14 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
         </div>
 
         {msg ? (
-          <p className={`mb-3 text-sm font-bold ${msg.kind === "ok" ? "text-[#0f8a6a]" : "text-[#c0392b]"}`}>{msg.text}</p>
+          <p className={`mb-3 text-sm font-bold ${msg.kind === "ok" ? "text-[#0f8a6a]" : "text-danger"}`}>{msg.text}</p>
         ) : null}
 
         <button
           type="button"
           onClick={submit}
           disabled={busy}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#111716] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Phone className="h-4 w-4" />}
           {runNow ? "Start blast" : "Schedule blast"}
@@ -285,14 +285,14 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
       <div className={card}>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-black">Blasts</h3>
-          <button type="button" onClick={refresh} className="inline-flex items-center gap-1 text-sm font-bold text-[#66716e] hover:text-[#111716]">
+          <button type="button" onClick={refresh} className="inline-flex items-center gap-1 text-sm font-bold text-ink-soft hover:text-ink">
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
         </div>
         {blasts.length === 0 ? (
           <p className="text-sm text-[#8a938f]">No blasts yet.</p>
         ) : (
-          <div className="divide-y divide-black/5">
+          <div className="divide-y divide-line">
             {blasts.map((b) => (
               <div key={b.id} className="py-3">
                 <div className="flex items-center justify-between gap-3">
@@ -309,23 +309,23 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
                         await cancelBlast(b.id);
                         refresh();
                       }}
-                      className="text-xs font-bold text-[#c0392b] hover:underline"
+                      className="text-xs font-bold text-danger hover:underline"
                     >
                       Cancel
                     </button>
                   ) : null}
                 </div>
                 {openBlast === b.id ? (
-                  <div className="mt-2 overflow-x-auto rounded-lg bg-[#f7f8f7] p-3">
+                  <div className="mt-2 overflow-x-auto rounded-lg bg-card-tint p-3">
                     {(results[b.id] ?? []).length === 0 ? (
                       <p className="text-xs text-[#8a938f]">Loading…</p>
                     ) : (
                       <table className="w-full text-xs">
                         <tbody>
                           {results[b.id].map((c) => (
-                            <tr key={c.id} className="border-b border-black/5 last:border-0">
+                            <tr key={c.id} className="border-b border-line last:border-0">
                               <td className="py-1 pr-3 font-medium">{c.contactName || "-"}</td>
-                              <td className="py-1 pr-3 text-[#66716e]">{c.toNumber}</td>
+                              <td className="py-1 pr-3 text-ink-soft">{c.toNumber}</td>
                               <td className="py-1 pr-3">{STATUS_LABEL[c.status] ?? c.status}</td>
                               <td className="py-1 text-[#8a938f]">{c.attempts} attempt(s)</td>
                             </tr>
@@ -343,10 +343,10 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
 
       <div className={card}>
         <div className="mb-1 flex items-center gap-2">
-          <Ban className="h-5 w-5 text-[#111716]" />
+          <Ban className="h-5 w-5 text-ink" />
           <h3 className="text-lg font-black">Do-not-call list</h3>
         </div>
-        <p className="mb-3 text-sm text-[#66716e]">Numbers here are skipped by every blast. Opt-outs captured on calls land here automatically.</p>
+        <p className="mb-3 text-sm text-ink-soft">Numbers here are skipped by every blast. Opt-outs captured on calls land here automatically.</p>
         <div className="mb-3 flex gap-2">
           <input className={input} value={dncNumber} onChange={(e) => setDncNumber(e.target.value)} placeholder="+44…" />
           <button
@@ -358,7 +358,7 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
               const d = await listDnc();
               if (d.ok) setDnc(d.data);
             }}
-            className="rounded-lg bg-[#111716] px-4 py-2 text-sm font-black text-white hover:bg-[#263130]"
+            className="rounded-lg bg-ink px-4 py-2 text-sm font-black text-white hover:bg-[#263130]"
           >
             Add
           </button>
@@ -379,7 +379,7 @@ export function OutboundManager({ profileId, businessName }: { profileId: string
                     const r = await listDnc();
                     if (r.ok) setDnc(r.data);
                   }}
-                  className="text-[#c0392b] hover:opacity-70"
+                  className="text-danger hover:opacity-70"
                   aria-label="Remove"
                 >
                   <Trash2 className="h-4 w-4" />
