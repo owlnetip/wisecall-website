@@ -4,24 +4,16 @@ import { createServerClient } from "@supabase/ssr";
 // Routes that require a signed-in user.
 const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/demo", "/billing"];
 
-// Design-review route: demo data only, no auth/session — must not touch Supabase
-// (preview deployments may not have env vars configured yet).
-const AUTH_BYPASS_PREFIXES = ["/preview"];
-
 function isPathMatch(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  if (isPathMatch(pathname, AUTH_BYPASS_PREFIXES)) {
-    return NextResponse.next();
-  }
+  const isProtected = isPathMatch(pathname, PROTECTED_PREFIXES);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const isProtected = isPathMatch(pathname, PROTECTED_PREFIXES);
 
   // Preview/staging builds without Supabase env must still serve public pages.
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -67,7 +59,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|owl-logo.png|favicon.png|preview).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|owl-logo.png|favicon.png).*)"],
 };
