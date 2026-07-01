@@ -3609,6 +3609,7 @@ function AiInsights({
   const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState<string | null>(null);
   const [analysing, setAnalysing] = useState(false);
+  const initialLoadStarted = useRef(false);
   const backfillStarted = useRef(false);
 
   async function load(next: InsightsRange) {
@@ -3628,9 +3629,25 @@ function AiInsights({
 
   function selectRange(next: InsightsRange) {
     if (next === range) return;
+    initialLoadStarted.current = true;
     setRange(next);
     void load(next);
   }
+
+  // /admin does not have server-rendered tenant insights, so hydrate the
+  // default range on mount. Without this, the dashboard stays on skeletons
+  // until someone manually changes the date range.
+  useEffect(() => {
+    if (initialLoadStarted.current) return;
+    if (initial || insights) return;
+    const timer = window.setTimeout(() => {
+      if (initialLoadStarted.current) return;
+      initialLoadStarted.current = true;
+      void load(range);
+    }, 0);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // One-time backfill: if there's call history that has never been analysed,
   // analyse it in small batches, then refresh. Runs at most once per mount.
