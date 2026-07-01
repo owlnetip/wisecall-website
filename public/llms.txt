@@ -10,9 +10,9 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Integrations: https://wisecall.io/integrations/
 - Case studies: https://wisecall.io/case-studies/
 - Industries hub: https://wisecall.io/industries/
-- Dental practices: https://wisecall.io/industries/dental/
-- Legal and professional services: https://wisecall.io/industries/legal/
-- Estate agents: https://wisecall.io/industries/estate-agents/
+- Dental practices: https://wisecall.io/dental
+- Legal and professional services: https://wisecall.io/legal
+- Estate agents: https://wisecall.io/property
 - AI receptionist UK comparison: https://wisecall.io/compare/ai-receptionist-uk-comparison/
 - WiseCall vs Voicemail: https://wisecall.io/compare/wisecall-vs-voicemail/
 - WiseCall vs Answering service: https://wisecall.io/compare/wisecall-vs-answering-service/
