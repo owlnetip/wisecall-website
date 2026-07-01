@@ -37,25 +37,31 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://wisecall.io/industries/dental/</loc>
+    <loc>https://wisecall.io/dental</loc>
     <lastmod>2026-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://wisecall.io/industries/legal/</loc>
+    <loc>https://wisecall.io/legal</loc>
     <lastmod>2026-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://wisecall.io/industries/estate-agents/</loc>
+    <loc>https://wisecall.io/property</loc>
     <lastmod>2026-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://wisecall.io/industries/care-homes/</loc>
+    <lastmod>2026-07-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisecall.io/trades</loc>
     <lastmod>2026-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

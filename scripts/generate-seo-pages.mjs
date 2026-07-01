@@ -18,6 +18,14 @@ const out = new URL('../', import.meta.url);
 const publicOut = new URL('../public/', import.meta.url);
 
 const route = (path) => `${site.url}${path}`;
+
+// Canonical public path for an industry. Root hand-built pages (dental.html,
+// legal.html, property.html) are canonical where they exist — vercel.json 301s
+// /industries/<slug>/ to them, so generating those duplicates wastes crawl
+// budget and puts redirecting URLs in the sitemap.
+const industryPath = (industry) =>
+  industry.legacyPath ? industry.legacyPath.replace('.html', '') : `/industries/${industry.slug}/`;
+
 const esc = (value = '') =>
   String(value)
     .replaceAll('&', '&amp;')
@@ -203,7 +211,7 @@ function footer() {
     <div>
       <h2 class="text-white font-bold mb-3 text-base">Industries</h2>
       <ul class="space-y-2 text-white/60">
-        ${industries.map((industry) => `<li><a href="/industries/${industry.slug}/" class="hover:text-[#7de8eb]">${esc(industry.keyword)}</a></li>`).join('')}
+        ${industries.map((industry) => `<li><a href="${industryPath(industry)}" class="hover:text-[#7de8eb]">${esc(industry.keyword)}</a></li>`).join('')}
       </ul>
     </div>
     <div>
@@ -218,7 +226,17 @@ function footer() {
 </footer>`;
 }
 
-function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls' }) {
+const comparisonHeroPanel = {
+  title: 'Why businesses switch',
+  items: ['Answers instantly, 24/7', 'Captures structured details, not messages', 'Summary and next step after every call', 'Routes and escalates urgent calls', 'Test it on real calls in a 7-day pilot'],
+};
+
+const DEFAULT_HERO_PANEL = {
+  title: 'What WiseCall does on every call',
+  items: ['Answers in your business name', 'Qualifies the caller’s intent', 'Captures structured details', 'Books, routes or escalates', 'Sends summaries and transcripts'],
+};
+
+function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls', panel = DEFAULT_HERO_PANEL }) {
   return `<section class="px-6 py-20 md:py-28">
   <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-center">
     <div>
@@ -231,9 +249,9 @@ function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Mi
       </div>
     </div>
     <div class="card-strong p-7">
-      <h2 class="text-2xl font-bold mb-5">What WiseCall does on every call</h2>
+      <h2 class="text-2xl font-bold mb-5">${esc(panel.title)}</h2>
       <div class="grid gap-4">
-        ${['Answers in your business name', 'Qualifies the caller’s intent', 'Captures structured details', 'Books, routes or escalates', 'Sends summaries and transcripts'].map((item) => `<div class="flex gap-3 text-white/78"><i data-lucide="check-circle-2" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-1"></i><span>${esc(item)}</span></div>`).join('')}
+        ${panel.items.map((item) => `<div class="flex gap-3 text-white/78"><i data-lucide="check-circle-2" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-1"></i><span>${esc(item)}</span></div>`).join('')}
       </div>
     </div>
   </div>
@@ -412,7 +430,7 @@ function audioAndCasePlaceholders(industry) {
 }
 
 function renderIndustryPage(industry) {
-  const page = { title: industry.title, description: industry.description, path: `/industries/${industry.slug}/` };
+  const page = { title: industry.title, description: industry.description, path: industryPath(industry) };
   const faqs = [...industry.faqs, ...globalFaqs.slice(0, 2)];
   const body = `${hero({
     eyebrow: industry.keyword,
@@ -420,6 +438,7 @@ function renderIndustryPage(industry) {
     lead: industry.heroLead,
     cta: 'Start a 7-day pilot',
     secondary: 'Calculate missed calls',
+    panel: { title: `What WiseCall handles for ${industry.name.toLowerCase()}`, items: industry.features.slice(0, 5) },
   })}
 ${trustStrip()}
 <section class="px-6 py-20">
@@ -471,7 +490,7 @@ function renderIndustriesHub() {
   const body = `${hero({ eyebrow: 'Industry hub', h1: 'AI Receptionist <span class="text-[#7de8eb]">by Industry</span>', lead: 'WiseCall adapts call handling, intake questions, integrations and escalation rules to the way each UK sector works.' })}
 ${trustStrip()}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">
-${industries.map((industry) => `<a href="/industries/${industry.slug}/" class="card p-7 block hover:border-[#7de8eb]/40"><h2 class="text-2xl font-bold mb-3">${esc(industry.name)}</h2><p class="text-white/65 leading-relaxed">${esc(industry.description)}</p><span class="inline-flex mt-5 text-[#7de8eb] font-bold">View ${esc(industry.keyword)}</span></a>`).join('')}
+${industries.map((industry) => `<a href="${industryPath(industry)}" class="card p-7 block hover:border-[#7de8eb]/40"><h2 class="text-2xl font-bold mb-3">${esc(industry.name)}</h2><p class="text-white/65 leading-relaxed">${esc(industry.description)}</p><span class="inline-flex mt-5 text-[#7de8eb] font-bold">View ${esc(industry.keyword)}</span></a>`).join('')}
 </div></section>
 <section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these — get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
 ${ctaBlock('Don’t see your industry?', 'Book a demo and we will show you how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
@@ -495,8 +514,8 @@ function renderHowItWorks() {
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-5 gap-4">${steps.map(([name, text], index) => `<div class="card p-6"><div class="text-[#7de8eb] font-black text-2xl mb-4">0${index + 1}</div><h2 class="font-bold text-xl mb-3">${esc(name)}</h2><p class="text-white/64 text-sm leading-relaxed">${esc(text)}</p></div>`).join('')}</div></section>
 ${faqSection(globalFaqs, 'Questions about AI call handling')}
 ${relatedLinks([
-  { path: '/industries/dental/', title: 'Dental call handling example', text: 'See how WiseCall handles dental patient calls.' },
-  { path: '/industries/legal/', title: 'Legal intake example', text: 'See how WiseCall supports law firm intake.' },
+  { path: '/dental', title: 'Dental call handling example', text: 'See how WiseCall handles dental patient calls.' },
+  { path: '/legal', title: 'Legal intake example', text: 'See how WiseCall supports law firm intake.' },
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the plan structure and what is included.' },
 ])}
 ${ctaBlock('Want to hear how WiseCall would answer your calls?', 'Book a demo and we will walk through your current call flow.')}`;
@@ -539,7 +558,7 @@ function renderPricing() {
     description: 'WiseCall AI receptionist pricing for UK businesses: Starter £99, Professional £199 and Business £399 per month, plus a 7-day pilot before the 12-month term begins.',
     path: '/pricing/',
   };
-  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'One AI front desk covering voice, email, WhatsApp, live chat and SMS. Choose the plan that matches your call volume, or start a 7-day pilot before the 12-month term begins.', cta: 'Start a 7-day pilot' })}
+  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'One AI front desk covering voice, email, WhatsApp, live chat and SMS. Choose the plan that matches your call volume, or start a 7-day pilot before the 12-month term begins.', cta: 'Start a 7-day pilot', panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${pricingPlans.map((plan) => `<div class="card-strong p-7 relative">${plan.popular ? '<span class="absolute -top-3 left-7 px-3 py-1 rounded-full bg-[#7de8eb] text-[#0f1f1f] text-xs font-bold">Most Popular</span>' : ''}<h2 class="text-2xl font-bold mb-3">${esc(plan.name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(plan.tagline)}</p><div class="mb-5"><span class="text-4xl font-black">${esc(plan.price)}</span><span class="text-white/60">/month</span><div class="text-white/50 text-sm mt-1">excl. VAT &middot; 12-month term</div></div><ul class="space-y-2 text-white/70 mb-6">${[plan.calls, ...plan.included, 'AI receptionist, 24/7', 'Call summaries and transcripts', 'Appointment booking', 'Call transfers and routing'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul><a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3">Start a 7-day pilot</a></div>`).join('')}</div>
 <div class="max-w-7xl mx-auto mt-8"><div class="card p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><h2 class="text-xl font-bold mb-2">Enterprise</h2><p class="text-white/68">Custom call volume, bespoke integrations and onboarding. Suited to larger teams, franchises, healthcare, legal, dental, property and multi-location businesses.</p></div><a href="/#contact" class="btn btn-secondary px-8 py-3 whitespace-nowrap">Talk to us</a></div></div>
 </section>
@@ -563,7 +582,7 @@ function renderComparison() {
     description: 'Compare WiseCall with human receptionist services, voicemail, virtual assistants and generic AI call answering options for UK businesses.',
     path: '/compare/ai-receptionist-uk-comparison/',
   };
-  const body = `${hero({ eyebrow: 'Comparison', h1: 'AI Receptionist UK <span class="text-[#7de8eb]">Comparison</span>', lead: 'A practical comparison for UK businesses evaluating AI receptionists, virtual receptionists, voicemail and in-house call handling.' })}
+  const body = `${hero({ eyebrow: 'Comparison', h1: 'AI Receptionist UK <span class="text-[#7de8eb]">Comparison</span>', lead: 'A practical comparison for UK businesses evaluating AI receptionists, virtual receptionists, voicemail and in-house call handling.', panel: comparisonHeroPanel })}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto overflow-x-auto card p-3"><table class="w-full text-left text-sm"><thead><tr class="text-[#7de8eb]"><th class="p-4">Criteria</th><th class="p-4">WiseCall</th><th class="p-4">Human receptionist service</th><th class="p-4">Voicemail / callback</th></tr></thead><tbody>${comparisonRows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell) => `<td class="p-4 text-white/72">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
 ${faqSection([
   { question: 'What is the best AI receptionist for UK businesses?', answer: 'The best AI receptionist for a UK business depends on call volume, routing needs, integrations, compliance expectations and whether a phone system is included. WiseCall is designed for UK service businesses that want AI call answering plus a business phone system foundation.' },
@@ -584,7 +603,7 @@ function renderComparisonPage(comparison) {
     description: comparison.description,
     path: `/compare/${comparison.slug}/`,
   };
-  const body = `${hero({ eyebrow: comparison.eyebrow, h1: comparison.h1, lead: comparison.lead, cta: 'Start a 7-day pilot' })}
+  const body = `${hero({ eyebrow: comparison.eyebrow, h1: comparison.h1, lead: comparison.lead, cta: 'Start a 7-day pilot', panel: comparisonHeroPanel })}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto overflow-x-auto card p-3"><table class="w-full text-left text-sm"><thead><tr class="text-[#7de8eb]">${comparison.columns.map((col) => `<th class="p-4">${esc(col)}</th>`).join('')}</tr></thead><tbody>${comparison.rows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell) => `<td class="p-4 text-white/72">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
 ${faqSection(comparison.faqs, `${page.title.split('|')[0].trim()} Questions`)}
 ${relatedLinks([
@@ -602,9 +621,9 @@ function renderCalculator() {
     description: 'Estimate the potential value of missed calls for a UK business using your own call volume, lead value and conversion-rate assumptions.',
     path: '/resources/missed-call-calculator/',
   };
-  const body = `${hero({ eyebrow: 'Resource', h1: 'Missed Call <span class="text-[#7de8eb]">Calculator</span>', lead: 'Estimate the potential monthly opportunity from calls your business does not answer. Use your own inputs and treat the result as a planning estimate.' })}
+  const body = `${hero({ eyebrow: 'Resource', h1: 'Missed Call <span class="text-[#7de8eb]">Calculator</span>', lead: 'Estimate the potential monthly opportunity from calls your business does not answer. Use your own inputs and treat the result as a planning estimate.', panel: { title: 'What the calculator estimates', items: ['Missed calls per month', 'Missed new enquiries', 'Monthly value at risk', 'Annual value at risk', 'Industry presets you can adjust'] } })}
 ${missedCallCalculatorBlock()}
-${relatedLinks(industries.map((industry) => ({ path: `/industries/${industry.slug}/`, title: industry.keyword, text: `See how missed call recovery applies to ${industry.name.toLowerCase()}.` })))}
+${relatedLinks(industries.map((industry) => ({ path: industryPath(industry), title: industry.keyword, text: `See how missed call recovery applies to ${industry.name.toLowerCase()}.` })))}
 ${ctaBlock('Want help reducing missed calls?', 'Book a demo and see how WiseCall can answer, summarise and route calls for your team.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Resources', path: '/resources/' }, { name: 'Missed Call Calculator', path: page.path }])]);
 }
@@ -619,7 +638,7 @@ function renderIntegrations() {
   const body = `${hero({ eyebrow: 'Integrations', h1: 'WiseCall Integrations <span class="text-[#7de8eb]">and Handover Points</span>', lead: 'WiseCall is designed to fit around the systems your team already uses: calendars, CRMs, email, team alerts and phone routing rules.' })}
 ${trustStrip()}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-5">${integrations.map((integration) => `<div class="card p-7"><h2 class="text-2xl font-bold mb-3">${esc(integration.name)}</h2><p class="text-white/66 leading-relaxed">${esc(integration.description)}</p></div>`).join('')}</div></section>
-<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl md:text-5xl font-black mb-8">Industry system examples</h2><div class="grid md:grid-cols-3 gap-5">${industries.map((industry) => `<a href="/industries/${industry.slug}/" class="card p-7 block hover:border-[#7de8eb]/40"><h3 class="text-xl font-bold mb-3">${esc(industry.name)}</h3><p class="text-white/62 text-sm leading-relaxed mb-5">${esc(industry.integrations.join(', '))}</p><span class="text-[#7de8eb] font-bold">${esc(industry.keyword)}</span></a>`).join('')}</div></div></section>
+<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl md:text-5xl font-black mb-8">Industry system examples</h2><div class="grid md:grid-cols-3 gap-5">${industries.map((industry) => `<a href="${industryPath(industry)}" class="card p-7 block hover:border-[#7de8eb]/40"><h3 class="text-xl font-bold mb-3">${esc(industry.name)}</h3><p class="text-white/62 text-sm leading-relaxed mb-5">${esc(industry.integrations.join(', '))}</p><span class="text-[#7de8eb] font-bold">${esc(industry.keyword)}</span></a>`).join('')}</div></div></section>
 ${faqSection([
   { question: 'Can WiseCall integrate with our existing CRM?', answer: 'WiseCall can send structured call summaries and caller details into CRM and workflow systems where suitable integration routes are available. The exact setup depends on the CRM, available APIs and the level of automation required.' },
   { question: 'Can WiseCall update calendars?', answer: 'WiseCall can support calendar-led workflows such as callback windows and booking requests where the business has a clear availability process. Live booking depends on the calendar or diary system and the permissions available.' },
@@ -627,8 +646,8 @@ ${faqSection([
 ], 'Integration Questions')}
 ${relatedLinks([
   { path: '/how-it-works/', title: 'How call handling works', text: 'See how WiseCall captures details and sends summaries.' },
-  { path: '/industries/dental/', title: 'Dental integrations', text: 'See dental practice workflow examples.' },
-  { path: '/industries/legal/', title: 'Legal intake systems', text: 'See law firm intake workflow examples.' },
+  { path: '/dental', title: 'Dental integrations', text: 'See dental practice workflow examples.' },
+  { path: '/legal', title: 'Legal intake systems', text: 'See law firm intake workflow examples.' },
 ])}
 ${ctaBlock('Want WiseCall connected to your workflow?', 'Book a demo and we will map your current systems, handover points and routing needs.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Integrations', path: page.path }]), faqSchema([
@@ -709,7 +728,7 @@ function renderTranscriptGuide() {
 ${faqSection(faqs, 'Transcript Content Questions')}
 ${relatedLinks([
   { path: '/case-studies/', title: 'WiseCall in action', text: 'See anonymised example calls and the summaries your team receives.' },
-  { path: '/industries/dental/', title: 'Dental FAQs', text: 'See an example of self-contained vertical FAQs.' },
+  { path: '/dental', title: 'Dental FAQs', text: 'See an example of self-contained vertical FAQs.' },
   { path: '/blog/missed-calls-cost-uk-businesses/', title: 'Missed call article', text: 'Use research-led content while transcript data matures.' },
 ])}
 ${ctaBlock('Need help turning calls into useful content?', 'Book a demo and we can explain what WiseCall captures and how it can support future reporting.')}`;
@@ -741,9 +760,9 @@ function renderBlogPost() {
 ${missedCallCalculatorBlock()}
 ${faqSection(faqs, 'Missed Call Questions')}
 ${relatedLinks([
-  { path: '/industries/dental/', title: 'Missed calls in dental practices', text: 'See how WiseCall supports dental reception teams.' },
-  { path: '/industries/legal/', title: 'Missed legal enquiries', text: 'See how WiseCall supports law firm intake.' },
-  { path: '/industries/estate-agents/', title: 'Missed property enquiries', text: 'See how WiseCall supports estate agency branches.' },
+  { path: '/dental', title: 'Missed calls in dental practices', text: 'See how WiseCall supports dental reception teams.' },
+  { path: '/legal', title: 'Missed legal enquiries', text: 'See how WiseCall supports law firm intake.' },
+  { path: '/property', title: 'Missed property enquiries', text: 'See how WiseCall supports estate agency branches.' },
 ])}
 ${ctaBlock('Turn missed calls into structured enquiries', 'Book a demo to see how WiseCall can capture and route caller details for your business.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog/' }, { name: post.title, path: page.path }]), faqSchema(faqs), {
@@ -813,7 +832,8 @@ function allRoutes() {
     '/integrations/',
     '/case-studies/',
     '/industries/',
-    ...industries.map((industry) => `/industries/${industry.slug}/`),
+    ...industries.map((industry) => industryPath(industry)),
+    '/trades',
     '/compare/ai-receptionist-uk-comparison/',
     ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
     '/resources/missed-call-calculator/',
@@ -851,9 +871,9 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Integrations: ${site.url}/integrations/
 - Case studies: ${site.url}/case-studies/
 - Industries hub: ${site.url}/industries/
-- Dental practices: ${site.url}/industries/dental/
-- Legal and professional services: ${site.url}/industries/legal/
-- Estate agents: ${site.url}/industries/estate-agents/
+- Dental practices: ${site.url}/dental
+- Legal and professional services: ${site.url}/legal
+- Estate agents: ${site.url}/property
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
 ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
 - Missed call calculator: ${site.url}/resources/missed-call-calculator/
@@ -885,7 +905,7 @@ async function writePublic(path, content) {
 
 async function generate() {
   await write('industries/index.html', renderIndustriesHub());
-  await Promise.all(industries.map((industry) => write(`industries/${industry.slug}/index.html`, renderIndustryPage(industry))));
+  await Promise.all(industries.filter((industry) => !industry.legacyPath).map((industry) => write(`industries/${industry.slug}/index.html`, renderIndustryPage(industry))));
   await write('how-it-works/index.html', renderHowItWorks());
   await write('pricing/index.html', renderPricing());
   await write('integrations/index.html', renderIntegrations());
