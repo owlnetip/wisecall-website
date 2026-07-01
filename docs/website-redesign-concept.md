@@ -259,13 +259,15 @@ WiseCall's website should feel like the product: **calm competence while phones 
 
 ## Sequenced build plan (recommended order)
 
-1. ~~**Fix the plan-name/price mismatch**~~ — **DONE 2026-07-01.** Confirmed Starter/Professional/Business is the live model (not Core/Growth/Pro, which is legacy); rebuilt `/pricing` in the generator to match the homepage exactly, including the Enterprise tier and honest pilot/term wording. Built + verified locally; not yet committed/deployed.
+1. ~~**Fix the plan-name/price mismatch**~~ — **DONE 2026-07-01.** Confirmed Starter/Professional/Business is the live model (not Core/Growth/Pro, which is legacy); rebuilt `/pricing` in the generator to match the homepage exactly, including the Enterprise tier and honest pilot/term wording. Shipped in PR #28.
 2. ~~**Rebuild /pricing** to homepage quality with real prices~~ — done as part of #1.
-3. **Continue killing SEO-template shells.** Fixed 2026-07-01: `/industries` no longer says "Need an industry page built next?" (now "Don't see your industry?") or exposes "the content architecture is ready... once approved" (now customer-facing "More industries coming soon" copy); footer nav heading renamed "Priority Pages" → "Explore" site-wide. Still open: the repeated "What WiseCall does on every call" hero card appears verbatim on every generated page — consider varying it per page type so pages don't read as templated.
-4. **Stage the demo** as the magic-moment module (scenario picker + summary payoff) on home and /dental — keep the orb, add framing and the post-call summary artefact.
-5. **Build the summary-card mockup component** and deploy it into hero, product story, and /dental.
-6. **Light/dark section rhythm + icon set** (replace emoji) — the perceived-quality jump.
-7. **Rebuild calculator** with presets; embed dental version on /dental.
-8. **Ship the two highest-intent compare pages** (answering service, voicemail).
+3. **Continue killing SEO-template shells.** Fixed 2026-07-01: `/industries` no longer says "Need an industry page built next?" (now "Don't see your industry?") or exposes "the content architecture is ready... once approved" (now customer-facing "More industries coming soon" copy); footer nav heading renamed "Priority Pages" → "Explore" site-wide. Shipped in PR #28. Still open: the repeated "What WiseCall does on every call" hero card appears verbatim on every generated page — consider varying it per page type so pages don't read as templated.
+4. **Stage the demo** as the magic-moment module (scenario picker + summary payoff) on home and /dental — keep the orb, add framing and the post-call summary artefact. **Still pending** — paused pending homepage coordination with the Cursor agent's concurrent work.
+5. **Build the summary-card mockup component** and deploy it into hero, product story, and /dental. Still pending.
+6. **Light/dark section rhythm + icon set** (replace emoji) — the perceived-quality jump. Still pending.
+7. **Rebuild calculator** with presets; embed dental version on /dental. Still pending.
+8. ~~**Ship the two highest-intent compare pages** (answering service, voicemail).~~ — **DONE 2026-07-01.** Built `/compare/wisecall-vs-voicemail` and `/compare/wisecall-vs-answering-service` (data-driven, `renderComparisonPage()` + `comparisonPages` in `scripts/seo-content.mjs`), each with an honest table, FAQ, and cross-links from `/pricing` and the comparison hub. Shipped in PR #28.
+
+**Workflow note (2026-07-01):** the local working copy was checked out on the Cursor cloud agent's own branch (`cursor/cloud-agent-1782853965452-jqsru`, which also carries an unrelated "AI Marketing Studio" app) rather than `main`. All work above was done on a fresh branch `wisecall-pricing-fix` cut from `origin/main` and opened as **PR #28** (github.com/owlnetip/wisecall-website/pull/28) — not committed to the Cursor branch or pushed straight to `main`. The original branch and its pre-existing uncommitted WIP (WhatsApp/SMS Supabase functions, a docs file) were fully restored afterward via `git stash` — untouched, not part of this PR. Future sessions: check `git branch --show-current` before committing; if it's a `cursor/cloud-agent-*` branch, branch off `origin/main` instead.
 9. **Proof system** slots + pilot-results template; start collecting from every pilot (Grace/Excel first).
 10. **Mobile pass**: sticky CTA bar, tap-to-call dominance, swipeable cards.
