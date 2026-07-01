@@ -4,38 +4,57 @@ import { createServerClient } from "@supabase/ssr";
 // Routes that require a signed-in user.
 const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/demo", "/billing"];
 
+// Design-review route: demo data only, no auth/session — must not touch Supabase
+// (preview deployments may not have env vars configured yet).
+const AUTH_BYPASS_PREFIXES = ["/preview"];
+
+function isPathMatch(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (isPathMatch(pathname, AUTH_BYPASS_PREFIXES)) {
+    return NextResponse.next();
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const isProtected = isPathMatch(pathname, PROTECTED_PREFIXES);
+
+  // Preview/staging builds without Supabase env must still serve public pages.
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (isProtected) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/";
+      redirectUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+    return NextResponse.next();
+  }
+
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options),
+        );
       },
     },
-  );
+  });
 
   // IMPORTANT: refreshes the session cookie. Do not run logic between this and the response.
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-
-  const isProtected = PROTECTED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
 
   if (isProtected && !user) {
     const redirectUrl = request.nextUrl.clone();
@@ -48,5 +67,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|owl-logo.png|favicon.png).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|owl-logo.png|favicon.png|preview).*)",
+  ],
 };
