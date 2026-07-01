@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/env";
+import { resolvePartnerByCode } from "@/lib/partner";
 
 export type AuthState = { error?: string; message?: string };
 
@@ -44,12 +45,22 @@ export async function signUpAction(
 ): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const referralCode = String(formData.get("referral_code") ?? "").trim();
 
   if (!email || !password) {
     return { error: "Enter your email and password." };
   }
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
+  }
+
+  // Attribute the signup to a partner if a valid referral code was supplied.
+  // Stored on the auth user's metadata; the Stripe webhook copies it onto the
+  // billing row (as partner_id) when the customer subscribes.
+  let partnerCode: string | undefined;
+  if (referralCode) {
+    const partner = await resolvePartnerByCode(referralCode);
+    if (partner) partnerCode = partner.referralCode;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -61,7 +72,10 @@ export async function signUpAction(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${getAppBaseUrl()}/auth/confirm?next=/billing` },
+    options: {
+      emailRedirectTo: `${getAppBaseUrl()}/auth/confirm?next=/billing`,
+      ...(partnerCode ? { data: { partner_code: partnerCode } } : {}),
+    },
   });
 
   if (error) {

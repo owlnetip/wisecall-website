@@ -298,7 +298,7 @@ const OUTCOME_LABELS: Record<string, string> = {
 };
 
 export function friendlyOutcome(raw: string | null | undefined): string {
-  if (!raw) return "—";
+  if (!raw) return "-";
   const key = raw.trim().toLowerCase();
   return OUTCOME_LABELS[key] ?? raw;
 }
@@ -309,14 +309,14 @@ function channelFromRow(row: CallRow): CallChannel {
   if (raw === "whatsapp" || raw === "sms" || raw === "email" || raw === "chat") return raw;
 
   // Fallback for rows logged before metadata.channel existed (or when the column
-  // isn't persisted) — infer from the outcome/summary the edge functions write.
+  // isn't persisted) - infer from the outcome/summary the edge functions write.
   const outcome = String(row.outcome ?? "").toLowerCase();
   const summary = String(row.summary ?? "").toLowerCase();
   if (outcome.includes("whatsapp") || summary.startsWith("whatsapp:")) return "whatsapp";
   if (outcome.includes("sms") || summary.startsWith("sms:")) return "sms";
   if (outcome.includes("email") || summary.startsWith("email:")) return "email";
 
-  // Website live chat predates per-channel tagging — it tags itself via the
+  // Website live chat predates per-channel tagging - it tags itself via the
   // edge-function source and a "live_chat" outcome instead of metadata.channel.
   if (String(meta.source ?? "") === "wisecall-live-chat") return "chat";
   if (outcome.startsWith("live_chat")) return "chat";
@@ -324,11 +324,11 @@ function channelFromRow(row: CallRow): CallChannel {
 }
 
 function duration(started: string | null, finished: string | null): string {
-  if (!started || !finished) return "—";
+  if (!started || !finished) return "-";
   const secs = Math.max(0, Math.round((Date.parse(finished) - Date.parse(started)) / 1000));
   // Zero-length means there's no real duration (e.g. a single WhatsApp/email
-  // exchange logged with started == finished) — show a dash, not "0:00".
-  if (secs === 0) return "—";
+  // exchange logged with started == finished) - show a dash, not "0:00".
+  if (secs === 0) return "-";
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${m}:${String(s).padStart(2, "0")}`;

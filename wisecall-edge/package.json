@@ -2,7 +2,7 @@
   "name": "wisecall-edge",
   "private": true,
   "version": "0.1.0",
-  "description": "WiseCall voice runtime — call session lifecycle and custom integration webhooks",
+  "description": "WiseCall voice runtime - call session lifecycle and custom integration webhooks",
   "type": "commonjs",
   "main": "src/index.js",
   "scripts": {

@@ -304,7 +304,7 @@ serve(async (req) => {
     const resellerOwnerId = reseller.uniqueHash || reseller.resellerId;
     console.log(`✅ Using MOR reseller ${resellerUsername} (${MOR_RESELLER_ID}) for provisioning`);
 
-    // Deterministic username — same on every attempt for this profile. If we
+    // Deterministic username - same on every attempt for this profile. If we
     // are recovering from an old admin-owned partial, use a stable replacement.
     const baseMorUsername = "wca" + profile_id.replace(/-/g, "").slice(0, 10);
     let morUsername = baseMorUsername;
@@ -335,7 +335,7 @@ serve(async (req) => {
     let sipPassword = "";
 
     if (existingPool?.mor_user_id && existingPool?.mor_device_id && existingSip?.sip_username) {
-      // Full partial state available — skip user + device creation entirely.
+      // Full partial state available - skip user + device creation entirely.
       didPoolId = existingPool.id;
       didNumber = existingPool.did_number;
       morUserId = existingPool.mor_user_id;
@@ -360,7 +360,7 @@ serve(async (req) => {
         );
         if (didErr) throw new Error(`DID reservation failed: ${didErr.message}`);
         const didRow = Array.isArray(didRows) ? didRows[0] : didRows;
-        if (!didRow) throw new Error("No available MOR DIDs in pool — all 100 assigned");
+        if (!didRow) throw new Error("No available MOR DIDs in pool - all 100 assigned");
         didPoolId = didRow.id;
         didNumber = didRow.did_number;
         console.log(`✅ Reserved DID ${didNumber} (pool id ${didPoolId})`);
@@ -391,7 +391,7 @@ serve(async (req) => {
       const userErr = morError(userXml);
       if (userErr) {
         if (/username.*taken|already.*taken/i.test(userErr)) {
-          // User was created in a previous attempt — look up their ID from users_get.
+          // User was created in a previous attempt - look up their ID from users_get.
           console.log(`⚠️ Username ${morUsername} already exists, looking up user_id…`);
           const usersXml = await morGet(
             `${MOR_API_URL}/billing/api/users_get?` +
@@ -436,7 +436,7 @@ serve(async (req) => {
       let deviceSourceXml = deviceXml;
       if (deviceErr) {
         // If device already exists for this user, look it up via devices_get.
-        console.warn(`⚠️ device_create error: ${deviceErr} — looking up existing device for user ${morUserId}`);
+        console.warn(`⚠️ device_create error: ${deviceErr} - looking up existing device for user ${morUserId}`);
         const devicesParams = new URLSearchParams({
           u: resellerUsername,
           hash: deviceHash,
@@ -487,7 +487,7 @@ serve(async (req) => {
     const lastDigits = (s: string) => s.replace(/\D/g, "").slice(-10);
     const didNotFree = (e: string | null) => !!e && /did.*not.*free|not.*free/i.test(e);
 
-    // "Already assigned/reserved" means a previous attempt got this far — treat as
+    // "Already assigned/reserved" means a previous attempt got this far - treat as
     // success and continue so the agent still gets marked live (idempotent retry).
     const alreadyDone = (e: string | null) =>
       !!e && /already.*(assigned|reserved)|is already/i.test(e);
@@ -549,7 +549,7 @@ serve(async (req) => {
             break;
           }
         }
-        // Fallback: single-row response — just grab the first numeric <id>.
+        // Fallback: single-row response - just grab the first numeric <id>.
         if (!didId && wantTail) {
           const idMatch = didsGetXml.match(/<id>(\d+)<\/id>/);
           if (idMatch && didsGetXml.includes(didNumber)) didId = idMatch[1];

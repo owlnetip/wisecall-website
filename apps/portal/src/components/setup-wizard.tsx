@@ -49,8 +49,8 @@ const STEP_TITLES: Record<Step, string> = {
 
 // Re-applies a template's prompt/greeting (and seeds its starter contacts +
 // knowledge) onto the draft. For the general receptionist we keep the AI-written
-// prompt from the website scan when we have one — it's more tailored than the
-// generic template — and only fall back to the template text in manual mode.
+// prompt from the website scan when we have one - it's more tailored than the
+// generic template - and only fall back to the template text in manual mode.
 function applyTemplate(
   draft: AgentDraft,
   template: AgentTemplate,
@@ -288,12 +288,12 @@ export function SetupWizard({
         </div>
 
         <div className="px-6 py-6">
-          {/* STEP — website */}
+          {/* STEP - website */}
           {step === "website" && (
             <div>
               <h3 className="text-lg font-black text-[#111716]">Paste your business website</h3>
               <p className="mt-1 text-sm text-[#66716e]">
-                We&apos;ll read it and draft your receptionist — business details, what it says, how it
+                We&apos;ll read it and draft your receptionist - business details, what it says, how it
                 answers and your opening hours. You review everything before it goes live.
               </p>
               <div className="mt-4 flex items-center gap-2 rounded-xl border border-black/10 px-3 focus-within:border-[#148b8e]">
@@ -342,13 +342,13 @@ export function SetupWizard({
             </div>
           )}
 
-          {/* STEP — basics (manual only) */}
+          {/* STEP - basics (manual only) */}
           {step === "basics" && (
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-black text-[#111716]">Tell us about your business</h3>
                 <p className="mt-1 text-sm text-[#66716e]">
-                  Fill in what you know — we&apos;ll use it to build your receptionist. Leave anything blank that doesn&apos;t apply.
+                  Fill in what you know - we&apos;ll use it to build your receptionist. Leave anything blank that doesn&apos;t apply.
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -451,13 +451,13 @@ export function SetupWizard({
             </div>
           )}
 
-          {/* STEP — template */}
+          {/* STEP - template */}
           {step === "template" && draft && (
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-black text-[#111716]">What kind of assistant is this?</h3>
                 <p className="mt-1 text-sm text-[#66716e]">
-                  We pre-selected the best match. This sets what your assistant can do — you can
+                  We pre-selected the best match. This sets what your assistant can do - you can
                   fine-tune everything next.
                 </p>
               </div>
@@ -517,11 +517,11 @@ export function SetupWizard({
             </div>
           )}
 
-          {/* STEP — review */}
+          {/* STEP - review */}
           {step === "review" && draft && (
             <div className="space-y-4">
               <p className="text-sm text-[#66716e]">
-                Here&apos;s the draft. Tweak anything — this is exactly how your assistant behaves and
+                Here&apos;s the draft. Tweak anything - this is exactly how your assistant behaves and
                 what it knows.
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -550,12 +550,12 @@ export function SetupWizard({
             </div>
           )}
 
-          {/* STEP — hours */}
+          {/* STEP - hours */}
           {step === "hours" && draft && (
             <div>
               <h3 className="text-lg font-black text-[#111716]">When are you open?</h3>
               <p className="mt-1 mb-4 text-sm text-[#66716e]">
-                Outside these hours the receptionist takes a detailed message and emails it to you — no
+                Outside these hours the receptionist takes a detailed message and emails it to you - no
                 missed enquiries. We pre-filled anything we found on your site. Leave all days closed to
                 skip after-hours handling.
               </p>
@@ -583,7 +583,7 @@ export function SetupWizard({
             </div>
           )}
 
-          {/* STEP — voice & greeting */}
+          {/* STEP - voice & greeting */}
           {step === "voice" && draft && (
             <div className="space-y-4">
               <div>
@@ -662,7 +662,7 @@ export function SetupWizard({
             </div>
           )}
 
-          {/* STEP — messages email */}
+          {/* STEP - messages email */}
           {step === "email" && draft && (
             <div className="space-y-4">
               <div>
@@ -718,7 +718,7 @@ export function SetupWizard({
             </div>
           )}
 
-          {/* STEP — team */}
+          {/* STEP - team */}
           {step === "team" && draft && (
             <div className="space-y-4">
               <div>
@@ -728,7 +728,7 @@ export function SetupWizard({
                 <p className="mt-1 text-sm text-[#66716e]">
                   Colleagues the assistant can transfer urgent calls to or email messages about. Add
                   keywords (e.g. &quot;accounts&quot;, &quot;emergency&quot;) and we&apos;ll route the
-                  right calls to the right person. Optional — you can skip and add people later.
+                  right calls to the right person. Optional - you can skip and add people later.
                 </p>
               </div>
 
@@ -739,7 +739,7 @@ export function SetupWizard({
 
               <div className="rounded-xl border border-[#148b8e]/20 bg-[#148b8e]/[0.05] px-4 py-3 text-sm text-[#1f5f60]">
                 <span className="font-bold">Last step.</span> When you finish, we&apos;ll create your
-                assistant and connect a phone number automatically — it&apos;ll be ready to take calls.
+                assistant and connect a phone number automatically - it&apos;ll be ready to take calls.
               </div>
 
               {error && <p className="text-sm font-medium text-red-600">{error}</p>}

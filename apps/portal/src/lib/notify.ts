@@ -35,3 +35,36 @@ export async function notifyTrialEnding(params: {
     console.error("trial reminder error:", err instanceof Error ? err.message : err);
   }
 }
+
+// Notifies a customer that they went over their included channel allowance
+// (SMS, email, WhatsApp, live chat) in the closing billing period. Overage
+// is currently free; this is an informational summary only.
+// Delegates to wisecall-channel-overage-alert edge function (holds Resend key).
+export async function notifyChannelOverage(params: {
+  email: string;
+  plan: string | null;
+  channels: Array<{ name: string; allowance: number; used: number; overage: number }>;
+}): Promise<void> {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const secret = process.env.WISECALL_TRIAL_REMINDER_SECRET;
+  if (!base || !secret) return;
+  try {
+    const res = await fetch(
+      `${base.replace(/\/$/, "")}/functions/v1/wisecall-channel-overage-alert`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-trigger-secret": secret },
+        body: JSON.stringify(params),
+      },
+    );
+    if (!res.ok) {
+      console.error(
+        "channel overage alert send failed:",
+        res.status,
+        (await res.text().catch(() => "")).slice(0, 160),
+      );
+    }
+  } catch (err) {
+    console.error("channel overage alert error:", err instanceof Error ? err.message : err);
+  }
+}

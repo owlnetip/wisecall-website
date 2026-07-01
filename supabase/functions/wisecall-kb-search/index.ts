@@ -1,12 +1,12 @@
-// wisecall-kb-search — retrieve an agent's knowledge-base chunks for a question.
+// wisecall-kb-search - retrieve an agent's knowledge-base chunks for a question.
 //
 // The voice runtime / chat / email call this when the agent needs to look
 // something up in the customer's uploaded documents. Embeds the query with Jina
-// (matching how kb-ingest embedded the docs — 1024-dim jina-embeddings-v3) and
+// (matching how kb-ingest embedded the docs - 1024-dim jina-embeddings-v3) and
 // runs the existing search_knowledge_base RPC filtered to this agent's bot id
 // (= the wisecall profile id).
 //
-// POST { profile_id, query, match_count? }  (auth: Supabase anon key — the
+// POST { profile_id, query, match_count? }  (auth: Supabase anon key - the
 // project is at its 100-secret limit, so we rely on standard JWT verification
 // rather than a bespoke shared secret; KB content is low-sensitivity business info).
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, JINA_API_KEY.

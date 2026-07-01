@@ -97,7 +97,7 @@ type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "chann
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
-// stack wins — only `provider` and the per-provider fields differ. Persisted in
+// stack wins - only `provider` and the per-provider fields differ. Persisted in
 // metadata.routing on wisecall_profiles.
 export type RoutingProvider = "telnyx" | "mor_openai" | "mor_sip";
 export type RoutingStatus = "unprovisioned" | "pending" | "live";
@@ -221,8 +221,8 @@ export type Assistant = {
   emailAddress?: string; // forwarding address for the email channel
   emailChannelEnabled?: boolean;
   integrationWebhooks?: IntegrationWebhook[];
-  ownerEmail?: string; // admin view only — which customer owns this agent
-  ownerId?: string; // admin view only — owner's auth user id (for "log in as")
+  ownerEmail?: string; // admin view only - which customer owns this agent
+  ownerId?: string; // admin view only - owner's auth user id (for "log in as")
 };
 
 // Per-day office hours. Only OPEN days are present; a missing day = closed.
@@ -230,7 +230,7 @@ export type Assistant = {
 // to switch the agent into after-hours message-taking mode when closed.
 export type OfficeHours = Record<string, { open: string; close: string }>;
 
-// The voices we offer today — Cartesia's latest model. Labels are what the
+// The voices we offer today - Cartesia's latest model. Labels are what the
 // customer sees; the real Cartesia voice ids are mapped server-side (env) so
 // they never reach the browser.
 export const cartesiaVoices: { id: string; label: string; blurb: string }[] = [
@@ -586,7 +586,7 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
   );
 }
 
-// "Email" channel — expandable to reveal each agent's forwarding address.
+// "Email" channel - expandable to reveal each agent's forwarding address.
 function EmailChannel({
   assistants,
   usage,
@@ -675,7 +675,7 @@ function AgentEmailRow({ assistant }: { assistant: Assistant }) {
   );
 }
 
-// "Website chat" channel — expandable to reveal each agent's embed snippet.
+// "Website chat" channel - expandable to reveal each agent's embed snippet.
 function WebsiteChatChannel({ assistants, usage }: { assistants: Assistant[]; usage?: ChannelUsage }) {
   const [open, setOpen] = useState(false);
   const withSlug = assistants.filter((a) => a.slug);
@@ -693,7 +693,7 @@ function WebsiteChatChannel({ assistants, usage }: { assistants: Assistant[]; us
         <div className="min-w-0 flex-1">
           <p className="font-black text-[#111716]">Website chat</p>
           <p className="text-sm text-[#66716e]">
-            Put your agent on your site as a chat bubble — one line of code.
+            Put your agent on your site as a chat bubble - one line of code.
           </p>
         </div>
         {usage?.enabled ? (
@@ -899,7 +899,7 @@ function WhatsAppChannel({
             <p className="max-w-md text-xs leading-relaxed text-[#7a8582]">
               Needs Meta Business admin access.{" "}
               {setupPath === "own"
-                ? "Don't move a live number yet — we check it first."
+                ? "Don't move a live number yet - we check it first."
                 : "We complete the Meta checks for you."}
             </p>
             <a
@@ -1043,7 +1043,7 @@ function AgentPhoneRow({
         </div>
       ) : pending ? (
         <div className="rounded-lg border border-[#f3dfae] bg-[#fff8eb] px-3 py-2 text-sm text-[#8a5a00]">
-          Setting up your phone number — usually ready within 5 minutes. Refresh to check.
+          Setting up your phone number - usually ready within 5 minutes. Refresh to check.
         </div>
       ) : (
         <button
@@ -1121,7 +1121,7 @@ function PhoneChannel({
       {open ? (
         <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
           <p className="mb-1 text-xs text-[#66716e]">
-            Each agent gets its own UK phone number. Customers call in and the AI answers —
+            Each agent gets its own UK phone number. Customers call in and the AI answers -
             every conversation is saved to Call History and Contacts.
           </p>
           {provisionError ? (
@@ -1212,7 +1212,7 @@ function SMSChannel({
       {open ? (
         <div className="space-y-2 border-t border-black/5 px-5 pb-5 pt-4">
           <p className="mb-1 text-xs text-[#66716e]">
-            Each agent gets its own UK mobile number. Customers text in and the AI replies instantly —
+            Each agent gets its own UK mobile number. Customers text in and the AI replies instantly -
             every conversation is saved to Contacts alongside calls and emails.
           </p>
           {provisionError ? (
@@ -1266,7 +1266,7 @@ function ChannelsHub({
       <div className="mb-6">
         <h1 className="text-2xl font-black text-[#111716]">Channels</h1>
         <p className="mt-1 text-sm text-[#66716e]">
-          One agent, every channel. Add a way for customers to reach you and the same AI handles it —
+          One agent, every channel. Add a way for customers to reach you and the same AI handles it -
           logging every conversation to Contacts.
         </p>
       </div>
@@ -1274,16 +1274,16 @@ function ChannelsHub({
       <div className="space-y-3">
         <PhoneChannel assistants={assistants} usage={callUsage} onRoutingUpdate={onRoutingUpdate} />
 
-        {/* Website chat — included, expandable to per-agent embed codes */}
+        {/* Website chat - included, expandable to per-agent embed codes */}
         <WebsiteChatChannel assistants={assistants} usage={livechatChannel} />
 
-        {/* Email — included in every plan; expandable to per-agent forwarding addresses */}
+        {/* Email - included in every plan; expandable to per-agent forwarding addresses */}
         <EmailChannel assistants={assistants} usage={emailChannel} />
 
-        {/* WhatsApp — included in every plan; number connected during setup */}
+        {/* WhatsApp - included in every plan; number connected during setup */}
         <WhatsAppChannel assistants={assistants} userEmail={userEmail} usage={whatsappChannel} />
 
-        {/* SMS — included in every plan; UK number auto-provisioned via Vonage */}
+        {/* SMS - included in every plan; UK number auto-provisioned via Vonage */}
         <SMSChannel assistants={assistants} usage={smsChannel} initialSmsNumbers={smsNumbers} />
 
       </div>
@@ -1299,7 +1299,7 @@ const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "channels", label: "Channels", icon: Layers },
 ];
 
-// Agent templates. For now there's one — a general Receptionist. Future
+// Agent templates. For now there's one - a general Receptionist. Future
 // templates (Dental, Property, Legal, integration-specific) slot in here and
 // the create flow picks them up automatically.
 export type AgentTemplate = {
@@ -1319,7 +1319,7 @@ export const agentTemplates: AgentTemplate[] = [
   {
     id: "receptionist",
     label: "Receptionist",
-    description: "Friendly general receptionist — answers FAQs, takes messages and transfers urgent calls.",
+    description: "Friendly general receptionist - answers FAQs, takes messages and transfers urgent calls.",
     industry: "General",
     available: true,
     buildPrompt: (business, receptionist) => {
@@ -1332,7 +1332,7 @@ export const agentTemplates: AgentTemplate[] = [
         "",
         "You can:",
         `- Answer common questions about ${biz} (opening hours, location, services and pricing).`,
-        "- Take a message — always capture the caller's name, phone number and the reason for their call.",
+        "- Take a message - always capture the caller's name, phone number and the reason for their call.",
         "- Note appointment or callback requests and pass them to the team.",
         "- Transfer urgent calls to a team member when needed.",
         "",
@@ -1351,7 +1351,7 @@ export const agentTemplates: AgentTemplate[] = [
     id: "dentally",
     label: "Dental practice (Dentally)",
     description:
-      "Dental receptionist with Dentally booking built in — looks up patients, registers new ones, books, reschedules and cancels appointments, and handles emergencies.",
+      "Dental receptionist with Dentally booking built in - looks up patients, registers new ones, books, reschedules and cancels appointments, and handles emergencies.",
     industry: "Dental",
     available: true,
     buildPrompt: (business, receptionist) => {
@@ -1478,7 +1478,7 @@ export function CustomerAgentWorkspace({
   analysisEnabled?: boolean; // whether the Claude API key is configured
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
-  // A real customer with no agents yet has an empty list — don't assume [0] exists.
+  // A real customer with no agents yet has an empty list - don't assume [0] exists.
   const [selectedId, setSelectedId] = useState(
     (initialAssistants ?? demoAssistants)[0]?.id ?? "",
   );
@@ -1769,7 +1769,7 @@ export function CustomerAgentWorkspace({
       {impersonating ? (
         <div className="mx-auto mb-3 flex max-w-[1920px] flex-wrap items-center justify-between gap-3 rounded-xl bg-[#7a2e2e] px-4 py-2.5 text-sm font-semibold text-white">
           <span>
-            👁 Viewing as <strong>{impersonating.email}</strong> — changes you make apply to this customer&apos;s account.
+            👁 Viewing as <strong>{impersonating.email}</strong> - changes you make apply to this customer&apos;s account.
           </span>
           <form action={stopImpersonating}>
             <button
@@ -1792,7 +1792,7 @@ export function CustomerAgentWorkspace({
           >
             <span>
               {trial.blocked
-                ? `Free trial limit reached — ${trial.used}/${trial.cap} calls used. Add a plan to keep taking calls.`
+                ? `Free trial limit reached - ${trial.used}/${trial.cap} calls used. Add a plan to keep taking calls.`
                 : `Free trial: ${trial.used}/${trial.cap} AI calls used.`}
             </span>
             {trial.blocked ? (
@@ -3247,7 +3247,7 @@ function RoutingTab({
           Default routing inbox
         </span>
         <p className="mt-1 mb-3 text-sm text-[#7a8582]">
-          A pooled address summaries fall back to — used by any contact set to “send to
+          A pooled address summaries fall back to - used by any contact set to “send to
           default”, and when no specific contact matches.
         </p>
         <input
@@ -3480,7 +3480,7 @@ function KeywordInput({
 }
 
 function formatWhen(iso: string): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("en-GB", {
     day: "numeric",
     month: "short",
@@ -3695,7 +3695,7 @@ function AiInsights({
 
   const i = insights as DashboardInsights;
 
-  // Empty state — no calls at all yet, or none in the chosen range.
+  // Empty state - no calls at all yet, or none in the chosen range.
   if (i.totalCalls === 0) {
     return (
       <div>
@@ -3858,7 +3858,7 @@ function AiInsights({
         </section>
       </div>
 
-      {/* Needs attention — open by default (the actionable one) */}
+      {/* Needs attention - open by default (the actionable one) */}
       <CollapsibleSection
         title="Needs attention"
         icon={AlertTriangle}
@@ -3880,7 +3880,7 @@ function AiInsights({
         )}
       </CollapsibleSection>
 
-      {/* Opportunities — collapsed by default */}
+      {/* Opportunities - collapsed by default */}
       {i.opportunities.length > 0 && (
         <CollapsibleSection
           title="Opportunities & lost sales"
@@ -3897,14 +3897,14 @@ function AiInsights({
         </CollapsibleSection>
       )}
 
-      {/* Common unanswered questions — collapsed by default */}
+      {/* Common unanswered questions - collapsed by default */}
       {i.unansweredQuestions.length > 0 && (
         <CollapsibleSection
           title="Common unanswered questions"
           icon={HelpCircle}
           accent="#7a5b00"
           count={i.unansweredQuestions.length}
-          subtitle="Questions your agent couldn't answer — worth adding to its knowledge"
+          subtitle="Questions your agent couldn't answer - worth adding to its knowledge"
         >
           <ul className="space-y-2">
             {i.unansweredQuestions.map((q, idx) => (
@@ -4091,7 +4091,7 @@ function CallRefRow({
   );
 }
 
-// A small channel badge for the history list — at a glance, how the conversation
+// A small channel badge for the history list - at a glance, how the conversation
 // arrived (phone / WhatsApp / email / website chat).
 const channelMeta: Record<CallChannel, { Icon: LucideIcon; label: string; bg: string; fg: string }> = {
   phone: { Icon: Phone, label: "Phone call", bg: "bg-[#eefbfb]", fg: "text-[#148b8e]" },
@@ -4155,7 +4155,7 @@ function CallHistory({
                     </div>
                   </div>
                   <MobileField label="Summary">
-                    <span className="text-sm text-[#66716e]">{log.summary || "—"}</span>
+                    <span className="text-sm text-[#66716e]">{log.summary || "-"}</span>
                   </MobileField>
                   <div className="grid grid-cols-2 gap-3">
                     <MobileField label="Outcome">
@@ -4183,7 +4183,7 @@ function CallHistory({
                       <span className="mt-1 block text-xs text-[#66716e]">{formatWhen(log.startedAt)}</span>
                     </span>
                   </span>
-                  <span className="truncate text-sm text-[#66716e]">{log.summary || "—"}</span>
+                  <span className="truncate text-sm text-[#66716e]">{log.summary || "-"}</span>
                   <span className="text-sm text-[#66716e]">{friendlyOutcome(log.outcome)}</span>
                   <span className="font-mono text-sm text-[#66716e]">{log.durationLabel}</span>
                 </button>
@@ -4467,7 +4467,7 @@ function RoutingCard({
   const sub = live
     ? "Live and answering calls"
     : pending
-      ? "WiseCall is provisioning your number — usually ready within 5 minutes. Refresh the page to check."
+      ? "WiseCall is provisioning your number - usually ready within 5 minutes. Refresh the page to check."
       : "Assign a number to put this agent on a phone line.";
 
   return (
@@ -5058,7 +5058,7 @@ function GreetingModal({
             className="min-h-[140px] w-full resize-none rounded-lg border border-black/15 bg-white px-4 py-3 text-base leading-7 outline-none transition focus:border-[#111716]"
           />
           <p className="mt-3 text-xs text-[#9aa4a1]">
-            Keep it short and natural — one or two sentences works best on the phone.
+            Keep it short and natural - one or two sentences works best on the phone.
           </p>
         </div>
         <div className="flex justify-end gap-3 border-t border-black/10 px-7 py-5">
