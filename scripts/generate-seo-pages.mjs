@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import {
   blogPosts,
+  comparisonPages,
   comparisonRows,
   futureIndustries,
   globalFaqs,
@@ -190,7 +191,7 @@ function footer() {
       <p class="text-white/60 leading-relaxed">${esc(site.description)}</p>
     </div>
     <div>
-      <h2 class="text-white font-bold mb-3 text-base">Priority Pages</h2>
+      <h2 class="text-white font-bold mb-3 text-base">Explore</h2>
       <ul class="space-y-2 text-white/60">
         <li><a href="/how-it-works/" class="hover:text-[#7de8eb]">How WiseCall handles calls</a></li>
         <li><a href="/pricing/" class="hover:text-[#7de8eb]">WiseCall pricing</a></li>
@@ -289,33 +290,104 @@ function relatedLinks(links) {
 </section>`;
 }
 
-function missedCallCalculatorBlock() {
+const calculatorPresets = {
+  general: { label: 'General', calls: 40, missedPct: 20, enquiryPct: 30, value: 150, convPct: 30, days: 22 },
+  dental: { label: 'Dental', calls: 60, missedPct: 25, enquiryPct: 25, value: 350, convPct: 40, days: 21 },
+  legal: { label: 'Legal', calls: 25, missedPct: 20, enquiryPct: 35, value: 1200, convPct: 20, days: 21 },
+  property: { label: 'Property', calls: 45, missedPct: 22, enquiryPct: 30, value: 900, convPct: 20, days: 24 },
+  trades: { label: 'Trades', calls: 15, missedPct: 35, enquiryPct: 50, value: 250, convPct: 40, days: 24 },
+  care: { label: 'Care', calls: 20, missedPct: 20, enquiryPct: 20, value: 1500, convPct: 15, days: 30 },
+};
+
+function missedCallCalculatorBlock(presetKey = 'general') {
+  const active = calculatorPresets[presetKey] ? presetKey : 'general';
   return `<section class="px-6 py-20" id="calculator">
   <div class="max-w-7xl mx-auto grid lg:grid-cols-[.9fr_1.1fr] gap-8 items-start">
     <div>
       <div class="eyebrow mb-6"><i data-lucide="calculator" class="w-4 h-4"></i>Missed Call Calculator</div>
       <h2 class="text-4xl md:text-5xl font-black mb-5">Estimate what unanswered calls may be costing</h2>
-      <p class="text-white/70 text-lg leading-relaxed">Use your own figures. This calculator is a planning tool, not a claim about your actual performance.</p>
+      <p class="text-white/70 text-lg leading-relaxed mb-6">Start from an industry preset, then adjust every figure to match your business. This is a planning estimate, not a claim about your actual performance.</p>
+      <div class="flex flex-wrap gap-2" id="calcPresets">
+        ${Object.entries(calculatorPresets).map(([key, preset]) => `<button type="button" data-preset="${key}" class="calc-preset px-4 py-2 rounded-full border text-sm font-semibold transition-colors ${key === active ? 'bg-[#7de8eb] text-[#172929] border-[#7de8eb]' : 'bg-white/5 text-white/70 border-[#7de8eb]/20 hover:border-[#7de8eb]/50'}">${esc(preset.label)}</button>`).join('')}
+      </div>
     </div>
     <div class="card-strong p-6">
       <div class="grid sm:grid-cols-3 gap-4">
-        <label class="block text-sm text-white/70">Missed calls per month<input id="missedCalls" type="number" value="20" min="0" class="mt-2 w-full rounded-lg bg-white/8 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
-        <label class="block text-sm text-white/70">Lead value (£)<input id="leadValue" type="number" value="100" min="0" class="mt-2 w-full rounded-lg bg-white/8 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
-        <label class="block text-sm text-white/70">Conversion rate (%)<input id="conversionRate" type="number" value="25" min="0" max="100" class="mt-2 w-full rounded-lg bg-white/8 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Calls per day<input id="calcCalls" type="number" min="0" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Missed calls (%)<input id="calcMissedPct" type="number" min="0" max="100" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">New enquiries (%)<input id="calcEnquiryPct" type="number" min="0" max="100" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Enquiry value (£)<input id="calcValue" type="number" min="0" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Conversion rate (%)<input id="calcConvPct" type="number" min="0" max="100" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Working days / month<input id="calcDays" type="number" min="0" max="31" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
       </div>
-      <div class="mt-6 p-6 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/20">
-        <div class="text-white/60 text-sm mb-2">Estimated monthly opportunity</div>
-        <div id="calcResult" class="text-4xl font-black text-[#7de8eb]">£500</div>
+      <div class="mt-6 grid sm:grid-cols-2 gap-4">
+        <div class="p-5 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/15">
+          <div class="text-white/60 text-sm mb-1.5">Missed calls / month</div>
+          <div id="calcOutCalls" class="text-3xl font-black text-white">0</div>
+        </div>
+        <div class="p-5 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/15">
+          <div class="text-white/60 text-sm mb-1.5">Missed new enquiries</div>
+          <div id="calcOutEnquiries" class="text-3xl font-black text-white">0</div>
+        </div>
+        <div class="p-5 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/25">
+          <div class="text-white/60 text-sm mb-1.5">Monthly value at risk</div>
+          <div id="calcOutMonthly" class="text-3xl font-black text-[#7de8eb]">£0</div>
+        </div>
+        <div class="p-5 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/25">
+          <div class="text-white/60 text-sm mb-1.5">Annual value at risk</div>
+          <div id="calcOutAnnual" class="text-3xl font-black text-[#7de8eb]">£0</div>
+        </div>
       </div>
+      <p class="text-white/40 text-xs mt-4 leading-relaxed">Estimates only, based on the figures you enter. Actual results depend on your call patterns, enquiry mix and follow-up.</p>
+      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3.5 mt-5">Stop the leak — try WiseCall now</a>
       <script>
-        function updateMissedCallCalc() {
-          const calls = Number(document.getElementById('missedCalls').value || 0);
-          const value = Number(document.getElementById('leadValue').value || 0);
-          const rate = Number(document.getElementById('conversionRate').value || 0) / 100;
-          document.getElementById('calcResult').textContent = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(calls * value * rate);
+      (function () {
+        const presets = ${JSON.stringify(calculatorPresets)};
+        const fields = { calls: 'calcCalls', missedPct: 'calcMissedPct', enquiryPct: 'calcEnquiryPct', value: 'calcValue', convPct: 'calcConvPct', days: 'calcDays' };
+        const el = (id) => document.getElementById(id);
+        const gbp = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 });
+        const num = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 });
+        const current = {};
+        function animate(id, target, format) {
+          const node = el(id);
+          const from = current[id] || 0;
+          current[id] = target;
+          const start = performance.now();
+          function tick(now) {
+            const t = Math.min((now - start) / 400, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            node.textContent = format(Math.round(from + (target - from) * eased));
+            if (t < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
         }
-        ['missedCalls','leadValue','conversionRate'].forEach((id) => document.getElementById(id).addEventListener('input', updateMissedCallCalc));
-        updateMissedCallCalc();
+        function recalc() {
+          const calls = Number(el(fields.calls).value || 0);
+          const missed = calls * (Number(el(fields.missedPct).value || 0) / 100) * Number(el(fields.days).value || 0);
+          const enquiries = missed * (Number(el(fields.enquiryPct).value || 0) / 100);
+          const monthly = enquiries * Number(el(fields.value).value || 0) * (Number(el(fields.convPct).value || 0) / 100);
+          animate('calcOutCalls', missed, num.format);
+          animate('calcOutEnquiries', enquiries, num.format);
+          animate('calcOutMonthly', monthly, gbp.format);
+          animate('calcOutAnnual', monthly * 12, gbp.format);
+        }
+        function applyPreset(key) {
+          Object.entries(fields).forEach(([prop, id]) => { el(id).value = presets[key][prop]; });
+          document.querySelectorAll('.calc-preset').forEach((btn) => {
+            const on = btn.dataset.preset === key;
+            btn.classList.toggle('bg-[#7de8eb]', on);
+            btn.classList.toggle('text-[#172929]', on);
+            btn.classList.toggle('border-[#7de8eb]', on);
+            btn.classList.toggle('bg-white/5', !on);
+            btn.classList.toggle('text-white/70', !on);
+            btn.classList.toggle('border-[#7de8eb]/20', !on);
+          });
+          recalc();
+        }
+        document.querySelectorAll('.calc-preset').forEach((btn) => btn.addEventListener('click', () => applyPreset(btn.dataset.preset)));
+        Object.values(fields).forEach((id) => el(id).addEventListener('input', recalc));
+        applyPreset('${active}');
+      })();
       </script>
     </div>
   </div>
@@ -379,7 +451,7 @@ ${trustStrip()}
   </div>
 </section>
 ${audioAndCasePlaceholders(industry)}
-${missedCallCalculatorBlock()}
+${missedCallCalculatorBlock({ dental: 'dental', legal: 'legal', 'estate-agents': 'property', 'care-homes': 'care' }[industry.slug] || 'general')}
 ${faqSection(faqs, `Common Questions from ${industry.name}`)}
 ${relatedLinks([
   { path: '/pricing/', title: `Pricing for ${industry.name}`, text: 'See how WiseCall plans work for UK businesses.' },
@@ -401,8 +473,8 @@ ${trustStrip()}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">
 ${industries.map((industry) => `<a href="/industries/${industry.slug}/" class="card p-7 block hover:border-[#7de8eb]/40"><h2 class="text-2xl font-bold mb-3">${esc(industry.name)}</h2><p class="text-white/65 leading-relaxed">${esc(industry.description)}</p><span class="inline-flex mt-5 text-[#7de8eb] font-bold">View ${esc(industry.keyword)}</span></a>`).join('')}
 </div></section>
-<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">Future industry pages</h2><p class="text-white/68 mb-6">The content architecture is ready for these pages once real copy, integrations and FAQs are approved.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
-${ctaBlock('Need an industry page built next?', 'WiseCall can extend this structure for care homes, restaurants, schools and telecoms resellers without duplicating page code.')}`;
+<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these — get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
+${ctaBlock('Don’t see your industry?', 'Book a demo and we will show you how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: page.path }])]);
 }
 
@@ -436,27 +508,50 @@ ${ctaBlock('Want to hear how WiseCall would answer your calls?', 'Book a demo an
   }, faqSchema(globalFaqs)]);
 }
 
+const pricingPlans = [
+  {
+    name: 'Starter',
+    price: '£99',
+    tagline: 'Small businesses, sole traders and teams who want to stop missing calls',
+    calls: '100 AI Calls',
+    included: ['100 AI Email Replies', '250 WhatsApp Messages', '100 Live Chat Conversations', '100 SMS Messages and Notifications'],
+  },
+  {
+    name: 'Professional',
+    price: '£199',
+    tagline: 'Growing businesses with regular inbound enquiries',
+    calls: '300 AI Calls',
+    included: ['500 AI Email Replies', '800 WhatsApp Messages', '300 Live Chat Conversations', '300 SMS Messages and Notifications'],
+    popular: true,
+  },
+  {
+    name: 'Business',
+    price: '£399',
+    tagline: 'Busy teams, multi-site businesses and companies with high call volume',
+    calls: '750 AI Calls',
+    included: ['2,000 AI Email Replies', '2,500 WhatsApp Messages', '1,000 Live Chat Conversations', '750 SMS Messages and Notifications'],
+  },
+];
+
 function renderPricing() {
   const page = {
     title: 'WiseCall Pricing UK | AI Receptionist Plans',
-    description: 'Understand WiseCall AI receptionist pricing for UK businesses, including plan structure, AI-handled calls, phone system inclusions and demo options.',
+    description: 'WiseCall AI receptionist pricing for UK businesses: Starter £99, Professional £199 and Business £399 per month, plus a 7-day pilot before the 12-month term begins.',
     path: '/pricing/',
   };
-  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'WiseCall pricing is designed around AI-handled inbound calls, team phone system needs and UK support. Book a demo if you need help choosing a plan.', cta: 'Start a 7-day pilot' })}
-<section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${[
-  ['Core', 'For smaller teams that want reliable AI call cover and a complete phone system foundation.'],
-  ['Growth', 'For businesses with higher call volume, more routing requirements and regular overflow.'],
-  ['Pro', 'For larger teams or businesses with significant call volume and room to scale.'],
-].map(([name, text]) => `<div class="card-strong p-7"><h2 class="text-2xl font-bold mb-3">${esc(name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(text)}</p><ul class="space-y-2 text-white/70">${['AI receptionist', 'Phone system included', 'UK outbound calling allowance', 'Call summaries and transcripts'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul></div>`).join('')}</div></section>
+  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'One AI front desk covering voice, email, WhatsApp, live chat and SMS. Choose the plan that matches your call volume, or start a 7-day pilot before the 12-month term begins.', cta: 'Start a 7-day pilot' })}
+<section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${pricingPlans.map((plan) => `<div class="card-strong p-7 relative">${plan.popular ? '<span class="absolute -top-3 left-7 px-3 py-1 rounded-full bg-[#7de8eb] text-[#0f1f1f] text-xs font-bold">Most Popular</span>' : ''}<h2 class="text-2xl font-bold mb-3">${esc(plan.name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(plan.tagline)}</p><div class="mb-5"><span class="text-4xl font-black">${esc(plan.price)}</span><span class="text-white/60">/month</span><div class="text-white/50 text-sm mt-1">excl. VAT &middot; 12-month term</div></div><ul class="space-y-2 text-white/70 mb-6">${[plan.calls, ...plan.included, 'AI receptionist, 24/7', 'Call summaries and transcripts', 'Appointment booking', 'Call transfers and routing'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul><a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3">Start a 7-day pilot</a></div>`).join('')}</div>
+<div class="max-w-7xl mx-auto mt-8"><div class="card p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><h2 class="text-xl font-bold mb-2">Enterprise</h2><p class="text-white/68">Custom call volume, bespoke integrations and onboarding. Suited to larger teams, franchises, healthcare, legal, dental, property and multi-location businesses.</p></div><a href="/#contact" class="btn btn-secondary px-8 py-3 whitespace-nowrap">Talk to us</a></div></div>
+</section>
 ${faqSection([
-  { question: 'How does WiseCall pricing work?', answer: 'WiseCall pricing is based on the plan you choose, the number of AI-handled inbound calls included and the phone system requirements for your team. The best plan depends on your call volume and routing needs.' },
-  { question: 'Does the phone system cost extra?', answer: 'WiseCall plans include the AI receptionist and a complete business phone system foundation, so teams do not need to buy a separate basic phone system just to start.' },
-  { question: 'What happens if we receive more AI calls than our plan includes?', answer: 'If your business receives more AI-handled inbound calls than your monthly allowance, additional call handling can be charged as overage or moved to a more suitable plan.' },
+  { question: 'How does WiseCall pricing work?', answer: 'WiseCall pricing is based on the plan you choose (Starter, Professional or Business) and the number of AI-handled calls, emails, WhatsApp messages, live chat conversations and SMS notifications included each month. The best plan depends on your enquiry volume.' },
+  { question: 'What is included in every plan?', answer: 'Every plan includes a 24/7 AI receptionist, call summaries and transcripts, appointment booking, call transfers and routing, a dashboard, and a 7-day pilot before the 12-month term begins.' },
+  { question: 'What happens if we receive more AI calls than our plan includes?', answer: 'If your business regularly exceeds its monthly allowance, we will recommend moving to a more suitable plan. Book a demo and we can advise based on your call volume.' },
 ], 'Pricing Questions')}
 ${relatedLinks([
-  { path: '/compare/ai-receptionist-uk-comparison/', title: 'Compare AI receptionist options', text: 'See how WiseCall compares with human reception and voicemail-led alternatives.' },
+  { path: '/compare/wisecall-vs-answering-service/', title: 'WiseCall vs answering service', text: 'See the cost and coverage difference against a traditional answering service.' },
+  { path: '/compare/wisecall-vs-voicemail/', title: 'WiseCall vs voicemail', text: 'See what changes when WiseCall answers instead of a recorded message.' },
   { path: '/resources/missed-call-calculator/', title: 'Calculate missed call value', text: 'Estimate the opportunity cost of unanswered calls before choosing a plan.' },
-  { path: '/industries/', title: 'Industry examples', text: 'See how WiseCall applies to different UK sectors.' },
 ])}
 ${ctaBlock('Need help choosing a plan?', 'Book a free 15-minute demo and we will recommend a plan based on your current call volume.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Pricing', path: page.path }])]);
@@ -477,10 +572,28 @@ ${faqSection([
 ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
-  { path: '/industries/legal/', title: 'AI receptionist for law firms', text: 'Explore a high-intent professional services use case.' },
+  ...comparisonPages.map((c) => ({ path: `/compare/${c.slug}/`, title: `WiseCall vs ${c.subject}`, text: `A focused comparison against ${c.subject.toLowerCase()}.` })),
 ])}
 ${ctaBlock('Compare WiseCall against your current setup', 'Book a demo and we will map WiseCall against your current call handling process.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: 'AI Receptionist UK Comparison', path: page.path }])]);
+}
+
+function renderComparisonPage(comparison) {
+  const page = {
+    title: comparison.title,
+    description: comparison.description,
+    path: `/compare/${comparison.slug}/`,
+  };
+  const body = `${hero({ eyebrow: comparison.eyebrow, h1: comparison.h1, lead: comparison.lead, cta: 'Start a 7-day pilot' })}
+<section class="px-6 py-20"><div class="max-w-7xl mx-auto overflow-x-auto card p-3"><table class="w-full text-left text-sm"><thead><tr class="text-[#7de8eb]">${comparison.columns.map((col) => `<th class="p-4">${esc(col)}</th>`).join('')}</tr></thead><tbody>${comparison.rows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell) => `<td class="p-4 text-white/72">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
+${faqSection(comparison.faqs, `${page.title.split('|')[0].trim()} Questions`)}
+${relatedLinks([
+  { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
+  { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
+  { path: '/compare/ai-receptionist-uk-comparison/', title: 'AI receptionist UK comparison', text: 'See the broader comparison against human reception and voicemail.' },
+])}
+${ctaBlock(comparison.ctaTitle, comparison.ctaText)}`;
+  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: page.title.split('|')[0].trim(), path: page.path }]), faqSchema(comparison.faqs)]);
 }
 
 function renderCalculator() {
@@ -702,6 +815,7 @@ function allRoutes() {
     '/industries/',
     ...industries.map((industry) => `/industries/${industry.slug}/`),
     '/compare/ai-receptionist-uk-comparison/',
+    ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
     '/resources/missed-call-calculator/',
     '/resources/call-transcript-guide/',
     '/blog/missed-calls-cost-uk-businesses/',
@@ -741,6 +855,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Legal and professional services: ${site.url}/industries/legal/
 - Estate agents: ${site.url}/industries/estate-agents/
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
+${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
 - Missed call calculator: ${site.url}/resources/missed-call-calculator/
 - Call transcript guide: ${site.url}/resources/call-transcript-guide/
 - Missed calls guide: ${site.url}/blog/missed-calls-cost-uk-businesses/
@@ -776,6 +891,7 @@ async function generate() {
   await write('integrations/index.html', renderIntegrations());
   await write('case-studies/index.html', renderCaseStudies());
   await write('compare/ai-receptionist-uk-comparison/index.html', renderComparison());
+  await Promise.all(comparisonPages.map((comparison) => write(`compare/${comparison.slug}/index.html`, renderComparisonPage(comparison))));
   await write('resources/missed-call-calculator/index.html', renderCalculator());
   await write('resources/call-transcript-guide/index.html', renderTranscriptGuide());
   await write('blog/missed-calls-cost-uk-businesses/index.html', renderBlogPost());

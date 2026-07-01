@@ -244,27 +244,88 @@
     <div>
       <div class="eyebrow mb-6"><i data-lucide="calculator" class="w-4 h-4"></i>Missed Call Calculator</div>
       <h2 class="text-4xl md:text-5xl font-black mb-5">Estimate what unanswered calls may be costing</h2>
-      <p class="text-white/70 text-lg leading-relaxed">Use your own figures. This calculator is a planning tool, not a claim about your actual performance.</p>
+      <p class="text-white/70 text-lg leading-relaxed mb-6">Start from an industry preset, then adjust every figure to match your business. This is a planning estimate, not a claim about your actual performance.</p>
+      <div class="flex flex-wrap gap-2" id="calcPresets">
+        <button type="button" data-preset="general" class="calc-preset px-4 py-2 rounded-full border text-sm font-semibold transition-colors bg-white/5 text-white/70 border-[#7de8eb]/20 hover:border-[#7de8eb]/50">General</button><button type="button" data-preset="dental" class="calc-preset px-4 py-2 rounded-full border text-sm font-semibold transition-colors bg-white/5 text-white/70 border-[#7de8eb]/20 hover:border-[#7de8eb]/50">Dental</button><button type="button" data-preset="legal" class="calc-preset px-4 py-2 rounded-full border text-sm font-semibold transition-colors bg-white/5 text-white/70 border-[#7de8eb]/20 hover:border-[#7de8eb]/50">Legal</button><button type="button" data-preset="property" class="calc-preset px-4 py-2 rounded-full border text-sm font-semibold transition-colors bg-white/5 text-white/70 border-[#7de8eb]/20 hover:border-[#7de8eb]/50">Property</button><button type="button" data-preset="trades" class="calc-preset px-4 py-2 rounded-full border text-sm font-semibold transition-colors bg-white/5 text-white/70 border-[#7de8eb]/20 hover:border-[#7de8eb]/50">Trades</button><button type="button" data-preset="care" class="calc-preset px-4 py-2 rounded-full border text-sm font-semibold transition-colors bg-[#7de8eb] text-[#172929] border-[#7de8eb]">Care</button>
+      </div>
     </div>
     <div class="card-strong p-6">
       <div class="grid sm:grid-cols-3 gap-4">
-        <label class="block text-sm text-white/70">Missed calls per month<input id="missedCalls" type="number" value="20" min="0" class="mt-2 w-full rounded-lg bg-white/8 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
-        <label class="block text-sm text-white/70">Lead value (£)<input id="leadValue" type="number" value="100" min="0" class="mt-2 w-full rounded-lg bg-white/8 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
-        <label class="block text-sm text-white/70">Conversion rate (%)<input id="conversionRate" type="number" value="25" min="0" max="100" class="mt-2 w-full rounded-lg bg-white/8 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Calls per day<input id="calcCalls" type="number" min="0" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Missed calls (%)<input id="calcMissedPct" type="number" min="0" max="100" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">New enquiries (%)<input id="calcEnquiryPct" type="number" min="0" max="100" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Enquiry value (£)<input id="calcValue" type="number" min="0" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Conversion rate (%)<input id="calcConvPct" type="number" min="0" max="100" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
+        <label class="block text-sm text-white/70">Working days / month<input id="calcDays" type="number" min="0" max="31" class="mt-2 w-full rounded-lg bg-white/10 border border-[#7de8eb]/20 px-4 py-3 text-white"></label>
       </div>
-      <div class="mt-6 p-6 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/20">
-        <div class="text-white/60 text-sm mb-2">Estimated monthly opportunity</div>
-        <div id="calcResult" class="text-4xl font-black text-[#7de8eb]">£500</div>
+      <div class="mt-6 grid sm:grid-cols-2 gap-4">
+        <div class="p-5 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/15">
+          <div class="text-white/60 text-sm mb-1.5">Missed calls / month</div>
+          <div id="calcOutCalls" class="text-3xl font-black text-white">0</div>
+        </div>
+        <div class="p-5 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/15">
+          <div class="text-white/60 text-sm mb-1.5">Missed new enquiries</div>
+          <div id="calcOutEnquiries" class="text-3xl font-black text-white">0</div>
+        </div>
+        <div class="p-5 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/25">
+          <div class="text-white/60 text-sm mb-1.5">Monthly value at risk</div>
+          <div id="calcOutMonthly" class="text-3xl font-black text-[#7de8eb]">£0</div>
+        </div>
+        <div class="p-5 rounded-xl bg-[#172929]/70 border border-[#7de8eb]/25">
+          <div class="text-white/60 text-sm mb-1.5">Annual value at risk</div>
+          <div id="calcOutAnnual" class="text-3xl font-black text-[#7de8eb]">£0</div>
+        </div>
       </div>
+      <p class="text-white/40 text-xs mt-4 leading-relaxed">Estimates only, based on the figures you enter. Actual results depend on your call patterns, enquiry mix and follow-up.</p>
+      <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="btn btn-primary w-full text-center py-3.5 mt-5">Stop the leak — try WiseCall now</a>
       <script>
-        function updateMissedCallCalc() {
-          const calls = Number(document.getElementById('missedCalls').value || 0);
-          const value = Number(document.getElementById('leadValue').value || 0);
-          const rate = Number(document.getElementById('conversionRate').value || 0) / 100;
-          document.getElementById('calcResult').textContent = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(calls * value * rate);
+      (function () {
+        const presets = {"general":{"label":"General","calls":40,"missedPct":20,"enquiryPct":30,"value":150,"convPct":30,"days":22},"dental":{"label":"Dental","calls":60,"missedPct":25,"enquiryPct":25,"value":350,"convPct":40,"days":21},"legal":{"label":"Legal","calls":25,"missedPct":20,"enquiryPct":35,"value":1200,"convPct":20,"days":21},"property":{"label":"Property","calls":45,"missedPct":22,"enquiryPct":30,"value":900,"convPct":20,"days":24},"trades":{"label":"Trades","calls":15,"missedPct":35,"enquiryPct":50,"value":250,"convPct":40,"days":24},"care":{"label":"Care","calls":20,"missedPct":20,"enquiryPct":20,"value":1500,"convPct":15,"days":30}};
+        const fields = { calls: 'calcCalls', missedPct: 'calcMissedPct', enquiryPct: 'calcEnquiryPct', value: 'calcValue', convPct: 'calcConvPct', days: 'calcDays' };
+        const el = (id) => document.getElementById(id);
+        const gbp = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 });
+        const num = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 });
+        const current = {};
+        function animate(id, target, format) {
+          const node = el(id);
+          const from = current[id] || 0;
+          current[id] = target;
+          const start = performance.now();
+          function tick(now) {
+            const t = Math.min((now - start) / 400, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            node.textContent = format(Math.round(from + (target - from) * eased));
+            if (t < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
         }
-        ['missedCalls','leadValue','conversionRate'].forEach((id) => document.getElementById(id).addEventListener('input', updateMissedCallCalc));
-        updateMissedCallCalc();
+        function recalc() {
+          const calls = Number(el(fields.calls).value || 0);
+          const missed = calls * (Number(el(fields.missedPct).value || 0) / 100) * Number(el(fields.days).value || 0);
+          const enquiries = missed * (Number(el(fields.enquiryPct).value || 0) / 100);
+          const monthly = enquiries * Number(el(fields.value).value || 0) * (Number(el(fields.convPct).value || 0) / 100);
+          animate('calcOutCalls', missed, num.format);
+          animate('calcOutEnquiries', enquiries, num.format);
+          animate('calcOutMonthly', monthly, gbp.format);
+          animate('calcOutAnnual', monthly * 12, gbp.format);
+        }
+        function applyPreset(key) {
+          Object.entries(fields).forEach(([prop, id]) => { el(id).value = presets[key][prop]; });
+          document.querySelectorAll('.calc-preset').forEach((btn) => {
+            const on = btn.dataset.preset === key;
+            btn.classList.toggle('bg-[#7de8eb]', on);
+            btn.classList.toggle('text-[#172929]', on);
+            btn.classList.toggle('border-[#7de8eb]', on);
+            btn.classList.toggle('bg-white/5', !on);
+            btn.classList.toggle('text-white/70', !on);
+            btn.classList.toggle('border-[#7de8eb]/20', !on);
+          });
+          recalc();
+        }
+        document.querySelectorAll('.calc-preset').forEach((btn) => btn.addEventListener('click', () => applyPreset(btn.dataset.preset)));
+        Object.values(fields).forEach((id) => el(id).addEventListener('input', recalc));
+        applyPreset('care');
+      })();
       </script>
     </div>
   </div>
@@ -331,7 +392,7 @@
       <p class="text-white/60 leading-relaxed">WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It answers calls, qualifies enquiries, books appointments, captures details and supports teams out of hours.</p>
     </div>
     <div>
-      <h2 class="text-white font-bold mb-3 text-base">Priority Pages</h2>
+      <h2 class="text-white font-bold mb-3 text-base">Explore</h2>
       <ul class="space-y-2 text-white/60">
         <li><a href="/how-it-works/" class="hover:text-[#7de8eb]">How WiseCall handles calls</a></li>
         <li><a href="/pricing/" class="hover:text-[#7de8eb]">WiseCall pricing</a></li>
