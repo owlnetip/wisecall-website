@@ -77,6 +77,8 @@ import { DEMO_KB_TITLE_PREFIX } from "@/lib/demo-knowledge-base";
 import type { CallLog, CallChannel } from "@/lib/agents";
 import { friendlyOutcome } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
+import type { FollowUp } from "@/lib/follow-ups";
+import { updateFollowUpStatus } from "@/app/actions/follow-ups";
 import type {
   AttentionItem,
   CallReference,
@@ -1460,6 +1462,7 @@ export function CustomerAgentWorkspace({
   impersonating,
   initialInsights,
   analysisEnabled = false,
+  initialFollowUps = [],
 }: {
   initialAssistants?: Assistant[];
   callLogs?: CallLog[];
@@ -1479,6 +1482,7 @@ export function CustomerAgentWorkspace({
   impersonating?: { email: string }; // admin viewing as this customer
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
+  initialFollowUps?: FollowUp[];
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
   // A real customer with no agents yet has an empty list, don't assume [0] exists.
@@ -1507,6 +1511,26 @@ export function CustomerAgentWorkspace({
   const [isCreating, startCreate] = useTransition();
   const [isProvisioning, startProvision] = useTransition();
   const [isDeleting, startDelete] = useTransition();
+  const [followUps, setFollowUps] = useState(initialFollowUps);
+
+  function handleFollowUpStatus(followUpId: string, status: FollowUp["status"]) {
+    startTransition(async () => {
+      const result = await updateFollowUpStatus(followUpId, status);
+      if (result.ok) {
+        setFollowUps((prev) =>
+          prev.map((item) =>
+            item.id === followUpId
+              ? {
+                  ...item,
+                  status,
+                  completedAt: status === "done" ? new Date().toISOString() : null,
+                }
+              : item,
+          ),
+        );
+      }
+    });
+  }
 
   // Poll for number assignment on agents that are still awaiting one. Only runs
   // while at least one agent is pending; clears itself once all are live.
@@ -2081,6 +2105,8 @@ export function CustomerAgentWorkspace({
               <AiInsights
                 initial={initialInsights}
                 analysisEnabled={analysisEnabled}
+                followUps={followUps}
+                onFollowUpStatus={handleFollowUpStatus}
                 onViewCalls={() => setView("calls")}
                 onOpenCall={(callId) => {
                   // One click from an insight straight into the conversation.
@@ -2149,13 +2175,15 @@ export function CustomerAgentWorkspace({
             {view === "calls" && (
               <UnifiedInbox
                 callLogs={callLogs}
+                followUps={followUps}
+                onFollowUpStatus={handleFollowUpStatus}
                 selectedId={selectedCallId}
                 onSelect={setSelectedCallId}
               />
             )}
 
             {view === "contacts" && (
-              <ContactsView contacts={contacts} callLogs={callLogs} />
+              <ContactsView contacts={contacts} callLogs={callLogs} followUps={followUps} />
             )}
 
             {view === "channels" && (
@@ -3593,14 +3621,84 @@ function CollapsibleSection({
   );
 }
 
+function FollowUpsSection({
+  followUps,
+  onFollowUpStatus,
+  onOpenCall,
+}: {
+  followUps: FollowUp[];
+  onFollowUpStatus: (id: string, status: FollowUp["status"]) => void;
+  onOpenCall: (callId: string) => void;
+}) {
+  const open = followUps.filter((item) => item.status === "open");
+  if (open.length === 0) return null;
+
+  return (
+    <CollapsibleSection
+      title="Open follow-ups"
+      icon={CalendarCheck}
+      accent="#0e6b6e"
+      count={open.length}
+      defaultOpen
+      subtitle="Tasks extracted from conversations — mark done when handled"
+    >
+      <ul className="divide-y divide-line">
+        {open.map((item) => (
+          <li key={item.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-ink">{item.title}</p>
+              <p className="mt-0.5 text-xs text-ink-soft">
+                {item.caller} · {item.agentName}
+              </p>
+              {item.description ? (
+                <p className="mt-1 text-sm text-ink-soft">{item.description}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-shrink-0 flex-wrap gap-2">
+              {item.callLogId ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenCall(item.callLogId!)}
+                  className="press inline-flex h-8 items-center rounded-lg border border-line px-3 text-xs font-bold text-ink-soft hover:border-line-strong hover:text-ink"
+                >
+                  View conversation
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => onFollowUpStatus(item.id, "snoozed")}
+                className="press inline-flex h-8 items-center rounded-lg border border-line px-3 text-xs font-bold text-ink-soft hover:border-line-strong hover:text-ink"
+              >
+                Snooze
+              </button>
+              <button
+                type="button"
+                onClick={() => onFollowUpStatus(item.id, "done")}
+                className="press inline-flex h-8 items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-black text-white hover:bg-[#263130]"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Done
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </CollapsibleSection>
+  );
+}
+
 function AiInsights({
   initial,
   analysisEnabled,
+  followUps,
+  onFollowUpStatus,
   onViewCalls,
   onOpenCall,
 }: {
   initial?: DashboardInsights;
   analysisEnabled: boolean;
+  followUps: FollowUp[];
+  onFollowUpStatus: (id: string, status: FollowUp["status"]) => void;
   onViewCalls: () => void;
   onOpenCall: (callId: string) => void;
 }) {
@@ -3897,6 +3995,12 @@ function AiInsights({
           )}
         </section>
       </div>
+
+      <FollowUpsSection
+        followUps={followUps}
+        onFollowUpStatus={onFollowUpStatus}
+        onOpenCall={onOpenCall}
+      />
 
       {/* Needs attention, open by default (the actionable one) */}
       <CollapsibleSection
@@ -4266,9 +4370,21 @@ function CopyChip({ value, label }: { value: string; label: string }) {
   );
 }
 
-function ConversationDetail({ log, onBack }: { log: CallLog; onBack: () => void }) {
+function ConversationDetail({
+  log,
+  followUps,
+  onFollowUpStatus,
+  onBack,
+}: {
+  log: CallLog;
+  followUps: FollowUp[];
+  onFollowUpStatus: (id: string, status: FollowUp["status"]) => void;
+  onBack: () => void;
+}) {
   const meta = channelMeta[log.channel] ?? channelMeta.phone;
   const isPhone = looksLikePhone(log.caller);
+  const callFollowUps = followUps.filter((item) => item.callLogId === log.id && item.status === "open");
+  const actionItems = log.actionItems.length ? log.actionItems : callFollowUps.map((item) => item.title);
   return (
     <div key={log.id} className="anim-fade flex h-full min-h-0 flex-col overflow-y-auto">
       {/* Mobile back */}
@@ -4317,6 +4433,43 @@ function ConversationDetail({ log, onBack }: { log: CallLog; onBack: () => void 
       </div>
 
       <div className="flex-1 space-y-5 px-4 py-4 sm:px-6 sm:py-5">
+        {log.aiInsightSummary && (
+          <div className="rounded-xl border border-line bg-card-tint px-4 py-3">
+            <p className="mb-1 text-[11px] font-black uppercase tracking-wide text-ink-faint">
+              Manager summary
+            </p>
+            <p className="text-sm leading-relaxed text-ink-soft">{log.aiInsightSummary}</p>
+          </div>
+        )}
+        {actionItems.length > 0 && (
+          <div className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3">
+            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-teal">
+              <CalendarCheck className="h-3.5 w-3.5" />
+              Action items
+            </p>
+            <ul className="space-y-2">
+              {callFollowUps.length > 0
+                ? callFollowUps.map((item) => (
+                    <li key={item.id} className="flex items-start justify-between gap-3 text-sm text-[#0e4b4d]">
+                      <span>{item.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => onFollowUpStatus(item.id, "done")}
+                        className="press inline-flex h-7 flex-shrink-0 items-center gap-1 rounded-lg bg-ink px-2.5 text-[11px] font-black text-white"
+                      >
+                        <Check className="h-3 w-3" />
+                        Done
+                      </button>
+                    </li>
+                  ))
+                : actionItems.map((item) => (
+                    <li key={item} className="text-sm text-[#0e4b4d]">
+                      {item}
+                    </li>
+                  ))}
+            </ul>
+          </div>
+        )}
         {log.summary && (
           <div className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3">
             <p className="mb-1 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-teal">
@@ -4354,10 +4507,14 @@ const INBOX_FILTERS: { value: "all" | CallChannel; label: string }[] = [
 
 function UnifiedInbox({
   callLogs,
+  followUps,
+  onFollowUpStatus,
   selectedId,
   onSelect,
 }: {
   callLogs: CallLog[];
+  followUps: FollowUp[];
+  onFollowUpStatus: (id: string, status: FollowUp["status"]) => void;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
 }) {
@@ -4480,7 +4637,12 @@ function UnifiedInbox({
           }`}
         >
           {selected ? (
-            <ConversationDetail log={selected} onBack={() => setMobileDetail(false)} />
+            <ConversationDetail
+              log={selected}
+              followUps={followUps}
+              onFollowUpStatus={onFollowUpStatus}
+              onBack={() => setMobileDetail(false)}
+            />
           ) : (
             <div className="hidden h-full min-h-[240px] items-center justify-center px-4 lg:flex">
               <div className="text-center">

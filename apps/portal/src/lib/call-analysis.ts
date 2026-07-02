@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getServiceSupabase } from "@/lib/supabase";
+import { sendActionItemsEmail, syncFollowUpsFromAnalysis } from "@/lib/follow-ups-sync";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WiseCall after-call AI analysis
@@ -47,6 +48,7 @@ export type CallAnalysis = {
   booking_detected: boolean;
   unanswered_questions: string[];
   missed_opportunities: string[];
+  action_items: string[];
   recommended_follow_up: string;
   short_manager_summary: string;
   tags: string[];
@@ -119,6 +121,7 @@ function normalise(raw: Record<string, unknown>): CallAnalysis {
     booking_detected: raw.booking_detected === true,
     unanswered_questions: strList(raw.unanswered_questions),
     missed_opportunities: strList(raw.missed_opportunities),
+    action_items: strList(raw.action_items).slice(0, 5),
     recommended_follow_up: str("recommended_follow_up").slice(0, 500),
     short_manager_summary: str("short_manager_summary").slice(0, 500),
     tags: strList(raw.tags),
@@ -209,6 +212,12 @@ export async function analyzeTranscript(input: {
               description:
                 "Plain-English notes on lost sales or opportunities the business should know about. Empty array if none.",
             },
+            action_items: {
+              type: "array",
+              items: { type: "string" },
+              description:
+                "Concrete post-call tasks for staff (2-5 items max). e.g. 'Call back re refund', 'Book emergency slot'. Empty if none.",
+            },
             recommended_follow_up: {
               type: "string",
               description: "One plain-English next action for the team, or empty string.",
@@ -250,6 +259,7 @@ export async function analyzeTranscript(input: {
             "booking_detected",
             "unanswered_questions",
             "missed_opportunities",
+            "action_items",
             "recommended_follow_up",
             "short_manager_summary",
             "tags",
@@ -308,12 +318,48 @@ type AnalyzableRow = {
   profile_id: string | null;
   profile_name: string | null;
   caller_id: string | null;
+  contact_id: string | null;
   summary: string | null;
   transcript: string | null;
 };
 
 const ANALYZABLE_SELECT =
-  "id, profile_id, profile_name, caller_id, summary, transcript";
+  "id, profile_id, profile_name, caller_id, contact_id, summary, transcript";
+
+async function persistAnalysis(
+  callId: string,
+  row: AnalyzableRow,
+  analysis: CallAnalysis,
+): Promise<void> {
+  const supabase = getServiceSupabase();
+  if (!supabase) throw new Error("Supabase is not configured.");
+
+  const { error: updErr } = await supabase
+    .from("wisecall_call_logs")
+    .update(analysisToColumns(analysis))
+    .eq("id", callId);
+  if (updErr) throw new Error(`Could not store analysis for ${callId}: ${updErr.message}`);
+
+  await syncContactFromAnalysis(row, analysis);
+
+  if (row.profile_id) {
+    const actionItems = await syncFollowUpsFromAnalysis(
+      callId,
+      row.profile_id,
+      row.contact_id,
+      analysis,
+    );
+    if (actionItems.length) {
+      void sendActionItemsEmail({
+        callLogId: callId,
+        profileId: row.profile_id,
+        callerId: row.caller_id ?? "Unknown",
+        actionItems,
+        managerSummary: analysis.short_manager_summary,
+      });
+    }
+  }
+}
 
 async function syncContactFromAnalysis(
   row: AnalyzableRow,
@@ -374,13 +420,7 @@ export async function analyzeAndStoreCall(callId: string): Promise<CallAnalysis 
     businessName: row.profile_name ?? undefined,
   });
 
-  const { error: updErr } = await supabase
-    .from("wisecall_call_logs")
-    .update(analysisToColumns(analysis))
-    .eq("id", callId);
-  if (updErr) throw new Error(`Could not store analysis for ${callId}: ${updErr.message}`);
-
-  await syncContactFromAnalysis(row, analysis);
+  await persistAnalysis(callId, row, analysis);
 
   return analysis;
 }
@@ -434,15 +474,12 @@ export async function backfillAnalysisForUser(
         summary: row.summary ?? undefined,
         businessName: row.profile_name ?? undefined,
       });
-      const { error: updErr } = await supabase
-        .from("wisecall_call_logs")
-        .update(analysisToColumns(analysis))
-        .eq("id", row.id);
-      if (updErr) {
-        errors += 1;
-        console.error(`backfill store failed for ${row.id}:`, updErr.message);
-      } else {
+      try {
+        await persistAnalysis(row.id, row, analysis);
         analysed += 1;
+      } catch (err) {
+        errors += 1;
+        console.error(`backfill store failed for ${row.id}:`, (err as Error).message);
       }
     } catch (err) {
       errors += 1;

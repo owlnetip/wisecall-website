@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildMemoryBlock,
+  loadContactContext,
+  resolveContact,
+  triggerPortalAnalysis,
+} from "../_shared/contact-memory.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -293,7 +299,12 @@ async function fetchKbContext(profileId: string, query: string): Promise<string 
   }
 }
 
-async function callOpenAi(profile: any, history: ChatMessage[], kbContext: string | null) {
+async function callOpenAi(
+  profile: any,
+  history: ChatMessage[],
+  kbContext: string | null,
+  memoryBlock: string,
+) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return null;
 
@@ -301,6 +312,7 @@ async function callOpenAi(profile: any, history: ChatMessage[], kbContext: strin
   const messages = [
     { role: "system", content: prompt },
     ...(kbContext ? [{ role: "system", content: kbContext }] : []),
+    ...(memoryBlock ? [{ role: "system", content: memoryBlock }] : []),
     ...history.slice(-18).map((message) => ({
       role: message.role === "assistant" ? "assistant" : "user",
       content: message.content,
@@ -518,7 +530,13 @@ serve(async (req) => {
       .map((m) => m.content)
       .join(" ");
     const kbContext = await fetchKbContext(profile.id, recentUserTurns || message);
-    const reply = (await callOpenAi(profile, history, kbContext)) || fallbackReply(profile, collected);
+    const contactContext = await loadContactContext(supabase, profile.id, {
+      phone: collected.contact_phone as string | undefined,
+      email: collected.contact_email as string | undefined,
+    });
+    const memoryBlock = buildMemoryBlock(contactContext);
+    const reply =
+      (await callOpenAi(profile, history, kbContext, memoryBlock)) || fallbackReply(profile, collected);
     const updatedMessages = [...history, { role: "assistant", content: reply } as ChatMessage];
     const transcript = formatTranscript(updatedMessages);
 
@@ -547,7 +565,47 @@ serve(async (req) => {
     if (updateError) throw new Error(updateError.message || JSON.stringify(updateError));
     chatLog = updatedLog;
 
+    let contactId: string | null = (chatLog.contact_id as string | null) ?? null;
+    if (collected.contact_email || collected.contact_phone) {
+      const now = new Date().toISOString();
+      try {
+        const existing = await resolveContact(supabase, profile.id, {
+          phone: collected.contact_phone as string | undefined,
+          email: collected.contact_email as string | undefined,
+        });
+        if (existing?.id) {
+          const patch: Record<string, unknown> = { last_seen: now, updated_at: now };
+          if (collected.contact_name && !existing.name) patch.name = collected.contact_name;
+          await supabase.from("wisecall_contacts").update(patch).eq("id", existing.id);
+          contactId = existing.id as string;
+        } else {
+          const { data: created } = await supabase
+            .from("wisecall_contacts")
+            .insert({
+              profile_id: profile.id,
+              phone: (collected.contact_phone as string) || null,
+              email: (collected.contact_email as string) || null,
+              name: (collected.contact_name as string) || null,
+              first_seen: now,
+              last_seen: now,
+            })
+            .select("id")
+            .single();
+          contactId = created?.id ?? null;
+        }
+        if (contactId && contactId !== chatLog.contact_id) {
+          await supabase.from("wisecall_call_logs").update({ contact_id: contactId }).eq("id", chatLog.id);
+        }
+      } catch (e) {
+        console.error("[wisecall-live-chat] contact upsert:", (e as Error).message);
+      }
+    }
+
     const emailSent = await maybeSendLeadEmail(supabase, profile, chatLog, collected, transcript);
+
+    if (chatLog.id && (emailSent || collected.contact_email || collected.contact_phone)) {
+      void triggerPortalAnalysis(chatLog.id as string);
+    }
 
     return jsonResponse({
       session_id: chatLog.call_id,

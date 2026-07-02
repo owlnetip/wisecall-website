@@ -9,6 +9,7 @@ const portalLib = join(root, "apps", "portal", "src", "lib");
 const copies = [
   ["contactMemory.js", "contactMemory.runtime.js"],
   ["integrationWebhooks.js", "integrationWebhooks.runtime.js"],
+  ["portalWebhook.js", "portalWebhook.runtime.js"],
   ["callSession.js", "callSession.runtime.js"],
   ["callerIntake.js", "callerIntake.runtime.js"],
 ];

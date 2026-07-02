@@ -2,7 +2,7 @@
 // before / during / after call lifecycle.
 
 const { getSupabase } = require("./supabase");
-const { lookupContact, buildContextBlock, upsertContact } = require("./contactMemory");
+const { loadContactContext, buildContextBlock, upsertContact } = require("./contactMemory");
 const {
   runBeforeCallWebhooks,
   buildDuringCallTools,
@@ -10,6 +10,7 @@ const {
   runAfterCallWebhooks,
 } = require("./integrationWebhooks");
 const { sendCallEmailSummary } = require("./emailSummary");
+const { triggerPortalAnalysis } = require("./portalWebhook");
 const { buildSystemPrompt } = require("../prompt");
 const { saveCallLog } = require("../saveCallLog");
 
@@ -65,12 +66,12 @@ async function prepareCallSession(profile, { callId, callerId }) {
     return { allowed: false, reason: "trial_cap" };
   }
 
-  const [contact, pre] = await Promise.all([
-    lookupContact(profileId, callerId),
+  const [contactContext, pre] = await Promise.all([
+    loadContactContext(profileId, { phone: callerId }),
     runBeforeCallWebhooks(metadata, context),
   ]);
 
-  const contactBlock = buildContextBlock(contact);
+  const contactBlock = buildContextBlock(contactContext);
   const systemPrompt = buildSystemPrompt(profile, {
     contactBlock,
     integrationBlock: pre.contextBlock,
@@ -82,7 +83,8 @@ async function prepareCallSession(profile, { callId, callerId }) {
   return {
     allowed: true,
     profile,
-    contact,
+    contact: contactContext.contact,
+    contactContext,
     context,
     systemPrompt,
     contactBlock,
@@ -178,6 +180,10 @@ async function finalizeCallSession(
     .catch((err) => {
       console.error("[callSession] email summary failed:", err.message);
     });
+
+  triggerPortalAnalysis(callLogId).catch((err) => {
+    console.error("[callSession] portal analysis trigger failed:", err.message);
+  });
 
   return { callLogId };
 }
