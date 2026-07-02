@@ -3834,6 +3834,12 @@ function AiInsights({
 
       {/* Secondary metrics: present but not shouting. */}
       <div className="mt-4 flex flex-wrap gap-2">
+        <StatChip
+          icon={Bot}
+          label="Handled by AI"
+          value={analysedKnown ? `${i.handledByAiRate}%` : "—"}
+          title="Calls fully handled by your AI without transfer or callback"
+        />
         <StatChip icon={TrendingUp} label="Conversion" value={`${i.conversionRate}%`} />
         <StatChip icon={PhoneMissed} label="Missed / escalated" value={i.missedOrEscalated} />
         <StatChip icon={Flame} label="Urgent" value={i.urgentCount} />
@@ -4005,13 +4011,18 @@ function StatChip({
   icon: Icon,
   label,
   value,
+  title,
 }: {
   icon: LucideIcon;
   label: string;
   value: number | string;
+  title?: string;
 }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1.5 text-xs font-semibold text-ink-soft shadow-card">
+    <span
+      title={title}
+      className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1.5 text-xs font-semibold text-ink-soft shadow-card"
+    >
       <Icon className="h-3.5 w-3.5 text-ink-faint" />
       {label}
       <span className="font-black tabular-nums text-ink">{value}</span>

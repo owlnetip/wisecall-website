@@ -70,6 +70,8 @@ export type DashboardInsights = {
   leadCount: number;
   bookingCount: number;
   conversionRate: number; // 0..100, (bookings + leads) / total calls
+  handledByAi: number; // analysed calls where the AI fully resolved without human help
+  handledByAiRate: number; // 0..100, handledByAi / analysedCalls
   topReasons: LabelCount[];
   unansweredQuestions: CallReference[];
   opportunities: CallReference[];
@@ -116,6 +118,8 @@ export function emptyInsights(range: InsightsRange, hasAnyCalls: boolean): Dashb
     leadCount: 0,
     bookingCount: 0,
     conversionRate: 0,
+    handledByAi: 0,
+    handledByAiRate: 0,
     topReasons: [],
     unansweredQuestions: [],
     opportunities: [],
@@ -124,6 +128,11 @@ export function emptyInsights(range: InsightsRange, hasAnyCalls: boolean): Dashb
       ? "No calls in this period yet. Try a longer date range."
       : "Once your AI agent has handled calls, insights will appear here.",
   };
+}
+
+// Fully handled by the AI — no transfer, callback, or escalation needed.
+function isHandledByAi(row: InsightRow): boolean {
+  return row.ai_analysis_json?.outcome === "resolved";
 }
 
 // "Missed / escalated" = the agent could not fully resolve it for the caller.
@@ -155,6 +164,12 @@ function buildSummary(i: DashboardInsights): string {
       bits.push(`${i.bookingCount} booking${i.bookingCount === 1 ? "" : "s"}`);
     if (i.leadCount > 0) bits.push(`${i.leadCount} new lead${i.leadCount === 1 ? "" : "s"}`);
     parts.push(`It captured ${bits.join(" and ")} (${i.conversionRate}% conversion).`);
+  }
+
+  if (i.analysedCalls > 0) {
+    parts.push(
+      `It fully handled ${i.handledByAiRate}% of calls without needing you (${i.handledByAi} of ${i.analysedCalls}).`,
+    );
   }
 
   const needsAttention = i.complaintCount + i.urgentCount + i.unansweredQuestions.length;
@@ -245,6 +260,7 @@ export async function getInsightsForUser(
     if (row.complaint_detected) result.complaintCount += 1;
     if (row.lead_detected) result.leadCount += 1;
     if (row.booking_detected) result.bookingCount += 1;
+    if (isHandledByAi(row)) result.handledByAi += 1;
 
     const reason = (row.intent_category || "").trim();
     if (reason) reasons.set(reason, (reasons.get(reason) ?? 0) + 1);
@@ -308,6 +324,10 @@ export async function getInsightsForUser(
   const conversions = result.bookingCount + result.leadCount;
   result.conversionRate =
     result.totalCalls > 0 ? Math.round((conversions / result.totalCalls) * 100) : 0;
+  result.handledByAiRate =
+    result.analysedCalls > 0
+      ? Math.round((result.handledByAi / result.analysedCalls) * 100)
+      : 0;
 
   result.summary = buildSummary(result);
   return result;
