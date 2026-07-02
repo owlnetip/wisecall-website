@@ -167,6 +167,103 @@
     @media (max-width: 1023px) {
       .hero-demo-panel .orb-stage { width: 200px; height: 200px; }
     }
+    /* Integrations hub */
+    .integrations-hub {
+      position: relative;
+      min-height: 22rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .integrations-orbit {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed rgba(125, 232, 235, 0.16);
+      pointer-events: none;
+    }
+    .integrations-orbit--outer { width: min(100%, 28rem); height: min(100%, 28rem); }
+    .integrations-orbit--inner { width: min(72%, 20rem); height: min(72%, 20rem); }
+    .integrations-core {
+      position: relative;
+      z-index: 2;
+      width: 5.5rem;
+      height: 5.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(125,232,235,0.22), rgba(93,191,194,0.08));
+      border: 1px solid rgba(125, 232, 235, 0.35);
+      box-shadow: 0 0 40px rgba(125, 232, 235, 0.14);
+    }
+    .integrations-core img { width: 3rem; height: auto; }
+    .integration-badge {
+      position: absolute;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-height: 2.65rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(125,232,235,0.14);
+      backdrop-filter: blur(8px);
+      color: rgba(255,255,255,0.88);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+      transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .integration-badge:hover {
+      transform: translateY(-2px);
+      border-color: rgba(125,232,235,0.35);
+      background: rgba(255,255,255,0.09);
+    }
+    .integration-badge img {
+      width: 1.15rem;
+      height: 1.15rem;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    .integration-badge--dentally { color: #8ef0ea; border-color: rgba(0, 178, 169, 0.28); }
+    .integration-badge--reapit { color: #d8c7ff; border-color: rgba(124, 77, 255, 0.28); }
+    @media (min-width: 768px) {
+      .integration-badge--pos-1 { top: 4%; left: 50%; transform: translateX(-50%); }
+      .integration-badge--pos-2 { top: 18%; right: 4%; }
+      .integration-badge--pos-3 { top: 50%; right: -2%; transform: translateY(-50%); }
+      .integration-badge--pos-4 { bottom: 12%; right: 8%; }
+      .integration-badge--pos-5 { bottom: 4%; left: 50%; transform: translateX(-50%); }
+      .integration-badge--pos-6 { bottom: 12%; left: 8%; }
+      .integration-badge--pos-7 { top: 50%; left: -2%; transform: translateY(-50%); }
+      .integration-badge--pos-8 { top: 18%; left: 4%; }
+      .integration-badge--pos-1:hover,
+      .integration-badge--pos-5:hover { transform: translateX(-50%) translateY(-2px); }
+      .integration-badge--pos-3:hover,
+      .integration-badge--pos-7:hover { transform: translateY(-50%) translateY(-2px); }
+    }
+    @media (max-width: 767px) {
+      .integrations-hub {
+        min-height: auto;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+        padding-top: 0.5rem;
+      }
+      .integrations-orbit,
+      .integrations-core { display: none; }
+      .integration-badge {
+        position: static;
+        transform: none !important;
+        justify-content: center;
+        white-space: normal;
+        text-align: center;
+        min-height: 3rem;
+        font-size: 0.74rem;
+      }
+    }
   </style>
 
   <script>
@@ -195,6 +292,7 @@
         <a href="#how-it-works" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
         <a href="#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
         <a href="#industries" class="hover:text-[#7de8eb] transition-colors">Industries</a>
+        <a href="#integrations" class="hover:text-[#7de8eb] transition-colors">Integrations</a>
         <a href="/compare/ai-receptionist-uk-comparison/" class="hover:text-[#7de8eb] transition-colors">Compare</a>
         <a href="#partners" class="hover:text-[#7de8eb] transition-colors">Partners</a>
         <a href="#faq" class="hover:text-[#7de8eb] transition-colors">FAQ</a>
@@ -216,6 +314,7 @@
         <a href="#how-it-works" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How It Works</a>
         <a href="#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
         <a href="#industries" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Industries</a>
+        <a href="#integrations" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Integrations</a>
         <a href="/compare/ai-receptionist-uk-comparison/" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Compare</a>
         <a href="#partners" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Partners</a>
         <a href="#faq" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">FAQ</a>
@@ -655,6 +754,99 @@
           <h3 class="text-lg font-semibold text-white mb-2">Care</h3>
           <p class="text-white/60 text-sm leading-relaxed flex-1">Answer family enquiries with care, capture details sensitively and pass them to the right coordinator with a clear summary.</p>
           <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors mt-4">Find out more &rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── INTEGRATIONS ───── -->
+  <section class="relative py-24 px-6 overflow-hidden" id="integrations">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/35 to-[#172929] pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
+    <div class="relative z-10 max-w-7xl mx-auto">
+      <div class="motion text-center mb-12 md:mb-16" data-anim="fade-up">
+        <span class="text-sm text-[#7de8eb] font-semibold">Integrations</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Connects to the tools your team already uses</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">WiseCall fits around your calendars, CRMs, practice systems and team alerts. Bookings, leads and call summaries land where your people work, not in another inbox to babysit.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-[1fr_1.05fr] gap-10 lg:gap-14 items-center mb-12">
+        <div class="motion integrations-hub" data-anim="scale-in" aria-label="WiseCall connects to common business tools">
+          <div class="integrations-orbit integrations-orbit--outer"></div>
+          <div class="integrations-orbit integrations-orbit--inner"></div>
+          <div class="integrations-core" aria-hidden="true">
+            <img src="owl-logo.png" alt="">
+          </div>
+
+          <span class="integration-badge integration-badge--dentally integration-badge--pos-1" title="Live appointment booking for UK dental practices">
+            <span class="inline-flex h-[1.15rem] w-[1.15rem] items-center justify-center rounded-full bg-[#00b2a9]/20 text-[0.62rem] font-black text-[#8ef0ea]">D</span>
+            Dentally
+          </span>
+          <span class="integration-badge integration-badge--pos-2">
+            <img src="https://cdn.simpleicons.org/googlecalendar/7de8eb" alt="" loading="lazy" width="18" height="18">
+            Google Calendar
+          </span>
+          <span class="integration-badge integration-badge--pos-3">
+            <img src="https://cdn.simpleicons.org/microsoft/7de8eb" alt="" loading="lazy" width="18" height="18">
+            Microsoft 365
+          </span>
+          <span class="integration-badge integration-badge--pos-4">
+            <img src="https://cdn.simpleicons.org/hubspot/7de8eb" alt="" loading="lazy" width="18" height="18">
+            HubSpot
+          </span>
+          <span class="integration-badge integration-badge--pos-5">
+            <img src="https://cdn.simpleicons.org/clio/7de8eb" alt="" loading="lazy" width="18" height="18">
+            Clio
+          </span>
+          <span class="integration-badge integration-badge--reapit integration-badge--pos-6" title="Estate agency CRM workflows">
+            <span class="inline-flex h-[1.15rem] w-[1.15rem] items-center justify-center rounded-full bg-[#7c4dff]/20 text-[0.58rem] font-black text-[#d8c7ff]">R</span>
+            Reapit
+          </span>
+          <span class="integration-badge integration-badge--pos-7">
+            <img src="https://cdn.simpleicons.org/zapier/7de8eb" alt="" loading="lazy" width="18" height="18">
+            Zapier
+          </span>
+          <span class="integration-badge integration-badge--pos-8">
+            <img src="https://cdn.simpleicons.org/slack/7de8eb" alt="" loading="lazy" width="18" height="18">
+            Slack
+          </span>
+        </div>
+
+        <div class="motion space-y-5" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center">
+                <i data-lucide="calendar-check" class="w-5 h-5 text-[#7de8eb]"></i>
+              </div>
+              <h3 class="text-lg font-semibold text-white">Calendars and bookings</h3>
+            </div>
+            <p class="text-white/60 text-sm leading-relaxed">Check availability, book appointments and send confirmations into Google Calendar, Microsoft 365 and practice diaries such as Dentally.</p>
+          </div>
+          <div class="rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center">
+                <i data-lucide="database" class="w-5 h-5 text-[#7de8eb]"></i>
+              </div>
+              <h3 class="text-lg font-semibold text-white">CRMs and case systems</h3>
+            </div>
+            <p class="text-white/60 text-sm leading-relaxed">Push structured caller details, summaries and next actions into HubSpot, Salesforce, Clio, Reapit and the systems your team already runs on.</p>
+          </div>
+          <div class="rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center">
+                <i data-lucide="webhook" class="w-5 h-5 text-[#7de8eb]"></i>
+              </div>
+              <h3 class="text-lg font-semibold text-white">Workflows and custom APIs</h3>
+            </div>
+            <p class="text-white/60 text-sm leading-relaxed">Use Zapier, Slack and webhooks for team alerts. Need something bespoke? WiseCall can call APIs during the call and after it ends.</p>
+          </div>
+          <p class="text-white/45 text-xs leading-relaxed px-1">Logos shown are common systems WiseCall customers connect to. Setup depends on your stack, APIs and the workflow you need. We confirm the exact integration during onboarding.</p>
+        </div>
+      </div>
+
+      <div class="motion text-center" data-anim="fade-up">
+        <a href="/integrations/" class="mbtn inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]">
+          See all integrations <i data-lucide="arrow-right" class="w-5 h-5"></i>
         </a>
       </div>
     </div>
