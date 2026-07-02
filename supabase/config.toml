@@ -34,3 +34,6 @@ verify_jwt = false
 # the service-role key. The function body rejects non-service-role callers.
 [functions.wisecall-provision-sms]
 verify_jwt = false
+
+[functions.wisecall-action-items-email]
+verify_jwt = false
