@@ -13,19 +13,21 @@ export type PreviewSessionResult =
   | { ok: true; clientSecret: string; greeting: string; agentName: string }
   | { ok: false; error: string };
 
+// Default browser preview voice — marin is the closest OpenAI Realtime stand-in
+// to our default Cartesia voice (Gemma, warm British female).
+const DEFAULT_PREVIEW_VOICE = "marin";
+
 // The live phone pipeline uses Cartesia voices, but OpenAI Realtime only ships
-// its own 10 built-in voices (no way to plug a Cartesia voice ID into it), so
-// each Cartesia voice gets its own closest-matching OpenAI stand-in - matched
-// on tone/character rather than just gender, so all six sound distinct in
-// preview. marin/cedar are OpenAI's highest-quality voices, used for the two
-// default agent voices (Gemma, Hugo).
+// its own built-in voices (no way to plug a Cartesia voice ID into it), so
+// each Cartesia voice gets its own closest-matching OpenAI stand-in. For the
+// in-browser test call we bias toward British-sounding stand-ins (marin/cedar).
 const PREVIEW_VOICE: Record<string, string> = {
-  Gemma: "marin", // warm British female → marin (warm, natural)
-  Victoria: "sage", // polished, professional female → sage (composed, measured)
-  Julia: "coral", // clear, approachable female → coral (friendly, clear)
-  Hugo: "cedar", // friendly British male → cedar (warm, natural)
-  Archie: "verse", // bright, upbeat male → verse (energetic)
-  Benedict: "ash", // calm, reassuring male → ash (calm, even)
+  Gemma: "marin",
+  Hugo: "cedar",
+  Victoria: "marin",
+  Julia: "marin",
+  Archie: "cedar",
+  Benedict: "cedar",
 };
 
 function composePreviewInstructions(profile: {
@@ -57,6 +59,7 @@ function composePreviewInstructions(profile: {
     "This is a browser-based test call from the business owner previewing their agent. Behave EXACTLY as you would on a real inbound phone call - same tone, same rules, same knowledge. Do not mention that this is a preview or a test.",
     "",
     "Voice call style:",
+    "- Speak with a clear British English accent — UK pronunciation, phrasing and vocabulary.",
     "- Speak naturally and conversationally, like a real UK receptionist on the phone.",
     "- Keep answers short - one to three sentences - then let the caller speak.",
     "- Never invent prices, availability or bookings you cannot verify.",
@@ -109,8 +112,8 @@ export async function startAgentPreview(agentId: string): Promise<PreviewSession
     metadata,
   });
 
-  const voiceName = typeof metadata.voice === "string" ? metadata.voice : "";
-  const previewVoice = PREVIEW_VOICE[voiceName] ?? "marin";
+  const voiceName = typeof metadata.voice === "string" ? metadata.voice.trim() : "";
+  const previewVoice = PREVIEW_VOICE[voiceName] ?? DEFAULT_PREVIEW_VOICE;
 
   try {
     const res = await fetch("https://api.openai.com/v1/realtime/client_secrets", {

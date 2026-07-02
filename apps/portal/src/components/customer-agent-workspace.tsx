@@ -2512,6 +2512,20 @@ function AssistantDetail({
 }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
+
   return (
     <div className="anim-rise mx-auto max-w-5xl">
       <button
@@ -2553,32 +2567,47 @@ function AssistantDetail({
             <form action={impersonateUser.bind(null, assistant.ownerId)}>
               <button
                 type="submit"
-                className="press inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#263130]"
+                className="press inline-flex h-9 max-w-[11rem] items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-black text-white transition hover:bg-[#263130]"
                 title={`Open ${assistant.ownerEmail ?? "this customer"}'s account`}
               >
-                <LogOut className="h-4 w-4 rotate-180" />
-                Log in as {assistant.ownerEmail ?? "owner"}
+                <LogOut className="h-3.5 w-3.5 shrink-0 rotate-180" />
+                <span className="truncate">View as {assistant.ownerEmail ?? "owner"}</span>
               </button>
             </form>
           ) : null}
           {onDelete ? (
-            <button
-              type="button"
-              onClick={() => setDeleteConfirm(true)}
-              disabled={isDeleting}
-              className="press inline-flex items-center gap-2 rounded-lg border border-danger/20 bg-danger-wash px-4 py-2.5 text-sm font-black text-danger transition hover:bg-[#fbdad6] disabled:opacity-60"
-            >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              {isDeleting ? "Deleting…" : "Delete agent"}
-            </button>
+            <div ref={menuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                disabled={isDeleting}
+                className="press flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-card-tint disabled:opacity-60"
+                aria-label="More actions"
+                aria-expanded={menuOpen}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-danger" />
+                ) : (
+                  <MoreHorizontal className="h-5 w-5" />
+                )}
+              </button>
+              {menuOpen && (
+                <div className="anim-fade absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-line bg-white py-1 shadow-float">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setDeleteConfirm(true);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-bold text-danger transition hover:bg-danger-wash"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete agent
+                  </button>
+                </div>
+              )}
+            </div>
           ) : null}
-          <button
-            type="button"
-            className="press flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-card-tint"
-            aria-label="More actions"
-          >
-            <MoreHorizontal className="h-5 w-5" />
-          </button>
         </div>
       </div>
 
@@ -4989,15 +5018,7 @@ function RoutingCard({
             />
           ) : null}
         </div>
-        {live ? (
-          <a
-            href={`tel:${routing.number.replace(/[^\d+]/g, "")}`}
-            className="press inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-[#7de8eb] px-4 py-2.5 text-sm font-black text-[#0c1717] shadow-card transition hover:opacity-90"
-          >
-            <Phone className="h-4 w-4" />
-            Call to test
-          </a>
-        ) : (
+        {live ? null : (
           <button
             type="button"
             onClick={onProvision}
