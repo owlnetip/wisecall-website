@@ -211,6 +211,56 @@ Buttons (primary cyan-on-dark / dark-on-light, loud demo variant with pulse) · 
 
 ---
 
+## 11a. Proof components — built, NOT deployed (2026-07-02)
+
+**Status: real pilot data checked (Supabase, live production) — 319 total AI calls, 290 in the last 30 days, 9 active agent profiles, 4 paying customers, clear growth curve (~10/week in April → ~100/week by late June). No customer quotes, named case studies, or reviews exist yet. Luke's call: too early to publish raw counts publicly — could undercut the premium positioning rather than build trust — so these components are built and ready, but intentionally NOT wired into any live page.**
+
+Do not add empty "proof coming soon" sections to `index.html`, `dental.html`, or the generator — Luke explicitly removed exactly that pattern site-wide on 2026-06-30 (the `audioAndCasePlaceholders` "Placeholder" cards, the "Verified Proof Will Live Here" case-studies page). These snippets exist so that the moment there's a real quote, a real named pilot result, or the call-volume story is worth telling, wiring it in is a five-minute copy-paste — not a design job.
+
+All three match the existing card system (`rounded-2xl bg-white/5 border border-[#7de8eb]/10` for standard, `card-strong` gradient border for the featured/emphasis variant) and the `[#7de8eb]` accent, so they drop into any section without further styling work.
+
+**1. Stats band** — for real, defensible numbers only (once volume justifies it). Three or four cards in a row:
+```html
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+  <div class="rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center">
+    <div class="text-3xl font-black text-[#7de8eb] mb-1">[NUMBER]</div>
+    <div class="text-white/60 text-sm">[metric label, e.g. "calls answered this month"]</div>
+  </div>
+  <!-- repeat per stat -->
+</div>
+```
+
+**2. Testimonial / quote card** — for a real named customer quote once one exists (never anonymous, never invented):
+```html
+<div class="rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-7 max-w-lg">
+  <p class="text-white/85 text-lg leading-relaxed mb-5">"[Real customer quote — their words, not marketing copy.]"</p>
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-full bg-[#7de8eb]/15 flex items-center justify-center text-[#7de8eb] font-bold">[Initial]</div>
+    <div>
+      <div class="text-white font-semibold text-sm">[Name, role]</div>
+      <div class="text-white/50 text-xs">[Business name, industry]</div>
+    </div>
+  </div>
+</div>
+```
+
+**3. Pilot-result card** — the strongest format once a named pilot has run its 7 days (e.g. Grace / Excel Telecom is the natural first candidate — see `project_wisecall_grace_excel_kb`):
+```html
+<div class="card-strong p-7 max-w-md">
+  <div class="text-sm text-[#7de8eb] font-semibold mb-1">7-day pilot result</div>
+  <h3 class="text-xl font-bold text-white mb-5">[Business name]</h3>
+  <div class="space-y-3">
+    <div class="flex justify-between text-sm"><span class="text-white/60">Calls answered</span><span class="text-white font-semibold">[N]</span></div>
+    <div class="flex justify-between text-sm"><span class="text-white/60">Enquiries captured</span><span class="text-white font-semibold">[N]</span></div>
+    <div class="flex justify-between text-sm"><span class="text-white/60">Missed calls before WiseCall</span><span class="text-white font-semibold">[N]/week</span></div>
+  </div>
+</div>
+```
+
+**What to collect per pilot, ready for the moment it exists:** calls answered, enquiries captured, appointments booked, reception hours saved (self-reported is fine), a one-line quote from the owner/manager, permission to name the business. The Grace/Excel Telecom pilot (`project_wisecall_grace_excel_kb`, live agent, 303 KB articles already ingested) is the most mature relationship and the natural first pilot-result card once it's run its course.
+
+---
+
 ## 12. Mobile
 
 Design mobile-first; most SME owners will hit this site on a phone, and the demo is *literally a phone call* — mobile is the home-field advantage.
@@ -269,5 +319,5 @@ WiseCall's website should feel like the product: **calm competence while phones 
 8. ~~**Ship the two highest-intent compare pages** (answering service, voicemail).~~ — **DONE 2026-07-01.** Built `/compare/wisecall-vs-voicemail` and `/compare/wisecall-vs-answering-service` (data-driven, `renderComparisonPage()` + `comparisonPages` in `scripts/seo-content.mjs`), each with an honest table, FAQ, and cross-links from `/pricing` and the comparison hub. Shipped in PR #28.
 
 **Workflow note (2026-07-01):** the local working copy was checked out on the Cursor cloud agent's own branch (`cursor/cloud-agent-1782853965452-jqsru`, which also carries an unrelated "AI Marketing Studio" app) rather than `main`. All work above was done on a fresh branch `wisecall-pricing-fix` cut from `origin/main` and opened as **PR #28** (github.com/owlnetip/wisecall-website/pull/28) — not committed to the Cursor branch or pushed straight to `main`. The original branch and its pre-existing uncommitted WIP (WhatsApp/SMS Supabase functions, a docs file) were fully restored afterward via `git stash` — untouched, not part of this PR. Future sessions: check `git branch --show-current` before committing; if it's a `cursor/cloud-agent-*` branch, branch off `origin/main` instead.
-9. **Proof system** slots + pilot-results template; start collecting from every pilot (Grace/Excel first).
-10. **Mobile pass**: sticky CTA bar, tap-to-call dominance, swipeable cards.
+9. ~~**Proof system** slots + pilot-results template~~ — **Components built 2026-07-02, deliberately NOT deployed** (see §11a). Checked real production data first rather than guessing: 319 calls total / 290 in last 30 days / 4 paying customers, clear growth curve, no quotes or named results yet. Luke's call: too early to publish counts publicly. Three ready-to-paste components (stats band, testimonial card, pilot-result card) documented in §11a with exact HTML matching the site's card system — wiring one in is copy-paste once real data exists. Start collecting from every pilot (Grace/Excel first).
+10. **Mobile pass**: sticky CTA bar shipped (PR #29). Still open: tap-to-call dominance in the mobile hero, swipeable cards for industry/use-case grids.
