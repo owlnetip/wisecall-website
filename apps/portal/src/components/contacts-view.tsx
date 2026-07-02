@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { EnrichedContact } from "@/lib/enrich-contacts";
 import type { CallLog } from "@/lib/agents";
+import type { FollowUp } from "@/lib/follow-ups";
 import { updateContactNotes } from "@/app/actions/contacts";
 
 function initials(name: string, phone: string): string {
@@ -106,11 +107,13 @@ function ContactRow({
 function ContactDetail({
   contact,
   callLogs,
+  followUps,
   onBack,
   showBack,
 }: {
   contact: EnrichedContact;
   callLogs: CallLog[];
+  followUps: FollowUp[];
   onBack?: () => void;
   showBack?: boolean;
 }) {
@@ -130,11 +133,15 @@ function ContactDetail({
   const phoneKey = contact.phone.replace(/\s/g, "");
   const emailKey = contact.email.toLowerCase();
   const relatedCalls = callLogs.filter((l) => {
+    if (l.contactId && l.contactId === contact.id) return true;
     const caller = (l.caller || "").trim();
     if (phoneKey && caller.replace(/\s/g, "") === phoneKey) return true;
     if (emailKey && caller.toLowerCase() === emailKey) return true;
     return false;
   });
+  const openFollowUps = followUps.filter(
+    (item) => item.contactId === contact.id && item.status === "open",
+  );
 
   const displayName = contactDisplayName(contact);
 
@@ -266,6 +273,22 @@ function ContactDetail({
           </div>
         </div>
 
+        {openFollowUps.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-bold text-ink">Open follow-ups ({openFollowUps.length})</p>
+            <ul className="space-y-2">
+              {openFollowUps.map((item) => (
+                <li
+                  key={item.id}
+                  className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3 text-sm text-[#0e4b4d]"
+                >
+                  {item.title}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {relatedCalls.length > 0 && (
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-ink">
@@ -304,9 +327,11 @@ function ContactDetail({
 export function ContactsView({
   contacts,
   callLogs,
+  followUps = [],
 }: {
   contacts: EnrichedContact[];
   callLogs: CallLog[];
+  followUps?: FollowUp[];
 }) {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(contacts[0]?.id ?? null);
@@ -395,6 +420,7 @@ export function ContactsView({
           <ContactDetail
             contact={selected}
             callLogs={callLogs}
+            followUps={followUps}
             showBack
             onBack={backToList}
           />

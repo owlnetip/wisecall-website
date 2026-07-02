@@ -253,12 +253,15 @@ export type CallLog = {
   profileId: string;
   agentName: string;
   caller: string;
+  contactId: string;
   summary: string;
   outcome: string;
   startedAt: string; // ISO
   durationLabel: string;
   transcript: string;
   channel: CallChannel;
+  aiInsightSummary: string;
+  actionItems: string[];
 };
 
 type CallRow = {
@@ -266,6 +269,7 @@ type CallRow = {
   profile_id: string | null;
   profile_name: string | null;
   caller_id: string | null;
+  contact_id: string | null;
   summary: string | null;
   outcome: string | null;
   transcript: string | null;
@@ -273,6 +277,8 @@ type CallRow = {
   finished_at: string | null;
   created_at: string | null;
   metadata: Record<string, unknown> | null;
+  ai_insight_summary: string | null;
+  ai_analysis_json: Record<string, unknown> | null;
 };
 
 const OUTCOME_LABELS: Record<string, string> = {
@@ -351,7 +357,7 @@ export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
   const { data, error } = await supabase
     .from("wisecall_call_logs")
     .select(
-      "id, profile_id, profile_name, caller_id, summary, outcome, transcript, started_at, finished_at, created_at, metadata",
+      "id, profile_id, profile_name, caller_id, contact_id, summary, outcome, transcript, started_at, finished_at, created_at, metadata, ai_insight_summary, ai_analysis_json",
     )
     .in("profile_id", ids)
     .order("created_at", { ascending: false })
@@ -365,6 +371,17 @@ export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
   return (data as CallRow[]).map(mapCallRow);
 }
 
+function actionItemsFromRow(row: CallRow): string[] {
+  const json = row.ai_analysis_json;
+  if (!json || typeof json !== "object") return [];
+  const items = json.action_items;
+  if (Array.isArray(items)) {
+    return items.filter((v): v is string => typeof v === "string" && Boolean(v.trim())).slice(0, 5);
+  }
+  const legacy = json.recommended_follow_up;
+  return typeof legacy === "string" && legacy.trim() ? [legacy.trim()] : [];
+}
+
 function mapCallRow(row: CallRow): CallLog {
   const channel = channelFromRow(row);
   return {
@@ -372,12 +389,15 @@ function mapCallRow(row: CallRow): CallLog {
     profileId: row.profile_id || "",
     agentName: row.profile_name || "Agent",
     caller: row.caller_id || "Unknown",
+    contactId: row.contact_id || "",
     summary: row.summary || "",
     outcome: row.outcome || "",
     startedAt: row.started_at || row.created_at || "",
     durationLabel: duration(row.started_at, row.finished_at),
     transcript: row.transcript || "",
     channel,
+    aiInsightSummary: row.ai_insight_summary || "",
+    actionItems: actionItemsFromRow(row),
   };
 }
 
@@ -385,7 +405,7 @@ const PROFILE_SELECT =
   "id, slug, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, after_hours_message, business_context, timezone, metadata";
 
 const CALL_SELECT =
-  "id, profile_id, profile_name, caller_id, summary, outcome, transcript, started_at, finished_at, created_at";
+  "id, profile_id, profile_name, caller_id, contact_id, summary, outcome, transcript, started_at, finished_at, created_at, metadata, ai_insight_summary, ai_analysis_json";
 
 // Admin only: every agent across all customers, as full editable Assistants,
 // with the owner's email resolved for display. Service-role only.

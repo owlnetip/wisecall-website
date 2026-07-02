@@ -14,6 +14,7 @@ import {
 import { backfillInferredContactNames } from "@/app/actions/contacts";
 import { isAdmin } from "@/lib/admin";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
+import { getFollowUpsForUser } from "@/lib/follow-ups";
 import { getInsightsForUser, emptyInsights } from "@/lib/insights";
 import { isAnalysisConfigured } from "@/lib/call-analysis";
 
@@ -79,7 +80,8 @@ export default async function DashboardPage() {
     }
   };
 
-  const [agents, callLogs, contacts, trial, insights, smsNumbers, whatsappNumbers] = await Promise.all([
+  const [agents, callLogs, contacts, trial, insights, smsNumbers, whatsappNumbers, followUps] =
+    await Promise.all([
     safe("agents", getAgentsForUser(effectiveUserId), []),
     safe("callLogs", getCallLogsForUser(effectiveUserId), []),
     safe("contacts", getContactsForUser(effectiveUserId), []),
@@ -88,6 +90,7 @@ export default async function DashboardPage() {
     safe("insights", getInsightsForUser(effectiveUserId, "7d"), emptyInsights("7d", false)),
     safe("smsNumbers", getSmsNumbersForUser(effectiveUserId), []),
     safe("whatsappNumbers", getWhatsappNumbersForUser(effectiveUserId), []),
+    safe("followUps", getFollowUpsForUser(effectiveUserId), []),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.
@@ -128,6 +131,7 @@ export default async function DashboardPage() {
       impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}
+      initialFollowUps={followUps}
     />
   );
 }

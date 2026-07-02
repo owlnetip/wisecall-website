@@ -12,6 +12,7 @@
 //   Twilio Console → Messaging → Senders → WhatsApp sender → Webhook URL
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { buildMemoryBlock, loadContactContext, triggerPortalAnalysis } from "../_shared/contact-memory.ts";
 
 const CLAUDE_MODEL = "claude-opus-4-8";
 const KB_MIN_SIMILARITY = 0.35;
@@ -300,21 +301,9 @@ Deno.serve(async (req) => {
     const businessName =
       profile.business_name || profile.clinic_name || profile.profile_name || "the business";
 
-    const { data: contact } = await supabase
-      .from("wisecall_contacts")
-      .select("id, name, call_count, email_count, last_seen, ai_summary, notes")
-      .eq("profile_id", profile.id)
-      .eq("phone", fromNumber)
-      .maybeSingle();
-
-    const memoryLines: string[] = [];
-    if (contact) {
-      memoryLines.push("[CONTACT MEMORY: you have dealt with this person before]");
-      if (contact.name) memoryLines.push(`Name: ${contact.name}`);
-      memoryLines.push(`Previous calls: ${contact.call_count}, previous emails: ${contact.email_count}`);
-      if (contact.ai_summary) memoryLines.push(`History: ${contact.ai_summary}`);
-      if (contact.notes) memoryLines.push(`Notes: ${contact.notes}`);
-    }
+    const contactContext = await loadContactContext(supabase, profile.id, { phone: fromNumber });
+    const memoryBlock = buildMemoryBlock(contactContext);
+    const contact = contactContext.contact;
 
     const kbContext = await fetchKbContext(profile.id, incoming);
 
@@ -335,7 +324,7 @@ Deno.serve(async (req) => {
       "- If it doesn't cover the question, you may use general knowledge, but never invent business-specific details (prices, timescales, account specifics). For those, say the team will confirm.",
       profile.business_context ? `\nBusiness knowledge:\n${profile.business_context}` : "",
       kbContext ? `\n${kbContext}` : "",
-      memoryLines.length ? `\n${memoryLines.join("\n")}` : "",
+      memoryBlock ? `\n${memoryBlock}` : "",
       "\nReturn ONLY the message text to send back, no quotes, no labels.",
     ]
       .filter(Boolean)
@@ -373,7 +362,7 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date().toISOString();
-    let contactId: string | null = contact?.id ?? null;
+    let contactId: string | null = (contact?.id as string | undefined) ?? null;
     try {
       if (contact) {
         const patch: Record<string, unknown> = { last_seen: now, updated_at: now };
@@ -399,8 +388,9 @@ Deno.serve(async (req) => {
 
     // Log the interaction to the call-logs table (channel = whatsapp) so the
     // conversation appears in Call History alongside phone, email and live chat.
+    let callLogId: string | null = null;
     try {
-      await supabase.from("wisecall_call_logs").insert({
+      const { data: logRow } = await supabase.from("wisecall_call_logs").insert({
         call_id: `whatsapp-${messageSid || crypto.randomUUID()}`,
         profile_id: profile.id,
         profile_name: profile.profile_name || businessName,
@@ -412,10 +402,13 @@ Deno.serve(async (req) => {
         started_at: now,
         finished_at: now,
         metadata: { channel: "whatsapp", message_sid: messageSid || null },
-      });
+      }).select("id").single();
+      callLogId = logRow?.id ?? null;
     } catch (e) {
       console.error("[wisecall-whatsapp-inbound] log insert:", (e as Error).message);
     }
+
+    if (callLogId) void triggerPortalAnalysis(callLogId);
 
     return twiml();
   } catch (e) {

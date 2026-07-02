@@ -35,6 +35,7 @@
 //   WISECALL_EMAIL_INBOUND_DOMAIN        (optional; default "in.wisecall.io")
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { buildMemoryBlock, loadContactContext, triggerPortalAnalysis } from "../_shared/contact-memory.ts";
 
 const INBOUND_DOMAIN = Deno.env.get("WISECALL_EMAIL_INBOUND_DOMAIN") || "in.wisecall.io";
 const CLAUDE_MODEL = "claude-opus-4-8";
@@ -360,24 +361,11 @@ Deno.serve(async (req) => {
   const businessName = profile.business_name || profile.clinic_name || profile.profile_name || "the business";
   const fromAddress = agentEmailAddress(profile);
 
-  // Caller memory: look up this sender by email for context + continuity.
-  const { data: contact } = await supabase
-    .from("wisecall_contacts")
-    .select("id, name, call_count, email_count, last_seen, ai_summary, notes")
-    .eq("profile_id", profile.id)
-    .eq("email", email.from.email)
-    .maybeSingle();
-
-  // Build the agent's brain for email: reuse its phone system_prompt, reframed for
-  // written replies, plus any memory we hold on this contact.
-  const memoryLines: string[] = [];
-  if (contact) {
-    memoryLines.push("[CONTACT MEMORY: you have dealt with this person before]");
-    if (contact.name) memoryLines.push(`Name: ${contact.name}`);
-    memoryLines.push(`Previous calls: ${contact.call_count}, previous emails: ${contact.email_count}`);
-    if (contact.ai_summary) memoryLines.push(`History: ${contact.ai_summary}`);
-    if (contact.notes) memoryLines.push(`Notes: ${contact.notes}`);
-  }
+  const contactContext = await loadContactContext(supabase, profile.id, {
+    email: email.from.email,
+  });
+  const memoryBlock = buildMemoryBlock(contactContext);
+  const contact = contactContext.contact;
 
   const rawBody = email.text || email.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const incoming = stripQuotedReply(rawBody);
@@ -406,7 +394,7 @@ Deno.serve(async (req) => {
     "- If you are unsure, be honest and offer to have the team follow up rather than guessing.",
     profile.business_context ? `\nBusiness knowledge:\n${profile.business_context}` : "",
     kbContext ? `\n${kbContext}` : "",
-    memoryLines.length ? `\n${memoryLines.join("\n")}` : "",
+    memoryBlock ? `\n${memoryBlock}` : "",
     "\nReturn ONLY the body of the email reply, no subject line, no email headers.",
   ]
     .filter(Boolean)
@@ -448,13 +436,13 @@ Deno.serve(async (req) => {
 
   // Upsert the contact by email (one source of truth across channels).
   const now = new Date().toISOString();
-  let contactId = contact?.id ?? null;
+  let contactId = (contact?.id as string | undefined) ?? null;
   try {
     if (contact) {
       const patch: Record<string, unknown> = {
         last_seen: now,
         updated_at: now,
-        email_count: (contact.email_count || 0) + 1,
+        email_count: ((contact.email_count as number) || 0) + 1,
       };
       if (email.from.name && !contact.name) patch.name = email.from.name;
       await supabase.from("wisecall_contacts").update(patch).eq("id", contact.id);
@@ -478,8 +466,9 @@ Deno.serve(async (req) => {
   }
 
   // Log the interaction to the call-logs table (channel = email).
+  let callLogId: string | null = null;
   try {
-    await supabase.from("wisecall_call_logs").insert({
+    const { data: logRow } = await supabase.from("wisecall_call_logs").insert({
       call_id: `email-${email.messageId || crypto.randomUUID()}`,
       profile_id: profile.id,
       profile_name: profile.profile_name || businessName,
@@ -491,10 +480,13 @@ Deno.serve(async (req) => {
       started_at: now,
       finished_at: now,
       metadata: { channel: "email", message_id: email.messageId },
-    });
+    }).select("id").single();
+    callLogId = logRow?.id ?? null;
   } catch (e) {
     console.error("[wisecall-email-inbound] log insert:", (e as Error).message);
   }
+
+  if (callLogId) void triggerPortalAnalysis(callLogId);
 
   return json({ ok: true, agent: profile.id, replied_to: email.from.email });
 });
