@@ -97,6 +97,7 @@ import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 import { OutboundManager } from "@/components/outbound-manager";
+import { AgentPreviewModal } from "./agent-preview-modal";
 
 type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
@@ -2510,6 +2511,7 @@ function AssistantDetail({
   whatsappNumber?: string;
 }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   return (
     <div className="anim-rise mx-auto max-w-5xl">
       <button
@@ -2537,7 +2539,16 @@ function AssistantDetail({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(true)}
+            className="press inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#7de8eb] px-3 text-xs font-black text-[#0e1b1b] transition hover:bg-[#5de0e5]"
+            title="Talk to this agent in your browser — no phone call needed"
+          >
+            <Phone className="h-3.5 w-3.5" />
+            Test agent
+          </button>
           {adminMode && assistant.ownerId ? (
             <form action={impersonateUser.bind(null, assistant.ownerId)}>
               <button
@@ -2570,6 +2581,14 @@ function AssistantDetail({
           </button>
         </div>
       </div>
+
+      {previewOpen && (
+        <AgentPreviewModal
+          agentId={assistant.id}
+          agentLabel={assistant.receptionistName || assistant.name}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
 
       {deleteConfirm && (
         <div className="anim-fade fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
