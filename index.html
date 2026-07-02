@@ -288,7 +288,7 @@
                 <span class="orb-core"></span>
               </span>
             </a>
-            <a href="tel:+441135222277" class="mbtn inline-flex items-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)] transition-shadow">
+            <a href="tel:+441135222277" class="mbtn inline-flex items-center justify-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)] transition-shadow w-full max-w-xs">
               <i data-lucide="phone-call" class="w-5 h-5"></i>
               Call the demo
             </a>
@@ -319,7 +319,7 @@
       <!-- CTAs + trust badges: third on mobile, left column below intro on desktop -->
       <div class="order-3 lg:col-start-1 lg:row-start-2 w-full">
         <div class="motion flex flex-col sm:flex-row gap-4 mb-8 lg:mb-10" data-anim="fade-up" style="transition-delay:0.15s">
-          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10 lg:bg-gradient-to-r lg:from-[#7de8eb] lg:to-[#5dbfc2] lg:text-[#172929] lg:border-0 lg:font-bold lg:shadow-[0_0_34px_rgba(125,232,235,0.35)] lg:hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
             Try it now <i data-lucide="arrow-right" class="w-5 h-5"></i>
           </a>
           <a href="#" class="contact-link mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10" data-inquiry="Demo Request">
@@ -423,8 +423,8 @@
       </div>
 
       <!-- 5-step flow -->
-      <div class="motion grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-20" data-anim="fade-up" style="transition-delay:0.05s">
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
+      <div class="motion flex sm:grid overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-20 pb-4 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-anim="fade-up" style="transition-delay:0.05s">
+        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 min-w-[75%] sm:min-w-0 flex-shrink-0 sm:flex-shrink snap-start sm:snap-align-none">
           <div class="flex items-center justify-between mb-4">
             <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="phone-incoming" class="w-5 h-5 text-[#7de8eb]"></i></div>
             <span class="text-[#7de8eb]/40 font-bold text-2xl">01</span>
@@ -432,7 +432,7 @@
           <h3 class="text-lg font-semibold text-white mb-1.5">Answer</h3>
           <p class="text-white/55 text-sm leading-relaxed">Picks up in your business name, 24/7, no rings to voicemail.</p>
         </div>
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
+        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 min-w-[75%] sm:min-w-0 flex-shrink-0 sm:flex-shrink snap-start sm:snap-align-none">
           <div class="flex items-center justify-between mb-4">
             <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="message-circle-question" class="w-5 h-5 text-[#7de8eb]"></i></div>
             <span class="text-[#7de8eb]/40 font-bold text-2xl">02</span>
@@ -440,7 +440,7 @@
           <h3 class="text-lg font-semibold text-white mb-1.5">Qualify</h3>
           <p class="text-white/55 text-sm leading-relaxed">Asks the right questions to understand who's calling and why.</p>
         </div>
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
+        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 min-w-[75%] sm:min-w-0 flex-shrink-0 sm:flex-shrink snap-start sm:snap-align-none">
           <div class="flex items-center justify-between mb-4">
             <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="clipboard-list" class="w-5 h-5 text-[#7de8eb]"></i></div>
             <span class="text-[#7de8eb]/40 font-bold text-2xl">03</span>
@@ -448,7 +448,7 @@
           <h3 class="text-lg font-semibold text-white mb-1.5">Capture</h3>
           <p class="text-white/55 text-sm leading-relaxed">Records the caller's details in a clean, structured summary.</p>
         </div>
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
+        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 min-w-[75%] sm:min-w-0 flex-shrink-0 sm:flex-shrink snap-start sm:snap-align-none">
           <div class="flex items-center justify-between mb-4">
             <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="git-branch" class="w-5 h-5 text-[#7de8eb]"></i></div>
             <span class="text-[#7de8eb]/40 font-bold text-2xl">04</span>
@@ -456,7 +456,7 @@
           <h3 class="text-lg font-semibold text-white mb-1.5">Book or route</h3>
           <p class="text-white/55 text-sm leading-relaxed">Books the next step, routes to the right person, or escalates if urgent.</p>
         </div>
-        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6">
+        <div class="relative rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 min-w-[75%] sm:min-w-0 flex-shrink-0 sm:flex-shrink snap-start sm:snap-align-none">
           <div class="flex items-center justify-between mb-4">
             <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="file-text" class="w-5 h-5 text-[#7de8eb]"></i></div>
             <span class="text-[#7de8eb]/40 font-bold text-2xl">05</span>
@@ -621,36 +621,36 @@
         <p class="text-xl text-white/70 max-w-3xl mx-auto">Built for businesses where the phone still wins work. From dental practices and law firms to estate agents, trades and care providers, WiseCall answers the calls your team cannot always reach.</p>
       </div>
 
-      <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-5">
-        <a href="/dental" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.05s">
+      <div class="flex md:grid overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none -mx-6 px-6 md:mx-0 md:px-0 gap-5 md:grid-cols-2 lg:grid-cols-5 pb-4 md:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <a href="/dental" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline min-w-[80%] sm:min-w-[55%] md:min-w-0 flex-shrink-0 md:flex-shrink snap-start md:snap-align-none" data-anim="fade-up" style="transition-delay:0.05s">
           <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="smile" class="w-5 h-5 text-[#7de8eb]"></i></div>
           <h3 class="text-lg font-semibold text-white mb-2">Dental and Healthcare</h3>
           <p class="text-white/60 text-sm leading-relaxed flex-1">Book appointments 24/7. Free up reception for in-person patients. Handle enquiries and recalls without adding headcount.</p>
           <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors mt-4">Find out more &rarr;</span>
         </a>
 
-        <a href="/legal" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.08s">
+        <a href="/legal" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline min-w-[80%] sm:min-w-[55%] md:min-w-0 flex-shrink-0 md:flex-shrink snap-start md:snap-align-none" data-anim="fade-up" style="transition-delay:0.08s">
           <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="scale" class="w-5 h-5 text-[#7de8eb]"></i></div>
           <h3 class="text-lg font-semibold text-white mb-2">Legal and Professional</h3>
           <p class="text-white/60 text-sm leading-relaxed flex-1">Sound professional from first contact. Qualify enquiries, capture matter details, route urgent calls and support Clio intake workflows.</p>
           <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors mt-4">Find out more &rarr;</span>
         </a>
 
-        <a href="/property" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.11s">
+        <a href="/property" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline min-w-[80%] sm:min-w-[55%] md:min-w-0 flex-shrink-0 md:flex-shrink snap-start md:snap-align-none" data-anim="fade-up" style="transition-delay:0.11s">
           <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="home" class="w-5 h-5 text-[#7de8eb]"></i></div>
           <h3 class="text-lg font-semibold text-white mb-2">Property</h3>
           <p class="text-white/60 text-sm leading-relaxed flex-1">Handle vendor and buyer enquiries, book valuations and manage call volume across lettings and sales without extra staff.</p>
           <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors mt-4">Find out more &rarr;</span>
         </a>
 
-        <a href="/trades" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.14s">
+        <a href="/trades" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline min-w-[80%] sm:min-w-[55%] md:min-w-0 flex-shrink-0 md:flex-shrink snap-start md:snap-align-none" data-anim="fade-up" style="transition-delay:0.14s">
           <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="wrench" class="w-5 h-5 text-[#7de8eb]"></i></div>
           <h3 class="text-lg font-semibold text-white mb-2">Trades and Services</h3>
           <p class="text-white/60 text-sm leading-relaxed flex-1">Capture every lead while you are on a job. No more voicemail. Every enquiry logged, routed and ready when you need it.</p>
           <span class="text-sm text-[#7de8eb] group-hover:text-white transition-colors mt-4">Find out more &rarr;</span>
         </a>
 
-        <a href="/industries/care-homes/" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline" data-anim="fade-up" style="transition-delay:0.17s">
+        <a href="/industries/care-homes/" class="motion group flex flex-col h-full rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6 hover:bg-white/10 hover:border-[#7de8eb]/30 transition-all no-underline min-w-[80%] sm:min-w-[55%] md:min-w-0 flex-shrink-0 md:flex-shrink snap-start md:snap-align-none" data-anim="fade-up" style="transition-delay:0.17s">
           <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="heart-handshake" class="w-5 h-5 text-[#7de8eb]"></i></div>
           <h3 class="text-lg font-semibold text-white mb-2">Care</h3>
           <p class="text-white/60 text-sm leading-relaxed flex-1">Answer family enquiries with care, capture details sensitively and pass them to the right coordinator with a clear summary.</p>
