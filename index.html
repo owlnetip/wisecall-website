@@ -427,87 +427,130 @@
     <div class="relative z-10 max-w-7xl mx-auto">
       <div class="motion text-center mb-14" data-anim="fade-up">
         <span class="text-sm text-[#7de8eb] font-semibold">Setup</span>
-        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Live in minutes, not weeks</h2>
-        <p class="text-xl text-white/70 max-w-3xl mx-auto">No engineers, no phone system project, no lengthy onboarding. Anyone on your team can set WiseCall up.</p>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">Live in five simple screens</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">No engineers, no phone system project, no lengthy onboarding. Paste your website and WiseCall drafts the whole receptionist, you just review and go live.</p>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-5 lg:gap-6 max-w-6xl mx-auto">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 max-w-6xl mx-auto">
 
-        <!-- Step 1 -->
-        <div class="motion flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 sm:p-7" data-anim="fade-up" style="transition-delay:0.05s">
+        <!-- Step 1: website scan -->
+        <div class="motion flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.05s">
           <div class="flex items-center justify-between mb-4">
             <span class="inline-flex w-10 h-10 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold items-center justify-center">1</span>
-            <span class="text-white/40 text-xs font-semibold uppercase tracking-wider">~2 min</span>
           </div>
-          <h3 class="text-xl font-semibold text-white mb-2">Point it at your website</h3>
-          <p class="text-white/60 text-sm leading-relaxed mb-6">Enter your web address and WiseCall drafts your agent for you: services, FAQs, greeting and tone, all from your own site.</p>
-          <!-- Mock UI: website scan -->
+          <h3 class="text-lg font-semibold text-white mb-2">Paste your website</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-5">We read your site and draft the whole receptionist: what it says, what it knows, even your opening hours.</p>
+          <!-- Mock UI: website input -->
           <div class="mt-auto rounded-xl bg-[#0f1f1f] border border-[#7de8eb]/15 p-4 shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
-            <div class="flex items-center gap-2 rounded-lg bg-white/5 border border-[#7de8eb]/20 px-3 py-2.5 mb-3">
+            <div class="flex items-center gap-2 rounded-lg bg-white/5 border border-[#7de8eb]/30 px-3 py-2.5 mb-2.5">
               <i data-lucide="globe" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i>
-              <span class="text-white/80 text-sm truncate">yourbusiness.co.uk</span>
-              <span class="ml-auto flex-shrink-0 rounded-md bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-xs font-bold px-2.5 py-1">Draft it</span>
+              <span class="text-white/85 text-sm truncate">yourbusiness.co.uk</span>
             </div>
-            <div class="space-y-2">
-              <div class="flex items-center gap-2 text-xs text-white/70"><i data-lucide="check" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0"></i>Services and FAQs found</div>
-              <div class="flex items-center gap-2 text-xs text-white/70"><i data-lucide="check" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0"></i>Greeting written in your tone</div>
-              <div class="flex items-center gap-2 text-xs text-white/70"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0"></i>Knowledge base drafted</div>
-            </div>
+            <div class="rounded-lg bg-white text-[#172929] text-center text-xs font-bold px-3 py-2.5 mb-2.5 flex items-center justify-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>Build my receptionist</div>
+            <p class="text-white/40 text-[11px] text-center">No website? Set up manually instead</p>
           </div>
         </div>
 
-        <!-- Step 2 -->
-        <div class="motion flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 sm:p-7" data-anim="fade-up" style="transition-delay:0.1s">
+        <!-- Step 2: review the draft -->
+        <div class="motion flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.08s">
           <div class="flex items-center justify-between mb-4">
             <span class="inline-flex w-10 h-10 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold items-center justify-center">2</span>
-            <span class="text-white/40 text-xs font-semibold uppercase tracking-wider">~3 min</span>
           </div>
-          <h3 class="text-xl font-semibold text-white mb-2">Pick a voice, set your hours</h3>
-          <p class="text-white/60 text-sm leading-relaxed mb-6">Choose how your receptionist sounds, listen to a sample, and tell it when to answer: full-time, out-of-hours or overflow.</p>
-          <!-- Mock UI: voice & hours -->
+          <h3 class="text-lg font-semibold text-white mb-2">Review the draft</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-5">Tweak anything: how your assistant behaves and what it knows about your business, all in plain English.</p>
+          <!-- Mock UI: draft fields -->
           <div class="mt-auto rounded-xl bg-[#0f1f1f] border border-[#7de8eb]/15 p-4 shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
-            <div class="flex items-center gap-3 rounded-lg bg-[#7de8eb]/10 border border-[#7de8eb]/30 px-3 py-2.5 mb-2">
-              <span class="w-7 h-7 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center flex-shrink-0"><i data-lucide="play" class="w-3 h-3 text-[#172929] ml-0.5"></i></span>
-              <div class="min-w-0">
-                <p class="text-white text-xs font-semibold">Sophie</p>
-                <p class="text-white/50 text-[11px]">Warm, professional</p>
-              </div>
-              <i data-lucide="check-circle-2" class="w-4 h-4 text-[#7de8eb] ml-auto flex-shrink-0"></i>
-            </div>
-            <div class="flex items-center gap-3 rounded-lg bg-white/5 border border-[#7de8eb]/10 px-3 py-2.5 mb-3 opacity-60">
-              <span class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"><i data-lucide="play" class="w-3 h-3 text-white/60 ml-0.5"></i></span>
-              <div class="min-w-0">
-                <p class="text-white text-xs font-semibold">James</p>
-                <p class="text-white/50 text-[11px]">Calm, reassuring</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-white/70"><i data-lucide="clock" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0"></i>Answering: out-of-hours &amp; overflow</div>
+            <p class="text-white/40 text-[10px] font-bold uppercase tracking-wider mb-1.5">Business name</p>
+            <div class="rounded-lg bg-white/5 border border-[#7de8eb]/15 px-3 py-2 text-white/85 text-sm mb-3">Your Business Ltd</div>
+            <p class="text-white/40 text-[10px] font-bold uppercase tracking-wider mb-1.5">How it should behave</p>
+            <div class="rounded-lg bg-white/5 border border-[#7de8eb]/15 px-3 py-2 text-white/60 text-[11px] leading-relaxed">You are the AI front desk. Answer enquiries professionally and warmly, in clear UK English&hellip;</div>
           </div>
         </div>
 
-        <!-- Step 3 -->
-        <div class="motion flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6 sm:p-7" data-anim="fade-up" style="transition-delay:0.15s">
+        <!-- Step 3: opening hours -->
+        <div class="motion flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.11s">
           <div class="flex items-center justify-between mb-4">
             <span class="inline-flex w-10 h-10 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold items-center justify-center">3</span>
-            <span class="text-white/40 text-xs font-semibold uppercase tracking-wider">Instant</span>
           </div>
-          <h3 class="text-xl font-semibold text-white mb-2">Go live on your number</h3>
-          <p class="text-white/60 text-sm leading-relaxed mb-6">We provide a dedicated number instantly, or connect your existing PBX. Urgent calls route to the right person's mobile.</p>
-          <!-- Mock UI: live number -->
+          <h3 class="text-lg font-semibold text-white mb-2">Confirm your hours</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-5">Pre-filled from your site. Outside these hours the receptionist takes a detailed message, so nothing is missed.</p>
+          <!-- Mock UI: hours grid -->
+          <div class="mt-auto rounded-xl bg-[#0f1f1f] border border-[#7de8eb]/15 p-4 shadow-[0_14px_36px_rgba(0,0,0,0.35)] space-y-2">
+            <div class="flex items-center gap-2.5 text-xs">
+              <span class="inline-flex items-center gap-1 rounded-full bg-[#7de8eb]/12 text-[#7de8eb] font-bold px-2 py-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i>Mon</span>
+              <span class="text-white/75 tabular-nums">09:00 &ndash; 17:00</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs">
+              <span class="inline-flex items-center gap-1 rounded-full bg-[#7de8eb]/12 text-[#7de8eb] font-bold px-2 py-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i>Tue</span>
+              <span class="text-white/75 tabular-nums">09:00 &ndash; 17:00</span>
+              <span class="ml-auto text-[#7de8eb] text-[11px] font-semibold">Copy to Mon&ndash;Fri</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs opacity-50">
+              <span class="inline-flex items-center gap-1 rounded-full bg-white/8 text-white/60 font-bold px-2 py-1">Sat</span>
+              <span class="text-white/55">Closed</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs opacity-50">
+              <span class="inline-flex items-center gap-1 rounded-full bg-white/8 text-white/60 font-bold px-2 py-1">Sun</span>
+              <span class="text-white/55">Closed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: pick a voice -->
+        <div class="motion flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.14s">
+          <div class="flex items-center justify-between mb-4">
+            <span class="inline-flex w-10 h-10 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold items-center justify-center">4</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Pick a voice</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-5">Tap play to hear each one. Choose the voice and greeting your callers hear, and change it any time.</p>
+          <!-- Mock UI: voice picker -->
           <div class="mt-auto rounded-xl bg-[#0f1f1f] border border-[#7de8eb]/15 p-4 shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="w-9 h-9 rounded-lg bg-gradient-to-br from-[#7de8eb]/25 to-[#5dbfc2]/10 flex items-center justify-center flex-shrink-0"><i data-lucide="phone" class="w-4 h-4 text-[#7de8eb]"></i></span>
+            <div class="flex items-center gap-3 rounded-lg bg-[#7de8eb]/10 border border-[#7de8eb]/30 px-3 py-2.5 mb-2">
               <div class="min-w-0">
-                <p class="text-white text-sm font-semibold tracking-wide">020 4·· ····</p>
-                <p class="text-white/50 text-[11px]">Your WiseCall number</p>
+                <p class="text-white text-xs font-semibold">Gemma</p>
+                <p class="text-white/50 text-[11px]">Warm British female</p>
               </div>
-              <span class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/30 text-[#7de8eb] text-[11px] font-bold px-2.5 py-1 flex-shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-[#7de8eb] pulse-dot"></span>Live</span>
+              <span class="ml-auto w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"><i data-lucide="play" class="w-2.5 h-2.5 text-white/70 ml-0.5"></i></span>
+              <span class="w-6 h-6 rounded-full bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3 h-3 text-[#172929]"></i></span>
             </div>
-            <div class="space-y-2">
-              <div class="flex items-center gap-2 text-xs text-white/70"><i data-lucide="phone-forwarded" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0"></i>Urgent calls &rarr; your mobile</div>
-              <div class="flex items-center gap-2 text-xs text-white/70"><i data-lucide="file-text" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0"></i>Summaries &rarr; your inbox</div>
+            <div class="flex items-center gap-3 rounded-lg bg-white/5 border border-[#7de8eb]/10 px-3 py-2.5 mb-2 opacity-60">
+              <div class="min-w-0">
+                <p class="text-white text-xs font-semibold">Hugo</p>
+                <p class="text-white/50 text-[11px]">Friendly British male</p>
+              </div>
+              <span class="ml-auto w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"><i data-lucide="play" class="w-2.5 h-2.5 text-white/70 ml-0.5"></i></span>
             </div>
+            <p class="text-white/40 text-[10px] font-bold uppercase tracking-wider mb-1.5 mt-3">Greeting</p>
+            <div class="rounded-lg bg-white/5 border border-[#7de8eb]/15 px-3 py-2 text-white/70 text-[11px] leading-relaxed">Hi, welcome to Your Business — how can I help you today?</div>
           </div>
+        </div>
+
+        <!-- Step 5: team & go live -->
+        <div class="motion flex flex-col rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.17s">
+          <div class="flex items-center justify-between mb-4">
+            <span class="inline-flex w-10 h-10 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold items-center justify-center">5</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-2">Add your team, go live</h3>
+          <p class="text-white/60 text-sm leading-relaxed mb-5">Tell us where messages land and who urgent calls reach. Finish, and we connect your number automatically.</p>
+          <!-- Mock UI: team & finish -->
+          <div class="mt-auto rounded-xl bg-[#0f1f1f] border border-[#7de8eb]/15 p-4 shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
+            <div class="flex items-center gap-2 rounded-lg bg-white/5 border border-[#7de8eb]/15 px-3 py-2 mb-2">
+              <i data-lucide="mail" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0"></i>
+              <span class="text-white/80 text-xs truncate">admin@yourbusiness.co.uk</span>
+            </div>
+            <div class="flex items-center gap-2 rounded-lg bg-white/5 border border-[#7de8eb]/15 px-3 py-2 mb-3">
+              <i data-lucide="phone-forwarded" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0"></i>
+              <span class="text-white/80 text-xs truncate">Bob &middot; urgent transfers</span>
+            </div>
+            <div class="rounded-lg bg-[#12915c] text-white text-center text-xs font-bold px-3 py-2.5 flex items-center justify-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5"></i>Finish &amp; connect number</div>
+          </div>
+        </div>
+
+        <!-- Result tile -->
+        <div class="motion flex flex-col justify-center rounded-2xl bg-gradient-to-br from-[#7de8eb]/12 to-[#5dbfc2]/5 border border-[#7de8eb]/30 p-6 text-center" data-anim="fade-up" style="transition-delay:0.2s">
+          <span class="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/30 text-[#7de8eb] text-xs font-bold px-3 py-1.5 mx-auto mb-4"><span class="w-1.5 h-1.5 rounded-full bg-[#7de8eb] pulse-dot"></span>Live and answering</span>
+          <h3 class="text-xl font-semibold text-white mb-2">That's it</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Your receptionist is created and a phone number connected automatically, ready to take calls straight away.</p>
         </div>
       </div>
 
