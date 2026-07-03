@@ -22,9 +22,19 @@ import { getServiceSupabase } from "@/lib/supabase";
 // repeatedly: a call with no transcript is skipped, and re-posting simply
 // re-analyses and overwrites the stored result.
 // ─────────────────────────────────────────────────────────────────────────────
+function getAcceptedWebhookSecrets(): string[] {
+  return [
+    process.env.WISECALL_WEBHOOK_SECRET,
+    process.env.WISECALL_TRIAL_REMINDER_SECRET,
+    process.env.WISECALL_POOL_REPLENISH_SECRET,
+  ]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+}
+
 export async function POST(request: Request) {
-  const secret = process.env.WISECALL_WEBHOOK_SECRET;
-  if (!secret) {
+  const secrets = getAcceptedWebhookSecrets();
+  if (secrets.length === 0) {
     return NextResponse.json(
       { ok: false, error: "Webhook not configured." },
       { status: 503 },
@@ -35,7 +45,7 @@ export async function POST(request: Request) {
     request.headers.get("x-wisecall-secret") ||
     request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
     "";
-  if (provided !== secret) {
+  if (!secrets.includes(provided)) {
     return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
   }
 

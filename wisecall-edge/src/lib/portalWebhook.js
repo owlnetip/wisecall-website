@@ -2,15 +2,37 @@
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
+function normalizePortalBase(raw) {
+  const value = String(raw || "")
+    .trim()
+    .replace(/\/+$/, "");
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://${value}`;
+}
+
 function getPortalWebhookUrl(env = process.env) {
-  const base = (env.WISECALL_PORTAL_URL || env.PORTAL_URL || "").trim().replace(/\/+$/, "");
+  const base = normalizePortalBase(
+    env.WISECALL_PORTAL_URL ||
+      env.PORTAL_URL ||
+      env.PORTAL_DOMAIN ||
+      env.SITE_URL,
+  );
   if (!base) return "";
   return `${base}/api/webhooks/call-completed`;
 }
 
+function getPortalWebhookSecret(env = process.env) {
+  return (
+    (env.WISECALL_WEBHOOK_SECRET || "").trim() ||
+    (env.WISECALL_TRIAL_REMINDER_SECRET || "").trim() ||
+    (env.WISECALL_POOL_REPLENISH_SECRET || "").trim()
+  );
+}
+
 async function triggerPortalAnalysis(callLogId, env = process.env) {
   const url = getPortalWebhookUrl(env);
-  const secret = (env.WISECALL_WEBHOOK_SECRET || "").trim();
+  const secret = getPortalWebhookSecret(env);
   if (!url || !secret || !callLogId) {
     return { ok: false, skipped: "missing_portal_webhook_config" };
   }
@@ -39,4 +61,9 @@ async function triggerPortalAnalysis(callLogId, env = process.env) {
   }
 }
 
-module.exports = { triggerPortalAnalysis, getPortalWebhookUrl };
+module.exports = {
+  triggerPortalAnalysis,
+  getPortalWebhookUrl,
+  getPortalWebhookSecret,
+  normalizePortalBase,
+};

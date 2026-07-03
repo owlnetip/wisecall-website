@@ -224,13 +224,41 @@ export function buildMemoryBlock(context: {
   return lines.join("\n");
 }
 
+function normalizePortalBase(raw: string | undefined): string {
+  const value = (raw || "").trim().replace(/\/+$/, "");
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://${value}`;
+}
+
+function getPortalWebhookUrl(): string {
+  const base = normalizePortalBase(
+    Deno.env.get("WISECALL_PORTAL_URL") ||
+      Deno.env.get("PORTAL_URL") ||
+      Deno.env.get("PORTAL_DOMAIN") ||
+      Deno.env.get("SITE_URL") ||
+      "",
+  );
+  if (!base) return "";
+  return `${base}/api/webhooks/call-completed`;
+}
+
+function getPortalWebhookSecret(): string {
+  return (
+    Deno.env.get("WISECALL_WEBHOOK_SECRET") ||
+    Deno.env.get("WISECALL_TRIAL_REMINDER_SECRET") ||
+    Deno.env.get("WISECALL_POOL_REPLENISH_SECRET") ||
+    ""
+  );
+}
+
 export async function triggerPortalAnalysis(callLogId: string): Promise<void> {
-  const portalUrl = (Deno.env.get("WISECALL_PORTAL_URL") || "").replace(/\/+$/, "");
-  const secret = Deno.env.get("WISECALL_WEBHOOK_SECRET") || "";
+  const portalUrl = getPortalWebhookUrl();
+  const secret = getPortalWebhookSecret();
   if (!portalUrl || !secret || !callLogId) return;
 
   try {
-    await fetch(`${portalUrl}/api/webhooks/call-completed`, {
+    await fetch(portalUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

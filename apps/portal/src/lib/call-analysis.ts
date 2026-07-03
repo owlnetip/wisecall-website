@@ -489,3 +489,60 @@ export async function backfillAnalysisForUser(
 
   return { analysed, remaining: Math.max(0, rows.length - batch.length), errors };
 }
+
+// Re-analyse recent calls that pre-date action_items extraction, plus any still
+// pending. Service-role only — used by the webhook backfill endpoint.
+export async function backfillRecentActionItems(limit = 25): Promise<BackfillResult> {
+  const supabase = getServiceSupabase();
+  if (!supabase) throw new Error("Supabase is not configured.");
+  if (!isAnalysisConfigured()) {
+    return { analysed: 0, remaining: 0, errors: 0 };
+  }
+
+  const { data, error } = await supabase
+    .from("wisecall_call_logs")
+    .select(ANALYZABLE_SELECT)
+    .not("transcript", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(Math.max(limit * 4, 40));
+  if (error) throw new Error(`Could not list calls for backfill: ${error.message}`);
+
+  const rows = ((data as AnalyzableRow[]) ?? []).filter((row) => {
+    const transcript = (row.transcript ?? "").trim();
+    return transcript.length >= 10;
+  });
+
+  const { data: followUpRows } = await supabase
+    .from("wisecall_follow_ups")
+    .select("call_log_id")
+    .in(
+      "call_log_id",
+      rows.map((row) => row.id),
+    );
+  const withFollowUps = new Set(
+    (followUpRows ?? [])
+      .map((row) => row.call_log_id as string | null)
+      .filter(Boolean),
+  );
+
+  const candidates = rows.filter((row) => !withFollowUps.has(row.id)).slice(0, limit + 1);
+  const batch = candidates.slice(0, limit);
+
+  let analysed = 0;
+  let errors = 0;
+  for (const row of batch) {
+    try {
+      await analyzeAndStoreCall(row.id);
+      analysed += 1;
+    } catch (err) {
+      errors += 1;
+      console.error(`backfillRecentActionItems failed for ${row.id}:`, (err as Error).message);
+    }
+  }
+
+  return {
+    analysed,
+    remaining: Math.max(0, candidates.length - batch.length),
+    errors,
+  };
+}
