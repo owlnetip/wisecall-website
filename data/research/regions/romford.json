@@ -6,18 +6,18 @@
   "file_prefix": "romford-rm-dental",
   "overrides_file": "romford-dental-manual-overrides.json",
   "core_outward_codes": [
-    "RM11",
     "RM17",
+    "RM11",
     "RM12",
     "RM1",
-    "RM3",
     "RM6",
     "RM14",
+    "RM3",
     "RM8",
     "RM10",
-    "RM18",
     "RM2",
-    "RM7"
+    "RM7",
+    "RM9"
   ],
   "core_segment_prefix": "romford-core",
   "area_labels": {
@@ -40,5 +40,7 @@
     "RM7": "Romford & Essex east (RM7)",
     "RM8": "Romford & Essex east (RM8)",
     "RM9": "Romford & Essex east (RM9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

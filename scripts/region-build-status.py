@@ -15,14 +15,21 @@ MANIFEST = REGIONS_DIR / "manifest.json"
 
 def main() -> None:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    print(f"{'Phase':>5}  {'Region':<14} {'Practices':>9}  {'Dentally T1':>11}  {'Status':<8}  Master CSV")
-    print("-" * 90)
+    print(
+        f"{'Phase':>5}  {'Region':<22} {'Country':<8} {'Practices':>9}  "
+        f"{'Dentally T1':>11}  {'Status':<8}  Master CSV"
+    )
+    print("-" * 105)
     total = dentally = 0
     for entry in manifest["regions"]:
         rid = entry["id"]
         cfg_path = REGIONS_DIR / f"{rid}.json"
+        country = entry.get("country", "england")
         if not cfg_path.exists():
-            print(f"{entry.get('phase', '?'):>5}  {rid:<14} {'—':>9}  {'—':>11}  {'no cfg':<8}")
+            print(
+                f"{entry.get('phase', '?'):>5}  {entry['name']:<22} {country:<8} "
+                f"{'—':>9}  {'—':>11}  {'no cfg':<8}"
+            )
             continue
         cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
         master = RESEARCH / f"{cfg['file_prefix']}-marketing-list.csv"
@@ -41,9 +48,10 @@ def main() -> None:
             n = t1 = 0
             status = "pending"
         print(
-            f"{entry.get('phase', '?'):>5}  {entry['name']:<14} {n:>9}  {t1:>11}  {status:<8}  {master.name if master.exists() else '—'}"
+            f"{entry.get('phase', '?'):>5}  {entry['name']:<22} {country:<8} {n:>9}  "
+            f"{t1:>11}  {status:<8}  {master.name if master.exists() else '—'}"
         )
-    print("-" * 90)
+    print("-" * 105)
     print(f"Total practices: {total} | Tier 1 Dentally independents: {dentally}")
 
 

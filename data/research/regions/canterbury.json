@@ -6,15 +6,15 @@
   "file_prefix": "canterbury-ct-dental",
   "overrides_file": "canterbury-dental-manual-overrides.json",
   "core_outward_codes": [
-    "CT5",
     "CT1",
-    "CT6",
-    "CT9",
     "CT20",
+    "CT9",
+    "CT5",
+    "CT6",
     "CT14",
     "CT16",
-    "CT2",
     "CT10",
+    "CT2",
     "CT11",
     "CT21",
     "CT3"
@@ -42,5 +42,7 @@
     "CT7": "Canterbury & Kent east (CT7)",
     "CT8": "Canterbury & Kent east (CT8)",
     "CT9": "Canterbury & Kent east (CT9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

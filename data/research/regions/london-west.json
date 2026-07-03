@@ -10,14 +10,14 @@
     "W2",
     "W5",
     "W3",
+    "W4",
     "W6",
     "W12",
-    "W4",
-    "W8",
     "W1U",
-    "W9",
     "W14",
-    "W11"
+    "W9",
+    "W13",
+    "W8"
   ],
   "core_segment_prefix": "london-west-core",
   "area_labels": {
@@ -45,5 +45,7 @@
     "W7": "West London (W7)",
     "W8": "West London (W8)",
     "W9": "West London (W9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

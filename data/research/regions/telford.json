@@ -6,15 +6,15 @@
   "file_prefix": "telford-tf-dental",
   "overrides_file": "telford-dental-manual-overrides.json",
   "core_outward_codes": [
-    "TF9",
     "TF1",
+    "TF9",
     "TF10",
     "TF2",
+    "TF3",
     "TF4",
     "TF7",
-    "TF3",
-    "TF5",
     "TF11",
+    "TF5",
     "TF12",
     "TF13"
   ],
@@ -31,5 +31,7 @@
     "TF5": "Telford & Shrewsbury east (TF5)",
     "TF7": "Telford & Shrewsbury east (TF7)",
     "TF9": "Telford & Shrewsbury east (TF9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

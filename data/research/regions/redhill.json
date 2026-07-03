@@ -8,15 +8,15 @@
   "core_outward_codes": [
     "RH12",
     "RH10",
-    "RH19",
+    "RH16",
     "RH2",
     "RH4",
-    "RH16",
+    "RH19",
     "RH11",
     "RH1",
-    "RH6",
     "RH8",
     "RH15",
+    "RH6",
     "RH20"
   ],
   "core_segment_prefix": "redhill-core",
@@ -39,5 +39,7 @@
     "RH7": "Redhill & Crawley (RH7)",
     "RH8": "Redhill & Crawley (RH8)",
     "RH9": "Redhill & Crawley (RH9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

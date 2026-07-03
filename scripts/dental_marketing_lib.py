@@ -6,6 +6,7 @@ import csv
 import json
 import re
 import ssl
+import sys
 import time
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -22,6 +23,16 @@ RESEARCH = ROOT / "data" / "research"
 REGIONS_DIR = RESEARCH / "regions"
 CQC_ZIP_URL = "https://www.cqc.org.uk/sites/default/files/2026-07/01_July_2026_CQC_directory.zip"
 CQC_CSV = RESEARCH / "01_July_2026_CQC_directory.csv"
+SCOTLAND_DENTAL_URL = (
+    "https://www.opendata.nhs.scot/dataset/2f218ba7-6695-4b22-867d-41383ae36de7/"
+    "resource/6c0d19e7-ba5b-46c2-8135-3200b59ad482/download/"
+    "nhs-dental-practices-and-nhs-dental-registrations-as-at-31-mar-2026.csv"
+)
+SCOTLAND_DENTAL_CSV = RESEARCH / "scotland-nhs-dental-practices.csv"
+WALES_HIW_URL = "https://www.hiw.org.uk/service-directory.csv"
+WALES_HIW_CSV = RESEARCH / "wales-hiw-service-directory.csv"
+NI_BSO_DENTAL_URL = "https://bso.hscni.net/wp-content/uploads/2026/05/Dental_Surgery_List_May2026.xlsx"
+NI_BSO_DENTAL_CSV = RESEARCH / "ni-bso-dental-surgeries.csv"
 ADG_GROUPS = RESEARCH / "adg-corporate-groups.json"
 BDA_GP_KML = RESEARCH / "bda-good-practice.kml"
 BDA_GP_KML_URL = "https://www.google.com/maps/d/kml?mid=1jijuQW4yxqNedsPRyfktaHFMG30SrFPz&forcekml=1"
@@ -51,6 +62,8 @@ class RegionConfig:
     core_outward_codes: tuple[str, ...]
     core_segment_prefix: str
     area_labels: dict[str, str]
+    data_source: str = "cqc"
+    country: str = "england"
 
     @property
     def overrides_path(self) -> Path:
@@ -94,6 +107,8 @@ def load_region(region_id: str) -> RegionConfig:
         core_outward_codes=tuple(data["core_outward_codes"]),
         core_segment_prefix=data["core_segment_prefix"],
         area_labels=data["area_labels"],
+        data_source=data.get("data_source", "cqc"),
+        country=data.get("country", "england"),
     )
 
 
@@ -149,6 +164,84 @@ def ensure_cqc_csv() -> None:
     with zipfile.ZipFile(zip_path) as zf:
         zf.extractall(RESEARCH)
     print(f"Extracted {CQC_CSV.name}")
+
+
+def ensure_scotland_dental_csv() -> None:
+    RESEARCH.mkdir(parents=True, exist_ok=True)
+    if SCOTLAND_DENTAL_CSV.exists():
+        return
+    print(f"Downloading Scotland NHS dental practices -> {SCOTLAND_DENTAL_CSV.name}")
+    urllib.request.urlretrieve(SCOTLAND_DENTAL_URL, SCOTLAND_DENTAL_CSV)
+
+
+def ensure_wales_hiw_csv() -> None:
+    RESEARCH.mkdir(parents=True, exist_ok=True)
+    if WALES_HIW_CSV.exists():
+        return
+    print(f"Downloading Wales HIW service directory -> {WALES_HIW_CSV.name}")
+    urllib.request.urlretrieve(WALES_HIW_URL, WALES_HIW_CSV)
+
+
+def ensure_ni_bso_csv() -> None:
+    RESEARCH.mkdir(parents=True, exist_ok=True)
+    if NI_BSO_DENTAL_CSV.exists():
+        return
+    xlsx_path = RESEARCH / "ni-bso-dental-surgeries.xlsx"
+    print(f"Downloading NI BSO dental surgery list -> {xlsx_path.name}")
+    urllib.request.urlretrieve(NI_BSO_DENTAL_URL, xlsx_path)
+    try:
+        import openpyxl
+    except ImportError:
+        import subprocess
+
+        subprocess.run([sys.executable, "-m", "pip", "install", "openpyxl", "-q"], check=True)
+        import openpyxl
+
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True)
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    with NI_BSO_DENTAL_CSV.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        for row in rows:
+            writer.writerow(["" if cell is None else cell for cell in row])
+    print(f"Converted -> {NI_BSO_DENTAL_CSV.name}")
+
+
+def ensure_dataset(data_source: str) -> None:
+    if data_source == "cqc":
+        ensure_cqc_csv()
+    elif data_source == "scotland_nhs":
+        ensure_scotland_dental_csv()
+    elif data_source == "wales_hiw":
+        ensure_wales_hiw_csv()
+    elif data_source == "ni_bso":
+        ensure_ni_bso_csv()
+    else:
+        raise SystemExit(f"Unknown data_source: {data_source}")
+
+
+def blank_practice(region: RegionConfig, source: str) -> dict[str, str]:
+    return {
+        "practice_name": "",
+        "also_known_as": "",
+        "address": "",
+        "postcode": "",
+        "phone": "",
+        "website": "",
+        "provider_name": "",
+        "nhs_private": "Unknown",
+        "pms_detected": "",
+        "pms_confidence": "",
+        "pms_evidence": "",
+        "blast_segment": "Unknown PMS - manual check",
+        "wisecall_tier": "Tier 3 - Unknown PMS (qualify on call)",
+        "adg_corporate": "No",
+        "adg_group": "",
+        "bda_good_practice": "No",
+        region.area_column: "",
+        "notes": "",
+        "source": source,
+    }
 
 
 def norm_phone(raw: str) -> str:
@@ -306,6 +399,118 @@ def load_cqc_practices(region: RegionConfig) -> dict[str, dict[str, str]]:
                 "source": "CQC directory (auto-downloaded)",
             }
     return practices
+
+
+def load_scotland_practices(region: RegionConfig) -> dict[str, dict[str, str]]:
+    practices: dict[str, dict[str, str]] = {}
+    pc_re = re.compile(region.postcode_regex)
+    with SCOTLAND_DENTAL_CSV.open(newline="", encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            pc = row["pc7"].strip().upper().replace(" ", "")
+            if not pc_re.match(pc):
+                continue
+            name = row["address1"].strip().title()
+            address_parts = [row.get("address2", "").strip(), row.get("address3", "").strip()]
+            address = ", ".join(p for p in address_parts if p)
+            key = re.sub(r"[^a-z0-9]", "", name.lower()) + pc
+            postcode = row["pc7"].strip().upper()
+            practice = blank_practice(region, "Scotland NHS dental register (PHS open data)")
+            practice.update(
+                {
+                    "practice_name": name,
+                    "address": address,
+                    "postcode": postcode,
+                    "nhs_private": "NHS",
+                    region.area_column: area_label(postcode, region.area_labels),
+                }
+            )
+            practices[key] = practice
+    return practices
+
+
+def load_wales_practices(region: RegionConfig) -> dict[str, dict[str, str]]:
+    practices: dict[str, dict[str, str]] = {}
+    pc_re = re.compile(region.postcode_regex)
+    with WALES_HIW_CSV.open(newline="", encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            if row.get("Type of establishment") != "Dental Practices":
+                continue
+            pc = row["Postcode"].strip().upper().replace(" ", "")
+            if not pc_re.match(pc):
+                continue
+            name = row["Service name"].strip()
+            address_parts = [
+                row.get("Address line 1", "").strip(),
+                row.get("Address line 2", "").strip(),
+            ]
+            address = ", ".join(p for p in address_parts if p)
+            phone_raw = (row.get("Telephone") or "").strip().strip("'")
+            sector = (row.get("Sector") or "").strip()
+            nhs_private = "NHS" if sector.upper().startswith("NHS") else "Private"
+            key = re.sub(r"[^a-z0-9]", "", name.lower()) + pc
+            postcode = row["Postcode"].strip().upper()
+            practice = blank_practice(region, "Wales HIW service directory")
+            practice.update(
+                {
+                    "practice_name": name,
+                    "address": address,
+                    "postcode": postcode,
+                    "phone": norm_phone(phone_raw),
+                    "nhs_private": nhs_private,
+                    "provider_name": sector,
+                    region.area_column: area_label(postcode, region.area_labels),
+                }
+            )
+            practices[key] = practice
+    return practices
+
+
+def load_ni_practices(region: RegionConfig) -> dict[str, dict[str, str]]:
+    practices: dict[str, dict[str, str]] = {}
+    pc_re = re.compile(region.postcode_regex)
+    with NI_BSO_DENTAL_CSV.open(newline="", encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            pc = row["POSTCODE"].strip().upper().replace(" ", "")
+            if not pc_re.match(pc):
+                continue
+            town = (row.get("ADDRESS3") or row.get("ADDRESS4") or "").strip()
+            line1 = row.get("ADDRESS1", "").strip()
+            name = f"{town} Dental Surgery".strip() if town else line1.title()
+            address_parts = [
+                line1,
+                row.get("ADDRESS2", "").strip(),
+                town,
+                row.get("ADDRESS4", "").strip(),
+            ]
+            address = ", ".join(p for p in address_parts if p)
+            phone_raw = (row.get("TELEPHONE_NO") or "").strip()
+            key = re.sub(r"[^a-z0-9]", "", name.lower()) + pc
+            postcode = row["POSTCODE"].strip().upper()
+            practice = blank_practice(region, "Northern Ireland BSO dental surgery list")
+            practice.update(
+                {
+                    "practice_name": name,
+                    "address": address,
+                    "postcode": postcode,
+                    "phone": norm_phone(phone_raw),
+                    "nhs_private": "NHS" if row.get("DENTISTTYPE") == "GDS" else "Unknown",
+                    region.area_column: area_label(postcode, region.area_labels),
+                }
+            )
+            practices[key] = practice
+    return practices
+
+
+def load_practices(region: RegionConfig) -> dict[str, dict[str, str]]:
+    if region.data_source == "cqc":
+        return load_cqc_practices(region)
+    if region.data_source == "scotland_nhs":
+        return load_scotland_practices(region)
+    if region.data_source == "wales_hiw":
+        return load_wales_practices(region)
+    if region.data_source == "ni_bso":
+        return load_ni_practices(region)
+    raise SystemExit(f"Unknown data_source '{region.data_source}' for region {region.id}")
 
 
 def apply_overrides(practices: dict[str, dict[str, str]], region: RegionConfig) -> None:
@@ -594,8 +799,8 @@ def segment_definitions(region: RegionConfig) -> list[tuple[str, Callable[[dict[
 
 def build_region(region_id: str, skip_scan: bool = False) -> None:
     region = load_region(region_id)
-    ensure_cqc_csv()
-    practices = load_cqc_practices(region)
+    ensure_dataset(region.data_source)
+    practices = load_practices(region)
     apply_overrides(practices, region)
     apply_industry_flags(practices)
     if skip_scan:

@@ -12,12 +12,12 @@
     "IP4",
     "IP12",
     "IP14",
-    "IP5",
     "IP6",
     "IP11",
     "IP28",
     "IP2",
-    "IP3"
+    "IP3",
+    "IP5"
   ],
   "core_segment_prefix": "ipswich-core",
   "area_labels": {
@@ -48,5 +48,7 @@
     "IP6": "Ipswich & Suffolk (IP6)",
     "IP7": "Ipswich & Suffolk (IP7)",
     "IP9": "Ipswich & Suffolk (IP9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

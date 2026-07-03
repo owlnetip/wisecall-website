@@ -8,8 +8,8 @@
   "core_outward_codes": [
     "HR1",
     "HR2",
-    "HR6",
     "HR4",
+    "HR6",
     "HR7",
     "HR9",
     "HR8",
@@ -25,5 +25,7 @@
     "HR7": "Hereford & Leominster (HR7)",
     "HR8": "Hereford & Leominster (HR8)",
     "HR9": "Hereford & Leominster (HR9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

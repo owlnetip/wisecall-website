@@ -10,14 +10,14 @@
     "BN3",
     "BN2",
     "BN21",
-    "BN7",
     "BN11",
+    "BN7",
     "BN16",
     "BN14",
-    "BN25",
     "BN27",
     "BN43",
-    "BN10"
+    "BN15",
+    "BN17"
   ],
   "core_segment_prefix": "brighton-core",
   "area_labels": {
@@ -49,5 +49,7 @@
     "BN7": "Brighton & Hove (BN7)",
     "BN8": "Brighton & Hove (BN8)",
     "BN9": "Brighton & Hove (BN9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

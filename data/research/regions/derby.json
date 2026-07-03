@@ -7,17 +7,17 @@
   "overrides_file": "derby-dental-manual-overrides.json",
   "core_outward_codes": [
     "DE23",
+    "DE1",
     "DE14",
+    "DE21",
     "DE24",
     "DE55",
-    "DE1",
     "DE4",
-    "DE21",
-    "DE22",
     "DE6",
+    "DE22",
     "DE7",
     "DE11",
-    "DE3"
+    "DE13"
   ],
   "core_segment_prefix": "derby-core",
   "area_labels": {
@@ -44,5 +44,7 @@
     "DE73": "Derby (DE73)",
     "DE74": "Derby (DE74)",
     "DE75": "Derby (DE75)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

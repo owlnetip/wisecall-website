@@ -11,13 +11,13 @@
     "CV11",
     "CV37",
     "CV3",
-    "CV1",
-    "CV2",
     "CV6",
+    "CV1",
     "CV34",
+    "CV2",
+    "CV4",
     "CV8",
-    "CV31",
-    "CV4"
+    "CV22"
   ],
   "core_segment_prefix": "coventry-core",
   "area_labels": {
@@ -44,5 +44,7 @@
     "CV7": "Coventry (CV7)",
     "CV8": "Coventry (CV8)",
     "CV9": "Coventry (CV9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

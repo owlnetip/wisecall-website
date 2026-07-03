@@ -7,17 +7,17 @@
   "overrides_file": "walsall-dental-manual-overrides.json",
   "core_outward_codes": [
     "WS1",
-    "WS3",
     "WS10",
-    "WS11",
     "WS13",
+    "WS3",
+    "WS11",
     "WS14",
     "WS15",
-    "WS8",
     "WS9",
     "WS12",
-    "WS2",
-    "WS6"
+    "WS6",
+    "WS7",
+    "WS8"
   ],
   "core_segment_prefix": "walsall-core",
   "area_labels": {
@@ -36,5 +36,7 @@
     "WS7": "Walsall & Cannock (WS7)",
     "WS8": "Walsall & Cannock (WS8)",
     "WS9": "Walsall & Cannock (WS9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

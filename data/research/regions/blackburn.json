@@ -11,12 +11,12 @@
     "BB7",
     "BB1",
     "BB9",
-    "BB10",
     "BB3",
-    "BB8",
+    "BB10",
     "BB11",
     "BB18",
     "BB4",
+    "BB8",
     "BB12"
   ],
   "core_segment_prefix": "blackburn-core",
@@ -34,5 +34,7 @@
     "BB7": "Blackburn (BB7)",
     "BB8": "Blackburn (BB8)",
     "BB9": "Blackburn (BB9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

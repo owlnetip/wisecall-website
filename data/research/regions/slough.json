@@ -9,10 +9,10 @@
     "SL4",
     "SL1",
     "SL6",
-    "SL9",
     "SL7",
-    "SL3",
+    "SL9",
     "SL5",
+    "SL3",
     "SL2",
     "SL0",
     "SL8"
@@ -29,5 +29,7 @@
     "SL7": "Slough & Windsor (SL7)",
     "SL8": "Slough & Windsor (SL8)",
     "SL9": "Slough & Windsor (SL9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

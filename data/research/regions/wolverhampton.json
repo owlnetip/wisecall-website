@@ -7,16 +7,16 @@
   "overrides_file": "wolverhampton-dental-manual-overrides.json",
   "core_outward_codes": [
     "WV3",
-    "WV6",
     "WV10",
     "WV14",
     "WV1",
-    "WV16",
+    "WV6",
     "WV8",
+    "WV16",
     "WV2",
-    "WV5",
     "WV11",
     "WV4",
+    "WV5",
     "WV12"
   ],
   "core_segment_prefix": "wolverhampton-core",
@@ -35,5 +35,7 @@
     "WV6": "Wolverhampton (WV6)",
     "WV7": "Wolverhampton (WV7)",
     "WV8": "Wolverhampton (WV8)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

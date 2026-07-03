@@ -9,15 +9,15 @@
     "BH23",
     "BH15",
     "BH1",
-    "BH21",
     "BH6",
-    "BH24",
-    "BH8",
+    "BH21",
     "BH14",
     "BH2",
-    "BH18",
+    "BH8",
+    "BH24",
     "BH25",
-    "BH4"
+    "BH18",
+    "BH31"
   ],
   "core_segment_prefix": "bournemouth-core",
   "area_labels": {
@@ -47,5 +47,7 @@
     "BH7": "Bournemouth & Poole (BH7)",
     "BH8": "Bournemouth & Poole (BH8)",
     "BH9": "Bournemouth & Poole (BH9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

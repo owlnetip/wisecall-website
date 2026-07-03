@@ -7,13 +7,13 @@
   "overrides_file": "bromley-dental-manual-overrides.json",
   "core_outward_codes": [
     "BR6",
-    "BR3",
     "BR1",
+    "BR3",
     "BR2",
-    "BR7",
     "BR5",
-    "BR8",
-    "BR4"
+    "BR7",
+    "BR4",
+    "BR8"
   ],
   "core_segment_prefix": "bromley-core",
   "area_labels": {
@@ -25,5 +25,7 @@
     "BR6": "Bromley (BR6)",
     "BR7": "Bromley (BR7)",
     "BR8": "Bromley (BR8)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

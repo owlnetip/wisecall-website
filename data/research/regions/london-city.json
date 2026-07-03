@@ -40,5 +40,7 @@
     "EC4R": "City of London (EC4R)",
     "EC4V": "City of London (EC4V)",
     "EC4Y": "City of London (EC4Y)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

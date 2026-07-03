@@ -10,13 +10,13 @@
     "DY9",
     "DY3",
     "DY4",
-    "DY11",
     "DY5",
-    "DY13",
+    "DY11",
     "DY1",
-    "DY2",
     "DY6",
     "DY10",
+    "DY13",
+    "DY2",
     "DY7"
   ],
   "core_segment_prefix": "dudley-core",
@@ -35,5 +35,7 @@
     "DY7": "Dudley & Black Country (DY7)",
     "DY8": "Dudley & Black Country (DY8)",
     "DY9": "Dudley & Black Country (DY9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

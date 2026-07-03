@@ -8,8 +8,9 @@ Research lists for WiseCall outbound blasts targeting dental practices by UK pos
 |----------|----------------|
 | `data/research/` | Master CSVs, outbound blast CSVs, region configs, ADG/BDA flags |
 | `data/research/regions/*.json` | Per-city postcode + core area config |
-| `data/research/regions/manifest.json` | Master list of all **101** England regions (phases 1–9) |
-| `scripts/extend-uk-manifest.py` | Add remaining postcode areas for full England coverage |
+| `data/research/regions/manifest.json` | Master list of all **123** UK regions (phases 1–12) |
+| `scripts/extend-uk-manifest.py` | Add remaining England postcode areas for full CQC coverage |
+| `scripts/extend-devolved-nations-manifest.py` | Add Scotland, Wales and Northern Ireland regions |
 | `scripts/generate-dental-region-configs.py` | Regenerate region JSON from manifest + CQC |
 | `scripts/region-build-status.py` | Print build status table |
 | `scripts/build-dental-marketing-list.py` | Regenerate lists + website PMS scan (`--all`, `--phase N`) |
@@ -64,8 +65,21 @@ Research lists for WiseCall outbound blasts targeting dental practices by UK pos
 | **Phase 8 — West Midlands remainder** | 9 regions | 546 | 13 |
 | **Phase 9 — Edge postcodes (TD/NP)** | 2 regions | 5 | 1 |
 | **Full England (CQC)** | **101 regions** | **11,076** | **325** |
+| **Phase 10 — Scotland (NHS PHS)** | 16 regions | 989 | 0* |
+| **Phase 11 — Wales (HIW)** | 6 regions | 548 | 0* |
+| **Phase 12 — Northern Ireland (BSO)** | 1 region | 322 | 0* |
+| **Full UK** | **123 regions** | **12,934** | **324** |
 
-CQC directory covers **England only** (no Scotland/Wales/NI dental rows in this dataset).
+\*Devolved-nation registers do not include practice websites. PMS fingerprinting only runs when a website is known (manual overrides or future enrichment). Wales and NI contacts still enter the CRM on phone for qualification calls.
+
+| Country | Data source | Register |
+|---------|-------------|----------|
+| England | CQC directory CSV | Dentist + orthodontist services with phone/website |
+| Scotland | PHS open data | NHS dental practices (address only — no phone/website) |
+| Wales | HIW service directory CSV | Regulated dental practices with phone |
+| Northern Ireland | BSO dental surgery list | NHS dental surgeries with phone |
+
+CQC directory covers **England only**. Scotland, Wales and NI use the registers above.
 
 Run `python3 scripts/region-build-status.py` for the latest counts.
 
@@ -257,4 +271,4 @@ Regenerate the CRM seed after adding regions:
 python3 scripts/sync-dental-prospects-seed.py
 ```
 
-Current seed totals (10,022 contacts): **334** Dentally active, **2** Exact queued, **8,500** unknown queued, **1,186** corporate hold.
+Current seed totals (10,830 contacts): **334** Dentally active, **2** Exact queued, **9,217** unknown queued, **1,277** corporate hold.

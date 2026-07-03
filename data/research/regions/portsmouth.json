@@ -7,17 +7,17 @@
   "overrides_file": "portsmouth-dental-manual-overrides.json",
   "core_outward_codes": [
     "PO19",
-    "PO9",
     "PO16",
+    "PO9",
+    "PO33",
+    "PO6",
     "PO8",
     "PO21",
-    "PO33",
     "PO5",
-    "PO6",
     "PO1",
-    "PO30",
-    "PO7",
-    "PO12"
+    "PO12",
+    "PO13",
+    "PO30"
   ],
   "core_segment_prefix": "portsmouth-core",
   "area_labels": {
@@ -52,5 +52,7 @@
     "PO7": "Portsmouth & Hampshire south (PO7)",
     "PO8": "Portsmouth & Hampshire south (PO8)",
     "PO9": "Portsmouth & Hampshire south (PO9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

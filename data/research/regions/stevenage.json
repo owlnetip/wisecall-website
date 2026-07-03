@@ -11,13 +11,13 @@
     "SG8",
     "SG7",
     "SG14",
+    "SG12",
     "SG18",
+    "SG19",
     "SG2",
     "SG6",
-    "SG12",
-    "SG19",
-    "SG13",
-    "SG3"
+    "SG3",
+    "SG4"
   ],
   "core_segment_prefix": "stevenage-core",
   "area_labels": {
@@ -38,5 +38,7 @@
     "SG7": "Stevenage & Hertfordshire north (SG7)",
     "SG8": "Stevenage & Hertfordshire north (SG8)",
     "SG9": "Stevenage & Hertfordshire north (SG9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

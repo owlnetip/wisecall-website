@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "B91",
     "B17",
-    "B72",
     "B14",
+    "B72",
     "B29",
     "B31",
+    "B45",
+    "B61",
     "B93",
     "B97",
     "B16",
-    "B27",
-    "B45",
-    "B61"
+    "B19"
   ],
   "core_segment_prefix": "birmingham-core",
   "area_labels": {
@@ -94,5 +94,7 @@
     "B95": "Birmingham (B95)",
     "B97": "Birmingham (B97)",
     "B98": "Birmingham (B98)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "BS8",
     "BS1",
-    "BS31",
-    "BS4",
-    "BS7",
     "BS16",
-    "BS20",
+    "BS31",
     "BS6",
-    "BS23",
+    "BS7",
+    "BS20",
     "BS9",
+    "BS23",
+    "BS4",
     "BS10",
-    "BS48"
+    "BS15"
   ],
   "core_segment_prefix": "bristol-core",
   "area_labels": {
@@ -55,5 +55,7 @@
     "BS7": "Bristol (BS7)",
     "BS8": "Bristol (BS8)",
     "BS9": "Bristol (BS9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "CM2",
     "CM1",
-    "CM12",
     "CM23",
+    "CM12",
     "CM3",
     "CM8",
-    "CM15",
     "CM14",
+    "CM15",
     "CM16",
+    "CM6",
     "CM7",
-    "CM9",
-    "CM6"
+    "CM9"
   ],
   "core_segment_prefix": "chelmsford-core",
   "area_labels": {
@@ -46,5 +46,7 @@
     "CM77": "Chelmsford & Essex (CM77)",
     "CM8": "Chelmsford & Essex (CM8)",
     "CM9": "Chelmsford & Essex (CM9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

@@ -15,9 +15,9 @@
     "GL20",
     "GL4",
     "GL10",
-    "GL11",
     "GL51",
-    "GL2"
+    "GL2",
+    "GL6"
   ],
   "core_segment_prefix": "gloucester-core",
   "area_labels": {
@@ -44,5 +44,7 @@
     "GL6": "Gloucester & Cheltenham (GL6)",
     "GL7": "Gloucester & Cheltenham (GL7)",
     "GL8": "Gloucester & Cheltenham (GL8)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

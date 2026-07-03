@@ -8,12 +8,12 @@
   "core_outward_codes": [
     "HD1",
     "HD3",
-    "HD8",
     "HD5",
     "HD6",
+    "HD8",
     "HD9",
-    "HD4",
     "HD2",
+    "HD4",
     "HD7"
   ],
   "core_segment_prefix": "huddersfield-core",
@@ -27,5 +27,7 @@
     "HD7": "Huddersfield (HD7)",
     "HD8": "Huddersfield (HD8)",
     "HD9": "Huddersfield (HD9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

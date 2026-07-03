@@ -7,13 +7,13 @@
   "overrides_file": "durham-dental-manual-overrides.json",
   "core_outward_codes": [
     "DH1",
-    "DH3",
     "DH8",
+    "DH3",
     "DH7",
-    "DH6",
     "DH9",
     "DH2",
     "DH4",
+    "DH6",
     "DH5"
   ],
   "core_segment_prefix": "durham-core",
@@ -27,5 +27,7 @@
     "DH7": "Durham (DH7)",
     "DH8": "Durham (DH8)",
     "DH9": "Durham (DH9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

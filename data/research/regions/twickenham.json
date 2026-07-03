@@ -11,13 +11,13 @@
     "TW3",
     "TW11",
     "TW13",
-    "TW18",
     "TW8",
-    "TW7",
-    "TW2",
+    "TW18",
     "TW12",
+    "TW2",
+    "TW7",
     "TW15",
-    "TW10"
+    "TW5"
   ],
   "core_segment_prefix": "twickenham-core",
   "area_labels": {
@@ -40,5 +40,7 @@
     "TW7": "Twickenham & Heathrow (TW7)",
     "TW8": "Twickenham & Heathrow (TW8)",
     "TW9": "Twickenham & Heathrow (TW9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

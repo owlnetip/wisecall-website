@@ -7,11 +7,11 @@
   "overrides_file": "tunbridge-wells-dental-manual-overrides.json",
   "core_outward_codes": [
     "TN13",
-    "TN23",
     "TN4",
+    "TN23",
     "TN9",
-    "TN37",
     "TN34",
+    "TN37",
     "TN1",
     "TN6",
     "TN12",
@@ -57,5 +57,7 @@
     "TN6": "Tunbridge Wells & Kent (TN6)",
     "TN8": "Tunbridge Wells & Kent (TN8)",
     "TN9": "Tunbridge Wells & Kent (TN9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

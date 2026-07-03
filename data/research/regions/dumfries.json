@@ -1,0 +1,39 @@
+{
+  "id": "dumfries",
+  "name": "Dumfries & Galloway",
+  "postcode_regex": "^DG\\d",
+  "area_column": "area",
+  "file_prefix": "dumfries-dg-dental",
+  "overrides_file": "dumfries-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "DG1",
+    "DG9",
+    "DG11",
+    "DG12",
+    "DG2",
+    "DG3",
+    "DG5",
+    "DG6",
+    "DG7",
+    "DG8",
+    "DG10",
+    "DG16"
+  ],
+  "core_segment_prefix": "dumfries-core",
+  "area_labels": {
+    "DG1": "Dumfries & Galloway (DG1)",
+    "DG10": "Dumfries & Galloway (DG10)",
+    "DG11": "Dumfries & Galloway (DG11)",
+    "DG12": "Dumfries & Galloway (DG12)",
+    "DG16": "Dumfries & Galloway (DG16)",
+    "DG2": "Dumfries & Galloway (DG2)",
+    "DG3": "Dumfries & Galloway (DG3)",
+    "DG5": "Dumfries & Galloway (DG5)",
+    "DG6": "Dumfries & Galloway (DG6)",
+    "DG7": "Dumfries & Galloway (DG7)",
+    "DG8": "Dumfries & Galloway (DG8)",
+    "DG9": "Dumfries & Galloway (DG9)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

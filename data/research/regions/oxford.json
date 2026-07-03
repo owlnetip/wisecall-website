@@ -6,18 +6,18 @@
   "file_prefix": "oxford-ox-dental",
   "overrides_file": "oxford-dental-manual-overrides.json",
   "core_outward_codes": [
+    "OX2",
     "OX14",
     "OX16",
-    "OX28",
-    "OX2",
     "OX3",
+    "OX28",
     "OX1",
     "OX4",
-    "OX7",
     "OX9",
-    "OX10",
     "OX11",
-    "OX26"
+    "OX26",
+    "OX5",
+    "OX7"
   ],
   "core_segment_prefix": "oxford-core",
   "area_labels": {
@@ -46,5 +46,7 @@
     "OX5": "Oxford & Banbury (OX5)",
     "OX7": "Oxford & Banbury (OX7)",
     "OX9": "Oxford & Banbury (OX9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

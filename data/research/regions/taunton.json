@@ -9,12 +9,12 @@
     "TA1",
     "TA6",
     "TA8",
-    "TA11",
     "TA18",
     "TA21",
     "TA4",
     "TA24",
     "TA10",
+    "TA11",
     "TA12",
     "TA20",
     "TA2"
@@ -36,5 +36,7 @@
     "TA4": "Taunton & Somerset west (TA4)",
     "TA6": "Taunton & Somerset west (TA6)",
     "TA8": "Taunton & Somerset west (TA8)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

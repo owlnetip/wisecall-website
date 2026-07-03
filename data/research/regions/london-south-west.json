@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "SW6",
     "SW19",
-    "SW15",
     "SW11",
+    "SW15",
     "SW3",
     "SW18",
     "SW16",
     "SW12",
-    "SW17",
     "SW5",
     "SW9",
-    "SW2"
+    "SW17",
+    "SW1X"
   ],
   "core_segment_prefix": "london-south-west-core",
   "area_labels": {
@@ -46,5 +46,7 @@
     "SW7": "South West London (SW7)",
     "SW8": "South West London (SW8)",
     "SW9": "South West London (SW9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

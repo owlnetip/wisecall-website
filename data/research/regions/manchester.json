@@ -10,14 +10,14 @@
     "M33",
     "M2",
     "M6",
-    "M41",
-    "M22",
     "M30",
-    "M8",
-    "M14",
     "M9",
+    "M14",
+    "M22",
     "M25",
-    "M28"
+    "M41",
+    "M28",
+    "M3"
   ],
   "core_segment_prefix": "manchester-core",
   "area_labels": {
@@ -63,5 +63,7 @@
     "M7": "Manchester (M7)",
     "M8": "Manchester (M8)",
     "M9": "Manchester (M9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

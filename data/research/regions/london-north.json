@@ -7,16 +7,16 @@
   "overrides_file": "london-north-dental-manual-overrides.json",
   "core_outward_codes": [
     "N1",
-    "N12",
     "N8",
+    "N12",
     "N4",
-    "N22",
-    "N13",
-    "N14",
     "N3",
+    "N13",
     "N15",
     "N7",
     "N10",
+    "N14",
+    "N22",
     "N2"
   ],
   "core_segment_prefix": "london-north-core",
@@ -43,5 +43,7 @@
     "N7": "North London (N7)",
     "N8": "North London (N8)",
     "N9": "North London (N9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

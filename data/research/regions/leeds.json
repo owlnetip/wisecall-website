@@ -7,15 +7,15 @@
   "overrides_file": "leeds-dental-manual-overrides.json",
   "core_outward_codes": [
     "LS29",
-    "LS1",
     "LS17",
+    "LS1",
     "LS7",
-    "LS12",
     "LS8",
-    "LS16",
+    "LS12",
     "LS6",
-    "LS11",
     "LS10",
+    "LS11",
+    "LS16",
     "LS22",
     "LS25"
   ],
@@ -49,5 +49,7 @@
     "LS7": "Leeds (LS7)",
     "LS8": "Leeds (LS8)",
     "LS9": "Leeds (LS9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

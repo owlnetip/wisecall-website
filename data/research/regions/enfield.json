@@ -11,11 +11,11 @@
     "EN4",
     "EN6",
     "EN2",
-    "EN11",
     "EN3",
+    "EN11",
     "EN1",
-    "EN10",
     "EN9",
+    "EN10",
     "EN7"
   ],
   "core_segment_prefix": "enfield-core",
@@ -31,5 +31,7 @@
     "EN7": "Enfield (EN7)",
     "EN8": "Enfield (EN8)",
     "EN9": "Enfield (EN9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

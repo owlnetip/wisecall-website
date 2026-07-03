@@ -7,17 +7,17 @@
   "overrides_file": "newcastle-dental-manual-overrides.json",
   "core_outward_codes": [
     "NE3",
-    "NE2",
     "NE1",
+    "NE2",
     "NE6",
-    "NE9",
+    "NE11",
     "NE16",
+    "NE26",
     "NE28",
     "NE29",
-    "NE66",
+    "NE33",
     "NE5",
-    "NE8",
-    "NE11"
+    "NE8"
   ],
   "core_segment_prefix": "newcastle-core",
   "area_labels": {
@@ -67,5 +67,7 @@
     "NE70": "Newcastle (NE70)",
     "NE8": "Newcastle (NE8)",
     "NE9": "Newcastle (NE9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

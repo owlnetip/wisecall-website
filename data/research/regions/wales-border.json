@@ -1,0 +1,27 @@
+{
+  "id": "wales-border",
+  "name": "Powys border (SY)",
+  "postcode_regex": "^SY\\d",
+  "area_column": "area",
+  "file_prefix": "wales-border-sy-dental",
+  "overrides_file": "wales-border-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "SY16",
+    "SY23",
+    "SY20",
+    "SY21",
+    "SY18",
+    "SY22"
+  ],
+  "core_segment_prefix": "wales-border-core",
+  "area_labels": {
+    "SY16": "Powys border (SY) (SY16)",
+    "SY18": "Powys border (SY) (SY18)",
+    "SY20": "Powys border (SY) (SY20)",
+    "SY21": "Powys border (SY) (SY21)",
+    "SY22": "Powys border (SY) (SY22)",
+    "SY23": "Powys border (SY) (SY23)"
+  },
+  "data_source": "wales_hiw",
+  "country": "wales"
+}

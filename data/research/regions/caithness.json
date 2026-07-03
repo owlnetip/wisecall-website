@@ -1,0 +1,25 @@
+{
+  "id": "caithness",
+  "name": "Orkney & Caithness",
+  "postcode_regex": "^KW\\d",
+  "area_column": "area",
+  "file_prefix": "caithness-kw-dental",
+  "overrides_file": "caithness-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "KW14",
+    "KW15",
+    "KW1",
+    "KW10",
+    "KW16"
+  ],
+  "core_segment_prefix": "caithness-core",
+  "area_labels": {
+    "KW1": "Orkney & Caithness (KW1)",
+    "KW10": "Orkney & Caithness (KW10)",
+    "KW14": "Orkney & Caithness (KW14)",
+    "KW15": "Orkney & Caithness (KW15)",
+    "KW16": "Orkney & Caithness (KW16)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

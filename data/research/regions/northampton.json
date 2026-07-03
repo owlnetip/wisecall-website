@@ -7,16 +7,16 @@
   "overrides_file": "northampton-dental-manual-overrides.json",
   "core_outward_codes": [
     "NN1",
-    "NN8",
     "NN2",
-    "NN16",
+    "NN8",
     "NN17",
-    "NN5",
-    "NN9",
+    "NN16",
     "NN4",
+    "NN5",
     "NN10",
-    "NN11",
     "NN14",
+    "NN11",
+    "NN13",
     "NN15"
   ],
   "core_segment_prefix": "northampton-core",
@@ -39,5 +39,7 @@
     "NN7": "Northampton & Kettering (NN7)",
     "NN8": "Northampton & Kettering (NN8)",
     "NN9": "Northampton & Kettering (NN9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

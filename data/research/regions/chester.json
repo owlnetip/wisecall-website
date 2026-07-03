@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "CH1",
     "CH42",
-    "CH2",
-    "CH3",
     "CH46",
     "CH45",
     "CH63",
-    "CH65",
-    "CH64",
-    "CH4",
+    "CH2",
+    "CH3",
     "CH44",
-    "CH48"
+    "CH48",
+    "CH49",
+    "CH60",
+    "CH4"
   ],
   "core_segment_prefix": "chester-core",
   "area_labels": {
@@ -41,5 +41,7 @@
     "CH64": "Chester (CH64)",
     "CH65": "Chester (CH65)",
     "CH66": "Chester (CH66)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

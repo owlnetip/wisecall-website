@@ -6,18 +6,18 @@
   "file_prefix": "oldham-ol-dental",
   "overrides_file": "oldham-dental-manual-overrides.json",
   "core_outward_codes": [
-    "OL4",
     "OL6",
-    "OL8",
     "OL11",
     "OL1",
-    "OL9",
+    "OL8",
     "OL16",
-    "OL2",
+    "OL4",
     "OL10",
+    "OL2",
+    "OL9",
+    "OL12",
     "OL15",
-    "OL3",
-    "OL12"
+    "OL3"
   ],
   "core_segment_prefix": "oldham-core",
   "area_labels": {
@@ -37,5 +37,7 @@
     "OL7": "Oldham (OL7)",
     "OL8": "Oldham (OL8)",
     "OL9": "Oldham (OL9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

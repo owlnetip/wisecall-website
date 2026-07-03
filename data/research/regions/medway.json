@@ -11,13 +11,13 @@
     "ME12",
     "ME8",
     "ME10",
-    "ME13",
     "ME7",
+    "ME13",
     "ME14",
-    "ME2",
     "ME4",
-    "ME5",
-    "ME16"
+    "ME16",
+    "ME2",
+    "ME5"
   ],
   "core_segment_prefix": "medway-core",
   "area_labels": {
@@ -40,5 +40,7 @@
     "ME7": "Medway & Kent north (ME7)",
     "ME8": "Medway & Kent north (ME8)",
     "ME9": "Medway & Kent north (ME9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }
