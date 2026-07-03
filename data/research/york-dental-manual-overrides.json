@@ -1,0 +1,94 @@
+{
+  "_comment": "Manual enrichments where CQC is missing websites/phones or automated PMS detection needs a verified override.",
+  "practices": [
+    {
+      "match_names": ["Heslington Dental Practice", "Heslington Dental"],
+      "website": "https://www.heslingtondental.co.uk",
+      "phone": "01904 904500",
+      "pms_detected": "Dentally",
+      "pms_confidence": "high",
+      "pms_evidence": "heslington-dental.portal.dental",
+      "blast_segment": "Dentally confirmed",
+      "notes": "Online booking via Dentally Portal"
+    },
+    {
+      "match_names": ["Blossom Dental  Care", "Blossom Dental Care"],
+      "website": "https://www.blossomdentalcare.co.uk",
+      "phone": "01904 654889",
+      "pms_detected": "Dentally",
+      "pms_confidence": "high",
+      "pms_evidence": "blossom-dental-care.dentr.net",
+      "blast_segment": "Dentally confirmed",
+      "notes": "Online booking via Dentally Portal (legacy dentr.net redirect)"
+    },
+    {
+      "match_names": ["Ainsty Dental Practice"],
+      "website": "https://www.ainstydental.co.uk",
+      "phone": "01904 786196",
+      "pms_detected": "Dentally",
+      "pms_confidence": "high",
+      "pms_evidence": "ainsty-clinic.portal.dental",
+      "blast_segment": "Dentally confirmed"
+    },
+    {
+      "match_names": ["Castlegate Dental Centre"],
+      "website": "https://castlegatedental.co.uk",
+      "pms_detected": "Dentally",
+      "pms_confidence": "high",
+      "pms_evidence": "castle-gate-dental-practice.portal.dental",
+      "blast_segment": "Dentally confirmed",
+      "notes": "Correct York site is castlegatedental.co.uk (not castlegate-dental.co.uk which is a different Gloucestershire practice)"
+    },
+    {
+      "match_names": ["York Dental"],
+      "match_exact": true,
+      "website": "https://yorkdentalpractice.co.uk",
+      "phone": "01904 891160",
+      "pms_detected": "Dentally",
+      "pms_confidence": "medium",
+      "pms_evidence": "Patient portal referenced on practice site; phone-first booking",
+      "blast_segment": "Dentally likely",
+      "notes": "Portal not linked on homepage — verify on call"
+    },
+    {
+      "match_names": ["Genix Healthcare Market Weighton Ltd", "Genix Healthcare Market Weighton"],
+      "lock_pms": true,
+      "pms_detected": "",
+      "pms_confidence": "none",
+      "pms_evidence": "",
+      "blast_segment": "Unknown PMS - manual check",
+      "notes": "Corporate site mentions portal.dental for other clinics — not confirmed for this location"
+    },
+    {
+      "match_names": ["Acorn Dental Practice"],
+      "website": "https://www.acorndental.co.uk",
+      "phone": "01904 789876"
+    },
+    {
+      "match_names": ["Andrea Ubhi"],
+      "website": "https://www.andreaubhi.co.uk",
+      "phone": "01904 639667"
+    },
+    {
+      "match_names": ["Bupa Dental Care York - Lawrence Street", "Bupa Dental Care York"],
+      "phone": "01904 411993",
+      "notes": "Corporate Bupa — likely SOE/Exact stack but booking page blocked to bots"
+    },
+    {
+      "match_names": ["Clock House Dental"],
+      "phone": "01904 422918"
+    },
+    {
+      "match_names": ["Copmanthorpe Dental Centre"],
+      "phone": "01904 706291"
+    },
+    {
+      "match_names": ["Crystal Clear Dental Spa"],
+      "phone": "01904 642595"
+    },
+    {
+      "match_names": ["Dunnington Dental Practice"],
+      "phone": "01904 489183"
+    }
+  ]
+}
