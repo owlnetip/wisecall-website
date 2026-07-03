@@ -5,6 +5,7 @@ import { isAdmin } from "@/lib/admin";
 import {
   isPbxType,
   isTransport,
+  normalizeSipEndpointAddress,
   type SipEndpoint,
   type SipEndpointResult,
   type SipMutationResult,
@@ -171,6 +172,12 @@ export async function saveSipEndpoint(input: {
   if (!sipDomain) return { ok: false, error: "PBX address (SIP domain) is required." };
   if (!sipUsername) return { ok: false, error: "Extension / SIP username is required." };
 
+  const normalized = normalizeSipEndpointAddress({
+    sipDomain,
+    sipProxy: input.sipProxy,
+    transport: input.transport as "udp" | "tcp" | "tls",
+  });
+
   // Determine create vs update so we can keep the stored password when the user
   // leaves the password field blank on an edit.
   const { data: existing, error: existingErr } = await service
@@ -190,8 +197,8 @@ export async function saveSipEndpoint(input: {
     profile_id: input.agentId,
     pbx_type: input.pbxType,
     transport: input.transport,
-    sip_domain: sipDomain,
-    sip_proxy: (input.sipProxy || "").trim() || sipDomain,
+    sip_domain: normalized.sipDomain,
+    sip_proxy: (input.sipProxy || "").trim() || normalized.sipProxy,
     sip_username: sipUsername,
     is_enabled: input.isEnabled,
     updated_at: new Date().toISOString(),

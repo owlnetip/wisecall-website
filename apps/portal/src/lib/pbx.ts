@@ -56,3 +56,65 @@ export function isPbxType(value: string): value is PbxType {
 export function isTransport(value: string): value is SipTransport {
   return (SIP_TRANSPORTS as readonly string[]).includes(value);
 }
+
+export function defaultSignalingPort(transport: SipTransport): number {
+  return transport === "tls" ? 5061 : 5060;
+}
+
+// Split "pbx.example.com:5061" or "[::1]:5061" into host + optional port.
+export function parseSipHostPort(input: string): { host: string; port?: number } {
+  const value = input.trim();
+  if (!value) return { host: "" };
+
+  const v6 = /^\[([^\]]+)\](?::(\d+))?$/.exec(value);
+  if (v6) {
+    return { host: v6[1], port: v6[2] ? Number(v6[2]) : undefined };
+  }
+
+  const idx = value.lastIndexOf(":");
+  if (idx > 0 && /^\d+$/.test(value.slice(idx + 1))) {
+    return { host: value.slice(0, idx), port: Number(value.slice(idx + 1)) };
+  }
+
+  return { host: value };
+}
+
+// Normalise what we store in wisecall_sip_endpoints so the SIP bridge opens
+// REGISTER on the right port. TLS must not stay on 5060; bare hosts get the
+// transport default (5060 UDP/TCP, 5061 TLS).
+export function normalizeSipEndpointAddress(input: {
+  sipDomain: string;
+  sipProxy?: string;
+  transport: SipTransport;
+}): { sipDomain: string; sipProxy: string } {
+  const source = input.sipDomain.trim() || input.sipProxy?.trim() || "";
+  const { host, port: explicitPort } = parseSipHostPort(source);
+  if (!host) return { sipDomain: "", sipProxy: "" };
+
+  let port = explicitPort;
+  if (port === 5060 && input.transport === "tls") {
+    port = 5061;
+  }
+  if (!port) {
+    port = defaultSignalingPort(input.transport);
+  }
+
+  const sipDomain = host;
+  const sipProxy = `${host}:${port}`;
+  return { sipDomain, sipProxy };
+}
+
+// Rebuild a friendly PBX address for the form from stored host + proxy.
+export function formatSipHostPortForDisplay(
+  sipDomain: string,
+  sipProxy: string,
+  transport: SipTransport,
+): string {
+  const parsed = parseSipHostPort(sipProxy || sipDomain);
+  if (!parsed.host) return sipDomain;
+  const port = parsed.port ?? defaultSignalingPort(transport);
+  if (transport === "tls" || port !== defaultSignalingPort("udp")) {
+    return `${parsed.host}:${port}`;
+  }
+  return parsed.host;
+}

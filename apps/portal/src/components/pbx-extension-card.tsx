@@ -12,6 +12,9 @@ import {
   PBX_TYPES,
   SIP_BRIDGE_PUBLIC_IP,
   SIP_TRANSPORTS,
+  defaultSignalingPort,
+  formatSipHostPortForDisplay,
+  normalizeSipEndpointAddress,
   type PbxType,
   type SipRegistrationStatus,
   type SipTransport,
@@ -85,7 +88,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
         setConfigured(true);
         setPbxType(e.pbxType);
         setTransport(e.transport);
-        setSipDomain(e.sipDomain);
+        setSipDomain(formatSipHostPortForDisplay(e.sipDomain, e.sipProxy, e.transport));
         setSipProxy(e.sipProxy);
         setSipUsername(e.sipUsername);
         setHasPassword(e.hasPassword);
@@ -210,7 +213,22 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
                 value={transport}
                 onChange={(e) => {
                   userTouchedTransport.current = true;
-                  setTransport(e.target.value as SipTransport);
+                  const next = e.target.value as SipTransport;
+                  setTransport(next);
+                  if (sipDomain.trim()) {
+                    const normalized = normalizeSipEndpointAddress({
+                      sipDomain,
+                      sipProxy,
+                      transport: next,
+                    });
+                    setSipDomain(
+                      formatSipHostPortForDisplay(
+                        normalized.sipDomain,
+                        normalized.sipProxy,
+                        next,
+                      ),
+                    );
+                  }
                 }}
                 className={FIELD}
               >
@@ -280,7 +298,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
             On your PBX, allow registrations from <span className="font-bold text-ink">{SIP_BRIDGE_PUBLIC_IP}</span> and
             route the extension&apos;s inbound calls to it.
             {tlsSelected ? (
-              <> For TLS, use port <span className="font-bold text-ink">5061</span> on the PBX address and open inbound TCP 5061 to the bridge. Media is encrypted automatically (SRTP) when your PBX offers it.</>
+              <> For TLS, the bridge registers to port <span className="font-bold text-ink">{defaultSignalingPort("tls")}</span> on the PBX address (not 5060). Media is encrypted automatically (SRTP) when your PBX offers it.</>
             ) : null}
           </div>
 

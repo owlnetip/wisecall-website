@@ -690,17 +690,25 @@ serve(async (req) => {
     console.log(`✅ DID ${didNumber} bound to user ${morUserId} / device ${morDeviceId}`);
 
     // ── 6. Upsert wisecall_sip_endpoints (bridge auto-picks it up in ~30s) ─
-    const { error: sipErr } = await supabase.from("wisecall_sip_endpoints").upsert({
+    const sipEndpointRow: Record<string, unknown> = {
       profile_id,
       pbx_type: "mor",
       sip_username: deviceUsername,
       sip_password: sipPassword,
       sip_domain: MOR_SIP_HOST,
       sip_proxy: MOR_SIP_HOST,
-      transport: "udp",
       is_enabled: true,
       mor_device_id: morDeviceId,
-    }, { onConflict: "profile_id" });
+    };
+    // Keep transport if the customer already switched to TLS/TCP in the portal —
+    // reprovisioning must not silently reset them back to UDP.
+    if (!existingSip?.transport) {
+      sipEndpointRow.transport = "udp";
+    }
+    const { error: sipErr } = await supabase.from("wisecall_sip_endpoints").upsert(
+      sipEndpointRow,
+      { onConflict: "profile_id" },
+    );
     if (sipErr) throw new Error(`wisecall_sip_endpoints upsert: ${sipErr.message}`);
     console.log(`✅ SIP endpoint upserted: ${deviceUsername}@${MOR_SIP_HOST}`);
 
