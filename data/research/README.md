@@ -72,6 +72,30 @@ Research lists for WiseCall outbound blasts targeting dental practices by UK pos
 
 \*Devolved-nation registers do not include practice websites. PMS fingerprinting only runs when a website is known (manual overrides or future enrichment). Wales and NI contacts still enter the CRM on phone for qualification calls.
 
+### Website discovery via search (Scotland / Wales / NI)
+
+Registers for Scotland, Wales and NI usually omit websites. To find Dentally practices there, run a search enrichment pass first:
+
+```bash
+export GOOGLE_CSE_API_KEY=your_key
+export GOOGLE_CSE_CX=your_search_engine_id   # https://programmablesearchengine.google.com/
+
+# Per-practice search (recommended — e.g. "Glasgow South Dental Care G41 dentist")
+python3 scripts/enrich-dental-websites-search.py --region glasgow --limit 20 --dry-run
+python3 scripts/enrich-dental-websites-search.py --country scotland
+
+# City batch (faster, fuzzier — e.g. one query "dentists in Glasgow")
+python3 scripts/enrich-dental-websites-search.py --region glasgow --mode city
+
+# Then rescan for Dentally/Exact fingerprints
+python3 scripts/build-dental-marketing-list.py --phase 10
+python3 scripts/sync-dental-prospects-seed.py
+```
+
+Per-practice queries match NHS/HIW register names more reliably than a single "dentists in Glasgow" search. City mode is useful for gap-fill but expect some false matches — review overrides before blasting.
+
+Alternative: `SERPAPI_KEY` instead of Google Custom Search.
+
 | Country | Data source | Register |
 |---------|-------------|----------|
 | England | CQC directory CSV | Dentist + orthodontist services with phone/website |
