@@ -12,6 +12,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Save,
 } from "lucide-react";
 import {
   importDentalProspectsFromSeed,
@@ -21,12 +22,20 @@ import {
   listProspectEmails,
   previewOutreachEmail,
   processDueOutreachFollowUps,
+  saveOutreachTemplate,
   sendOutreachEmail,
   updateOutreachProspect,
   type OutreachEmail,
   type OutreachProspect,
   type OutreachTemplate,
 } from "@/app/actions/outreach";
+
+const SEGMENT_OPTIONS = [
+  { value: "dentally_active", label: "Dentally (email now)", badge: "bg-emerald-100 text-emerald-800" },
+  { value: "exact_queued", label: "Exact/SOE (queued)", badge: "bg-violet-100 text-violet-800" },
+  { value: "unknown_queued", label: "Unknown PMS (queued)", badge: "bg-slate-100 text-slate-700" },
+  { value: "corporate_hold", label: "Corporate (hold)", badge: "bg-amber-100 text-amber-800" },
+] as const;
 
 const STATUS_OPTIONS = [
   { value: "new", label: "New" },
@@ -47,12 +56,14 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export function OutreachCrm() {
+  const [view, setView] = useState<"prospects" | "templates">("prospects");
   const [prospects, setProspects] = useState<OutreachProspect[]>([]);
   const [templates, setTemplates] = useState<OutreachTemplate[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [emails, setEmails] = useState<OutreachEmail[]>([]);
   const [regionFilter, setRegionFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [segmentFilter, setSegmentFilter] = useState("dentally_active");
   const [dueCount, setDueCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -61,6 +72,11 @@ export function OutreachCrm() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [scheduleFollowUps, setScheduleFollowUps] = useState(true);
+
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [editTemplateName, setEditTemplateName] = useState("");
+  const [editTemplateSubject, setEditTemplateSubject] = useState("");
+  const [editTemplateBody, setEditTemplateBody] = useState("");
 
   const selected = useMemo(
     () => prospects.find((p) => p.id === selectedId) ?? null,
@@ -72,11 +88,14 @@ export function OutreachCrm() {
     [prospects],
   );
 
+  const canEmail = selected?.outreachSegment === "dentally_active";
+
   const refresh = useCallback(async () => {
     const [p, t, d] = await Promise.all([
       listOutreachProspects({
         region: regionFilter || undefined,
         status: statusFilter || undefined,
+        outreachSegment: segmentFilter || undefined,
       }),
       listOutreachTemplates(),
       listDueFollowUpCount(),
@@ -90,7 +109,7 @@ export function OutreachCrm() {
       }
     }
     if (d.ok) setDueCount(d.data);
-  }, [regionFilter, statusFilter, templateId]);
+  }, [regionFilter, statusFilter, segmentFilter, templateId]);
 
   useEffect(() => {
     void refresh();
@@ -140,7 +159,37 @@ export function OutreachCrm() {
     const res = await importDentalProspectsFromSeed();
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
-    setMsg({ kind: "ok", text: `Imported ${res.data.imported} prospects (${res.data.skipped} skipped).` });
+    const seg = Object.entries(res.data.bySegment)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ");
+    setMsg({
+      kind: "ok",
+      text: `Imported ${res.data.imported} new, updated ${res.data.updated} (${seg}).`,
+    });
+    await refresh();
+  }
+
+  function startEditTemplate(t: OutreachTemplate) {
+    setEditingTemplateId(t.id);
+    setEditTemplateName(t.name);
+    setEditTemplateSubject(t.subjectTemplate);
+    setEditTemplateBody(t.bodyTemplate);
+    setView("templates");
+  }
+
+  async function onSaveTemplate() {
+    setBusy(true);
+    setMsg(null);
+    const res = await saveOutreachTemplate({
+      id: editingTemplateId ?? undefined,
+      name: editTemplateName,
+      subjectTemplate: editTemplateSubject,
+      bodyTemplate: editTemplateBody,
+    });
+    setBusy(false);
+    if (!res.ok) return setMsg({ kind: "err", text: res.error });
+    setMsg({ kind: "ok", text: "Template saved." });
+    setEditingTemplateId(res.data.id);
     await refresh();
   }
 
@@ -189,10 +238,26 @@ export function OutreachCrm() {
           <div>
             <h1 className="text-2xl font-black text-[#0e1b1b]">Dental outreach CRM</h1>
             <p className="mt-1 text-sm text-[#5a7272]">
-              Track Dentally prospects, personalize emails, and run 3 / 7 / 14-day follow-ups.
+              Dentally prospects get email now. Exact and unknown PMS contacts are stored until you are ready.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-lg border border-[#d8e4e4] bg-[#f4f7f7] p-1">
+              <button
+                type="button"
+                onClick={() => setView("prospects")}
+                className={`rounded-md px-3 py-1.5 text-sm font-bold ${view === "prospects" ? "bg-white text-[#0e1b1b] shadow-sm" : "text-[#5a7272]"}`}
+              >
+                Prospects
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("templates")}
+                className={`rounded-md px-3 py-1.5 text-sm font-bold ${view === "templates" ? "bg-white text-[#0e1b1b] shadow-sm" : "text-[#5a7272]"}`}
+              >
+                Templates
+              </button>
+            </div>
             <a
               href="/admin"
               className="rounded-lg border border-[#d8e4e4] px-3 py-2 text-sm font-semibold text-[#0e1b1b] hover:bg-[#f4f7f7]"
@@ -206,7 +271,7 @@ export function OutreachCrm() {
               className="inline-flex items-center gap-2 rounded-lg border border-[#d8e4e4] bg-white px-3 py-2 text-sm font-semibold text-[#0e1b1b] hover:bg-[#f4f7f7] disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              Import Dentally list
+              Import all contacts
             </button>
             {dueCount > 0 && (
               <button
@@ -239,8 +304,94 @@ export function OutreachCrm() {
         )}
       </header>
 
+      {view === "templates" ? (
+        <div className="mx-auto max-w-4xl px-6 py-6">
+          <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+            <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Templates</p>
+              <ul className="space-y-2">
+                {templates.map((t) => (
+                  <li key={t.id}>
+                    <button
+                      type="button"
+                      onClick={() => startEditTemplate(t)}
+                      className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
+                        editingTemplateId === t.id ? "border-[#7de8eb] bg-[#7de8eb]/10" : "border-[#e8efef]"
+                      }`}
+                    >
+                      <p className="font-bold text-[#0e1b1b]">{t.name}</p>
+                      <p className="text-xs text-[#5a7272]">{t.sequenceStep.replace(/_/g, " ")}</p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingTemplateId(null);
+                  setEditTemplateName("Custom template");
+                  setEditTemplateSubject("Subject with {{practice_name}}");
+                  setEditTemplateBody("Hi{{#contact_name}} {{contact_name}}{{/contact_name}},\n\nYour message here.\n\nBest,\n[Your name]");
+                }}
+                className="mt-3 w-full rounded-lg border border-dashed border-[#d8e4e4] px-3 py-2 text-sm font-semibold text-[#5a7272]"
+              >
+                + New template
+              </button>
+            </section>
+            <section className="rounded-2xl border border-[#d8e4e4] bg-white p-5 shadow-sm">
+              <h2 className="text-lg font-black text-[#0e1b1b]">Edit template</h2>
+              <p className="mt-1 text-sm text-[#5a7272]">
+                Merge fields: {"{{practice_name}}"}, {"{{contact_name}}"}, {"{{postcode}}"}, {"{{pms}}"}, {"{{area}}"}, {"{{phone}}"}
+              </p>
+              <div className="mt-4 grid gap-3">
+                <input
+                  value={editTemplateName}
+                  onChange={(e) => setEditTemplateName(e.target.value)}
+                  className="rounded-lg border border-[#d8e4e4] px-3 py-2 text-sm font-semibold"
+                  placeholder="Template name"
+                />
+                <input
+                  value={editTemplateSubject}
+                  onChange={(e) => setEditTemplateSubject(e.target.value)}
+                  className="rounded-lg border border-[#d8e4e4] px-3 py-2 text-sm"
+                  placeholder="Subject"
+                />
+                <textarea
+                  value={editTemplateBody}
+                  onChange={(e) => setEditTemplateBody(e.target.value)}
+                  rows={14}
+                  className="rounded-lg border border-[#d8e4e4] px-3 py-2 font-mono text-sm leading-relaxed"
+                />
+                <button
+                  type="button"
+                  onClick={() => void onSaveTemplate()}
+                  disabled={busy}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0e1b1b] px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save template
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      ) : (
       <div className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[360px_1fr]">
         <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
+          <div className="mb-3 flex flex-wrap gap-2">
+            {SEGMENT_OPTIONS.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => setSegmentFilter(s.value)}
+                className={`rounded-full px-3 py-1 text-xs font-bold ${
+                  segmentFilter === s.value ? s.badge : "bg-[#f4f7f7] text-[#5a7272]"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
           <div className="mb-4 flex gap-2">
             <select
               value={regionFilter}
@@ -303,7 +454,7 @@ export function OutreachCrm() {
             ))}
             {!prospects.length && (
               <li className="rounded-xl border border-dashed border-[#d8e4e4] p-6 text-center text-sm text-[#5a7272]">
-                No prospects yet. Click <strong>Import Dentally list</strong> to load York + Leeds Tier 1 targets.
+                No prospects yet. Click <strong>Import all contacts</strong> to load Dentally, Exact-queued and unknown PMS practices.
               </li>
             )}
           </ul>
@@ -312,7 +463,7 @@ export function OutreachCrm() {
         <section className="space-y-6">
           {!selected ? (
             <div className="rounded-2xl border border-dashed border-[#d8e4e4] bg-white p-12 text-center text-[#5a7272]">
-              Select a practice to draft a personalized email.
+              Select a practice to view details and draft an email (Dentally) or notes for queued contacts.
             </div>
           ) : (
             <>
@@ -323,6 +474,14 @@ export function OutreachCrm() {
                     <p className="text-sm text-[#5a7272]">
                       {selected.area || selected.region} · {selected.pms} · {selected.tier?.split(" - ")[0]}
                     </p>
+                    <span
+                      className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        SEGMENT_OPTIONS.find((s) => s.value === selected.outreachSegment)?.badge ??
+                        "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {selected.outreachSegment.replace(/_/g, " ")}
+                    </span>
                   </div>
                   <select
                     value={selected.status}
@@ -406,6 +565,7 @@ export function OutreachCrm() {
                 </label>
               </div>
 
+              {canEmail ? (
               <div className="rounded-2xl border border-[#d8e4e4] bg-white p-5 shadow-sm">
                 <h3 className="text-lg font-black text-[#0e1b1b]">Draft email</h3>
                 <div className="mt-3 grid gap-3">
@@ -459,6 +619,21 @@ export function OutreachCrm() {
                   </button>
                 </div>
               </div>
+              ) : (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+                  <p className="font-bold">Stored for later — email disabled</p>
+                  <p className="mt-2">
+                    {selected.outreachSegment === "exact_queued"
+                      ? "This practice is flagged for Exact/SOE. Once WiseCall Exact integration ships, switch them to active outreach and use the Exact templates."
+                      : selected.outreachSegment === "corporate_hold"
+                        ? "ADG corporate group — lower priority. Use phone outbound or revisit manually."
+                        : "Unknown PMS — qualify on a call first, or wait until you know their software. Phone number is saved for outbound blasts."}
+                  </p>
+                  {selected.phone && (
+                    <p className="mt-2 font-semibold">Phone: {selected.phone}</p>
+                  )}
+                </div>
+              )}
 
               {emails.length > 0 && (
                 <div className="rounded-2xl border border-[#d8e4e4] bg-white p-5 shadow-sm">
@@ -495,6 +670,7 @@ export function OutreachCrm() {
           )}
         </section>
       </div>
+      )}
     </div>
   );
 }

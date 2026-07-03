@@ -23,6 +23,7 @@ export type OutreachProspect = {
   notes: string | null;
   status: string;
   sequenceStatus: string;
+  outreachSegment: string;
   lastContactedAt: string | null;
   nextFollowUpAt: string | null;
   updatedAt: string;
@@ -80,6 +81,7 @@ function mapProspect(row: Record<string, unknown>): OutreachProspect {
     notes: (row.notes as string) ?? null,
     status: (row.status as string) ?? "new",
     sequenceStatus: (row.sequence_status as string) ?? "none",
+    outreachSegment: (row.outreach_segment as string) ?? "unknown_queued",
     lastContactedAt: (row.last_contacted_at as string) ?? null,
     nextFollowUpAt: (row.next_follow_up_at as string) ?? null,
     updatedAt: (row.updated_at as string) ?? "",
@@ -106,6 +108,7 @@ function mergeFieldsForProspect(p: OutreachProspect): Record<string, string> {
 export async function listOutreachProspects(filters?: {
   region?: string;
   status?: string;
+  outreachSegment?: string;
 }): Promise<Result<OutreachProspect[]>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -115,10 +118,12 @@ export async function listOutreachProspects(filters?: {
   let q = service
     .from("wisecall_outreach_prospects")
     .select("*")
+    .order("outreach_segment")
     .order("region")
     .order("practice_name");
   if (filters?.region) q = q.eq("region", filters.region);
   if (filters?.status) q = q.eq("status", filters.status);
+  if (filters?.outreachSegment) q = q.eq("outreach_segment", filters.outreachSegment);
 
   const { data, error } = await q;
   if (error) return { ok: false, error: error.message };
@@ -191,6 +196,55 @@ export async function listOutreachTemplates(): Promise<Result<OutreachTemplate[]
       bodyTemplate: (r.body_template as string) ?? "",
     })),
   };
+}
+
+export async function saveOutreachTemplate(input: {
+  id?: string;
+  name: string;
+  subjectTemplate: string;
+  bodyTemplate: string;
+  sequenceStep?: string;
+}): Promise<Result<{ id: string }>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const name = input.name.trim();
+  const subject = input.subjectTemplate.trim();
+  const body = input.bodyTemplate.trim();
+  if (!name || subject.length < 5 || body.length < 20) {
+    return { ok: false, error: "Template needs a name, subject and body." };
+  }
+
+  const step = input.sequenceStep || "custom";
+  const patch = {
+    name,
+    subject_template: subject,
+    body_template: body,
+    sequence_step: step,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (input.id) {
+    const { error } = await service
+      .from("wisecall_outreach_email_templates")
+      .update(patch)
+      .eq("id", input.id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/admin/outreach");
+    return { ok: true, data: { id: input.id } };
+  }
+
+  const slug = `custom-${Date.now()}`;
+  const { data, error } = await service
+    .from("wisecall_outreach_email_templates")
+    .insert({ ...patch, slug, category: "dental", is_system: false })
+    .select("id")
+    .single();
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/outreach");
+  return { ok: true, data: { id: data.id as string } };
 }
 
 export async function listProspectEmails(prospectId: string): Promise<Result<OutreachEmail[]>> {
@@ -314,6 +368,17 @@ export async function sendOutreachEmail(input: {
   if (pErr || !prospectRow) return { ok: false, error: "Prospect not found." };
 
   const prospect = mapProspect(prospectRow as Record<string, unknown>);
+  if (prospect.outreachSegment !== "dentally_active") {
+    return {
+      ok: false,
+      error:
+        prospect.outreachSegment === "exact_queued"
+          ? "Exact/SOE prospects are queued — enable outreach once Exact integration ships."
+          : prospect.outreachSegment === "corporate_hold"
+            ? "Corporate (ADG) practice — lower priority, email disabled."
+            : "Unknown PMS prospects are stored for qualification — email disabled until PMS confirmed.",
+    };
+  }
   if (!prospect.email) return { ok: false, error: "Add a recipient email before sending." };
 
   const sent = await sendViaResend({
@@ -361,7 +426,9 @@ export async function sendOutreachEmail(input: {
   return { ok: true, data: { emailId: emailRow.id as string } };
 }
 
-export async function importDentalProspectsFromSeed(): Promise<Result<{ imported: number; skipped: number }>> {
+export async function importDentalProspectsFromSeed(): Promise<
+  Result<{ imported: number; updated: number; skipped: number; bySegment: Record<string, number> }>
+> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
   const service = getServiceSupabase();
@@ -376,35 +443,67 @@ export async function importDentalProspectsFromSeed(): Promise<Result<{ imported
   }
 
   let imported = 0;
+  let updated = 0;
   let skipped = 0;
+  const bySegment: Record<string, number> = {};
+
   for (const p of raw.prospects ?? []) {
-    const row = {
+    const segment = p.outreach_segment || "unknown_queued";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+
+    const { data: existing } = await service
+      .from("wisecall_outreach_prospects")
+      .select("id, status, email, contact_name, notes")
+      .eq("practice_name", p.practice_name)
+      .eq("postcode", (p.postcode || "").toUpperCase())
+      .eq("region", p.region)
+      .maybeSingle();
+
+    const metadata = {
       practice_name: p.practice_name,
-      contact_name: p.contact_name || null,
-      email: p.email || null,
-      phone: p.phone || null,
       postcode: (p.postcode || "").toUpperCase(),
       region: p.region,
       area: p.area || null,
-      pms: p.pms || "Dentally",
+      pms: p.pms || "Unknown",
       tier: p.tier || null,
       website: p.website || null,
-      notes: p.notes || null,
+      outreach_segment: segment,
       merge_fields: p,
       updated_at: new Date().toISOString(),
     };
+
+    if (existing && existing.status !== "new") {
+      const { error } = await service
+        .from("wisecall_outreach_prospects")
+        .update({
+          ...metadata,
+          phone: p.phone || null,
+        })
+        .eq("id", existing.id);
+      if (error) skipped += 1;
+      else updated += 1;
+      continue;
+    }
+
+    const row = {
+      ...metadata,
+      contact_name: p.contact_name || null,
+      email: p.email || null,
+      phone: p.phone || null,
+      notes: p.notes || null,
+      status: "new",
+      sequence_status: "none",
+    };
+
     const { error } = await service.from("wisecall_outreach_prospects").upsert(row, {
       onConflict: "practice_name,postcode,region",
     });
-    if (error) {
-      skipped += 1;
-    } else {
-      imported += 1;
-    }
+    if (error) skipped += 1;
+    else imported += 1;
   }
 
   revalidatePath("/admin/outreach");
-  return { ok: true, data: { imported, skipped } };
+  return { ok: true, data: { imported, updated, skipped, bySegment } };
 }
 
 export async function processDueOutreachFollowUps(): Promise<
@@ -438,6 +537,14 @@ export async function processDueOutreachFollowUpsInternal(
   for (const row of due ?? []) {
     const prospect = row.wisecall_outreach_prospects as Record<string, unknown>;
     const p = mapProspect(prospect);
+    if (p.outreachSegment !== "dentally_active") {
+      await service
+        .from("wisecall_outreach_emails")
+        .update({ status: "cancelled", updated_at: now })
+        .eq("id", row.id);
+      cancelled += 1;
+      continue;
+    }
     if (p.sequenceStatus === "stopped" || ["not_interested", "paused"].includes(p.status)) {
       await service
         .from("wisecall_outreach_emails")
