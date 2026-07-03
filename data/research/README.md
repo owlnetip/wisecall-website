@@ -1,6 +1,13 @@
-# York (YO) dental marketing research
+# Dental marketing research (York + Leeds)
 
-Research list for WiseCall outbound blasts targeting dental practices in the York / North Yorkshire **YO** postcode area.
+Research lists for WiseCall outbound blasts targeting dental practices by UK postcode region.
+
+| Region | Postcodes | Master list | Tier 1 independents (Dentally) |
+|--------|-----------|-------------|--------------------------------|
+| **York** | YO* | `york-yo-dental-marketing-list.csv` (108) | `york-yo-dental-dentally-tier1-independents-outbound.csv` (6) |
+| **Leeds** | LS* | `leeds-ls-dental-marketing-list.csv` (182) | `leeds-ls-dental-dentally-tier1-independents-outbound.csv` (7) |
+
+Add more cities/towns by creating a JSON config in `data/research/regions/` and running the build script.
 
 ## Important limitation
 
@@ -15,19 +22,36 @@ Anything marked **Unknown PMS** still has value for a general dental blast, but 
 
 ## Files
 
+### Shared
+
 | File | Purpose |
 |------|---------|
-| `york-yo-dental-marketing-list.csv` | Full master list (108 practices) with PMS signals, tiers, notes |
-| `york-yo-dental-dentally-tier1-blast-outbound.csv` | **Start here** — Dentally confirmed/likely + phone numbers |
-| `york-yo-dental-dentally-confirmed-outbound.csv` | High-confidence Dentally only |
-| `york-yo-dental-york-core-all-outbound.csv` | York city + inner YO postcodes (YO1, YO10, YO19, YO23–YO32, YO41) |
-| `york-yo-dental-york-core-independents-outbound.csv` | York core excluding ADG corporate groups |
-| `york-yo-dental-york-core-bda-good-practice-outbound.csv` | York core BDA Good Practice charter members |
-| `york-yo-dental-york-core-unknown-pms-outbound.csv` | York core practices where PMS is unknown — good for qualification calls |
-| `york-yo-dental-dentally-tier1-independents-outbound.csv` | Tier 1 Dentally targets excluding ADG corporate |
-| `york-yo-dental-dentally-contacts.csv` | Owner/decision-maker research — public emails, names, outreach channel |
+| `regions/york.json` / `regions/leeds.json` | Region config (postcodes, core area, area labels) |
 | `adg-corporate-groups.json` | ADG member match patterns |
-| `york-dental-manual-overrides.json` | Verified manual enrichments |
+| `york-dental-manual-overrides.json` | York verified manual enrichments |
+| `leeds-dental-manual-overrides.json` | Leeds verified manual enrichments (empty starter) |
+
+### York (YO)
+
+| File | Purpose |
+|------|---------|
+| `york-yo-dental-marketing-list.csv` | Full master list (108 practices) |
+| `york-yo-dental-dentally-tier1-independents-outbound.csv` | **Start here** — 6 independent Dentally targets with phones |
+| `york-yo-dental-dentally-tier1-blast-outbound.csv` | All Tier 1 Dentally (incl. corporate) |
+| `york-yo-dental-york-core-independents-outbound.csv` | York city + inner YO postcodes, non-ADG |
+| `york-yo-dental-york-core-bda-good-practice-outbound.csv` | York core BDA Good Practice members |
+| `york-yo-dental-dentally-contacts.csv` | Owner/decision-maker research for York Tier 1 |
+
+### Leeds (LS)
+
+| File | Purpose |
+|------|---------|
+| `leeds-ls-dental-marketing-list.csv` | Full master list (182 practices) |
+| `leeds-ls-dental-dentally-tier1-independents-outbound.csv` | **Start here** — 7 independent Dentally targets with phones |
+| `leeds-ls-dental-dentally-tier1-blast-outbound.csv` | All Tier 1 Dentally (incl. corporate) |
+| `leeds-ls-dental-leeds-core-independents-outbound.csv` | Leeds city + inner LS postcodes, non-ADG (92) |
+| `leeds-ls-dental-leeds-core-bda-good-practice-outbound.csv` | Leeds core BDA Good Practice members (7) |
+| `leeds-ls-dental-leeds-core-unknown-pms-outbound.csv` | Leeds core unknown PMS — qualification calls (98) |
 
 ## Industry association flags
 
@@ -41,7 +65,8 @@ The build script tags each practice using:
 BDA list is downloaded to `bda-good-practice.kml` on first run. Regenerate flags only (fast):
 
 ```bash
-python3 scripts/build-york-dental-marketing-list.py --skip-website-scan
+python3 scripts/build-dental-marketing-list.py --region york --skip-website-scan
+python3 scripts/build-dental-marketing-list.py --region leeds --skip-website-scan
 ```
 
 ## WiseCall tiers
@@ -54,10 +79,29 @@ python3 scripts/build-york-dental-marketing-list.py --skip-website-scan
 ## Regenerating
 
 ```bash
+# Full rebuild with website PMS scan
+python3 scripts/build-dental-marketing-list.py --region leeds
+python3 scripts/build-dental-marketing-list.py --region york
+
+# York-only wrapper (same as --region york)
 python3 scripts/build-york-dental-marketing-list.py
 ```
 
 On first run the script downloads the latest CQC directory CSV (~19MB) into this folder.
+
+### Leeds Tier 1 independents (July 2026 scan)
+
+| Practice | Area | Phone |
+|----------|------|-------|
+| The Dental Architect | LS1 city centre | 01138 684324 |
+| The Tooth Spa | LS7 Chapel Allerton | 01132 625545 |
+| Chelwood Dental Care | LS8 Roundhay | 01132 668459 |
+| Church View Dental Care | LS15 Cross Gates | 01132 647133 |
+| Manor Square Dental | LS21 Otley | 01943 461501 |
+| Glen Lea Dental Suite | LS22 Wetherby | 01937 583502 |
+| Ilkley Dental Studio | LS29 Ilkley | 0798 4005132 |
+
+Genix Healthcare (2 Leeds sites) also runs Dentally but is ADG corporate → Tier 4.
 
 ## Portal outbound upload
 

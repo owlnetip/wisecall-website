@@ -1,17 +1,17 @@
 name,phone,company,postcode,yo_area,pms,segment,tier,adg_corporate,adg_group,bda_good_practice,website,notes
-Castlegate Dental Centre,01904 653284,Castlegate Dental Centre,YO1 9RN,York south,Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.castlegate-dental.co.uk,Correct York site is castlegatedental.co.uk (not castlegate-dental.co.uk which is a different Gloucestershire practice)
+Castlegate Dental Centre,01904 653284,Castlegate Dental Centre,YO1 9RN,York city centre,Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.castlegate-dental.co.uk,Correct York site is castlegatedental.co.uk (not castlegate-dental.co.uk which is a different Gloucestershire practice)
 Heslington Dental Practice,01904 904500,Heslington Dental Practice,YO10 5EA,York south/east,Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.heslingtondental.co.uk,Online booking via Dentally Portal
 Blossom Dental  Care,01904 654889,Blossom Dental  Care,YO24 1AQ,York south-west,Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.blossomdentalcare.co.uk,Online booking via Dentally Portal (legacy dentr.net redirect)
 Ainsty Dental Practice,01904 786196,Ainsty Dental Practice,YO26 6AR,York west/Acomb,Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.ainstydental.co.uk,
 York Dental,01904 891160,York Dental,YO30 4TN,York north/Clifton,Dentally,Dentally likely,Tier 1 - Dentally integration ready,No,,No,https://yorkdentalpractice.co.uk,Portal not linked on homepage — verify on call
 Stamford Bridge Dental Practice,01759 372360,Stamford Bridge Dental Practice,YO41 1BS,York east/Dunnington,Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.stamfordbridgedental.com,
-James Pegg Dentistry,01904 622487,James Pegg Dentistry,YO1 6JB,Bridlington,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
-Hopkins & Poyner Dental Surgery,01904 623582,Hopkins & Poyner Dental Surgery,YO1 7HP,Malton area,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
-Orthokind - York,01904 633061,Orthokind - York,YO1 7HZ,Malton area,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,https://www.orthokind.com,
-Andrea Ubhi,01904 639667,Andrea Ubhi,YO1 7LG,Malton area,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,https://www.andreaubhi.co.uk,
-Stonegate Dental Studio,01904 653107,Stonegate Dental Studio,YO1 8AW,Pickering area,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
-St Saviourgate Dental Care,01904 629239,St Saviourgate Dental Care,YO1 8NN,Pickering area,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
-Crystal Clear Dental Spa,01904 642595,Crystal Clear Dental Spa,YO1 8QJ,Pickering area,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
+James Pegg Dentistry,01904 622487,James Pegg Dentistry,YO1 6JB,York city centre,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
+Hopkins & Poyner Dental Surgery,01904 623582,Hopkins & Poyner Dental Surgery,YO1 7HP,York city centre,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
+Orthokind - York,01904 633061,Orthokind - York,YO1 7HZ,York city centre,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,https://www.orthokind.com,
+Andrea Ubhi,01904 639667,Andrea Ubhi,YO1 7LG,York city centre,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,https://www.andreaubhi.co.uk,
+Stonegate Dental Studio,01904 653107,Stonegate Dental Studio,YO1 8AW,York city centre,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
+St Saviourgate Dental Care,01904 629239,St Saviourgate Dental Care,YO1 8NN,York city centre,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
+Crystal Clear Dental Spa,01904 642595,Crystal Clear Dental Spa,YO1 8QJ,York city centre,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
 Restore 32 Dental Practice,01904 641167,Restore 32 Dental Practice,YO10 4BQ,York south/east,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
 Dunnington Dental Practice,01904 489183,Dunnington Dental Practice,YO19 5QT,York south,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,https://www.richardfisherdental.co.uk,website unreachable
 Nunnery Lane Dental Practice,01904 639779,Nunnery Lane Dental Practice,YO23 1AH,York west,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
@@ -40,7 +40,7 @@ Wortley House Dental Practice,01904 763458,Wortley House Dental Practice,YO32 2H
 Strensall Dental Practice,01904 490060,Strensall Dental Practice,YO32 5AA,York north/Haxby,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,https://www.richardfisherdental.co.uk,website unreachable
 HMP Millsike,0770 9176412,HMP Millsike,YO41 1FZ,York east/Dunnington,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,
 HMP Full Sutton,01759 475100,HMP Full Sutton,YO41 1PS,York east/Dunnington,Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,https://www.gov.uk,
-"mydentist Stonebow, York",01204 799799,"mydentist Stonebow, York",YO1 7NP,Malton area,Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,mydentist,No,,
+"mydentist Stonebow, York",01204 799799,"mydentist Stonebow, York",YO1 7NP,York city centre,Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,mydentist,No,,
 Bupa Dental Care York - Lawrence Street,01904 411993,Bupa Dental Care York - Lawrence Street,YO10 3EF,York south/east,Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,Bupa Dental Care,No,,Corporate Bupa — likely SOE/Exact stack but booking page blocked to bots
 Cornlands Road Clinic (Priory Medical Group),01423 885959,Cornlands Road Clinic (Priory Medical Group),YO24 3WX,York south-west,Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,Community Dental Services,No,,
 Smile Care York,01753 523410,Smile Care York,YO30 4WL,York north/Clifton,Dentally,Dentally confirmed,Tier 4 - ADG corporate group (lower priority),Yes,Smile Dental Care,No,https://www.smiledentalcare.co.uk,
