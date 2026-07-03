@@ -1,0 +1,29 @@
+{
+  "id": "blackpool",
+  "name": "Blackpool",
+  "postcode_regex": "^FY\\d",
+  "area_column": "area",
+  "file_prefix": "blackpool-fy-dental",
+  "overrides_file": "blackpool-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "FY8",
+    "FY3",
+    "FY1",
+    "FY6",
+    "FY4",
+    "FY5",
+    "FY7",
+    "FY2"
+  ],
+  "core_segment_prefix": "blackpool-core",
+  "area_labels": {
+    "FY1": "Blackpool (FY1)",
+    "FY2": "Blackpool (FY2)",
+    "FY3": "Blackpool (FY3)",
+    "FY4": "Blackpool (FY4)",
+    "FY5": "Blackpool (FY5)",
+    "FY6": "Blackpool (FY6)",
+    "FY7": "Blackpool (FY7)",
+    "FY8": "Blackpool (FY8)"
+  }
+}

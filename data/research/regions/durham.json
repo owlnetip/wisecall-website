@@ -1,0 +1,31 @@
+{
+  "id": "durham",
+  "name": "Durham",
+  "postcode_regex": "^DH\\d",
+  "area_column": "area",
+  "file_prefix": "durham-dh-dental",
+  "overrides_file": "durham-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "DH1",
+    "DH3",
+    "DH8",
+    "DH7",
+    "DH6",
+    "DH9",
+    "DH2",
+    "DH4",
+    "DH5"
+  ],
+  "core_segment_prefix": "durham-core",
+  "area_labels": {
+    "DH1": "Durham (DH1)",
+    "DH2": "Durham (DH2)",
+    "DH3": "Durham (DH3)",
+    "DH4": "Durham (DH4)",
+    "DH5": "Durham (DH5)",
+    "DH6": "Durham (DH6)",
+    "DH7": "Durham (DH7)",
+    "DH8": "Durham (DH8)",
+    "DH9": "Durham (DH9)"
+  }
+}

@@ -18,22 +18,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RESEARCH = ROOT / "data" / "research"
 OUT = ROOT / "apps" / "portal" / "src" / "data" / "dental-prospects-seed.json"
+REGIONS_DIR = RESEARCH / "regions"
 
-REGION_MAP = {
-    "york-yo": "york",
-    "leeds-ls": "leeds",
-    "harrogate-hg": "harrogate",
-    "bradford-bd": "bradford",
-    "hull-hu": "hull",
-    "sheffield-s": "sheffield",
-}
+
+def load_region_map() -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for path in sorted(REGIONS_DIR.glob("*.json")):
+        if path.name == "manifest.json":
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        mapping[data["file_prefix"]] = data["id"]
+    return mapping
 
 
 def region_from_stem(stem: str) -> str:
-    if stem in REGION_MAP:
-        return REGION_MAP[stem]
-    for key, val in REGION_MAP.items():
-        if stem.startswith(key.split("-")[0]):
+    region_map = load_region_map()
+    if stem in region_map:
+        return region_map[stem]
+    for prefix, val in region_map.items():
+        if stem.startswith(prefix):
             return val
     return stem.split("-")[0] if "-" in stem else stem
 

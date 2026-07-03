@@ -1,0 +1,41 @@
+{
+  "id": "oldham",
+  "name": "Oldham",
+  "postcode_regex": "^OL\\d",
+  "area_column": "area",
+  "file_prefix": "oldham-ol-dental",
+  "overrides_file": "oldham-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "OL4",
+    "OL6",
+    "OL8",
+    "OL11",
+    "OL1",
+    "OL9",
+    "OL16",
+    "OL2",
+    "OL10",
+    "OL15",
+    "OL3",
+    "OL12"
+  ],
+  "core_segment_prefix": "oldham-core",
+  "area_labels": {
+    "OL1": "Oldham (OL1)",
+    "OL10": "Oldham (OL10)",
+    "OL11": "Oldham (OL11)",
+    "OL12": "Oldham (OL12)",
+    "OL13": "Oldham (OL13)",
+    "OL14": "Oldham (OL14)",
+    "OL15": "Oldham (OL15)",
+    "OL16": "Oldham (OL16)",
+    "OL2": "Oldham (OL2)",
+    "OL3": "Oldham (OL3)",
+    "OL4": "Oldham (OL4)",
+    "OL5": "Oldham (OL5)",
+    "OL6": "Oldham (OL6)",
+    "OL7": "Oldham (OL7)",
+    "OL8": "Oldham (OL8)",
+    "OL9": "Oldham (OL9)"
+  }
+}

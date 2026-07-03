@@ -1,0 +1,9 @@
+name,phone,company,postcode,area,pms,segment,tier,adg_corporate,adg_group,bda_good_practice,website,notes
+Loughborough Road Dental Practice,01159 819396,Loughborough Road Dental Practice,NG2 7JJ,Nottingham (NG2),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,Yes,https://www.lrdp.org,
+Thackeray Dental Care,01623 629359,Thackeray Dental Care,NG18 2BT,Nottingham (NG18),Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,Yes,https://www.thackeraydental.co.uk,
+Wollaton Park Dental Practice,01159 281635,Wollaton Park Dental Practice,NG8 2BH,Nottingham (NG8),Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,Yes,,
+Market Place Family Dental Centre - Exchange Row,01159 790909,Market Place Family Dental Centre - Exchange Row,NG18 1JU,Nottingham (NG18),Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,Nationwide Healthcare,Yes,,
+The Market Place Family Dental Centre,01159 790909,The Market Place Family Dental Centre,NG18 1JU,Nottingham (NG18),Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,Nationwide Healthcare,Yes,,
+Sneinton Family Dental Centre,01159 790909,Sneinton Family Dental Centre,NG2 4BU,Nottingham (NG2),Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,Nationwide Healthcare,Yes,,
+The Maltings Dental Practice,01476 563181,The Maltings Dental Practice,NG31 6DE,Nottingham (NG31),Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,Rodericks Dental,Yes,,
+Seven Dental,01159 700007,Seven Dental,NG7 5DR,Nottingham (NG7),Unknown,Unknown PMS - manual check,Tier 4 - ADG corporate group (lower priority),Yes,Nationwide Healthcare,Yes,https://sevendental.co.uk,

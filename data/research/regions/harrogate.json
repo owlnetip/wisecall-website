@@ -5,13 +5,19 @@
   "area_column": "area",
   "file_prefix": "harrogate-hg-dental",
   "overrides_file": "harrogate-dental-manual-overrides.json",
-  "core_outward_codes": ["HG1", "HG2", "HG3", "HG5"],
+  "core_outward_codes": [
+    "HG1",
+    "HG2",
+    "HG5",
+    "HG3",
+    "HG4"
+  ],
   "core_segment_prefix": "harrogate-core",
   "area_labels": {
-    "HG1": "Harrogate town",
-    "HG2": "Harrogate south",
-    "HG3": "Pannal/Ripley",
-    "HG4": "Ripon",
-    "HG5": "Knaresborough"
+    "HG1": "Harrogate (HG1)",
+    "HG2": "Harrogate (HG2)",
+    "HG3": "Harrogate (HG3)",
+    "HG4": "Harrogate (HG4)",
+    "HG5": "Harrogate (HG5)"
   }
 }

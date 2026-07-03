@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "notes": "UK dental marketing regions. status: done | pending. Run scripts/generate-dental-region-configs.py then build-dental-marketing-list.py --all",
+  "regions": [
+    { "id": "york", "name": "York", "postcode_regex": "^YO\\d", "postcode_prefix": "YO", "phase": 1, "status": "done" },
+    { "id": "leeds", "name": "Leeds", "postcode_regex": "^LS\\d", "postcode_prefix": "LS", "phase": 1, "status": "done" },
+    { "id": "harrogate", "name": "Harrogate", "postcode_regex": "^HG\\d", "postcode_prefix": "HG", "phase": 1, "status": "done" },
+    { "id": "bradford", "name": "Bradford", "postcode_regex": "^BD\\d", "postcode_prefix": "BD", "phase": 1, "status": "done" },
+    { "id": "hull", "name": "Hull", "postcode_regex": "^HU\\d", "postcode_prefix": "HU", "phase": 1, "status": "done" },
+    { "id": "sheffield", "name": "Sheffield", "postcode_regex": "^S\\d", "postcode_prefix": "S", "phase": 1, "status": "done" },
+
+    { "id": "wakefield", "name": "Wakefield", "postcode_regex": "^WF\\d", "postcode_prefix": "WF", "phase": 2, "status": "done" },
+    { "id": "doncaster", "name": "Doncaster", "postcode_regex": "^DN\\d", "postcode_prefix": "DN", "phase": 2, "status": "done" },
+    { "id": "huddersfield", "name": "Huddersfield", "postcode_regex": "^HD\\d", "postcode_prefix": "HD", "phase": 2, "status": "done" },
+    { "id": "halifax", "name": "Halifax", "postcode_regex": "^HX\\d", "postcode_prefix": "HX", "phase": 2, "status": "done" },
+    { "id": "teesside", "name": "Teesside", "postcode_regex": "^TS\\d", "postcode_prefix": "TS", "phase": 2, "status": "done" },
+    { "id": "durham", "name": "Durham", "postcode_regex": "^DH\\d", "postcode_prefix": "DH", "phase": 2, "status": "done" },
+    { "id": "darlington", "name": "Darlington", "postcode_regex": "^DL\\d", "postcode_prefix": "DL", "phase": 2, "status": "done" },
+    { "id": "lincoln", "name": "Lincoln", "postcode_regex": "^LN\\d", "postcode_prefix": "LN", "phase": 2, "status": "done" },
+
+    { "id": "manchester", "name": "Manchester", "postcode_regex": "^M\\d", "postcode_prefix": "M", "phase": 3, "status": "done" },
+    { "id": "liverpool", "name": "Liverpool", "postcode_regex": "^L\\d", "postcode_prefix": "L", "phase": 3, "status": "done" },
+    { "id": "newcastle", "name": "Newcastle", "postcode_regex": "^NE\\d", "postcode_prefix": "NE", "phase": 3, "status": "done" },
+    { "id": "nottingham", "name": "Nottingham", "postcode_regex": "^NG\\d", "postcode_prefix": "NG", "phase": 3, "status": "done" },
+    { "id": "leicester", "name": "Leicester", "postcode_regex": "^LE\\d", "postcode_prefix": "LE", "phase": 3, "status": "done" },
+    { "id": "preston", "name": "Preston", "postcode_regex": "^PR\\d", "postcode_prefix": "PR", "phase": 3, "status": "done" },
+    { "id": "chester", "name": "Chester", "postcode_regex": "^CH\\d", "postcode_prefix": "CH", "phase": 3, "status": "done" },
+    { "id": "blackburn", "name": "Blackburn", "postcode_regex": "^BB\\d", "postcode_prefix": "BB", "phase": 3, "status": "done" },
+    { "id": "oldham", "name": "Oldham", "postcode_regex": "^OL\\d", "postcode_prefix": "OL", "phase": 3, "status": "done" },
+    { "id": "warrington", "name": "Warrington", "postcode_regex": "^WA\\d", "postcode_prefix": "WA", "phase": 3, "status": "done" },
+
+    { "id": "stoke", "name": "Stoke-on-Trent", "postcode_regex": "^ST\\d", "postcode_prefix": "ST", "phase": 4, "status": "done" },
+    { "id": "derby", "name": "Derby", "postcode_regex": "^DE\\d", "postcode_prefix": "DE", "phase": 4, "status": "done" },
+    { "id": "coventry", "name": "Coventry", "postcode_regex": "^CV\\d", "postcode_prefix": "CV", "phase": 4, "status": "done" },
+    { "id": "birmingham", "name": "Birmingham", "postcode_regex": "^B\\d", "postcode_prefix": "B", "phase": 4, "status": "done" },
+    { "id": "sunderland", "name": "Sunderland", "postcode_regex": "^SR\\d", "postcode_prefix": "SR", "phase": 4, "status": "done" },
+    { "id": "carlisle", "name": "Carlisle", "postcode_regex": "^CA\\d", "postcode_prefix": "CA", "phase": 4, "status": "done" },
+    { "id": "lancaster", "name": "Lancaster", "postcode_regex": "^LA\\d", "postcode_prefix": "LA", "phase": 4, "status": "done" },
+    { "id": "blackpool", "name": "Blackpool", "postcode_regex": "^FY\\d", "postcode_prefix": "FY", "phase": 4, "status": "done" },
+    { "id": "bolton", "name": "Bolton", "postcode_regex": "^BL\\d", "postcode_prefix": "BL", "phase": 4, "status": "done" },
+    { "id": "wigan", "name": "Wigan", "postcode_regex": "^WN\\d", "postcode_prefix": "WN", "phase": 4, "status": "done" },
+    { "id": "stockport", "name": "Stockport", "postcode_regex": "^SK\\d", "postcode_prefix": "SK", "phase": 4, "status": "done" }
+  ]
+}

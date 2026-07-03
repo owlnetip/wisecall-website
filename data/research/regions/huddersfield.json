@@ -1,0 +1,31 @@
+{
+  "id": "huddersfield",
+  "name": "Huddersfield",
+  "postcode_regex": "^HD\\d",
+  "area_column": "area",
+  "file_prefix": "huddersfield-hd-dental",
+  "overrides_file": "huddersfield-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "HD1",
+    "HD3",
+    "HD8",
+    "HD5",
+    "HD6",
+    "HD9",
+    "HD4",
+    "HD2",
+    "HD7"
+  ],
+  "core_segment_prefix": "huddersfield-core",
+  "area_labels": {
+    "HD1": "Huddersfield (HD1)",
+    "HD2": "Huddersfield (HD2)",
+    "HD3": "Huddersfield (HD3)",
+    "HD4": "Huddersfield (HD4)",
+    "HD5": "Huddersfield (HD5)",
+    "HD6": "Huddersfield (HD6)",
+    "HD7": "Huddersfield (HD7)",
+    "HD8": "Huddersfield (HD8)",
+    "HD9": "Huddersfield (HD9)"
+  }
+}

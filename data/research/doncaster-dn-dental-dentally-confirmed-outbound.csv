@@ -1,0 +1,4 @@
+name,phone,company,postcode,area,pms,segment,tier,adg_corporate,adg_group,bda_good_practice,website,notes
+Ashby Dental Practice,01724 847676,Ashby Dental Practice,DN16 2RZ,Doncaster (DN16),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.ashby-dental.co.uk,
+Genix Healthcare Tickhill Ltd,01302 742361,Genix Healthcare Tickhill Ltd,DN11 9HY,Doncaster (DN11),Dentally,Dentally confirmed,Tier 4 - ADG corporate group (lower priority),Yes,Genix Healthcare,No,https://www.genixhealthcare.com,
+Dental Partners Conisbrough,01709 862148,Dental Partners Conisbrough,DN12 3DB,Doncaster (DN12),Dentally,Dentally confirmed,Tier 4 - ADG corporate group (lower priority),Yes,Genix Healthcare,No,https://www.genixhealthcare.com,

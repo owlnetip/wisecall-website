@@ -8,20 +8,59 @@ Research lists for WiseCall outbound blasts targeting dental practices by UK pos
 |----------|----------------|
 | `data/research/` | Master CSVs, outbound blast CSVs, region configs, ADG/BDA flags |
 | `data/research/regions/*.json` | Per-city postcode + core area config |
-| `scripts/build-dental-marketing-list.py` | Regenerate lists + website PMS scan |
+| `data/research/regions/manifest.json` | Master list of all 35 regions (phases 1–4) |
+| `scripts/generate-dental-region-configs.py` | Regenerate region JSON from manifest + CQC |
+| `scripts/region-build-status.py` | Print build status table |
+| `scripts/build-dental-marketing-list.py` | Regenerate lists + website PMS scan (`--all`, `--phase N`) |
 | `apps/portal/src/data/dental-prospects-seed.json` | Dentally Tier 1 independents bundled for CRM import |
 | **Admin portal → `/admin/outreach`** | CRM to track sends, draft emails, 3/7/14-day follow-ups |
 
-| Region | Postcodes | Master list | Tier 1 independents (Dentally) |
-|--------|-----------|-------------|--------------------------------|
-| **York** | YO* | `york-yo-dental-marketing-list.csv` (108) | 6 |
-| **Leeds** | LS* | `leeds-ls-dental-marketing-list.csv` (182) | 7 |
-| **Harrogate** | HG* | `harrogate-hg-dental-marketing-list.csv` | (run build) |
-| **Bradford** | BD* | `bradford-bd-dental-marketing-list.csv` | (run build) |
-| **Hull** | HU* | `hull-hu-dental-marketing-list.csv` | (run build) |
-| **Sheffield** | S* | `sheffield-s-dental-marketing-list.csv` | (run build) |
+| Region | Postcodes | Practices | Dentally T1 |
+|--------|-----------|-----------|-------------|
+| **Phase 1 — Yorkshire core** | | | |
+| York | YO* | 108 | 6 |
+| Leeds | LS* | 182 | 7 |
+| Harrogate | HG* | 40 | 2 |
+| Bradford | BD* | 99 | 0 |
+| Hull | HU* | 68 | 0 |
+| Sheffield | S* | 235 | 3 |
+| **Phase 2 — Yorkshire ring** | | | |
+| Wakefield | WF* | 78 | 6 |
+| Doncaster | DN* | 112 | 1 |
+| Huddersfield | HD* | 55 | 1 |
+| Halifax | HX* | 26 | 0 |
+| Teesside | TS* | 95 | 0 |
+| Durham | DH* | 48 | 1 |
+| Darlington | DL* | 55 | 1 |
+| Lincoln | LN* | 45 | 0 |
+| **Phase 3 — North West / East Midlands** | | | |
+| Manchester | M* | 256 | 8 |
+| Liverpool | L* | 154 | 8 |
+| Newcastle | NE* | 184 | 4 |
+| Nottingham | NG* | 198 | 3 |
+| Leicester | LE* | 197 | 11 |
+| Preston | PR* | 101 | 1 |
+| Chester | CH* | 106 | 1 |
+| Blackburn | BB* | 97 | 3 |
+| Oldham | OL* | 86 | 3 |
+| Warrington | WA* | 130 | 2 |
+| **Phase 4 — West Midlands / wider North** | | | |
+| Birmingham | B* | 369 | 9 |
+| Stoke | ST* | 126 | 5 |
+| Derby | DE* | 120 | 1 |
+| Coventry | CV* | 140 | 4 |
+| Stockport | SK* | 150 | 1 |
+| Bolton | BL* | 65 | 5 |
+| Blackpool | FY* | 41 | 3 |
+| Wigan | WN* | 48 | 2 |
+| Carlisle | CA* | 54 | 1 |
+| Lancaster | LA* | 67 | 1 |
+| Sunderland | SR* | 29 | 0 |
+| **Total** | **35 regions** | **~3,964** | **104** |
 
-Add more cities by creating a JSON config in `data/research/regions/` and running the build script.
+Run `python3 scripts/region-build-status.py` for the latest counts.
+
+Add a new city: add an entry to `data/research/regions/manifest.json`, run `python3 scripts/generate-dental-region-configs.py`, then `python3 scripts/build-dental-marketing-list.py --region <id>`.
 
 ## Important limitation
 
@@ -93,12 +132,10 @@ python3 scripts/build-dental-marketing-list.py --region leeds --skip-website-sca
 ## Regenerating
 
 ```bash
-# Full rebuild with website PMS scan
 python3 scripts/build-dental-marketing-list.py --region leeds
-python3 scripts/build-dental-marketing-list.py --region york
-
-# York-only wrapper (same as --region york)
-python3 scripts/build-york-dental-marketing-list.py
+python3 scripts/build-dental-marketing-list.py --all          # all regions (skips scan if CSV exists)
+python3 scripts/build-dental-marketing-list.py --phase 2      # Yorkshire ring only
+python3 scripts/build-dental-marketing-list.py --region york --skip-website-scan
 ```
 
 On first run the script downloads the latest CQC directory CSV (~19MB) into this folder.
@@ -211,4 +248,4 @@ Regenerate the CRM seed after adding regions:
 python3 scripts/sync-dental-prospects-seed.py
 ```
 
-Current seed totals (~644 contacts): 19 Dentally active, 519 unknown queued, 106 corporate hold, 0 Exact queued (none detected in scans yet).
+Current seed totals (~3,628 contacts): **107** Dentally active, **1** Exact queued, **3,050** unknown queued, **470** corporate hold.

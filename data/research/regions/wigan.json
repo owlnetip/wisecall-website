@@ -1,0 +1,27 @@
+{
+  "id": "wigan",
+  "name": "Wigan",
+  "postcode_regex": "^WN\\d",
+  "area_column": "area",
+  "file_prefix": "wigan-wn-dental",
+  "overrides_file": "wigan-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "WN5",
+    "WN7",
+    "WN8",
+    "WN1",
+    "WN2",
+    "WN4",
+    "WN6"
+  ],
+  "core_segment_prefix": "wigan-core",
+  "area_labels": {
+    "WN1": "Wigan (WN1)",
+    "WN2": "Wigan (WN2)",
+    "WN4": "Wigan (WN4)",
+    "WN5": "Wigan (WN5)",
+    "WN6": "Wigan (WN6)",
+    "WN7": "Wigan (WN7)",
+    "WN8": "Wigan (WN8)"
+  }
+}

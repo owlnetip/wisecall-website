@@ -1,0 +1,5 @@
+name,phone,company,postcode,area,pms,segment,tier,adg_corporate,adg_group,bda_good_practice,website,notes
+The Dental Suite Nottingham,01159 814400,The Dental Suite Nottingham,NG2 6EN,Nottingham (NG2),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.nottinghamsmiles.co.uk,
+Loughborough Road Dental Practice,01159 819396,Loughborough Road Dental Practice,NG2 7JJ,Nottingham (NG2),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,Yes,https://www.lrdp.org,
+Beeston Dental Practice,01159 254169,Beeston Dental Practice,NG9 1BS,Nottingham (NG9),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.beestondentalpractice.co.uk,
+Bilborough Dental Practice,01159 293398,Bilborough Dental Practice,NG8 4PN,Nottingham (NG8),Dentally,Dentally confirmed,Tier 4 - ADG corporate group (lower priority),Yes,Rodericks Dental,No,https://www.bilboroughdental.co.uk,
