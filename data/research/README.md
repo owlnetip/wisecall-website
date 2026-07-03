@@ -21,16 +21,35 @@ Anything marked **Unknown PMS** still has value for a general dental blast, but 
 | `york-yo-dental-dentally-tier1-blast-outbound.csv` | **Start here** — Dentally confirmed/likely + phone numbers |
 | `york-yo-dental-dentally-confirmed-outbound.csv` | High-confidence Dentally only |
 | `york-yo-dental-york-core-all-outbound.csv` | York city + inner YO postcodes (YO1, YO10, YO19, YO23–YO32, YO41) |
+| `york-yo-dental-york-core-independents-outbound.csv` | York core excluding ADG corporate groups |
+| `york-yo-dental-york-core-bda-good-practice-outbound.csv` | York core BDA Good Practice charter members |
 | `york-yo-dental-york-core-unknown-pms-outbound.csv` | York core practices where PMS is unknown — good for qualification calls |
-| `york-yo-dental-exact-soe-confirmed-outbound.csv` | Exact/SOE confirmed (none found in this pass) |
-| `york-yo-dental-dentally-contacts.csv` | **Owner/decision-maker research** — public emails (mostly pooled), names, recommended outreach channel |
+| `york-yo-dental-dentally-tier1-independents-outbound.csv` | Tier 1 Dentally targets excluding ADG corporate |
+| `york-yo-dental-dentally-contacts.csv` | Owner/decision-maker research — public emails, names, outreach channel |
+| `adg-corporate-groups.json` | ADG member match patterns |
+| `york-dental-manual-overrides.json` | Verified manual enrichments |
+
+## Industry association flags
+
+The build script tags each practice using:
+
+| Flag | Source | Meaning |
+|------|--------|---------|
+| `adg_corporate` | [ADG members](https://www.theadg.co.uk/members/) | Corporate dental group (mydentist, Smile Dental Care, Genix, Bupa, etc.) → Tier 4 |
+| `bda_good_practice` | [BDA Good Practice map](https://www.bda.org/learning/bda-good-practice/find-a-good-practice/) | Quality charter member (~975 UK practices) |
+
+BDA list is downloaded to `bda-good-practice.kml` on first run. Regenerate flags only (fast):
+
+```bash
+python3 scripts/build-york-dental-marketing-list.py --skip-website-scan
+```
 
 ## WiseCall tiers
 
 - **Tier 1** — Dentally confirmed/likely → pitch live Dentally booking on calls
 - **Tier 2** — Exact/SOE confirmed → workflow/summary pitch (no live Dentally booking yet)
 - **Tier 3** — Unknown PMS → qualify first
-- **Tier 4** — Corporate chains (e.g. mydentist) → lower priority
+- **Tier 4** — ADG corporate groups or mydentist → lower priority
 
 ## Regenerating
 
