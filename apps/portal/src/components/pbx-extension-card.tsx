@@ -304,9 +304,6 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
             {tlsSelected ? (
               <> For TLS, the bridge registers to port <span className="font-bold text-ink">{defaultSignalingPort("tls")}</span> on the PBX address (not 5060). Media is encrypted automatically (SRTP) when your PBX offers it.</>
             ) : null}
-            {pbxType === "mor" ? (
-              <> MOR currently requires <span className="font-bold text-ink">UDP</span> for SIP registration — TLS reaches MOR but authentication fails.</>
-            ) : null}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
