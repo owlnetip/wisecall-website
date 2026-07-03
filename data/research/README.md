@@ -1,13 +1,27 @@
-# Dental marketing research (York + Leeds)
+# Dental marketing research (York + Leeds + more)
 
 Research lists for WiseCall outbound blasts targeting dental practices by UK postcode region.
 
+**Where everything lives:**
+
+| Location | What's there |
+|----------|----------------|
+| `data/research/` | Master CSVs, outbound blast CSVs, region configs, ADG/BDA flags |
+| `data/research/regions/*.json` | Per-city postcode + core area config |
+| `scripts/build-dental-marketing-list.py` | Regenerate lists + website PMS scan |
+| `apps/portal/src/data/dental-prospects-seed.json` | Dentally Tier 1 independents bundled for CRM import |
+| **Admin portal → `/admin/outreach`** | CRM to track sends, draft emails, 3/7/14-day follow-ups |
+
 | Region | Postcodes | Master list | Tier 1 independents (Dentally) |
 |--------|-----------|-------------|--------------------------------|
-| **York** | YO* | `york-yo-dental-marketing-list.csv` (108) | `york-yo-dental-dentally-tier1-independents-outbound.csv` (6) |
-| **Leeds** | LS* | `leeds-ls-dental-marketing-list.csv` (182) | `leeds-ls-dental-dentally-tier1-independents-outbound.csv` (7) |
+| **York** | YO* | `york-yo-dental-marketing-list.csv` (108) | 6 |
+| **Leeds** | LS* | `leeds-ls-dental-marketing-list.csv` (182) | 7 |
+| **Harrogate** | HG* | `harrogate-hg-dental-marketing-list.csv` | (run build) |
+| **Bradford** | BD* | `bradford-bd-dental-marketing-list.csv` | (run build) |
+| **Hull** | HU* | `hull-hu-dental-marketing-list.csv` | (run build) |
+| **Sheffield** | S* | `sheffield-s-dental-marketing-list.csv` | (run build) |
 
-Add more cities/towns by creating a JSON config in `data/research/regions/` and running the build script.
+Add more cities by creating a JSON config in `data/research/regions/` and running the build script.
 
 ## Important limitation
 
@@ -167,3 +181,21 @@ There are **no public owner/director personal emails** for these practices. What
 **Recommendation:** use the phone outbound list and ask for the named owner/practice manager (see `york-yo-dental-dentally-contacts.csv`). Email blast to these addresses will almost certainly hit reception and go nowhere.
 
 These are business phone numbers from public CQC/register sources. Run outbound only within UK calling hours, honour opt-outs, and maintain your DNC list in the portal before blasting.
+
+## Admin outreach CRM
+
+Import Dentally Tier 1 independents into the admin portal and track personalized email outreach:
+
+1. Apply migration `apps/portal/supabase/migrations/0017_outreach_crm.sql` in Supabase
+2. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` on the portal (Vercel env)
+3. Optional: set `CRON_SECRET` for automatic daily follow-up processing (9:00 UTC cron)
+4. Open **`/admin/outreach`** → **Import Dentally list**
+5. Select a practice, add the recipient email, pick a template, personalize, send
+
+After the initial email, follow-ups auto-schedule for **day 3, 7 and 14**. Mark a prospect **Not interested** or **Paused** to stop the sequence. After day 14 the sequence completes unless they reply.
+
+Regenerate the CRM seed after adding regions:
+
+```bash
+python3 scripts/sync-dental-prospects-seed.py
+```

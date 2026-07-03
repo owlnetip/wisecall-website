@@ -1,0 +1,17 @@
+{
+  "id": "harrogate",
+  "name": "Harrogate",
+  "postcode_regex": "^HG\\d",
+  "area_column": "area",
+  "file_prefix": "harrogate-hg-dental",
+  "overrides_file": "harrogate-dental-manual-overrides.json",
+  "core_outward_codes": ["HG1", "HG2", "HG3", "HG5"],
+  "core_segment_prefix": "harrogate-core",
+  "area_labels": {
+    "HG1": "Harrogate town",
+    "HG2": "Harrogate south",
+    "HG3": "Pannal/Ripley",
+    "HG4": "Ripon",
+    "HG5": "Knaresborough"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "hull",
+  "name": "Hull",
+  "postcode_regex": "^HU\\d",
+  "area_column": "area",
+  "file_prefix": "hull-hu-dental",
+  "overrides_file": "hull-dental-manual-overrides.json",
+  "core_outward_codes": ["HU1", "HU2", "HU3", "HU4", "HU5", "HU6", "HU7", "HU8", "HU9"],
+  "core_segment_prefix": "hull-core",
+  "area_labels": {
+    "HU1": "Hull city centre",
+    "HU2": "Hull east",
+    "HU3": "Hull west",
+    "HU4": "Hull north",
+    "HU5": "Hull north-west",
+    "HU6": "Hull north",
+    "HU7": "Hull east",
+    "HU8": "Hull east",
+    "HU9": "Hull south",
+    "HU10": "Kirk Ella/West Hull",
+    "HU11": "Hull rural north",
+    "HU12": "Hedon/Withernsea",
+    "HU13": "Hessle",
+    "HU14": "North Ferriby",
+    "HU15": "Brough",
+    "HU16": "Cottingham",
+    "HU17": "Beverley"
+  }
+}
