@@ -184,18 +184,31 @@ These are business phone numbers from public CQC/register sources. Run outbound 
 
 ## Admin outreach CRM
 
-Import Dentally Tier 1 independents into the admin portal and track personalized email outreach:
+Import **all** dental contacts into the admin portal. Only **Dentally** prospects can receive email today; Exact and unknown PMS contacts are **stored for later**.
 
-1. Apply migration `apps/portal/supabase/migrations/0017_outreach_crm.sql` in Supabase
+| Segment | Meaning | Email now? |
+|---------|---------|------------|
+| `dentally_active` | Tier 1 independents on Dentally | Yes |
+| `exact_queued` | Exact/SOE confirmed (when scan finds them) | No — wait for Exact integration |
+| `unknown_queued` | Unknown PMS, non-ADG, has phone | No — qualify first / phone blast |
+| `corporate_hold` | ADG corporate groups | No — lower priority |
+
+### Setup
+
+1. Apply migrations `0017_outreach_crm.sql` and `0018_outreach_segments.sql` in Supabase
 2. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` on the portal (Vercel env)
 3. Optional: set `CRON_SECRET` for automatic daily follow-up processing (9:00 UTC cron)
-4. Open **`/admin/outreach`** → **Import Dentally list**
-5. Select a practice, add the recipient email, pick a template, personalize, send
+4. Open **`/admin/outreach`** → **Import all contacts**
+5. Filter **Dentally (email now)** → add recipient email → personalize → send
 
-After the initial email, follow-ups auto-schedule for **day 3, 7 and 14**. Mark a prospect **Not interested** or **Paused** to stop the sequence. After day 14 the sequence completes unless they reply.
+After the initial Dentally email, follow-ups auto-schedule for **day 3, 7 and 14**. Mark **Not interested** or **Paused** to stop the sequence.
+
+Edit email templates under the **Templates** tab in the CRM.
 
 Regenerate the CRM seed after adding regions:
 
 ```bash
 python3 scripts/sync-dental-prospects-seed.py
 ```
+
+Current seed totals (~644 contacts): 19 Dentally active, 519 unknown queued, 106 corporate hold, 0 Exact queued (none detected in scans yet).
