@@ -200,6 +200,38 @@ export async function saveSipEndpoint(input: {
     return { ok: false, error: "SIP password is required." };
   }
 
+  if (existing) {
+    const { data: prior } = await service
+      .from("wisecall_sip_endpoints")
+      .select("pbx_type, transport, sip_domain, sip_proxy, sip_username, sip_password, is_enabled")
+      .eq("profile_id", input.agentId)
+      .maybeSingle();
+
+    const priorRow = prior as {
+      pbx_type: string | null;
+      transport: string | null;
+      sip_domain: string | null;
+      sip_proxy: string | null;
+      sip_username: string | null;
+      sip_password: string | null;
+      is_enabled: boolean | null;
+    } | null;
+
+    const unchanged =
+      priorRow &&
+      priorRow.pbx_type === input.pbxType &&
+      priorRow.transport === input.transport &&
+      priorRow.sip_domain === normalized.sipDomain &&
+      priorRow.sip_proxy === sipProxy &&
+      priorRow.sip_username === sipUsername &&
+      priorRow.is_enabled === input.isEnabled &&
+      !password;
+
+    if (unchanged) {
+      return { ok: true };
+    }
+  }
+
   const row: Record<string, unknown> = {
     profile_id: input.agentId,
     pbx_type: input.pbxType,
@@ -232,6 +264,29 @@ export async function saveSipEndpoint(input: {
     if (error) return { ok: false, error: error.message };
   }
 
+
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+// Toggle enabled without touching credentials — used to force the bridge to
+// drop and re-open its REGISTER when stuck on 408.
+export async function setSipEndpointEnabled(
+  agentId: string,
+  isEnabled: boolean,
+): Promise<SipMutationResult> {
+  const access = await getAccessibleProfile(agentId);
+  if (!access.ok) return { ok: false, error: access.error };
+
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const { error } = await service
+    .from("wisecall_sip_endpoints")
+    .update({ is_enabled: isEnabled, updated_at: new Date().toISOString() })
+    .eq("profile_id", agentId);
+
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath("/dashboard");
   return { ok: true };

@@ -7,6 +7,7 @@ import {
   getSipEndpoint,
   getSipRegistrationStatus,
   saveSipEndpoint,
+  setSipEndpointEnabled,
 } from "@/app/actions/sip-endpoints";
 import {
   PBX_TYPES,
@@ -150,6 +151,28 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
       } else {
         setMsg({ ok: false, text: r.error ?? "Couldn't save." });
       }
+    });
+  }
+
+  function reregister() {
+    setMsg(null);
+    start(async () => {
+      setMsg({ ok: true, text: "Re-registering… this takes about 30 seconds." });
+      const off = await setSipEndpointEnabled(agentId, false);
+      if (!off.ok) {
+        setMsg({ ok: false, text: off.error ?? "Couldn't re-register." });
+        return;
+      }
+      setIsEnabled(false);
+      await new Promise((resolve) => setTimeout(resolve, 35000));
+      const on = await setSipEndpointEnabled(agentId, true);
+      if (!on.ok) {
+        setMsg({ ok: false, text: on.error ?? "Couldn't re-register." });
+        return;
+      }
+      setIsEnabled(true);
+      setMsg({ ok: true, text: "Re-register sent. Checking status…" });
+      setTimeout(refreshStatus, 5000);
     });
   }
 
@@ -320,11 +343,22 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
               <button
                 type="button"
                 onClick={remove}
-                disabled={deleting}
+                disabled={deleting || pending}
                 className="inline-flex h-9 items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:opacity-60"
               >
                 {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 Remove
+              </button>
+            ) : null}
+            {configured && isEnabled && status?.state === "failed" ? (
+              <button
+                type="button"
+                onClick={reregister}
+                disabled={pending || deleting}
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-line px-4 text-sm font-bold text-ink transition hover:border-teal hover:text-teal disabled:opacity-60"
+              >
+                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Re-register
               </button>
             ) : null}
           </div>
