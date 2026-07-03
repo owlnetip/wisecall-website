@@ -32,11 +32,12 @@
     },
     {
       "match_names": ["Castlegate Dental Centre"],
-      "website": "https://www.castlegate-dental.co.uk",
+      "website": "https://castlegatedental.co.uk",
       "pms_detected": "Dentally",
       "pms_confidence": "high",
       "pms_evidence": "castle-gate-dental-practice.portal.dental",
-      "blast_segment": "Dentally confirmed"
+      "blast_segment": "Dentally confirmed",
+      "notes": "Correct York site is castlegatedental.co.uk (not castlegate-dental.co.uk which is a different Gloucestershire practice)"
     },
     {
       "match_names": ["York Dental"],
