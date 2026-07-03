@@ -64,6 +64,30 @@ Use any `*-outbound.csv` in the portal **Outbound** tab. Columns:
 
 | `york-dental-manual-overrides.json` | Verified manual enrichments |
 
+## FullEnrich API enrichment
+
+Once you have a FullEnrich API key, run:
+
+```bash
+export FULLENRICH_API_KEY=your_key_here
+python3 scripts/enrich-dental-contacts.py
+```
+
+This will:
+
+1. Read the 6 Dentally-confirmed decision-makers from `york-yo-dental-dentally-contacts.csv`
+2. Submit a bulk enrichment job to FullEnrich (work email, personal email, mobile)
+3. Poll until results are ready (~30–90 seconds per contact)
+4. Write:
+   - `york-yo-dental-dentally-enriched.csv` — full results with email status + mobile
+   - `york-yo-dental-dentally-enriched-outbound.csv` — portal-ready with `phone`, `email`, `mobile`, `channel`
+
+Manual input reference (if uploading via FullEnrich UI instead): `york-yo-dental-dentally-fullenrich-input.csv`
+
+**Do not commit your API key.** Pass it via environment variable only.
+
+If enrichment returns mobiles, still prefer **phone outbound over SMS** for cold outreach (see email reality check below).
+
 ## Email reality check (Dentally-confirmed 6)
 
 There are **no public owner/director personal emails** for these practices. What exists is pooled:
