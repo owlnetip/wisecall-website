@@ -118,3 +118,26 @@ export function formatSipHostPortForDisplay(
   }
   return parsed.host;
 }
+
+// Decide what to persist in sip_proxy. The optional outbound-proxy field often
+// duplicates the PBX address loaded from the DB (bare IP without port). On save
+// we must not let that override transport-normalized host:port.
+export function resolveStoredSipProxy(input: {
+  sipDomain: string;
+  sipProxy?: string;
+  transport: SipTransport;
+}): string {
+  const normalized = normalizeSipEndpointAddress(input);
+  const outbound = (input.sipProxy || "").trim();
+  if (!outbound) return normalized.sipProxy;
+
+  const outboundHost = parseSipHostPort(outbound).host;
+  if (!outboundHost || outboundHost === normalized.sipDomain) {
+    return normalized.sipProxy;
+  }
+
+  return normalizeSipEndpointAddress({
+    sipDomain: outbound,
+    transport: input.transport,
+  }).sipProxy;
+}

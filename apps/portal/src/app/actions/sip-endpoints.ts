@@ -6,6 +6,7 @@ import {
   isPbxType,
   isTransport,
   normalizeSipEndpointAddress,
+  resolveStoredSipProxy,
   type SipEndpoint,
   type SipEndpointResult,
   type SipMutationResult,
@@ -172,10 +173,16 @@ export async function saveSipEndpoint(input: {
   if (!sipDomain) return { ok: false, error: "PBX address (SIP domain) is required." };
   if (!sipUsername) return { ok: false, error: "Extension / SIP username is required." };
 
+  const transport = input.transport as "udp" | "tcp" | "tls";
   const normalized = normalizeSipEndpointAddress({
     sipDomain,
     sipProxy: input.sipProxy,
-    transport: input.transport as "udp" | "tcp" | "tls",
+    transport,
+  });
+  const sipProxy = resolveStoredSipProxy({
+    sipDomain,
+    sipProxy: input.sipProxy,
+    transport,
   });
 
   // Determine create vs update so we can keep the stored password when the user
@@ -198,7 +205,7 @@ export async function saveSipEndpoint(input: {
     pbx_type: input.pbxType,
     transport: input.transport,
     sip_domain: normalized.sipDomain,
-    sip_proxy: (input.sipProxy || "").trim() || normalized.sipProxy,
+    sip_proxy: sipProxy,
     sip_username: sipUsername,
     is_enabled: input.isEnabled,
     updated_at: new Date().toISOString(),

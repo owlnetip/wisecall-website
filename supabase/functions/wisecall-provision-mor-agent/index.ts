@@ -690,13 +690,16 @@ serve(async (req) => {
     console.log(`✅ DID ${didNumber} bound to user ${morUserId} / device ${morDeviceId}`);
 
     // ── 6. Upsert wisecall_sip_endpoints (bridge auto-picks it up in ~30s) ─
+    const morTransport = String(existingSip?.transport || "udp").toLowerCase();
+    const morSignalingPort = morTransport === "tls" ? 5061 : 5060;
+    const morSipProxy = `${MOR_SIP_HOST}:${morSignalingPort}`;
     const sipEndpointRow: Record<string, unknown> = {
       profile_id,
       pbx_type: "mor",
       sip_username: deviceUsername,
       sip_password: sipPassword,
       sip_domain: MOR_SIP_HOST,
-      sip_proxy: MOR_SIP_HOST,
+      sip_proxy: morSipProxy,
       is_enabled: true,
       mor_device_id: morDeviceId,
     };

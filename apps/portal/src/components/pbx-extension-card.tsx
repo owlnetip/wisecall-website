@@ -14,6 +14,7 @@ import {
   SIP_TRANSPORTS,
   defaultSignalingPort,
   formatSipHostPortForDisplay,
+  parseSipHostPort,
   normalizeSipEndpointAddress,
   type PbxType,
   type SipRegistrationStatus,
@@ -89,7 +90,10 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
         setPbxType(e.pbxType);
         setTransport(e.transport);
         setSipDomain(formatSipHostPortForDisplay(e.sipDomain, e.sipProxy, e.transport));
-        setSipProxy(e.sipProxy);
+        // Hide redundant outbound proxy when it is just the same host as PBX address.
+        setSipProxy(
+          e.sipProxy && parseSipHostPort(e.sipProxy).host !== e.sipDomain ? e.sipProxy : "",
+        );
         setSipUsername(e.sipUsername);
         setHasPassword(e.hasPassword);
         setIsEnabled(e.isEnabled);
@@ -299,6 +303,9 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
             route the extension&apos;s inbound calls to it.
             {tlsSelected ? (
               <> For TLS, the bridge registers to port <span className="font-bold text-ink">{defaultSignalingPort("tls")}</span> on the PBX address (not 5060). Media is encrypted automatically (SRTP) when your PBX offers it.</>
+            ) : null}
+            {pbxType === "mor" ? (
+              <> MOR currently requires <span className="font-bold text-ink">UDP</span> for SIP registration — TLS reaches MOR but authentication fails.</>
             ) : null}
           </div>
 
