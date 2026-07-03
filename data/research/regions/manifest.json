@@ -2,43 +2,879 @@
   "version": 1,
   "notes": "UK dental marketing regions. status: done | pending. Run scripts/generate-dental-region-configs.py then build-dental-marketing-list.py --all",
   "regions": [
-    { "id": "york", "name": "York", "postcode_regex": "^YO\\d", "postcode_prefix": "YO", "phase": 1, "status": "done" },
-    { "id": "leeds", "name": "Leeds", "postcode_regex": "^LS\\d", "postcode_prefix": "LS", "phase": 1, "status": "done" },
-    { "id": "harrogate", "name": "Harrogate", "postcode_regex": "^HG\\d", "postcode_prefix": "HG", "phase": 1, "status": "done" },
-    { "id": "bradford", "name": "Bradford", "postcode_regex": "^BD\\d", "postcode_prefix": "BD", "phase": 1, "status": "done" },
-    { "id": "hull", "name": "Hull", "postcode_regex": "^HU\\d", "postcode_prefix": "HU", "phase": 1, "status": "done" },
-    { "id": "sheffield", "name": "Sheffield", "postcode_regex": "^S\\d", "postcode_prefix": "S", "phase": 1, "status": "done" },
-
-    { "id": "wakefield", "name": "Wakefield", "postcode_regex": "^WF\\d", "postcode_prefix": "WF", "phase": 2, "status": "done" },
-    { "id": "doncaster", "name": "Doncaster", "postcode_regex": "^DN\\d", "postcode_prefix": "DN", "phase": 2, "status": "done" },
-    { "id": "huddersfield", "name": "Huddersfield", "postcode_regex": "^HD\\d", "postcode_prefix": "HD", "phase": 2, "status": "done" },
-    { "id": "halifax", "name": "Halifax", "postcode_regex": "^HX\\d", "postcode_prefix": "HX", "phase": 2, "status": "done" },
-    { "id": "teesside", "name": "Teesside", "postcode_regex": "^TS\\d", "postcode_prefix": "TS", "phase": 2, "status": "done" },
-    { "id": "durham", "name": "Durham", "postcode_regex": "^DH\\d", "postcode_prefix": "DH", "phase": 2, "status": "done" },
-    { "id": "darlington", "name": "Darlington", "postcode_regex": "^DL\\d", "postcode_prefix": "DL", "phase": 2, "status": "done" },
-    { "id": "lincoln", "name": "Lincoln", "postcode_regex": "^LN\\d", "postcode_prefix": "LN", "phase": 2, "status": "done" },
-
-    { "id": "manchester", "name": "Manchester", "postcode_regex": "^M\\d", "postcode_prefix": "M", "phase": 3, "status": "done" },
-    { "id": "liverpool", "name": "Liverpool", "postcode_regex": "^L\\d", "postcode_prefix": "L", "phase": 3, "status": "done" },
-    { "id": "newcastle", "name": "Newcastle", "postcode_regex": "^NE\\d", "postcode_prefix": "NE", "phase": 3, "status": "done" },
-    { "id": "nottingham", "name": "Nottingham", "postcode_regex": "^NG\\d", "postcode_prefix": "NG", "phase": 3, "status": "done" },
-    { "id": "leicester", "name": "Leicester", "postcode_regex": "^LE\\d", "postcode_prefix": "LE", "phase": 3, "status": "done" },
-    { "id": "preston", "name": "Preston", "postcode_regex": "^PR\\d", "postcode_prefix": "PR", "phase": 3, "status": "done" },
-    { "id": "chester", "name": "Chester", "postcode_regex": "^CH\\d", "postcode_prefix": "CH", "phase": 3, "status": "done" },
-    { "id": "blackburn", "name": "Blackburn", "postcode_regex": "^BB\\d", "postcode_prefix": "BB", "phase": 3, "status": "done" },
-    { "id": "oldham", "name": "Oldham", "postcode_regex": "^OL\\d", "postcode_prefix": "OL", "phase": 3, "status": "done" },
-    { "id": "warrington", "name": "Warrington", "postcode_regex": "^WA\\d", "postcode_prefix": "WA", "phase": 3, "status": "done" },
-
-    { "id": "stoke", "name": "Stoke-on-Trent", "postcode_regex": "^ST\\d", "postcode_prefix": "ST", "phase": 4, "status": "done" },
-    { "id": "derby", "name": "Derby", "postcode_regex": "^DE\\d", "postcode_prefix": "DE", "phase": 4, "status": "done" },
-    { "id": "coventry", "name": "Coventry", "postcode_regex": "^CV\\d", "postcode_prefix": "CV", "phase": 4, "status": "done" },
-    { "id": "birmingham", "name": "Birmingham", "postcode_regex": "^B\\d", "postcode_prefix": "B", "phase": 4, "status": "done" },
-    { "id": "sunderland", "name": "Sunderland", "postcode_regex": "^SR\\d", "postcode_prefix": "SR", "phase": 4, "status": "done" },
-    { "id": "carlisle", "name": "Carlisle", "postcode_regex": "^CA\\d", "postcode_prefix": "CA", "phase": 4, "status": "done" },
-    { "id": "lancaster", "name": "Lancaster", "postcode_regex": "^LA\\d", "postcode_prefix": "LA", "phase": 4, "status": "done" },
-    { "id": "blackpool", "name": "Blackpool", "postcode_regex": "^FY\\d", "postcode_prefix": "FY", "phase": 4, "status": "done" },
-    { "id": "bolton", "name": "Bolton", "postcode_regex": "^BL\\d", "postcode_prefix": "BL", "phase": 4, "status": "done" },
-    { "id": "wigan", "name": "Wigan", "postcode_regex": "^WN\\d", "postcode_prefix": "WN", "phase": 4, "status": "done" },
-    { "id": "stockport", "name": "Stockport", "postcode_regex": "^SK\\d", "postcode_prefix": "SK", "phase": 4, "status": "done" }
+    {
+      "id": "york",
+      "name": "York",
+      "postcode_regex": "^YO\\d",
+      "postcode_prefix": "YO",
+      "phase": 1,
+      "status": "done"
+    },
+    {
+      "id": "leeds",
+      "name": "Leeds",
+      "postcode_regex": "^LS\\d",
+      "postcode_prefix": "LS",
+      "phase": 1,
+      "status": "done"
+    },
+    {
+      "id": "harrogate",
+      "name": "Harrogate",
+      "postcode_regex": "^HG\\d",
+      "postcode_prefix": "HG",
+      "phase": 1,
+      "status": "done"
+    },
+    {
+      "id": "bradford",
+      "name": "Bradford",
+      "postcode_regex": "^BD\\d",
+      "postcode_prefix": "BD",
+      "phase": 1,
+      "status": "done"
+    },
+    {
+      "id": "hull",
+      "name": "Hull",
+      "postcode_regex": "^HU\\d",
+      "postcode_prefix": "HU",
+      "phase": 1,
+      "status": "done"
+    },
+    {
+      "id": "sheffield",
+      "name": "Sheffield",
+      "postcode_regex": "^S\\d",
+      "postcode_prefix": "S",
+      "phase": 1,
+      "status": "done"
+    },
+    {
+      "id": "wakefield",
+      "name": "Wakefield",
+      "postcode_regex": "^WF\\d",
+      "postcode_prefix": "WF",
+      "phase": 2,
+      "status": "done"
+    },
+    {
+      "id": "doncaster",
+      "name": "Doncaster",
+      "postcode_regex": "^DN\\d",
+      "postcode_prefix": "DN",
+      "phase": 2,
+      "status": "done"
+    },
+    {
+      "id": "huddersfield",
+      "name": "Huddersfield",
+      "postcode_regex": "^HD\\d",
+      "postcode_prefix": "HD",
+      "phase": 2,
+      "status": "done"
+    },
+    {
+      "id": "halifax",
+      "name": "Halifax",
+      "postcode_regex": "^HX\\d",
+      "postcode_prefix": "HX",
+      "phase": 2,
+      "status": "done"
+    },
+    {
+      "id": "teesside",
+      "name": "Teesside",
+      "postcode_regex": "^TS\\d",
+      "postcode_prefix": "TS",
+      "phase": 2,
+      "status": "done"
+    },
+    {
+      "id": "durham",
+      "name": "Durham",
+      "postcode_regex": "^DH\\d",
+      "postcode_prefix": "DH",
+      "phase": 2,
+      "status": "done"
+    },
+    {
+      "id": "darlington",
+      "name": "Darlington",
+      "postcode_regex": "^DL\\d",
+      "postcode_prefix": "DL",
+      "phase": 2,
+      "status": "done"
+    },
+    {
+      "id": "lincoln",
+      "name": "Lincoln",
+      "postcode_regex": "^LN\\d",
+      "postcode_prefix": "LN",
+      "phase": 2,
+      "status": "done"
+    },
+    {
+      "id": "manchester",
+      "name": "Manchester",
+      "postcode_regex": "^M\\d",
+      "postcode_prefix": "M",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "liverpool",
+      "name": "Liverpool",
+      "postcode_regex": "^L\\d",
+      "postcode_prefix": "L",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "newcastle",
+      "name": "Newcastle",
+      "postcode_regex": "^NE\\d",
+      "postcode_prefix": "NE",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "nottingham",
+      "name": "Nottingham",
+      "postcode_regex": "^NG\\d",
+      "postcode_prefix": "NG",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "leicester",
+      "name": "Leicester",
+      "postcode_regex": "^LE\\d",
+      "postcode_prefix": "LE",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "preston",
+      "name": "Preston",
+      "postcode_regex": "^PR\\d",
+      "postcode_prefix": "PR",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "chester",
+      "name": "Chester",
+      "postcode_regex": "^CH\\d",
+      "postcode_prefix": "CH",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "blackburn",
+      "name": "Blackburn",
+      "postcode_regex": "^BB\\d",
+      "postcode_prefix": "BB",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "oldham",
+      "name": "Oldham",
+      "postcode_regex": "^OL\\d",
+      "postcode_prefix": "OL",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "warrington",
+      "name": "Warrington",
+      "postcode_regex": "^WA\\d",
+      "postcode_prefix": "WA",
+      "phase": 3,
+      "status": "done"
+    },
+    {
+      "id": "stoke",
+      "name": "Stoke-on-Trent",
+      "postcode_regex": "^ST\\d",
+      "postcode_prefix": "ST",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "derby",
+      "name": "Derby",
+      "postcode_regex": "^DE\\d",
+      "postcode_prefix": "DE",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "coventry",
+      "name": "Coventry",
+      "postcode_regex": "^CV\\d",
+      "postcode_prefix": "CV",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "birmingham",
+      "name": "Birmingham",
+      "postcode_regex": "^B\\d",
+      "postcode_prefix": "B",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "sunderland",
+      "name": "Sunderland",
+      "postcode_regex": "^SR\\d",
+      "postcode_prefix": "SR",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "carlisle",
+      "name": "Carlisle",
+      "postcode_regex": "^CA\\d",
+      "postcode_prefix": "CA",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "lancaster",
+      "name": "Lancaster",
+      "postcode_regex": "^LA\\d",
+      "postcode_prefix": "LA",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "blackpool",
+      "name": "Blackpool",
+      "postcode_regex": "^FY\\d",
+      "postcode_prefix": "FY",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "bolton",
+      "name": "Bolton",
+      "postcode_regex": "^BL\\d",
+      "postcode_prefix": "BL",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "wigan",
+      "name": "Wigan",
+      "postcode_regex": "^WN\\d",
+      "postcode_prefix": "WN",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "stockport",
+      "name": "Stockport",
+      "postcode_regex": "^SK\\d",
+      "postcode_prefix": "SK",
+      "phase": 4,
+      "status": "done"
+    },
+    {
+      "id": "london-west",
+      "name": "West London",
+      "postcode_regex": "^W\\d",
+      "postcode_prefix": "W",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 389
+    },
+    {
+      "id": "london-south-west",
+      "name": "South West London",
+      "postcode_regex": "^SW\\d",
+      "postcode_prefix": "SW",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 292
+    },
+    {
+      "id": "london-south-east",
+      "name": "South East London",
+      "postcode_regex": "^SE\\d",
+      "postcode_prefix": "SE",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 219
+    },
+    {
+      "id": "brighton",
+      "name": "Brighton & Hove",
+      "postcode_regex": "^BN\\d",
+      "postcode_prefix": "BN",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 218
+    },
+    {
+      "id": "london-north",
+      "name": "North London",
+      "postcode_regex": "^N\\d",
+      "postcode_prefix": "N",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 215
+    },
+    {
+      "id": "tunbridge-wells",
+      "name": "Tunbridge Wells & Kent",
+      "postcode_regex": "^TN\\d",
+      "postcode_prefix": "TN",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 206
+    },
+    {
+      "id": "bristol",
+      "name": "Bristol",
+      "postcode_regex": "^BS\\d",
+      "postcode_prefix": "BS",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 204
+    },
+    {
+      "id": "guildford",
+      "name": "Guildford & Woking",
+      "postcode_regex": "^GU\\d",
+      "postcode_prefix": "GU",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 204
+    },
+    {
+      "id": "london-north-west",
+      "name": "North West London",
+      "postcode_regex": "^NW\\d",
+      "postcode_prefix": "NW",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 200
+    },
+    {
+      "id": "portsmouth",
+      "name": "Portsmouth & Hampshire south",
+      "postcode_regex": "^PO\\d",
+      "postcode_prefix": "PO",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 196
+    },
+    {
+      "id": "kingston",
+      "name": "Kingston & Surrey",
+      "postcode_regex": "^KT\\d",
+      "postcode_prefix": "KT",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 189
+    },
+    {
+      "id": "london-east",
+      "name": "East London",
+      "postcode_regex": "^E\\d",
+      "postcode_prefix": "E",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 183
+    },
+    {
+      "id": "reading",
+      "name": "Reading & Berkshire",
+      "postcode_regex": "^RG\\d",
+      "postcode_prefix": "RG",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 183
+    },
+    {
+      "id": "peterborough",
+      "name": "Peterborough & Cambridgeshire",
+      "postcode_regex": "^PE\\d",
+      "postcode_prefix": "PE",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 173
+    },
+    {
+      "id": "southampton",
+      "name": "Southampton & Eastleigh",
+      "postcode_regex": "^SO\\d",
+      "postcode_prefix": "SO",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 169
+    },
+    {
+      "id": "harrow",
+      "name": "Harrow & Uxbridge",
+      "postcode_regex": "^HA\\d",
+      "postcode_prefix": "HA",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 163
+    },
+    {
+      "id": "chelmsford",
+      "name": "Chelmsford & Essex",
+      "postcode_regex": "^CM\\d",
+      "postcode_prefix": "CM",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 155
+    },
+    {
+      "id": "redhill",
+      "name": "Redhill & Crawley",
+      "postcode_regex": "^RH\\d",
+      "postcode_prefix": "RH",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 155
+    },
+    {
+      "id": "oxford",
+      "name": "Oxford & Banbury",
+      "postcode_regex": "^OX\\d",
+      "postcode_prefix": "OX",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 151
+    },
+    {
+      "id": "twickenham",
+      "name": "Twickenham & Heathrow",
+      "postcode_regex": "^TW\\d",
+      "postcode_prefix": "TW",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 146
+    },
+    {
+      "id": "gloucester",
+      "name": "Gloucester & Cheltenham",
+      "postcode_regex": "^GL\\d",
+      "postcode_prefix": "GL",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 144
+    },
+    {
+      "id": "hemel-hempstead",
+      "name": "Hemel Hempstead & Amersham",
+      "postcode_regex": "^HP\\d",
+      "postcode_prefix": "HP",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 144
+    },
+    {
+      "id": "norwich",
+      "name": "Norwich & Norfolk",
+      "postcode_regex": "^NR\\d",
+      "postcode_prefix": "NR",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 144
+    },
+    {
+      "id": "bournemouth",
+      "name": "Bournemouth & Poole",
+      "postcode_regex": "^BH\\d",
+      "postcode_prefix": "BH",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 143
+    },
+    {
+      "id": "milton-keynes",
+      "name": "Milton Keynes & Bedford",
+      "postcode_regex": "^MK\\d",
+      "postcode_prefix": "MK",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 134
+    },
+    {
+      "id": "northampton",
+      "name": "Northampton & Kettering",
+      "postcode_regex": "^NN\\d",
+      "postcode_prefix": "NN",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 121
+    },
+    {
+      "id": "medway",
+      "name": "Medway & Kent north",
+      "postcode_regex": "^ME\\d",
+      "postcode_prefix": "ME",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 120
+    },
+    {
+      "id": "ipswich",
+      "name": "Ipswich & Suffolk",
+      "postcode_regex": "^IP\\d",
+      "postcode_prefix": "IP",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 111
+    },
+    {
+      "id": "canterbury",
+      "name": "Canterbury & Kent east",
+      "postcode_regex": "^CT\\d",
+      "postcode_prefix": "CT",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 109
+    },
+    {
+      "id": "bath",
+      "name": "Bath & Somerset",
+      "postcode_regex": "^BA\\d",
+      "postcode_prefix": "BA",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 103
+    },
+    {
+      "id": "exeter",
+      "name": "Exeter & Devon",
+      "postcode_regex": "^EX\\d",
+      "postcode_prefix": "EX",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 103
+    },
+    {
+      "id": "slough",
+      "name": "Slough & Windsor",
+      "postcode_regex": "^SL\\d",
+      "postcode_prefix": "SL",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 103
+    },
+    {
+      "id": "plymouth",
+      "name": "Plymouth & Cornwall east",
+      "postcode_regex": "^PL\\d",
+      "postcode_prefix": "PL",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 100
+    },
+    {
+      "id": "cambridge",
+      "name": "Cambridge & Ely",
+      "postcode_regex": "^CB\\d",
+      "postcode_prefix": "CB",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 96
+    },
+    {
+      "id": "dartford",
+      "name": "Dartford & Gravesend",
+      "postcode_regex": "^DA\\d",
+      "postcode_prefix": "DA",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 96
+    },
+    {
+      "id": "southend",
+      "name": "Southend & Basildon",
+      "postcode_regex": "^SS\\d",
+      "postcode_prefix": "SS",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 95
+    },
+    {
+      "id": "croydon",
+      "name": "Croydon",
+      "postcode_regex": "^CR\\d",
+      "postcode_prefix": "CR",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 92
+    },
+    {
+      "id": "romford",
+      "name": "Romford & Essex east",
+      "postcode_regex": "^RM\\d",
+      "postcode_prefix": "RM",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 90
+    },
+    {
+      "id": "colchester",
+      "name": "Colchester & Clacton",
+      "postcode_regex": "^CO\\d",
+      "postcode_prefix": "CO",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 89
+    },
+    {
+      "id": "bromley",
+      "name": "Bromley",
+      "postcode_regex": "^BR\\d",
+      "postcode_prefix": "BR",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 88
+    },
+    {
+      "id": "ilford",
+      "name": "Ilford & Romford",
+      "postcode_regex": "^IG\\d",
+      "postcode_prefix": "IG",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 87
+    },
+    {
+      "id": "stevenage",
+      "name": "Stevenage & Hertfordshire north",
+      "postcode_regex": "^SG\\d",
+      "postcode_prefix": "SG",
+      "phase": 7,
+      "status": "done",
+      "cqc_practices": 86
+    },
+    {
+      "id": "swindon",
+      "name": "Swindon & Wiltshire",
+      "postcode_regex": "^SN\\d",
+      "postcode_prefix": "SN",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 85
+    },
+    {
+      "id": "dudley",
+      "name": "Dudley & Black Country",
+      "postcode_regex": "^DY\\d",
+      "postcode_prefix": "DY",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 82
+    },
+    {
+      "id": "walsall",
+      "name": "Walsall & Cannock",
+      "postcode_regex": "^WS\\d",
+      "postcode_prefix": "WS",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 78
+    },
+    {
+      "id": "watford",
+      "name": "Watford & Hertfordshire south",
+      "postcode_regex": "^WD\\d",
+      "postcode_prefix": "WD",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 75
+    },
+    {
+      "id": "enfield",
+      "name": "Enfield",
+      "postcode_regex": "^EN\\d",
+      "postcode_prefix": "EN",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 73
+    },
+    {
+      "id": "sutton",
+      "name": "Sutton & Morden",
+      "postcode_regex": "^SM\\d",
+      "postcode_prefix": "SM",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 73
+    },
+    {
+      "id": "worcester",
+      "name": "Worcester & Herefordshire",
+      "postcode_regex": "^WR\\d",
+      "postcode_prefix": "WR",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 71
+    },
+    {
+      "id": "truro",
+      "name": "Truro & Cornwall",
+      "postcode_regex": "^TR\\d",
+      "postcode_prefix": "TR",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 70
+    },
+    {
+      "id": "st-albans",
+      "name": "St Albans & Hatfield",
+      "postcode_regex": "^AL\\d",
+      "postcode_prefix": "AL",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 68
+    },
+    {
+      "id": "wolverhampton",
+      "name": "Wolverhampton",
+      "postcode_regex": "^WV\\d",
+      "postcode_prefix": "WV",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 68
+    },
+    {
+      "id": "torquay",
+      "name": "Torquay & South Devon",
+      "postcode_regex": "^TQ\\d",
+      "postcode_prefix": "TQ",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 65
+    },
+    {
+      "id": "taunton",
+      "name": "Taunton & Somerset west",
+      "postcode_regex": "^TA\\d",
+      "postcode_prefix": "TA",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 62
+    },
+    {
+      "id": "crewe",
+      "name": "Crewe & Nantwich",
+      "postcode_regex": "^CW\\d",
+      "postcode_prefix": "CW",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 60
+    },
+    {
+      "id": "southall",
+      "name": "Southall & Ealing west",
+      "postcode_regex": "^UB\\d",
+      "postcode_prefix": "UB",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 59
+    },
+    {
+      "id": "shrewsbury",
+      "name": "Shrewsbury & Mid Wales border",
+      "postcode_regex": "^SY\\d",
+      "postcode_prefix": "SY",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 56
+    },
+    {
+      "id": "luton",
+      "name": "Luton & Dunstable",
+      "postcode_regex": "^LU\\d",
+      "postcode_prefix": "LU",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 55
+    },
+    {
+      "id": "london-city",
+      "name": "City of London",
+      "postcode_regex": "^EC\\d",
+      "postcode_prefix": "EC",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 53
+    },
+    {
+      "id": "salisbury",
+      "name": "Salisbury & Wiltshire south",
+      "postcode_regex": "^SP\\d",
+      "postcode_prefix": "SP",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 53
+    },
+    {
+      "id": "dorchester",
+      "name": "Dorchester & Weymouth",
+      "postcode_regex": "^DT\\d",
+      "postcode_prefix": "DT",
+      "phase": 6,
+      "status": "done",
+      "cqc_practices": 51
+    },
+    {
+      "id": "hereford",
+      "name": "Hereford & Leominster",
+      "postcode_regex": "^HR\\d",
+      "postcode_prefix": "HR",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 46
+    },
+    {
+      "id": "telford",
+      "name": "Telford & Shrewsbury east",
+      "postcode_regex": "^TF\\d",
+      "postcode_prefix": "TF",
+      "phase": 8,
+      "status": "done",
+      "cqc_practices": 43
+    },
+    {
+      "id": "london-west-end",
+      "name": "West End London",
+      "postcode_regex": "^WC\\d",
+      "postcode_prefix": "WC",
+      "phase": 5,
+      "status": "done",
+      "cqc_practices": 36
+    },
+    {
+      "id": "galashiels",
+      "name": "Scottish Borders (TD)",
+      "postcode_regex": "^TD\\d",
+      "postcode_prefix": "TD",
+      "phase": 9,
+      "status": "done",
+      "cqc_practices": 4
+    },
+    {
+      "id": "newport-wales",
+      "name": "Newport area (NP)",
+      "postcode_regex": "^NP\\d",
+      "postcode_prefix": "NP",
+      "phase": 9,
+      "status": "done",
+      "cqc_practices": 1
+    }
   ]
 }

@@ -1,0 +1,15 @@
+{
+  "id": "galashiels",
+  "name": "Scottish Borders (TD)",
+  "postcode_regex": "^TD\\d",
+  "area_column": "area",
+  "file_prefix": "galashiels-td-dental",
+  "overrides_file": "galashiels-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "TD15"
+  ],
+  "core_segment_prefix": "galashiels-core",
+  "area_labels": {
+    "TD15": "Scottish Borders (TD) (TD15)"
+  }
+}

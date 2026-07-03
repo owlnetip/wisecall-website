@@ -1,0 +1,43 @@
+{
+  "id": "northampton",
+  "name": "Northampton & Kettering",
+  "postcode_regex": "^NN\\d",
+  "area_column": "area",
+  "file_prefix": "northampton-nn-dental",
+  "overrides_file": "northampton-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "NN1",
+    "NN8",
+    "NN2",
+    "NN16",
+    "NN17",
+    "NN5",
+    "NN9",
+    "NN4",
+    "NN10",
+    "NN11",
+    "NN14",
+    "NN15"
+  ],
+  "core_segment_prefix": "northampton-core",
+  "area_labels": {
+    "NN1": "Northampton & Kettering (NN1)",
+    "NN10": "Northampton & Kettering (NN10)",
+    "NN11": "Northampton & Kettering (NN11)",
+    "NN12": "Northampton & Kettering (NN12)",
+    "NN13": "Northampton & Kettering (NN13)",
+    "NN14": "Northampton & Kettering (NN14)",
+    "NN15": "Northampton & Kettering (NN15)",
+    "NN16": "Northampton & Kettering (NN16)",
+    "NN17": "Northampton & Kettering (NN17)",
+    "NN18": "Northampton & Kettering (NN18)",
+    "NN2": "Northampton & Kettering (NN2)",
+    "NN3": "Northampton & Kettering (NN3)",
+    "NN4": "Northampton & Kettering (NN4)",
+    "NN5": "Northampton & Kettering (NN5)",
+    "NN6": "Northampton & Kettering (NN6)",
+    "NN7": "Northampton & Kettering (NN7)",
+    "NN8": "Northampton & Kettering (NN8)",
+    "NN9": "Northampton & Kettering (NN9)"
+  }
+}

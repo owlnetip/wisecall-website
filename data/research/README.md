@@ -8,7 +8,8 @@ Research lists for WiseCall outbound blasts targeting dental practices by UK pos
 |----------|----------------|
 | `data/research/` | Master CSVs, outbound blast CSVs, region configs, ADG/BDA flags |
 | `data/research/regions/*.json` | Per-city postcode + core area config |
-| `data/research/regions/manifest.json` | Master list of all 35 regions (phases 1–4) |
+| `data/research/regions/manifest.json` | Master list of all **101** England regions (phases 1–9) |
+| `scripts/extend-uk-manifest.py` | Add remaining postcode areas for full England coverage |
 | `scripts/generate-dental-region-configs.py` | Regenerate region JSON from manifest + CQC |
 | `scripts/region-build-status.py` | Print build status table |
 | `scripts/build-dental-marketing-list.py` | Regenerate lists + website PMS scan (`--all`, `--phase N`) |
@@ -56,7 +57,15 @@ Research lists for WiseCall outbound blasts targeting dental practices by UK pos
 | Carlisle | CA* | 54 | 1 |
 | Lancaster | LA* | 67 | 1 |
 | Sunderland | SR* | 29 | 0 |
-| **Total** | **35 regions** | **~3,964** | **104** |
+| **Total (phases 1–4)** | **35 regions** | **3,964** | **104** |
+| **Phase 5 — London & Home Counties** | 26 regions | 3,251 | 136 |
+| **Phase 6 — South & South West** | 18 regions | 2,117 | 47 |
+| **Phase 7 — East & Anglia** | 11 regions | 1,193 | 24 |
+| **Phase 8 — West Midlands remainder** | 9 regions | 546 | 13 |
+| **Phase 9 — Edge postcodes (TD/NP)** | 2 regions | 5 | 1 |
+| **Full England (CQC)** | **101 regions** | **11,076** | **325** |
+
+CQC directory covers **England only** (no Scotland/Wales/NI dental rows in this dataset).
 
 Run `python3 scripts/region-build-status.py` for the latest counts.
 
@@ -248,4 +257,4 @@ Regenerate the CRM seed after adding regions:
 python3 scripts/sync-dental-prospects-seed.py
 ```
 
-Current seed totals (~3,628 contacts): **107** Dentally active, **1** Exact queued, **3,050** unknown queued, **470** corporate hold.
+Current seed totals (10,022 contacts): **334** Dentally active, **2** Exact queued, **8,500** unknown queued, **1,186** corporate hold.

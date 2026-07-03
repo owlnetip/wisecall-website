@@ -1,0 +1,38 @@
+{
+  "id": "colchester",
+  "name": "Colchester & Clacton",
+  "postcode_regex": "^CO\\d",
+  "area_column": "area",
+  "file_prefix": "colchester-co-dental",
+  "overrides_file": "colchester-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "CO3",
+    "CO4",
+    "CO15",
+    "CO7",
+    "CO10",
+    "CO1",
+    "CO2",
+    "CO6",
+    "CO9",
+    "CO5",
+    "CO12",
+    "CO13"
+  ],
+  "core_segment_prefix": "colchester-core",
+  "area_labels": {
+    "CO1": "Colchester & Clacton (CO1)",
+    "CO10": "Colchester & Clacton (CO10)",
+    "CO11": "Colchester & Clacton (CO11)",
+    "CO12": "Colchester & Clacton (CO12)",
+    "CO13": "Colchester & Clacton (CO13)",
+    "CO15": "Colchester & Clacton (CO15)",
+    "CO2": "Colchester & Clacton (CO2)",
+    "CO3": "Colchester & Clacton (CO3)",
+    "CO4": "Colchester & Clacton (CO4)",
+    "CO5": "Colchester & Clacton (CO5)",
+    "CO6": "Colchester & Clacton (CO6)",
+    "CO7": "Colchester & Clacton (CO7)",
+    "CO9": "Colchester & Clacton (CO9)"
+  }
+}

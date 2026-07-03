@@ -1,0 +1,33 @@
+{
+  "id": "slough",
+  "name": "Slough & Windsor",
+  "postcode_regex": "^SL\\d",
+  "area_column": "area",
+  "file_prefix": "slough-sl-dental",
+  "overrides_file": "slough-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "SL4",
+    "SL1",
+    "SL6",
+    "SL9",
+    "SL7",
+    "SL3",
+    "SL5",
+    "SL2",
+    "SL0",
+    "SL8"
+  ],
+  "core_segment_prefix": "slough-core",
+  "area_labels": {
+    "SL0": "Slough & Windsor (SL0)",
+    "SL1": "Slough & Windsor (SL1)",
+    "SL2": "Slough & Windsor (SL2)",
+    "SL3": "Slough & Windsor (SL3)",
+    "SL4": "Slough & Windsor (SL4)",
+    "SL5": "Slough & Windsor (SL5)",
+    "SL6": "Slough & Windsor (SL6)",
+    "SL7": "Slough & Windsor (SL7)",
+    "SL8": "Slough & Windsor (SL8)",
+    "SL9": "Slough & Windsor (SL9)"
+  }
+}
