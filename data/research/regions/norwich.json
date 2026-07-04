@@ -9,15 +9,15 @@
     "NR2",
     "NR1",
     "NR31",
-    "NR7",
     "NR32",
     "NR3",
+    "NR7",
     "NR19",
+    "NR18",
     "NR4",
     "NR6",
-    "NR18",
     "NR10",
-    "NR14"
+    "NR25"
   ],
   "core_segment_prefix": "norwich-core",
   "area_labels": {
@@ -53,5 +53,7 @@
     "NR7": "Norwich & Norfolk (NR7)",
     "NR8": "Norwich & Norfolk (NR8)",
     "NR9": "Norwich & Norfolk (NR9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

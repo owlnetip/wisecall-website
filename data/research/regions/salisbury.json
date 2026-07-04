@@ -31,5 +31,7 @@
     "SP7": "Salisbury & Wiltshire south (SP7)",
     "SP8": "Salisbury & Wiltshire south (SP8)",
     "SP9": "Salisbury & Wiltshire south (SP9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

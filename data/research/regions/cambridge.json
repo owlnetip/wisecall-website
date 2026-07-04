@@ -10,13 +10,13 @@
     "CB1",
     "CB2",
     "CB8",
-    "CB7",
     "CB22",
+    "CB7",
     "CB10",
-    "CB24",
-    "CB9",
     "CB23",
+    "CB24",
     "CB5",
+    "CB9",
     "CB3"
   ],
   "core_segment_prefix": "cambridge-core",
@@ -37,5 +37,7 @@
     "CB7": "Cambridge & Ely (CB7)",
     "CB8": "Cambridge & Ely (CB8)",
     "CB9": "Cambridge & Ely (CB9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

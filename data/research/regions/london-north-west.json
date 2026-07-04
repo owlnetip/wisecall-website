@@ -8,15 +8,15 @@
   "core_outward_codes": [
     "NW3",
     "NW10",
-    "NW1",
     "NW6",
+    "NW1",
     "NW11",
     "NW7",
     "NW4",
     "NW9",
     "NW2",
-    "NW5",
-    "NW8"
+    "NW8",
+    "NW5"
   ],
   "core_segment_prefix": "london-north-west-core",
   "area_labels": {
@@ -31,5 +31,7 @@
     "NW7": "North West London (NW7)",
     "NW8": "North West London (NW8)",
     "NW9": "North West London (NW9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

@@ -9,15 +9,15 @@
     "MK40",
     "MK45",
     "MK2",
-    "MK18",
     "MK16",
-    "MK41",
+    "MK18",
     "MK10",
     "MK6",
     "MK9",
-    "MK17",
+    "MK41",
     "MK11",
-    "MK12"
+    "MK17",
+    "MK43"
   ],
   "core_segment_prefix": "milton-keynes-core",
   "area_labels": {
@@ -45,5 +45,7 @@
     "MK7": "Milton Keynes & Bedford (MK7)",
     "MK8": "Milton Keynes & Bedford (MK8)",
     "MK9": "Milton Keynes & Bedford (MK9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

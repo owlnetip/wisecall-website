@@ -9,15 +9,15 @@
     "DN1",
     "DN14",
     "DN21",
-    "DN32",
-    "DN16",
-    "DN4",
     "DN7",
-    "DN15",
+    "DN16",
     "DN22",
+    "DN32",
+    "DN4",
     "DN5",
     "DN8",
-    "DN12"
+    "DN15",
+    "DN35"
   ],
   "core_segment_prefix": "doncaster-core",
   "area_labels": {
@@ -48,5 +48,7 @@
     "DN7": "Doncaster (DN7)",
     "DN8": "Doncaster (DN8)",
     "DN9": "Doncaster (DN9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

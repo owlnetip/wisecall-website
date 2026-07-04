@@ -16,8 +16,8 @@
     "ST13",
     "ST6",
     "ST8",
-    "ST21",
-    "ST14"
+    "ST14",
+    "ST15"
   ],
   "core_segment_prefix": "stoke-core",
   "area_labels": {
@@ -41,5 +41,7 @@
     "ST7": "Stoke-on-Trent (ST7)",
     "ST8": "Stoke-on-Trent (ST8)",
     "ST9": "Stoke-on-Trent (ST9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

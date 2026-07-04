@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "TR1",
     "TR11",
-    "TR18",
     "TR7",
-    "TR26",
+    "TR18",
     "TR3",
     "TR13",
-    "TR10",
+    "TR26",
     "TR14",
-    "TR15",
     "TR2",
-    "TR5"
+    "TR5",
+    "TR10",
+    "TR15"
   ],
   "core_segment_prefix": "truro-core",
   "area_labels": {
@@ -37,5 +37,7 @@
     "TR6": "Truro & Cornwall (TR6)",
     "TR7": "Truro & Cornwall (TR7)",
     "TR9": "Truro & Cornwall (TR9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

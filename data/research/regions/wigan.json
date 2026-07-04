@@ -7,10 +7,10 @@
   "overrides_file": "wigan-dental-manual-overrides.json",
   "core_outward_codes": [
     "WN5",
-    "WN7",
     "WN8",
-    "WN1",
     "WN2",
+    "WN1",
+    "WN7",
     "WN4",
     "WN6"
   ],
@@ -23,5 +23,7 @@
     "WN6": "Wigan (WN6)",
     "WN7": "Wigan (WN7)",
     "WN8": "Wigan (WN8)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

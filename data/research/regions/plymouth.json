@@ -7,17 +7,17 @@
   "overrides_file": "plymouth-dental-manual-overrides.json",
   "core_outward_codes": [
     "PL3",
-    "PL1",
     "PL4",
     "PL19",
+    "PL1",
     "PL21",
     "PL25",
     "PL5",
     "PL6",
     "PL12",
     "PL7",
-    "PL14",
-    "PL15"
+    "PL15",
+    "PL9"
   ],
   "core_segment_prefix": "plymouth-core",
   "area_labels": {
@@ -47,5 +47,7 @@
     "PL7": "Plymouth & Cornwall east (PL7)",
     "PL8": "Plymouth & Cornwall east (PL8)",
     "PL9": "Plymouth & Cornwall east (PL9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

@@ -12,12 +12,12 @@
     "RG6",
     "RG9",
     "RG12",
-    "RG21",
     "RG24",
+    "RG21",
     "RG22",
     "RG2",
     "RG4",
-    "RG8"
+    "RG7"
   ],
   "core_segment_prefix": "reading-core",
   "area_labels": {
@@ -51,5 +51,7 @@
     "RG7": "Reading & Berkshire (RG7)",
     "RG8": "Reading & Berkshire (RG8)",
     "RG9": "Reading & Berkshire (RG9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

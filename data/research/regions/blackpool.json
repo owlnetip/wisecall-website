@@ -7,8 +7,8 @@
   "overrides_file": "blackpool-dental-manual-overrides.json",
   "core_outward_codes": [
     "FY8",
-    "FY3",
     "FY1",
+    "FY3",
     "FY6",
     "FY4",
     "FY5",
@@ -25,5 +25,7 @@
     "FY6": "Blackpool (FY6)",
     "FY7": "Blackpool (FY7)",
     "FY8": "Blackpool (FY8)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

@@ -8,14 +8,14 @@
   "core_outward_codes": [
     "CA1",
     "CA11",
-    "CA15",
-    "CA2",
-    "CA12",
     "CA13",
     "CA14",
-    "CA16",
+    "CA15",
     "CA28",
+    "CA2",
     "CA7",
+    "CA12",
+    "CA16",
     "CA22",
     "CA3"
   ],
@@ -38,5 +38,7 @@
     "CA7": "Carlisle (CA7)",
     "CA8": "Carlisle (CA8)",
     "CA9": "Carlisle (CA9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

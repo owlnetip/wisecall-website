@@ -9,14 +9,14 @@
     "PE1",
     "PE21",
     "PE30",
-    "PE2",
-    "PE7",
     "PE11",
+    "PE2",
     "PE19",
     "PE25",
     "PE27",
     "PE28",
     "PE29",
+    "PE7",
     "PE3"
   ],
   "core_segment_prefix": "peterborough-core",
@@ -52,5 +52,7 @@
     "PE7": "Peterborough & Cambridgeshire (PE7)",
     "PE8": "Peterborough & Cambridgeshire (PE8)",
     "PE9": "Peterborough & Cambridgeshire (PE9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

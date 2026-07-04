@@ -1,0 +1,43 @@
+{
+  "id": "perth",
+  "name": "Perth & Kinross",
+  "postcode_regex": "^PH\\d",
+  "area_column": "area",
+  "file_prefix": "perth-ph-dental",
+  "overrides_file": "perth-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "PH2",
+    "PH1",
+    "PH3",
+    "PH7",
+    "PH22",
+    "PH6",
+    "PH8",
+    "PH10",
+    "PH11",
+    "PH13",
+    "PH15",
+    "PH16"
+  ],
+  "core_segment_prefix": "perth-core",
+  "area_labels": {
+    "PH1": "Perth & Kinross (PH1)",
+    "PH10": "Perth & Kinross (PH10)",
+    "PH11": "Perth & Kinross (PH11)",
+    "PH13": "Perth & Kinross (PH13)",
+    "PH15": "Perth & Kinross (PH15)",
+    "PH16": "Perth & Kinross (PH16)",
+    "PH2": "Perth & Kinross (PH2)",
+    "PH21": "Perth & Kinross (PH21)",
+    "PH22": "Perth & Kinross (PH22)",
+    "PH26": "Perth & Kinross (PH26)",
+    "PH3": "Perth & Kinross (PH3)",
+    "PH33": "Perth & Kinross (PH33)",
+    "PH49": "Perth & Kinross (PH49)",
+    "PH6": "Perth & Kinross (PH6)",
+    "PH7": "Perth & Kinross (PH7)",
+    "PH8": "Perth & Kinross (PH8)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

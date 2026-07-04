@@ -12,12 +12,12 @@
     "EX2",
     "EX8",
     "EX31",
-    "EX11",
-    "EX14",
     "EX15",
     "EX20",
     "EX39",
-    "EX7"
+    "EX7",
+    "EX10",
+    "EX11"
   ],
   "core_segment_prefix": "exeter-core",
   "area_labels": {
@@ -48,5 +48,7 @@
     "EX7": "Exeter & Devon (EX7)",
     "EX8": "Exeter & Devon (EX8)",
     "EX9": "Exeter & Devon (EX9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

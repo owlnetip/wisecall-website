@@ -1,0 +1,19 @@
+{
+  "id": "shetland",
+  "name": "Shetland",
+  "postcode_regex": "^ZE\\d",
+  "area_column": "area",
+  "file_prefix": "shetland-ze-dental",
+  "overrides_file": "shetland-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "ZE1",
+    "ZE2"
+  ],
+  "core_segment_prefix": "shetland-core",
+  "area_labels": {
+    "ZE1": "Shetland (ZE1)",
+    "ZE2": "Shetland (ZE2)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

@@ -6,18 +6,18 @@
   "file_prefix": "sheffield-s-dental",
   "overrides_file": "sheffield-dental-manual-overrides.json",
   "core_outward_codes": [
-    "S60",
     "S6",
     "S40",
     "S8",
     "S11",
+    "S60",
     "S70",
     "S5",
     "S10",
-    "S2",
     "S66",
+    "S2",
     "S43",
-    "S45"
+    "S7"
   ],
   "core_segment_prefix": "sheffield-core",
   "area_labels": {
@@ -64,5 +64,7 @@
     "S80": "Sheffield (S80)",
     "S81": "Sheffield (S81)",
     "S9": "Sheffield (S9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

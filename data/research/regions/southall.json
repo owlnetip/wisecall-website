@@ -7,15 +7,15 @@
   "overrides_file": "southall-dental-manual-overrides.json",
   "core_outward_codes": [
     "UB6",
-    "UB5",
     "UB1",
-    "UB3",
+    "UB5",
     "UB10",
+    "UB3",
     "UB7",
     "UB8",
-    "UB2",
     "UB4",
-    "UB9"
+    "UB9",
+    "UB2"
   ],
   "core_segment_prefix": "southall-core",
   "area_labels": {
@@ -29,5 +29,7 @@
     "UB7": "Southall & Ealing west (UB7)",
     "UB8": "Southall & Ealing west (UB8)",
     "UB9": "Southall & Ealing west (UB9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

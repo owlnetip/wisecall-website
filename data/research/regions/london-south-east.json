@@ -7,16 +7,16 @@
   "overrides_file": "london-south-east-dental-manual-overrides.json",
   "core_outward_codes": [
     "SE1",
-    "SE9",
     "SE10",
-    "SE18",
+    "SE9",
     "SE13",
-    "SE6",
+    "SE18",
     "SE5",
-    "SE16",
-    "SE12",
-    "SE21",
+    "SE6",
     "SE3",
+    "SE12",
+    "SE16",
+    "SE21",
     "SE22"
   ],
   "core_segment_prefix": "london-south-east-core",
@@ -49,5 +49,7 @@
     "SE7": "South East London (SE7)",
     "SE8": "South East London (SE8)",
     "SE9": "South East London (SE9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

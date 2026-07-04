@@ -9,15 +9,15 @@
     "YO12",
     "YO1",
     "YO24",
-    "YO8",
     "YO26",
+    "YO8",
+    "YO25",
     "YO30",
     "YO31",
     "YO17",
-    "YO25",
-    "YO32",
+    "YO23",
     "YO42",
-    "YO10"
+    "YO7"
   ],
   "core_segment_prefix": "york-core",
   "area_labels": {
@@ -50,5 +50,7 @@
     "YO62": "York (YO62)",
     "YO7": "York (YO7)",
     "YO8": "York (YO8)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

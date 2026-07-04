@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "DA1",
     "DA11",
-    "DA16",
-    "DA15",
     "DA7",
+    "DA16",
     "DA12",
+    "DA15",
     "DA5",
     "DA14",
     "DA3",
     "DA6",
     "DA10",
-    "DA4"
+    "DA8"
   ],
   "core_segment_prefix": "dartford-core",
   "area_labels": {
@@ -37,5 +37,7 @@
     "DA7": "Dartford & Gravesend (DA7)",
     "DA8": "Dartford & Gravesend (DA8)",
     "DA9": "Dartford & Gravesend (DA9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

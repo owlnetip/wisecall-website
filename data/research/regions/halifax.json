@@ -23,5 +23,7 @@
     "HX5": "Halifax (HX5)",
     "HX6": "Halifax (HX6)",
     "HX7": "Halifax (HX7)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

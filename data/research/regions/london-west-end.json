@@ -7,8 +7,8 @@
   "overrides_file": "london-west-end-dental-manual-overrides.json",
   "core_outward_codes": [
     "WC2H",
-    "WC1X",
     "WC1N",
+    "WC1X",
     "WC1H",
     "WC1V",
     "WC2A",
@@ -31,5 +31,7 @@
     "WC2H": "West End London (WC2H)",
     "WC2N": "West End London (WC2N)",
     "WC2R": "West End London (WC2R)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

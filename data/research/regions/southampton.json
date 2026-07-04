@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "SO15",
     "SO23",
-    "SO45",
     "SO16",
     "SO31",
-    "SO41",
     "SO40",
     "SO19",
+    "SO41",
+    "SO22",
+    "SO45",
     "SO50",
     "SO51",
-    "SO22",
-    "SO30"
+    "SO14"
   ],
   "core_segment_prefix": "southampton-core",
   "area_labels": {
@@ -44,5 +44,7 @@
     "SO51": "Southampton & Eastleigh (SO51)",
     "SO52": "Southampton & Eastleigh (SO52)",
     "SO53": "Southampton & Eastleigh (SO53)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

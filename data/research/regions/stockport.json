@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "SK9",
     "SK8",
-    "SK7",
     "SK10",
-    "SK6",
+    "SK7",
     "SK11",
-    "SK2",
+    "SK6",
     "SK4",
+    "SK2",
     "SK12",
     "SK13",
-    "SK1",
-    "SK3"
+    "SK3",
+    "SK17"
   ],
   "core_segment_prefix": "stockport-core",
   "area_labels": {
@@ -40,5 +40,7 @@
     "SK7": "Stockport (SK7)",
     "SK8": "Stockport (SK8)",
     "SK9": "Stockport (SK9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

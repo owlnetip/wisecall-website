@@ -1,0 +1,3 @@
+practice_name,also_known_as,address,postcode,area,phone,website,nhs_private,pms_detected,pms_confidence,pms_evidence,blast_segment,wisecall_tier,adg_corporate,adg_group,bda_good_practice,provider_name,source,notes
+4 Market Street,,"LERWICK, SHETLAND",ZE1 0JN,Shetland (ZE1),,,NHS,,,,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,Scotland NHS dental register (PHS open data),
+Brae Dental Clinic,,"BRAE HEALTH CENTRE, BRAE, SHETLAND",ZE2 9QJ,Shetland (ZE2),,,NHS,,,,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,No,,Scotland NHS dental register (PHS open data),

@@ -7,17 +7,17 @@
   "overrides_file": "hemel-hempstead-dental-manual-overrides.json",
   "core_outward_codes": [
     "HP9",
-    "HP11",
     "HP20",
     "HP3",
-    "HP6",
+    "HP11",
     "HP13",
-    "HP19",
     "HP2",
+    "HP6",
     "HP4",
+    "HP7",
+    "HP19",
     "HP1",
-    "HP5",
-    "HP7"
+    "HP5"
   ],
   "core_segment_prefix": "hemel-hempstead-core",
   "area_labels": {
@@ -44,5 +44,7 @@
     "HP7": "Hemel Hempstead & Amersham (HP7)",
     "HP8": "Hemel Hempstead & Amersham (HP8)",
     "HP9": "Hemel Hempstead & Amersham (HP9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

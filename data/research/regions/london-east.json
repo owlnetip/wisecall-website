@@ -10,14 +10,14 @@
     "E1",
     "E11",
     "E2",
-    "E8",
     "E17",
+    "E8",
     "E4",
-    "E16",
-    "E13",
     "E15",
+    "E16",
     "E6",
-    "E10"
+    "E10",
+    "E13"
   ],
   "core_segment_prefix": "london-east-core",
   "area_labels": {
@@ -41,5 +41,7 @@
     "E7": "East London (E7)",
     "E8": "East London (E8)",
     "E9": "East London (E9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

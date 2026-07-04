@@ -868,13 +868,235 @@
       "cqc_practices": 4
     },
     {
-      "id": "newport-wales",
-      "name": "Newport area (NP)",
+      "id": "wales-gwent",
+      "name": "Gwent & Newport",
       "postcode_regex": "^NP\\d",
       "postcode_prefix": "NP",
-      "phase": 9,
+      "phase": 11,
       "status": "done",
-      "cqc_practices": 1
+      "cqc_practices": 1,
+      "country": "wales",
+      "data_source": "wales_hiw"
+    },
+    {
+      "id": "glasgow",
+      "name": "Glasgow",
+      "postcode_regex": "^G\\d",
+      "postcode_prefix": "G",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "edinburgh",
+      "name": "Edinburgh & Lothians",
+      "postcode_regex": "^EH\\d",
+      "postcode_prefix": "EH",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "aberdeen",
+      "name": "Aberdeen & Grampian",
+      "postcode_regex": "^AB\\d",
+      "postcode_prefix": "AB",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "ayrshire",
+      "name": "Ayrshire",
+      "postcode_regex": "^KA\\d",
+      "postcode_prefix": "KA",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "lanarkshire",
+      "name": "Lanarkshire",
+      "postcode_regex": "^ML\\d",
+      "postcode_prefix": "ML",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "paisley",
+      "name": "Paisley & Renfrewshire",
+      "postcode_regex": "^PA\\d",
+      "postcode_prefix": "PA",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "fife",
+      "name": "Fife",
+      "postcode_regex": "^KY\\d",
+      "postcode_prefix": "KY",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "dundee",
+      "name": "Dundee & Angus",
+      "postcode_regex": "^DD\\d",
+      "postcode_prefix": "DD",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "stirling",
+      "name": "Stirling & Falkirk",
+      "postcode_regex": "^FK\\d",
+      "postcode_prefix": "FK",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "inverness",
+      "name": "Inverness & Highlands",
+      "postcode_regex": "^IV\\d",
+      "postcode_prefix": "IV",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "dumfries",
+      "name": "Dumfries & Galloway",
+      "postcode_regex": "^DG\\d",
+      "postcode_prefix": "DG",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "perth",
+      "name": "Perth & Kinross",
+      "postcode_regex": "^PH\\d",
+      "postcode_prefix": "PH",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "scotland-borders",
+      "name": "Scottish Borders",
+      "postcode_regex": "^TD\\d",
+      "postcode_prefix": "TD",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "caithness",
+      "name": "Orkney & Caithness",
+      "postcode_regex": "^KW\\d",
+      "postcode_prefix": "KW",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "outer-hebrides",
+      "name": "Outer Hebrides",
+      "postcode_regex": "^HS\\d",
+      "postcode_prefix": "HS",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "shetland",
+      "name": "Shetland",
+      "postcode_regex": "^ZE\\d",
+      "postcode_prefix": "ZE",
+      "phase": 10,
+      "country": "scotland",
+      "data_source": "scotland_nhs",
+      "status": "done"
+    },
+    {
+      "id": "wales-cardiff",
+      "name": "Cardiff & Valleys",
+      "postcode_regex": "^CF\\d",
+      "postcode_prefix": "CF",
+      "phase": 11,
+      "country": "wales",
+      "data_source": "wales_hiw",
+      "status": "done"
+    },
+    {
+      "id": "wales-swansea",
+      "name": "Swansea & West Wales",
+      "postcode_regex": "^SA\\d",
+      "postcode_prefix": "SA",
+      "phase": 11,
+      "country": "wales",
+      "data_source": "wales_hiw",
+      "status": "done"
+    },
+    {
+      "id": "wales-north",
+      "name": "North Wales",
+      "postcode_regex": "^LL\\d",
+      "postcode_prefix": "LL",
+      "phase": 11,
+      "country": "wales",
+      "data_source": "wales_hiw",
+      "status": "done"
+    },
+    {
+      "id": "wales-mid",
+      "name": "Mid Wales",
+      "postcode_regex": "^LD\\d",
+      "postcode_prefix": "LD",
+      "phase": 11,
+      "country": "wales",
+      "data_source": "wales_hiw",
+      "status": "done"
+    },
+    {
+      "id": "wales-border",
+      "name": "Powys border (SY)",
+      "postcode_regex": "^SY\\d",
+      "postcode_prefix": "SY",
+      "phase": 11,
+      "country": "wales",
+      "data_source": "wales_hiw",
+      "status": "done"
+    },
+    {
+      "id": "northern-ireland",
+      "name": "Northern Ireland",
+      "postcode_regex": "^BT\\d",
+      "postcode_prefix": "BT",
+      "phase": 12,
+      "country": "northern_ireland",
+      "data_source": "ni_bso",
+      "status": "done"
     }
   ]
 }

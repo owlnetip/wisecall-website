@@ -6,18 +6,18 @@
   "file_prefix": "southend-ss-dental",
   "overrides_file": "southend-dental-manual-overrides.json",
   "core_outward_codes": [
-    "SS7",
     "SS1",
+    "SS7",
     "SS9",
     "SS0",
     "SS14",
     "SS5",
     "SS17",
-    "SS3",
     "SS15",
     "SS16",
-    "SS6",
-    "SS8"
+    "SS2",
+    "SS3",
+    "SS6"
   ],
   "core_segment_prefix": "southend-core",
   "area_labels": {
@@ -38,5 +38,7 @@
     "SS7": "Southend & Basildon (SS7)",
     "SS8": "Southend & Basildon (SS8)",
     "SS9": "Southend & Basildon (SS9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

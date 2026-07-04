@@ -7,15 +7,15 @@
   "overrides_file": "teesside-dental-manual-overrides.json",
   "core_outward_codes": [
     "TS23",
-    "TS26",
+    "TS15",
     "TS1",
     "TS9",
     "TS10",
-    "TS14",
-    "TS15",
-    "TS19",
     "TS18",
+    "TS26",
+    "TS14",
     "TS17",
+    "TS19",
     "TS22",
     "TS5"
   ],
@@ -47,5 +47,7 @@
     "TS7": "Teesside (TS7)",
     "TS8": "Teesside (TS8)",
     "TS9": "Teesside (TS9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

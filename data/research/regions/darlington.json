@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "DL3",
     "DL1",
-    "DL8",
     "DL14",
     "DL7",
+    "DL8",
     "DL2",
     "DL5",
     "DL6",
-    "DL17",
-    "DL9",
     "DL10",
-    "DL12"
+    "DL12",
+    "DL15",
+    "DL16"
   ],
   "core_segment_prefix": "darlington-core",
   "area_labels": {
@@ -36,5 +36,7 @@
     "DL7": "Darlington (DL7)",
     "DL8": "Darlington (DL8)",
     "DL9": "Darlington (DL9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

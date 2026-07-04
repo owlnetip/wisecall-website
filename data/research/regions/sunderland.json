@@ -8,11 +8,11 @@
   "core_outward_codes": [
     "SR5",
     "SR4",
-    "SR6",
-    "SR8",
     "SR1",
-    "SR7",
+    "SR6",
     "SR2",
+    "SR7",
+    "SR8",
     "SR3"
   ],
   "core_segment_prefix": "sunderland-core",
@@ -25,5 +25,7 @@
     "SR6": "Sunderland (SR6)",
     "SR7": "Sunderland (SR7)",
     "SR8": "Sunderland (SR8)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

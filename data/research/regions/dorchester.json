@@ -29,5 +29,7 @@
     "DT7": "Dorchester & Weymouth (DT7)",
     "DT8": "Dorchester & Weymouth (DT8)",
     "DT9": "Dorchester & Weymouth (DT9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

@@ -6,17 +6,17 @@
   "file_prefix": "nottingham-ng-dental",
   "overrides_file": "nottingham-dental-manual-overrides.json",
   "core_outward_codes": [
+    "NG1",
     "NG2",
     "NG5",
-    "NG1",
     "NG9",
-    "NG3",
     "NG18",
-    "NG31",
-    "NG4",
+    "NG3",
     "NG7",
     "NG8",
+    "NG31",
     "NG34",
+    "NG4",
     "NG10"
   ],
   "core_segment_prefix": "nottingham-core",
@@ -48,5 +48,7 @@
     "NG7": "Nottingham (NG7)",
     "NG8": "Nottingham (NG8)",
     "NG9": "Nottingham (NG9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

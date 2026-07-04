@@ -6,13 +6,13 @@
   "file_prefix": "watford-wd-dental",
   "overrides_file": "watford-dental-manual-overrides.json",
   "core_outward_codes": [
-    "WD3",
     "WD6",
+    "WD3",
     "WD17",
-    "WD23",
     "WD7",
-    "WD24",
+    "WD23",
     "WD18",
+    "WD24",
     "WD19",
     "WD25",
     "WD5",
@@ -31,5 +31,7 @@
     "WD5": "Watford & Hertfordshire south (WD5)",
     "WD6": "Watford & Hertfordshire south (WD6)",
     "WD7": "Watford & Hertfordshire south (WD7)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

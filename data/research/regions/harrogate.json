@@ -19,5 +19,7 @@
     "HG3": "Harrogate (HG3)",
     "HG4": "Harrogate (HG4)",
     "HG5": "Harrogate (HG5)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

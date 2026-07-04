@@ -6,18 +6,18 @@
   "file_prefix": "lancaster-la-dental",
   "overrides_file": "lancaster-dental-manual-overrides.json",
   "core_outward_codes": [
-    "LA9",
     "LA1",
+    "LA9",
     "LA14",
     "LA4",
     "LA5",
     "LA12",
-    "LA2",
     "LA23",
+    "LA2",
     "LA6",
     "LA7",
-    "LA10",
-    "LA11"
+    "LA11",
+    "LA18"
   ],
   "core_segment_prefix": "lancaster-core",
   "area_labels": {
@@ -36,5 +36,7 @@
     "LA6": "Lancaster (LA6)",
     "LA7": "Lancaster (LA7)",
     "LA9": "Lancaster (LA9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

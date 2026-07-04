@@ -8,16 +8,16 @@
   "core_outward_codes": [
     "KT3",
     "KT1",
-    "KT6",
     "KT13",
+    "KT6",
     "KT12",
     "KT19",
-    "KT2",
-    "KT10",
     "KT14",
-    "KT15",
+    "KT2",
+    "KT4",
+    "KT10",
     "KT17",
-    "KT4"
+    "KT22"
   ],
   "core_segment_prefix": "kingston-core",
   "area_labels": {
@@ -45,5 +45,7 @@
     "KT7": "Kingston & Surrey (KT7)",
     "KT8": "Kingston & Surrey (KT8)",
     "KT9": "Kingston & Surrey (KT9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

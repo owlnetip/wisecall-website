@@ -10,11 +10,11 @@
     "BL9",
     "BL3",
     "BL2",
-    "BL4",
     "BL0",
+    "BL4",
     "BL8",
-    "BL5",
     "BL6",
+    "BL5",
     "BL7"
   ],
   "core_segment_prefix": "bolton-core",
@@ -29,5 +29,7 @@
     "BL7": "Bolton (BL7)",
     "BL8": "Bolton (BL8)",
     "BL9": "Bolton (BL9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

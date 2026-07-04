@@ -6,18 +6,18 @@
   "file_prefix": "guildford-gu-dental",
   "overrides_file": "guildford-dental-manual-overrides.json",
   "core_outward_codes": [
-    "GU21",
     "GU1",
+    "GU21",
     "GU15",
     "GU7",
-    "GU51",
-    "GU34",
     "GU9",
+    "GU34",
+    "GU51",
+    "GU32",
+    "GU2",
     "GU14",
     "GU16",
-    "GU22",
-    "GU32",
-    "GU2"
+    "GU22"
   ],
   "core_segment_prefix": "guildford-core",
   "area_labels": {
@@ -57,5 +57,7 @@
     "GU7": "Guildford & Woking (GU7)",
     "GU8": "Guildford & Woking (GU8)",
     "GU9": "Guildford & Woking (GU9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

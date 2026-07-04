@@ -1,0 +1,42 @@
+{
+  "id": "fife",
+  "name": "Fife",
+  "postcode_regex": "^KY\\d",
+  "area_column": "area",
+  "file_prefix": "fife-ky-dental",
+  "overrides_file": "fife-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "KY12",
+    "KY11",
+    "KY7",
+    "KY8",
+    "KY15",
+    "KY16",
+    "KY1",
+    "KY5",
+    "KY2",
+    "KY4",
+    "KY6",
+    "KY13"
+  ],
+  "core_segment_prefix": "fife-core",
+  "area_labels": {
+    "KY1": "Fife (KY1)",
+    "KY10": "Fife (KY10)",
+    "KY11": "Fife (KY11)",
+    "KY12": "Fife (KY12)",
+    "KY13": "Fife (KY13)",
+    "KY14": "Fife (KY14)",
+    "KY15": "Fife (KY15)",
+    "KY16": "Fife (KY16)",
+    "KY2": "Fife (KY2)",
+    "KY3": "Fife (KY3)",
+    "KY4": "Fife (KY4)",
+    "KY5": "Fife (KY5)",
+    "KY6": "Fife (KY6)",
+    "KY7": "Fife (KY7)",
+    "KY8": "Fife (KY8)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

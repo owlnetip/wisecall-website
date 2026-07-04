@@ -11,13 +11,13 @@
     "LE5",
     "LE11",
     "LE4",
+    "LE15",
     "LE12",
     "LE13",
-    "LE15",
-    "LE7",
     "LE16",
-    "LE1",
-    "LE8"
+    "LE7",
+    "LE10",
+    "LE67"
   ],
   "core_segment_prefix": "leicester-core",
   "area_labels": {
@@ -41,5 +41,7 @@
     "LE7": "Leicester (LE7)",
     "LE8": "Leicester (LE8)",
     "LE9": "Leicester (LE9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

@@ -11,5 +11,7 @@
   "core_segment_prefix": "galashiels-core",
   "area_labels": {
     "TD15": "Scottish Borders (TD) (TD15)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }

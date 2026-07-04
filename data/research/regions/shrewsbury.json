@@ -9,13 +9,13 @@
     "SY1",
     "SY3",
     "SY11",
-    "SY8",
-    "SY13",
     "SY2",
     "SY4",
-    "SY5",
+    "SY8",
+    "SY13",
     "SY6",
     "SY12",
+    "SY5",
     "SY9",
     "SY14"
   ],
@@ -33,5 +33,7 @@
     "SY6": "Shrewsbury & Mid Wales border (SY6)",
     "SY8": "Shrewsbury & Mid Wales border (SY8)",
     "SY9": "Shrewsbury & Mid Wales border (SY9)"
-  }
+  },
+  "data_source": "cqc",
+  "country": "england"
 }
