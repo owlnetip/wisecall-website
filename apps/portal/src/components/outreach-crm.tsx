@@ -25,6 +25,7 @@ import {
   saveOutreachTemplate,
   sendOutreachEmail,
   updateOutreachProspect,
+  type DentalProspectsSeedStats,
   type OutreachEmail,
   type OutreachProspect,
   type OutreachTemplate,
@@ -55,7 +56,7 @@ const STATUS_BADGE: Record<string, string> = {
   paused: "bg-amber-100 text-amber-800",
 };
 
-export function OutreachCrm() {
+export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats | null }) {
   const [view, setView] = useState<"prospects" | "templates">("prospects");
   const [prospects, setProspects] = useState<OutreachProspect[]>([]);
   const [templates, setTemplates] = useState<OutreachTemplate[]>([]);
@@ -159,12 +160,9 @@ export function OutreachCrm() {
     const res = await importDentalProspectsFromSeed();
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
-    const seg = Object.entries(res.data.bySegment)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(", ");
     setMsg({
       kind: "ok",
-      text: `Imported ${res.data.imported} new, updated ${res.data.updated} (${seg}).`,
+      text: `Imported ${res.data.imported} new, updated ${res.data.updated}, skipped ${res.data.skipped}. Seed has ${res.data.seedTotal} contacts (${res.data.bySegment.dentally_active ?? 0} Dentally).`,
     });
     await refresh();
   }
@@ -302,6 +300,18 @@ export function OutreachCrm() {
             {msg.text}
           </p>
         )}
+        {seedStats && (seedStats.bySegment.dentally_active ?? 0) < 100 && (
+          <p className="mx-auto mt-2 max-w-7xl rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+            Deployed seed file only has <strong>{seedStats.bySegment.dentally_active ?? 0} Dentally</strong> contacts
+            ({seedStats.total} total). Merge PR #42 / #45 for the full England+UK build (~333 Dentally), redeploy, then
+            import again.
+          </p>
+        )}
+        {seedStats && (seedStats.bySegment.dentally_active ?? 0) >= 100 && (
+          <p className="mx-auto mt-2 max-w-7xl text-sm text-[#5a7272]">
+            Seed file: <strong>{seedStats.bySegment.dentally_active ?? 0} Dentally</strong> · {seedStats.total.toLocaleString()} total contacts
+          </p>
+        )}
       </header>
 
       {view === "templates" ? (
@@ -379,6 +389,15 @@ export function OutreachCrm() {
       <div className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[360px_1fr]">
         <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSegmentFilter("")}
+              className={`rounded-full px-3 py-1 text-xs font-bold ${
+                !segmentFilter ? "bg-[#0e1b1b] text-white" : "bg-[#f4f7f7] text-[#5a7272]"
+              }`}
+            >
+              All segments
+            </button>
             {SEGMENT_OPTIONS.map((s) => (
               <button
                 key={s.value}

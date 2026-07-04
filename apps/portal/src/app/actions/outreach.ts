@@ -55,6 +55,15 @@ export type OutreachEmail = {
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
+export type DentalProspectsSeedStats = {
+  total: number;
+  bySegment: Record<string, number>;
+  generatedFrom: string | null;
+};
+
+const SEED_PATH = path.join(process.cwd(), "src", "data", "dental-prospects-seed.json");
+const IMPORT_BATCH_SIZE = 500;
+
 async function requireAdmin() {
   const auth = await createSupabaseServerClient();
   const {
@@ -85,6 +94,40 @@ function mapProspect(row: Record<string, unknown>): OutreachProspect {
     lastContactedAt: (row.last_contacted_at as string) ?? null,
     nextFollowUpAt: (row.next_follow_up_at as string) ?? null,
     updatedAt: (row.updated_at as string) ?? "",
+  };
+}
+
+function prospectKey(practiceName: string, postcode: string, region: string): string {
+  return `${practiceName.trim().toLowerCase()}|${postcode.toUpperCase().replace(/\s/g, "")}|${region.trim()}`;
+}
+
+async function readDentalProspectsSeed(): Promise<{ prospects: Record<string, string>[] } | null> {
+  try {
+    return JSON.parse(await readFile(SEED_PATH, "utf-8")) as { prospects?: Record<string, string>[] };
+  } catch {
+    return null;
+  }
+}
+
+export async function getDentalProspectsSeedStats(): Promise<Result<DentalProspectsSeedStats>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const raw = await readDentalProspectsSeed();
+  if (!raw?.prospects) {
+    return { ok: false, error: "Seed file missing. Run: python3 scripts/sync-dental-prospects-seed.py" };
+  }
+  const bySegment: Record<string, number> = {};
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "unknown_queued";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+  }
+  return {
+    ok: true,
+    data: {
+      total: raw.prospects.length,
+      bySegment,
+      generatedFrom: (raw as { generated_from?: string }).generated_from ?? null,
+    },
   };
 }
 
@@ -427,37 +470,66 @@ export async function sendOutreachEmail(input: {
 }
 
 export async function importDentalProspectsFromSeed(): Promise<
-  Result<{ imported: number; updated: number; skipped: number; bySegment: Record<string, number> }>
+  Result<{
+    imported: number;
+    updated: number;
+    skipped: number;
+    seedTotal: number;
+    bySegment: Record<string, number>;
+  }>
 > {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
   const service = getServiceSupabase();
   if (!service) return { ok: false, error: "Server not configured." };
 
-  const seedPath = path.join(process.cwd(), "src", "data", "dental-prospects-seed.json");
-  let raw: { prospects?: Record<string, string>[] };
-  try {
-    raw = JSON.parse(await readFile(seedPath, "utf-8"));
-  } catch {
+  const raw = await readDentalProspectsSeed();
+  if (!raw?.prospects?.length) {
     return { ok: false, error: "Seed file missing. Run: python3 scripts/sync-dental-prospects-seed.py" };
+  }
+
+  const bySegment: Record<string, number> = {};
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "unknown_queued";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+  }
+
+  const { data: existingRows, error: existingError } = await service
+    .from("wisecall_outreach_prospects")
+    .select("id, practice_name, postcode, region, status");
+  if (existingError) return { ok: false, error: existingError.message };
+
+  const existingByKey = new Map<string, { id: string; status: string }>();
+  for (const row of existingRows ?? []) {
+    existingByKey.set(
+      prospectKey(row.practice_name as string, (row.postcode as string) ?? "", row.region as string),
+      { id: row.id as string, status: (row.status as string) ?? "new" },
+    );
   }
 
   let imported = 0;
   let updated = 0;
   let skipped = 0;
-  const bySegment: Record<string, number> = {};
+  const upsertBatch: Record<string, unknown>[] = [];
+  const now = new Date().toISOString();
 
-  for (const p of raw.prospects ?? []) {
+  async function flushUpsertBatch() {
+    if (!upsertBatch.length) return;
+    const { error } = await service!.from("wisecall_outreach_prospects").upsert(upsertBatch, {
+      onConflict: "practice_name,postcode,region",
+    });
+    if (error) {
+      skipped += upsertBatch.length;
+    } else {
+      imported += upsertBatch.length;
+    }
+    upsertBatch.length = 0;
+  }
+
+  for (const p of raw.prospects) {
     const segment = p.outreach_segment || "unknown_queued";
-    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
-
-    const { data: existing } = await service
-      .from("wisecall_outreach_prospects")
-      .select("id, status, email, contact_name, notes")
-      .eq("practice_name", p.practice_name)
-      .eq("postcode", (p.postcode || "").toUpperCase())
-      .eq("region", p.region)
-      .maybeSingle();
+    const key = prospectKey(p.practice_name ?? "", p.postcode ?? "", p.region ?? "");
+    const existing = existingByKey.get(key);
 
     const metadata = {
       practice_name: p.practice_name,
@@ -469,7 +541,7 @@ export async function importDentalProspectsFromSeed(): Promise<
       website: p.website || null,
       outreach_segment: segment,
       merge_fields: p,
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     };
 
     if (existing && existing.status !== "new") {
@@ -485,7 +557,7 @@ export async function importDentalProspectsFromSeed(): Promise<
       continue;
     }
 
-    const row = {
+    upsertBatch.push({
       ...metadata,
       contact_name: p.contact_name || null,
       email: p.email || null,
@@ -493,17 +565,20 @@ export async function importDentalProspectsFromSeed(): Promise<
       notes: p.notes || null,
       status: "new",
       sequence_status: "none",
-    };
-
-    const { error } = await service.from("wisecall_outreach_prospects").upsert(row, {
-      onConflict: "practice_name,postcode,region",
     });
-    if (error) skipped += 1;
-    else imported += 1;
+
+    if (upsertBatch.length >= IMPORT_BATCH_SIZE) {
+      await flushUpsertBatch();
+    }
   }
 
+  await flushUpsertBatch();
+
   revalidatePath("/admin/outreach");
-  return { ok: true, data: { imported, updated, skipped, bySegment } };
+  return {
+    ok: true,
+    data: { imported, updated, skipped, seedTotal: raw.prospects.length, bySegment },
+  };
 }
 
 export async function processDueOutreachFollowUps(): Promise<
