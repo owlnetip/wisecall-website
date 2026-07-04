@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import {
+  Activity,
   AlertTriangle,
   ArrowLeft,
   Bot,
@@ -1898,6 +1899,13 @@ export function CustomerAgentWorkspace({
                       Dental outreach
                     </a>
                     <a
+                      href="/admin/latency"
+                      className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                    >
+                      <Activity className="h-5 w-5 flex-shrink-0" />
+                      Voice latency
+                    </a>
+                    <a
                       href="/admin/partners"
                       className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
                     >
@@ -2004,6 +2012,13 @@ export function CustomerAgentWorkspace({
                   Dental outreach
                 </a>
                 <a
+                  href="/admin/latency"
+                  className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                >
+                  <Activity className="h-5 w-5 flex-shrink-0" />
+                  Voice latency
+                </a>
+                <a
                   href="/admin/partners"
                   className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
                 >
@@ -2027,6 +2042,13 @@ export function CustomerAgentWorkspace({
                   >
                     <Mail className="h-5 w-5 flex-shrink-0" />
                     Dental outreach
+                  </a>
+                  <a
+                    href="/admin/latency"
+                    className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
+                  >
+                    <Activity className="h-5 w-5 flex-shrink-0" />
+                    Voice latency
                   </a>
                   <a
                     href="/admin/partners"
