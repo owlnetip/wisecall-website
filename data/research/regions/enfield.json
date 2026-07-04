@@ -1,0 +1,35 @@
+{
+  "id": "enfield",
+  "name": "Enfield",
+  "postcode_regex": "^EN\\d",
+  "area_column": "area",
+  "file_prefix": "enfield-en-dental",
+  "overrides_file": "enfield-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "EN5",
+    "EN8",
+    "EN4",
+    "EN6",
+    "EN2",
+    "EN11",
+    "EN3",
+    "EN1",
+    "EN10",
+    "EN9",
+    "EN7"
+  ],
+  "core_segment_prefix": "enfield-core",
+  "area_labels": {
+    "EN1": "Enfield (EN1)",
+    "EN10": "Enfield (EN10)",
+    "EN11": "Enfield (EN11)",
+    "EN2": "Enfield (EN2)",
+    "EN3": "Enfield (EN3)",
+    "EN4": "Enfield (EN4)",
+    "EN5": "Enfield (EN5)",
+    "EN6": "Enfield (EN6)",
+    "EN7": "Enfield (EN7)",
+    "EN8": "Enfield (EN8)",
+    "EN9": "Enfield (EN9)"
+  }
+}

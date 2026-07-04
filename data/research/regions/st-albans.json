@@ -1,0 +1,33 @@
+{
+  "id": "st-albans",
+  "name": "St Albans & Hatfield",
+  "postcode_regex": "^AL\\d",
+  "area_column": "area",
+  "file_prefix": "st-albans-al-dental",
+  "overrides_file": "st-albans-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "AL5",
+    "AL1",
+    "AL3",
+    "AL8",
+    "AL7",
+    "AL2",
+    "AL4",
+    "AL10",
+    "AL6",
+    "AL9"
+  ],
+  "core_segment_prefix": "st-albans-core",
+  "area_labels": {
+    "AL1": "St Albans & Hatfield (AL1)",
+    "AL10": "St Albans & Hatfield (AL10)",
+    "AL2": "St Albans & Hatfield (AL2)",
+    "AL3": "St Albans & Hatfield (AL3)",
+    "AL4": "St Albans & Hatfield (AL4)",
+    "AL5": "St Albans & Hatfield (AL5)",
+    "AL6": "St Albans & Hatfield (AL6)",
+    "AL7": "St Albans & Hatfield (AL7)",
+    "AL8": "St Albans & Hatfield (AL8)",
+    "AL9": "St Albans & Hatfield (AL9)"
+  }
+}

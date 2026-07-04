@@ -1,0 +1,5 @@
+name,phone,company,postcode,area,pms,segment,tier,adg_corporate,adg_group,bda_good_practice,website,notes
+Park Street Dental Clinic,01844 215404,Park Street Dental Clinic,OX9 3HR,Oxford & Banbury (OX9),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,Yes,https://www.parkstreetdental.co.uk,
+Bloxham Dental @ Banbury,01295 257860,Bloxham Dental @ Banbury,OX16 9AB,Oxford & Banbury (OX16),Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,Yes,https://www.bloxhamdentalpractice.co.uk,
+Bicester Dental Care & Implant Centre,01869 252788,Bicester Dental Care & Implant Centre,OX26 6LP,Oxford & Banbury (OX26),Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,Yes,https://www.bicesterdental.co.uk,
+Kennett Road Dental Practice,01865 761965,Kennett Road Dental Practice,OX3 7BH,Oxford & Banbury (OX3),Unknown,Unknown PMS - manual check,Tier 3 - Unknown PMS (qualify on call),No,,Yes,,

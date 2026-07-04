@@ -1,0 +1,37 @@
+{
+  "id": "crewe",
+  "name": "Crewe & Nantwich",
+  "postcode_regex": "^CW\\d",
+  "area_column": "area",
+  "file_prefix": "crewe-cw-dental",
+  "overrides_file": "crewe-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "CW5",
+    "CW1",
+    "CW11",
+    "CW8",
+    "CW9",
+    "CW2",
+    "CW12",
+    "CW7",
+    "CW6",
+    "CW10",
+    "CW3",
+    "CW4"
+  ],
+  "core_segment_prefix": "crewe-core",
+  "area_labels": {
+    "CW1": "Crewe & Nantwich (CW1)",
+    "CW10": "Crewe & Nantwich (CW10)",
+    "CW11": "Crewe & Nantwich (CW11)",
+    "CW12": "Crewe & Nantwich (CW12)",
+    "CW2": "Crewe & Nantwich (CW2)",
+    "CW3": "Crewe & Nantwich (CW3)",
+    "CW4": "Crewe & Nantwich (CW4)",
+    "CW5": "Crewe & Nantwich (CW5)",
+    "CW6": "Crewe & Nantwich (CW6)",
+    "CW7": "Crewe & Nantwich (CW7)",
+    "CW8": "Crewe & Nantwich (CW8)",
+    "CW9": "Crewe & Nantwich (CW9)"
+  }
+}

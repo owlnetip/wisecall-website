@@ -1,0 +1,37 @@
+{
+  "id": "shrewsbury",
+  "name": "Shrewsbury & Mid Wales border",
+  "postcode_regex": "^SY\\d",
+  "area_column": "area",
+  "file_prefix": "shrewsbury-sy-dental",
+  "overrides_file": "shrewsbury-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "SY1",
+    "SY3",
+    "SY11",
+    "SY8",
+    "SY13",
+    "SY2",
+    "SY4",
+    "SY5",
+    "SY6",
+    "SY12",
+    "SY9",
+    "SY14"
+  ],
+  "core_segment_prefix": "shrewsbury-core",
+  "area_labels": {
+    "SY1": "Shrewsbury & Mid Wales border (SY1)",
+    "SY11": "Shrewsbury & Mid Wales border (SY11)",
+    "SY12": "Shrewsbury & Mid Wales border (SY12)",
+    "SY13": "Shrewsbury & Mid Wales border (SY13)",
+    "SY14": "Shrewsbury & Mid Wales border (SY14)",
+    "SY2": "Shrewsbury & Mid Wales border (SY2)",
+    "SY3": "Shrewsbury & Mid Wales border (SY3)",
+    "SY4": "Shrewsbury & Mid Wales border (SY4)",
+    "SY5": "Shrewsbury & Mid Wales border (SY5)",
+    "SY6": "Shrewsbury & Mid Wales border (SY6)",
+    "SY8": "Shrewsbury & Mid Wales border (SY8)",
+    "SY9": "Shrewsbury & Mid Wales border (SY9)"
+  }
+}

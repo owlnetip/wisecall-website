@@ -1,0 +1,42 @@
+{
+  "id": "carlisle",
+  "name": "Carlisle",
+  "postcode_regex": "^CA\\d",
+  "area_column": "area",
+  "file_prefix": "carlisle-ca-dental",
+  "overrides_file": "carlisle-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "CA1",
+    "CA11",
+    "CA15",
+    "CA2",
+    "CA12",
+    "CA13",
+    "CA14",
+    "CA16",
+    "CA28",
+    "CA7",
+    "CA22",
+    "CA3"
+  ],
+  "core_segment_prefix": "carlisle-core",
+  "area_labels": {
+    "CA1": "Carlisle (CA1)",
+    "CA11": "Carlisle (CA11)",
+    "CA12": "Carlisle (CA12)",
+    "CA13": "Carlisle (CA13)",
+    "CA14": "Carlisle (CA14)",
+    "CA15": "Carlisle (CA15)",
+    "CA16": "Carlisle (CA16)",
+    "CA17": "Carlisle (CA17)",
+    "CA2": "Carlisle (CA2)",
+    "CA22": "Carlisle (CA22)",
+    "CA28": "Carlisle (CA28)",
+    "CA3": "Carlisle (CA3)",
+    "CA4": "Carlisle (CA4)",
+    "CA5": "Carlisle (CA5)",
+    "CA7": "Carlisle (CA7)",
+    "CA8": "Carlisle (CA8)",
+    "CA9": "Carlisle (CA9)"
+  }
+}

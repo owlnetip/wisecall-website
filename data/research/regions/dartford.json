@@ -1,0 +1,41 @@
+{
+  "id": "dartford",
+  "name": "Dartford & Gravesend",
+  "postcode_regex": "^DA\\d",
+  "area_column": "area",
+  "file_prefix": "dartford-da-dental",
+  "overrides_file": "dartford-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "DA1",
+    "DA11",
+    "DA16",
+    "DA15",
+    "DA7",
+    "DA12",
+    "DA5",
+    "DA14",
+    "DA3",
+    "DA6",
+    "DA10",
+    "DA4"
+  ],
+  "core_segment_prefix": "dartford-core",
+  "area_labels": {
+    "DA1": "Dartford & Gravesend (DA1)",
+    "DA10": "Dartford & Gravesend (DA10)",
+    "DA11": "Dartford & Gravesend (DA11)",
+    "DA12": "Dartford & Gravesend (DA12)",
+    "DA13": "Dartford & Gravesend (DA13)",
+    "DA14": "Dartford & Gravesend (DA14)",
+    "DA15": "Dartford & Gravesend (DA15)",
+    "DA16": "Dartford & Gravesend (DA16)",
+    "DA17": "Dartford & Gravesend (DA17)",
+    "DA3": "Dartford & Gravesend (DA3)",
+    "DA4": "Dartford & Gravesend (DA4)",
+    "DA5": "Dartford & Gravesend (DA5)",
+    "DA6": "Dartford & Gravesend (DA6)",
+    "DA7": "Dartford & Gravesend (DA7)",
+    "DA8": "Dartford & Gravesend (DA8)",
+    "DA9": "Dartford & Gravesend (DA9)"
+  }
+}

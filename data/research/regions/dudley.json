@@ -1,0 +1,39 @@
+{
+  "id": "dudley",
+  "name": "Dudley & Black Country",
+  "postcode_regex": "^DY\\d",
+  "area_column": "area",
+  "file_prefix": "dudley-dy-dental",
+  "overrides_file": "dudley-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "DY8",
+    "DY9",
+    "DY3",
+    "DY4",
+    "DY11",
+    "DY5",
+    "DY13",
+    "DY1",
+    "DY2",
+    "DY6",
+    "DY10",
+    "DY7"
+  ],
+  "core_segment_prefix": "dudley-core",
+  "area_labels": {
+    "DY1": "Dudley & Black Country (DY1)",
+    "DY10": "Dudley & Black Country (DY10)",
+    "DY11": "Dudley & Black Country (DY11)",
+    "DY12": "Dudley & Black Country (DY12)",
+    "DY13": "Dudley & Black Country (DY13)",
+    "DY14": "Dudley & Black Country (DY14)",
+    "DY2": "Dudley & Black Country (DY2)",
+    "DY3": "Dudley & Black Country (DY3)",
+    "DY4": "Dudley & Black Country (DY4)",
+    "DY5": "Dudley & Black Country (DY5)",
+    "DY6": "Dudley & Black Country (DY6)",
+    "DY7": "Dudley & Black Country (DY7)",
+    "DY8": "Dudley & Black Country (DY8)",
+    "DY9": "Dudley & Black Country (DY9)"
+  }
+}

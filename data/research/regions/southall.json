@@ -1,0 +1,33 @@
+{
+  "id": "southall",
+  "name": "Southall & Ealing west",
+  "postcode_regex": "^UB\\d",
+  "area_column": "area",
+  "file_prefix": "southall-ub-dental",
+  "overrides_file": "southall-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "UB6",
+    "UB5",
+    "UB1",
+    "UB3",
+    "UB10",
+    "UB7",
+    "UB8",
+    "UB2",
+    "UB4",
+    "UB9"
+  ],
+  "core_segment_prefix": "southall-core",
+  "area_labels": {
+    "UB1": "Southall & Ealing west (UB1)",
+    "UB10": "Southall & Ealing west (UB10)",
+    "UB2": "Southall & Ealing west (UB2)",
+    "UB3": "Southall & Ealing west (UB3)",
+    "UB4": "Southall & Ealing west (UB4)",
+    "UB5": "Southall & Ealing west (UB5)",
+    "UB6": "Southall & Ealing west (UB6)",
+    "UB7": "Southall & Ealing west (UB7)",
+    "UB8": "Southall & Ealing west (UB8)",
+    "UB9": "Southall & Ealing west (UB9)"
+  }
+}

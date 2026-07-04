@@ -1,0 +1,29 @@
+{
+  "id": "bromley",
+  "name": "Bromley",
+  "postcode_regex": "^BR\\d",
+  "area_column": "area",
+  "file_prefix": "bromley-br-dental",
+  "overrides_file": "bromley-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "BR6",
+    "BR3",
+    "BR1",
+    "BR2",
+    "BR7",
+    "BR5",
+    "BR8",
+    "BR4"
+  ],
+  "core_segment_prefix": "bromley-core",
+  "area_labels": {
+    "BR1": "Bromley (BR1)",
+    "BR2": "Bromley (BR2)",
+    "BR3": "Bromley (BR3)",
+    "BR4": "Bromley (BR4)",
+    "BR5": "Bromley (BR5)",
+    "BR6": "Bromley (BR6)",
+    "BR7": "Bromley (BR7)",
+    "BR8": "Bromley (BR8)"
+  }
+}

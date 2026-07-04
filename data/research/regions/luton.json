@@ -1,0 +1,27 @@
+{
+  "id": "luton",
+  "name": "Luton & Dunstable",
+  "postcode_regex": "^LU\\d",
+  "area_column": "area",
+  "file_prefix": "luton-lu-dental",
+  "overrides_file": "luton-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "LU7",
+    "LU1",
+    "LU3",
+    "LU5",
+    "LU4",
+    "LU2",
+    "LU6"
+  ],
+  "core_segment_prefix": "luton-core",
+  "area_labels": {
+    "LU1": "Luton & Dunstable (LU1)",
+    "LU2": "Luton & Dunstable (LU2)",
+    "LU3": "Luton & Dunstable (LU3)",
+    "LU4": "Luton & Dunstable (LU4)",
+    "LU5": "Luton & Dunstable (LU5)",
+    "LU6": "Luton & Dunstable (LU6)",
+    "LU7": "Luton & Dunstable (LU7)"
+  }
+}

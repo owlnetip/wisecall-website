@@ -1,0 +1,35 @@
+{
+  "id": "ilford",
+  "name": "Ilford & Romford",
+  "postcode_regex": "^IG\\d",
+  "area_column": "area",
+  "file_prefix": "ilford-ig-dental",
+  "overrides_file": "ilford-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "IG1",
+    "IG10",
+    "IG2",
+    "IG6",
+    "IG8",
+    "IG3",
+    "IG11",
+    "IG9",
+    "IG7",
+    "IG5",
+    "IG4"
+  ],
+  "core_segment_prefix": "ilford-core",
+  "area_labels": {
+    "IG1": "Ilford & Romford (IG1)",
+    "IG10": "Ilford & Romford (IG10)",
+    "IG11": "Ilford & Romford (IG11)",
+    "IG2": "Ilford & Romford (IG2)",
+    "IG3": "Ilford & Romford (IG3)",
+    "IG4": "Ilford & Romford (IG4)",
+    "IG5": "Ilford & Romford (IG5)",
+    "IG6": "Ilford & Romford (IG6)",
+    "IG7": "Ilford & Romford (IG7)",
+    "IG8": "Ilford & Romford (IG8)",
+    "IG9": "Ilford & Romford (IG9)"
+  }
+}

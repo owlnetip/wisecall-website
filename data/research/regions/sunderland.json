@@ -1,0 +1,29 @@
+{
+  "id": "sunderland",
+  "name": "Sunderland",
+  "postcode_regex": "^SR\\d",
+  "area_column": "area",
+  "file_prefix": "sunderland-sr-dental",
+  "overrides_file": "sunderland-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "SR5",
+    "SR4",
+    "SR6",
+    "SR8",
+    "SR1",
+    "SR7",
+    "SR2",
+    "SR3"
+  ],
+  "core_segment_prefix": "sunderland-core",
+  "area_labels": {
+    "SR1": "Sunderland (SR1)",
+    "SR2": "Sunderland (SR2)",
+    "SR3": "Sunderland (SR3)",
+    "SR4": "Sunderland (SR4)",
+    "SR5": "Sunderland (SR5)",
+    "SR6": "Sunderland (SR6)",
+    "SR7": "Sunderland (SR7)",
+    "SR8": "Sunderland (SR8)"
+  }
+}
