@@ -26,7 +26,8 @@ export type LatencyTestCall = {
   id: string;
   test_run_id: string;
   call_id: string | null;
-  twilio_call_sid: string | null;
+  mor_call_ref: string | null;
+  sip_call_id: string | null;
   recording_url: string | null;
   status: string;
   p50_turn_latency_ms: number | null;

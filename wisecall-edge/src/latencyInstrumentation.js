@@ -120,7 +120,7 @@ async function createLatencyTestRun({
   return data.id;
 }
 
-async function createLatencyTestCall({ testRunId, twilioCallSid }) {
+async function createLatencyTestCall({ testRunId, morCallRef, sipCallId }) {
   const sb = getSupabase();
   if (!sb) throw new Error("Supabase not configured");
 
@@ -128,7 +128,8 @@ async function createLatencyTestCall({ testRunId, twilioCallSid }) {
     .from("voice_latency_tests")
     .insert({
       test_run_id: testRunId,
-      twilio_call_sid: twilioCallSid || null,
+      mor_call_ref: morCallRef || null,
+      sip_call_id: sipCallId || null,
       status: "in_progress",
       started_at: new Date().toISOString(),
     })

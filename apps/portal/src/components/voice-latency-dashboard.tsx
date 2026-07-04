@@ -22,7 +22,7 @@ export function VoiceLatencyDashboard({ data }: { data: LatencyDashboard }) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white">Voice latency tests</h1>
         <p className="mt-2 max-w-3xl text-white/60">
-          Real outbound call harness measuring end-to-end response time across SIP, Deepgram,
+          Real outbound SIP calls via MOR measure end-to-end response time across Deepgram,
           OpenAI, and Cartesia. Run tests with{" "}
           <code className="rounded bg-white/10 px-1.5 py-0.5 text-sm text-[#7de8eb]">
             npm run test:voice-agent -- --number=&quot;+44...&quot; --scenario dental

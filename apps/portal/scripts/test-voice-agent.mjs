@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 // WiseCall voice-agent latency test harness.
 //
-// Places real outbound calls via Twilio to a live WiseCall number, plays scripted
-// prompts, records the call, analyses response latency, and correlates with
-// server-side middleware metrics in Supabase.
+// Places real outbound SIP calls through MOR to a live WiseCall DID, plays
+// scripted prompts via SIPp, and correlates with server-side middleware metrics.
 //
 // Usage (from apps/portal):
 //   npm run test:voice-agent -- --number "+441135222277" --scenario dental
@@ -12,16 +11,24 @@
 // Required env:
 //   SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL)
 //   SUPABASE_SERVICE_ROLE_KEY
-//   TWILIO_ACCOUNT_SID
-//   TWILIO_AUTH_TOKEN
-//   TWILIO_LATENCY_TEST_FROM  (verified outbound caller ID)
+//   MOR_LATENCY_TEST_SIP_USER       — SIP device username on MOR (test caller)
+//   MOR_LATENCY_TEST_SIP_PASSWORD   — SIP device password
+//   MOR_SIP_DOMAIN or MOR_API_URL   — MOR SIP registrar host
 //
 // Optional:
-//   WISECALL_LATENCY_POLL_SEC=90  (wait for server-side turn metrics)
+//   MOR_SIP_PORT=5060
+//   MOR_API_URL / MOR_UNIQUE_HASH / MOR_WISECALL_RESELLER_USERNAME — for CDR correlation
+//   WISECALL_LATENCY_POLL_SEC=90
+//   SIPP_BIN=/usr/bin/sipp
+//
+// First-time setup per scenario:
+//   node scripts/generate-latency-prompts.mjs --scenario=dental
 
 import { createClient } from "@supabase/supabase-js";
-import { buildTwilioTwiml, getScenario } from "./latency-scenarios.mjs";
-import { analyseRecordingLatency, percentile, verdictFromP95 } from "./latency-audio-analyzer.mjs";
+import { percentile, verdictFromP95 } from "./latency-audio-analyzer.mjs";
+import { findRecentMorCall, loadMorConfig } from "./mor-client.mjs";
+import { getScenario } from "./latency-scenarios.mjs";
+import { placeMorSipCall } from "./sip-caller.mjs";
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((a) => {
@@ -36,27 +43,18 @@ const callsPlanned = Math.min(20, Math.max(1, Number(args.calls) || 5));
 const pollSec = Number(process.env.WISECALL_LATENCY_POLL_SEC) || 90;
 
 if (!targetNumber) {
-  console.error("Usage: npm run test:voice-agent -- --number=\"+44...\" [--scenario=dental] [--calls=5]");
+  console.error(
+    'Usage: npm run test:voice-agent -- --number="+44..." [--scenario=dental] [--calls=5]',
+  );
   process.exit(1);
 }
 
 const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioFrom = process.env.TWILIO_LATENCY_TEST_FROM || process.env.TWILIO_FROM_NUMBER;
 
-for (const [name, val] of [
-  ["SUPABASE_URL", url],
-  ["SUPABASE_SERVICE_ROLE_KEY", serviceKey],
-  ["TWILIO_ACCOUNT_SID", twilioSid],
-  ["TWILIO_AUTH_TOKEN", twilioToken],
-  ["TWILIO_LATENCY_TEST_FROM", twilioFrom],
-]) {
-  if (!val) {
-    console.error(`Missing ${name}. This harness requires real Twilio + Supabase credentials.`);
-    process.exit(1);
-  }
+if (!url || !serviceKey) {
+  console.error("Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY.");
+  process.exit(1);
 }
 
 const supabase = createClient(url, serviceKey, {
@@ -64,60 +62,13 @@ const supabase = createClient(url, serviceKey, {
 });
 
 const scenario = getScenario(scenarioId);
-const twiml = buildTwilioTwiml(scenario);
+const morConfig = loadMorConfig();
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function twilioRequest(path, body) {
-  const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64");
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}${path}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams(body).toString(),
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`Twilio ${res.status}: ${text}`);
-  return Object.fromEntries(new URLSearchParams(text));
-}
-
-async function fetchRecordingWav(recordingSid) {
-  const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64");
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Recordings/${recordingSid}.wav`,
-    { headers: { Authorization: `Basic ${auth}` } },
-  );
-  if (!res.ok) throw new Error(`Recording download failed: ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
-}
-
-async function waitForCallComplete(callSid, maxSec = 300) {
-  const deadline = Date.now() + maxSec * 1000;
-  while (Date.now() < deadline) {
-    const call = await twilioRequest(`/Calls/${callSid}.json`, {});
-    if (call.Status === "completed" || call.Status === "busy" || call.Status === "failed" || call.Status === "no-answer") {
-      return call;
-    }
-    await sleep(3000);
-  }
-  throw new Error(`Call ${callSid} did not complete within ${maxSec}s`);
-}
-
-async function listRecordings(callSid) {
-  const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString("base64");
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls/${callSid}/Recordings.json`,
-    { headers: { Authorization: `Basic ${auth}` } },
-  );
-  const json = await res.json();
-  return json.recordings || [];
-}
-
-async function pollServerTurns(callId, testRunId, testId) {
+async function pollServerTurns(callId, testRunId) {
   const deadline = Date.now() + pollSec * 1000;
   while (Date.now() < deadline) {
     const query = supabase
@@ -129,114 +80,84 @@ async function pollServerTurns(callId, testRunId, testId) {
     const { data } = await query;
     const serverTurns = (data || []).filter((t) => t.total_turn_latency_ms != null);
     if (serverTurns.length >= scenario.prompts.length) return serverTurns;
-
-    // Also try matching recent call_logs by caller + time
     await sleep(5000);
   }
   return [];
 }
 
-async function correlateCallLog(callerNumber, target, startedAt) {
-  const since = new Date(new Date(startedAt).getTime() - 60_000).toISOString();
+async function correlateCallLog(callerRef, startedAt) {
+  const since = new Date(new Date(startedAt).getTime() - 120_000).toISOString();
   const { data } = await supabase
     .from("wisecall_call_logs")
-    .select("id, call_id, caller_id, started_at")
-    .eq("caller_id", callerNumber)
+    .select("id, call_id, caller_id, started_at, recording_url")
     .gte("started_at", since)
     .order("started_at", { ascending: false })
-    .limit(5);
+    .limit(10);
 
+  const callerDigits = String(callerRef).replace(/[^\d]/g, "").slice(-10);
   return (data || []).find((row) => {
-    const meta = row;
-    return row.caller_id === callerNumber;
+    const from = String(row.caller_id || "").replace(/[^\d]/g, "");
+    return from.endsWith(callerDigits) || from.includes(callerDigits);
   });
 }
 
-function msToIso(baseMs, offsetMs) {
-  return new Date(baseMs + offsetMs).toISOString();
-}
-
 async function runSingleCall(testRunId, callIndex) {
-  console.log(`\n── Call ${callIndex + 1}/${callsPlanned} → ${targetNumber}`);
+  console.log(`\n── Call ${callIndex + 1}/${callsPlanned} → ${targetNumber} (MOR/SIP)`);
 
+  const startedAt = new Date().toISOString();
   const { data: testRow, error: testErr } = await supabase
     .from("voice_latency_tests")
     .insert({
       test_run_id: testRunId,
       status: "in_progress",
-      started_at: new Date().toISOString(),
-      metadata: { scenario: scenarioId, call_index: callIndex },
+      started_at: startedAt,
+      metadata: { scenario: scenarioId, call_index: callIndex, transport: "mor_sip" },
     })
     .select("id")
     .single();
   if (testErr) throw new Error(testErr.message);
   const testId = testRow.id;
 
-  const startedAt = Date.now();
-  const call = await twilioRequest("/Calls.json", {
-    To: targetNumber,
-    From: twilioFrom,
-    Twiml: twiml,
-    Record: "true",
-    Timeout: "120",
-    MachineDetection: "Enable",
-    AsyncAmd: "true",
-    AsyncAmdStatusCallbackMethod: "POST",
+  const sipResult = await placeMorSipCall({
+    targetNumber,
+    scenarioId,
+    testRunId,
+    callIndex,
   });
 
-  const callSid = call.Sid;
-  console.log(`  Twilio call SID: ${callSid}`);
+  if (!sipResult.ok) {
+    console.warn(`  SIPp exited with code ${sipResult.exitCode} (call may still have connected)`);
+  }
+
+  // Correlate via MOR CDR, SIP Call-ID, or recent call log
+  let morCall = null;
+  try {
+    morCall = await findRecentMorCall(morConfig, {
+      src: sipResult.callerNumber,
+      dst: targetNumber,
+      sinceIso: startedAt,
+    });
+  } catch (err) {
+    console.warn(`  MOR CDR lookup skipped: ${err.message}`);
+  }
+
+  const callLog = await correlateCallLog(sipResult.callerNumber, startedAt);
+  const wiseCallId = callLog?.call_id || morCall?.uniqueid || sipResult.morCallRef || `sip-${testId}`;
 
   await supabase
     .from("voice_latency_tests")
-    .update({ twilio_call_sid: callSid })
+    .update({
+      mor_call_ref: morCall?.uniqueid || sipResult.morCallRef,
+      sip_call_id: sipResult.morCallRef,
+      call_id: wiseCallId,
+    })
     .eq("id", testId);
 
-  const completed = await waitForCallComplete(callSid);
-  console.log(`  Status: ${completed.Status}, duration: ${completed.Duration}s`);
-
-  const recordings = await listRecordings(callSid);
-  const recording = recordings[0];
+  // Client-side turn analysis is optional (requires local RTP capture; server metrics are primary)
   let clientTurns = [];
-  let recordingUrl = null;
+  const recordingUrl = callLog?.recording_url || null;
 
-  if (recording?.sid) {
-    recordingUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Recordings/${recording.sid}.wav`;
-    try {
-      const wav = await fetchRecordingWav(recording.sid);
-      const analysis = analyseRecordingLatency(wav, { promptCount: scenario.prompts.length });
-      clientTurns = analysis.turns;
-      console.log(`  Recording analysed: ${clientTurns.length} turn(s) detected`);
-    } catch (err) {
-      console.warn(`  Recording analysis failed: ${err.message}`);
-    }
-  } else {
-    console.warn("  No recording available for client-side analysis");
-  }
-
-  const callLog = await correlateCallLog(twilioFrom, targetNumber, startedAt);
-  const wiseCallId = callLog?.call_id || callSid;
-
-  for (const turn of clientTurns) {
-    const prompt = scenario.prompts[turn.turn_id - 1] || null;
-    await supabase.from("voice_latency_test_turns").upsert(
-      {
-        test_run_id: testRunId,
-        test_id: testId,
-        call_id: wiseCallId,
-        turn_id: turn.turn_id,
-        prompt_text: prompt,
-        caller_audio_started_at: msToIso(startedAt, turn.caller_audio_started_at_ms),
-        caller_audio_ended_at: msToIso(startedAt, turn.caller_audio_ended_at_ms),
-        ai_audio_first_started_at: msToIso(startedAt, turn.ai_audio_first_started_at_ms),
-        client_response_latency_ms: turn.client_response_latency_ms,
-        silence_gaps_over_700ms: turn.silence_gaps_over_700ms,
-      },
-      { onConflict: "call_id,turn_id" },
-    );
-  }
-
-  const serverTurns = await pollServerTurns(wiseCallId, testRunId, testId);
+  const serverTurns = await pollServerTurns(wiseCallId, testRunId);
   if (serverTurns.length) {
     console.log(`  Server metrics: ${serverTurns.length} turn(s) from middleware`);
   } else {
@@ -256,7 +177,6 @@ async function runSingleCall(testRunId, callIndex) {
   await supabase
     .from("voice_latency_tests")
     .update({
-      call_id: wiseCallId,
       call_log_id: callLog?.id || null,
       recording_url: recordingUrl,
       status: serverTurns.length ? "completed" : "no_server_metrics",
@@ -264,10 +184,17 @@ async function runSingleCall(testRunId, callIndex) {
       p95_turn_latency_ms: p95,
       max_silence_gap_ms: maxSilence * 700,
       ended_at: new Date().toISOString(),
+      metadata: {
+        scenario: scenarioId,
+        call_index: callIndex,
+        transport: "mor_sip",
+        mor_uniqueid: morCall?.uniqueid || null,
+        sipp_logs: sipResult.logs,
+      },
     })
     .eq("id", testId);
 
-  return { p50, p95, latencies: allLatencies, callSid, wiseCallId };
+  return { p50, p95, latencies: allLatencies, wiseCallId };
 }
 
 async function finalizeRun(testRunId, allLatencies) {
@@ -310,9 +237,10 @@ async function finalizeRun(testRunId, allLatencies) {
 function printSummary(run) {
   console.log("\n══════════════════════════════════════════");
   console.log("  WiseCall Voice Latency Test Summary");
+  console.log("  Transport: MOR SIP (SIPp)");
   console.log("══════════════════════════════════════════");
   console.log(`  Scenario:     ${scenario.label}`);
-  console.log(`  Target:       ${targetNumber}`);
+  console.log(`  Target DID:   ${targetNumber}`);
   console.log(`  Calls:        ${callsPlanned}`);
   console.log(`  p50 latency:  ${run.p50 ?? "—"} ms`);
   console.log(`  p95 latency:  ${run.p95 ?? "—"} ms`);
@@ -328,17 +256,24 @@ function printSummary(run) {
 
 async function main() {
   console.log(`WiseCall latency test — ${scenario.label}`);
-  console.log(`Placing ${callsPlanned} call(s) to ${targetNumber}`);
+  console.log(`Placing ${callsPlanned} SIP call(s) via MOR to ${targetNumber}`);
+  console.log(
+    `Caller SIP user: ${morConfig.sipUser || "(set MOR_LATENCY_TEST_SIP_USER)"} @ ${morConfig.sipHost || "MOR"}`,
+  );
 
   const { data: runRow, error: runErr } = await supabase
     .from("voice_latency_test_runs")
     .insert({
       scenario: scenarioId,
       target_number: targetNumber,
-      caller_number: twilioFrom,
+      caller_number: morConfig.sipUser || null,
       calls_planned: callsPlanned,
       status: "running",
-      metadata: { harness: "twilio", prompts: scenario.prompts },
+      metadata: {
+        harness: "mor_sip_sipp",
+        prompts: scenario.prompts,
+        mor_sip_host: morConfig.sipHost,
+      },
     })
     .select("id")
     .single();
@@ -350,7 +285,7 @@ async function main() {
     for (let i = 0; i < callsPlanned; i += 1) {
       const result = await runSingleCall(testRunId, i);
       allLatencies.push(...result.latencies);
-      if (i < callsPlanned - 1) await sleep(5000);
+      if (i < callsPlanned - 1) await sleep(8000);
     }
     const summary = await finalizeRun(testRunId, allLatencies);
     printSummary(summary);

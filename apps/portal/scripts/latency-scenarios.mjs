@@ -1,14 +1,6 @@
-/** Pre-recorded caller prompt scenarios for latency testing. */
+/** Pre-recorded caller prompt scenarios for latency testing via MOR/SIP. */
 
-export type LatencyScenario = {
-  id: string;
-  label: string;
-  prompts: string[];
-  /** Seconds to wait after each prompt for the agent to respond. */
-  pauseAfterPromptSec: number;
-};
-
-export const LATENCY_SCENARIOS: Record<string, LatencyScenario> = {
+export const LATENCY_SCENARIOS = {
   dental: {
     id: "dental",
     label: "Dental reception",
@@ -32,24 +24,6 @@ export const LATENCY_SCENARIOS: Record<string, LatencyScenario> = {
   },
 };
 
-export function getScenario(id: string): LatencyScenario {
+export function getScenario(id) {
   return LATENCY_SCENARIOS[id] || LATENCY_SCENARIOS.dental;
-}
-
-export function buildTwilioTwiml(scenario: LatencyScenario): string {
-  const parts: string[] = ['<?xml version="1.0" encoding="UTF-8"?>', "<Response>", "<Record maxLength=\"300\" playBeep=\"false\" />"];
-
-  for (const prompt of scenario.prompts) {
-    const escaped = prompt
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-    parts.push(`<Say voice="Polly.Amy" language="en-GB">${escaped}</Say>`);
-    parts.push(`<Pause length="${scenario.pauseAfterPromptSec}" />`);
-  }
-
-  parts.push("<Pause length=\"3\" />");
-  parts.push("</Response>");
-  return parts.join("");
 }

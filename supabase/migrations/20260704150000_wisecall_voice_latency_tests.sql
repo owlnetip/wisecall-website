@@ -1,5 +1,5 @@
 -- Voice-agent latency test harness: batch runs, per-call results, per-turn metrics.
--- Populated by the Twilio test caller CLI and the live SIP bridge middleware.
+-- Populated by the MOR/SIP test caller CLI and the live SIP bridge middleware.
 
 create table if not exists voice_latency_test_runs (
   id                uuid primary key default gen_random_uuid(),
@@ -32,7 +32,8 @@ create table if not exists voice_latency_tests (
   test_run_id               uuid references voice_latency_test_runs(id) on delete cascade,
   call_id                   text,
   call_log_id               uuid,
-  twilio_call_sid           text,
+  mor_call_ref              text,
+  sip_call_id               text,
   recording_url             text,
   status                    text not null default 'pending',
   p50_turn_latency_ms       int,
@@ -54,7 +55,7 @@ create table if not exists voice_latency_test_turns (
   call_id                   text not null,
   turn_id                   int not null,
   prompt_text               text,
-  -- Client-side (Twilio caller / recording analysis)
+  -- Client-side (SIPp caller / recording analysis)
   caller_audio_started_at   timestamptz,
   caller_audio_ended_at     timestamptz,
   ai_audio_first_started_at timestamptz,
