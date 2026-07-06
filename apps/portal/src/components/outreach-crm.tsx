@@ -32,7 +32,7 @@ import {
 } from "@/app/actions/outreach";
 
 const SEGMENT_OPTIONS = [
-  { value: "dentally_active", label: "Dentally (email now)", badge: "bg-emerald-100 text-emerald-800" },
+  { value: "dentally_active", label: "Dentally independents", badge: "bg-emerald-100 text-emerald-800" },
   { value: "exact_queued", label: "Exact/SOE (queued)", badge: "bg-violet-100 text-violet-800" },
   { value: "unknown_queued", label: "Unknown PMS (queued)", badge: "bg-slate-100 text-slate-700" },
   { value: "corporate_hold", label: "Corporate (hold)", badge: "bg-amber-100 text-amber-800" },

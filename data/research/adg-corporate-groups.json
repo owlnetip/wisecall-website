@@ -2,7 +2,7 @@
   "_comment": "Association of Dental Groups (ADG) member organisations — used to flag corporate/multi-site groups. Source: https://www.theadg.co.uk/members/ (July 2026). Match is substring against practice name, provider, alias, and website.",
   "groups": [
     { "name": "mydentist", "patterns": ["mydentist"] },
-    { "name": "Portman Dentex", "patterns": ["portman dentex", "portmandental", "portman dental"] },
+    { "name": "Portman Dentex", "patterns": ["portman dentex", "portmandental", "portman dental", "portman healthcare", "portman smile"] },
     { "name": "Genix Healthcare", "patterns": ["genix healthcare", "genixhealthcare"] },
     { "name": "Rodericks Dental", "patterns": ["rodericks dental", "rodericksdental"] },
     { "name": "Bupa Dental Care", "patterns": ["bupa dental"] },
@@ -34,6 +34,14 @@
     { "name": "Arkview Dental", "patterns": ["arkview dental"] },
     { "name": "Obex Dental", "patterns": ["obex dental"] },
     { "name": "Smile Together", "patterns": ["smile together", "smile: together"] },
-    { "name": "International Dental Organization", "patterns": ["international dental organization"] }
+    { "name": "International Dental Organization", "patterns": ["international dental organization"] },
+    { "name": "Dentex Clinical", "patterns": ["dentex clinical", "dentex assets", "portmandentex"] },
+    { "name": "Perfect Smile Group", "patterns": ["perfect smile surgery", "perfect smile healthcare", "perfect smile clinic", "perfect smile-dental"] },
+    { "name": "Zental Dental", "patterns": ["zental dental", "zental ("] },
+    { "name": "Synergy Dental Care", "patterns": ["synergy dental care"] },
+    { "name": "Smile Hub Dental", "patterns": ["smile hub dental", "smile-hub"] },
+    { "name": "Private Dental Group", "patterns": ["private dental group"] },
+    { "name": "SAIL Dental Group", "patterns": ["sail dental group"] },
+    { "name": "Didcot Dental Group", "patterns": ["didcot dental group"] }
   ]
 }
