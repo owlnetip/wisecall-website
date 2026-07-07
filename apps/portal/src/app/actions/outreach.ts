@@ -117,7 +117,7 @@ function prospectKey(practiceName: string, postcode: string, region: string): st
   return `${practiceName.trim().toLowerCase()}|${postcode.toUpperCase().replace(/\s/g, "")}|${region.trim()}`;
 }
 
-async function readDentalProspectsSeed(): Promise<{ prospects: Record<string, string>[] } | null> {
+async function readDentalProspectsSeed(): Promise<{ prospects?: Record<string, string>[] } | null> {
   try {
     return JSON.parse(await readFile(SEED_PATH, "utf-8")) as { prospects?: Record<string, string>[] };
   } catch {
