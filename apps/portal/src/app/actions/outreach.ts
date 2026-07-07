@@ -5,8 +5,21 @@ import { readFile } from "fs/promises";
 import path from "path";
 import { isAdmin } from "@/lib/admin";
 import { renderOutreachTemplate, sendViaResend, addDays, followUpDaysForStep } from "@/lib/outreach-email";
+import {
+  sanitizeEmailHtml,
+  unwrapMergeChips,
+  htmlToText,
+  wrapEmailHtml,
+  isHtmlBody,
+} from "@/lib/email-template";
 import { getServiceSupabase } from "@/lib/supabase";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+/** Normalise editor HTML for storage: unwrap merge pills, then sanitise. */
+function cleanEditorHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return sanitizeEmailHtml(unwrapMergeChips(html));
+}
 
 export type OutreachProspect = {
   id: string;
@@ -37,6 +50,8 @@ export type OutreachTemplate = {
   sequenceStep: string;
   subjectTemplate: string;
   bodyTemplate: string;
+  /** Rich HTML body (visual editor). Null/empty = legacy plain-text template. */
+  bodyHtml: string | null;
 };
 
 export type OutreachEmail = {
@@ -45,6 +60,7 @@ export type OutreachEmail = {
   sequenceStep: string;
   subject: string;
   body: string;
+  bodyHtml: string | null;
   toEmail: string;
   status: string;
   scheduledFor: string | null;
@@ -194,6 +210,7 @@ export async function listOutreachTemplates(): Promise<Result<OutreachTemplate[]
       sequenceStep: (r.sequence_step as string) ?? "custom",
       subjectTemplate: (r.subject_template as string) ?? "",
       bodyTemplate: (r.body_template as string) ?? "",
+      bodyHtml: (r.body_html as string) ?? null,
     })),
   };
 }
@@ -203,6 +220,7 @@ export async function saveOutreachTemplate(input: {
   name: string;
   subjectTemplate: string;
   bodyTemplate: string;
+  bodyHtml?: string | null;
   sequenceStep?: string;
 }): Promise<Result<{ id: string }>> {
   const gate = await requireAdmin();
@@ -212,9 +230,12 @@ export async function saveOutreachTemplate(input: {
 
   const name = input.name.trim();
   const subject = input.subjectTemplate.trim();
-  const body = input.bodyTemplate.trim();
+  const bodyHtml = cleanEditorHtml(input.bodyHtml);
+  // For HTML templates the plain-text body_template is the auto text fallback;
+  // for legacy text templates it's the body itself.
+  const body = bodyHtml ? htmlToText(bodyHtml) : input.bodyTemplate.trim();
   if (!name || subject.length < 5 || body.length < 20) {
-    return { ok: false, error: "Template needs a name, subject and body." };
+    return { ok: false, error: "Template needs a name, subject and a bit of body content." };
   }
 
   const step = input.sequenceStep || "custom";
@@ -222,6 +243,7 @@ export async function saveOutreachTemplate(input: {
     name,
     subject_template: subject,
     body_template: body,
+    body_html: bodyHtml || null,
     sequence_step: step,
     updated_at: new Date().toISOString(),
   };
@@ -247,6 +269,36 @@ export async function saveOutreachTemplate(input: {
   return { ok: true, data: { id: data.id as string } };
 }
 
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/** Upload an image for use in an outreach email; returns its public URL. */
+export async function uploadOutreachImage(formData: FormData): Promise<Result<{ url: string }>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, error: "No file provided." };
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return { ok: false, error: "Use a PNG, JPG, GIF or WEBP image." };
+  }
+  if (file.size > MAX_IMAGE_BYTES) return { ok: false, error: "Image must be under 5 MB." };
+
+  const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+  const objectPath = `${new Date().getFullYear()}/${crypto.randomUUID()}.${ext}`;
+  const buffer = new Uint8Array(await file.arrayBuffer());
+
+  const { error } = await service.storage
+    .from("outreach-assets")
+    .upload(objectPath, buffer, { contentType: file.type, upsert: false });
+  if (error) return { ok: false, error: error.message };
+
+  const { data } = service.storage.from("outreach-assets").getPublicUrl(objectPath);
+  return { ok: true, data: { url: data.publicUrl } };
+}
+
 export async function listProspectEmails(prospectId: string): Promise<Result<OutreachEmail[]>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -268,6 +320,7 @@ export async function listProspectEmails(prospectId: string): Promise<Result<Out
       sequenceStep: (r.sequence_step as string) ?? "custom",
       subject: (r.subject as string) ?? "",
       body: (r.body as string) ?? "",
+      bodyHtml: (r.body_html as string) ?? null,
       toEmail: (r.to_email as string) ?? "",
       status: (r.status as string) ?? "draft",
       scheduledFor: (r.scheduled_for as string) ?? null,
@@ -283,7 +336,8 @@ export async function previewOutreachEmail(input: {
   templateId: string;
   subjectOverride?: string;
   bodyOverride?: string;
-}): Promise<Result<{ subject: string; body: string }>> {
+  bodyHtmlOverride?: string;
+}): Promise<Result<{ subject: string; body: string; bodyHtml: string | null }>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
   const service = getServiceSupabase();
@@ -300,11 +354,17 @@ export async function previewOutreachEmail(input: {
     input.subjectOverride?.trim() || (template.subject_template as string),
     fields,
   );
+
+  // Prefer the HTML body when the template (or the caller's live edit) has one.
+  const rawHtml = input.bodyHtmlOverride !== undefined
+    ? cleanEditorHtml(input.bodyHtmlOverride)
+    : ((template.body_html as string) ?? "");
+  const bodyHtml = isHtmlBody(rawHtml) ? renderOutreachTemplate(rawHtml, fields) : null;
   const body = renderOutreachTemplate(
     input.bodyOverride?.trim() || (template.body_template as string),
     fields,
   );
-  return { ok: true, data: { subject, body } };
+  return { ok: true, data: { subject, body, bodyHtml } };
 }
 
 async function scheduleFollowUps(
@@ -323,12 +383,16 @@ async function scheduleFollowUps(
   const rows = templates.map((t) => {
     const step = t.sequence_step as string;
     const days = followUpDaysForStep(step) ?? 0;
+    const tmplHtml = (t.body_html as string) ?? "";
+    const innerHtml = isHtmlBody(tmplHtml) ? renderOutreachTemplate(tmplHtml, fields) : null;
+    const textBody = renderOutreachTemplate(t.body_template as string, fields);
     return {
       prospect_id: prospect.id,
       template_id: t.id,
       sequence_step: step,
       subject: renderOutreachTemplate(t.subject_template as string, fields),
-      body: renderOutreachTemplate(t.body_template as string, fields),
+      body: textBody || (innerHtml ? htmlToText(innerHtml) : ""),
+      body_html: innerHtml,
       to_email: prospect.email,
       status: "scheduled",
       scheduled_for: addDays(sentAt, days),
@@ -353,6 +417,7 @@ export async function sendOutreachEmail(input: {
   templateId: string;
   subject: string;
   body: string;
+  bodyHtml?: string | null;
   scheduleFollowUps?: boolean;
 }): Promise<Result<{ emailId: string }>> {
   const gate = await requireAdmin();
@@ -381,10 +446,15 @@ export async function sendOutreachEmail(input: {
   }
   if (!prospect.email) return { ok: false, error: "Add a recipient email before sending." };
 
+  // Rich HTML when the composer sent a body_html; the plain-text body remains
+  // the fallback. Legacy text-only sends are unchanged.
+  const innerHtml = cleanEditorHtml(input.bodyHtml);
+  const textFallback = input.body?.trim() || (innerHtml ? htmlToText(innerHtml) : "");
   const sent = await sendViaResend({
     to: prospect.email,
     subject: input.subject,
-    body: input.body,
+    body: textFallback,
+    html: innerHtml ? wrapEmailHtml(innerHtml) : undefined,
     replyTo: gate.user.email ?? undefined,
   });
 
@@ -396,7 +466,8 @@ export async function sendOutreachEmail(input: {
       template_id: input.templateId,
       sequence_step: "initial",
       subject: input.subject,
-      body: input.body,
+      body: textFallback,
+      body_html: innerHtml || null,
       to_email: prospect.email,
       status: sent.ok ? "sent" : "failed",
       sent_at: sent.ok ? now : null,
@@ -562,10 +633,12 @@ export async function processDueOutreachFollowUpsInternal(
       continue;
     }
 
+    const storedHtml = (row.body_html as string) ?? "";
     const result = await sendViaResend({
       to: p.email,
       subject: row.subject as string,
       body: row.body as string,
+      html: isHtmlBody(storedHtml) ? wrapEmailHtml(storedHtml) : undefined,
     });
 
     await service
