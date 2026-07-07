@@ -78,8 +78,16 @@ def match_corporate_patterns(row: dict[str, str], patterns: list[tuple[str, list
     return None
 
 
+# A provider running this many Tier-1 Dentally sites is treated as a corporate
+# group. Kept at 4+ (not 2+) so a genuine independent dentist who owns two or
+# three practices isn't miscategorised as corporate and dropped from outreach —
+# named corporate groups are still caught by adg-corporate-groups.json patterns
+# regardless of site count.
+MULTI_SITE_CORPORATE_THRESHOLD = 4
+
+
 def load_multi_site_providers() -> set[str]:
-    """Providers running 2+ Tier 1 Dentally sites nationally."""
+    """Providers running several Tier 1 Dentally sites nationally."""
     counts: Counter[str] = Counter()
     for path in RESEARCH.glob("*-marketing-list.csv"):
         with path.open(newline="", encoding="utf-8") as f:
@@ -94,7 +102,7 @@ def load_multi_site_providers() -> set[str]:
                 provider = (row.get("provider_name") or "").strip()
                 if provider:
                     counts[provider] += 1
-    return {provider for provider, count in counts.items() if count >= 2}
+    return {provider for provider, count in counts.items() if count >= MULTI_SITE_CORPORATE_THRESHOLD}
 
 
 def is_corporate_group(
