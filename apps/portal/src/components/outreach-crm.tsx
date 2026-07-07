@@ -30,6 +30,17 @@ import {
   type OutreachProspect,
   type OutreachTemplate,
 } from "@/app/actions/outreach";
+import { RichEmailEditor, EmailPreview } from "@/components/rich-email-editor";
+
+/** Seed the visual editor from a legacy plain-text body (newlines → paragraphs). */
+function textToHtml(text: string): string {
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return text
+    .split(/\n{2,}/)
+    .map((para) => `<p>${esc(para).replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+}
 
 const SEGMENT_OPTIONS = [
   { value: "dentally_active", label: "Dentally independents", badge: "bg-emerald-100 text-emerald-800" },
@@ -71,13 +82,15 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
 
   const [templateId, setTemplateId] = useState("");
   const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  const [bodyHtml, setBodyHtml] = useState("");
+  const [draftNonce, setDraftNonce] = useState(0);
   const [scheduleFollowUps, setScheduleFollowUps] = useState(true);
 
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [editTemplateName, setEditTemplateName] = useState("");
   const [editTemplateSubject, setEditTemplateSubject] = useState("");
-  const [editTemplateBody, setEditTemplateBody] = useState("");
+  const [editTemplateHtml, setEditTemplateHtml] = useState("");
+  const [editNonce, setEditNonce] = useState(0);
 
   const selected = useMemo(
     () => prospects.find((p) => p.id === selectedId) ?? null,
@@ -131,7 +144,10 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     void previewOutreachEmail({ prospectId: selectedId, templateId }).then((r) => {
       if (r.ok) {
         setSubject(r.data.subject);
-        setBody(r.data.body);
+        // Always compose in the visual editor: use the rendered HTML when the
+        // template has one, else upgrade the plain-text body to simple HTML.
+        setBodyHtml(r.data.bodyHtml ?? textToHtml(r.data.body));
+        setDraftNonce((n) => n + 1);
       }
     });
   }, [selectedId, templateId]);
@@ -171,8 +187,19 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     setEditingTemplateId(t.id);
     setEditTemplateName(t.name);
     setEditTemplateSubject(t.subjectTemplate);
-    setEditTemplateBody(t.bodyTemplate);
+    setEditTemplateHtml(t.bodyHtml || textToHtml(t.bodyTemplate));
+    setEditNonce((n) => n + 1);
     setView("templates");
+  }
+
+  function startNewTemplate() {
+    setEditingTemplateId(null);
+    setEditTemplateName("Custom template");
+    setEditTemplateSubject("Subject with {{practice_name}}");
+    setEditTemplateHtml(
+      "<p>Hi <span data-merge=\"contact_name\" contenteditable=\"false\" style=\"display:inline-block;padding:1px 8px;border-radius:9999px;background:#e0f7f8;color:#0e7d82;font-weight:600;font-size:0.9em;\">Contact name</span>,</p><p>Your message here.</p><p>Best,<br/>The WiseCall team</p>",
+    );
+    setEditNonce((n) => n + 1);
   }
 
   async function onSaveTemplate() {
@@ -182,7 +209,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
       id: editingTemplateId ?? undefined,
       name: editTemplateName,
       subjectTemplate: editTemplateSubject,
-      bodyTemplate: editTemplateBody,
+      bodyTemplate: "",
+      bodyHtml: editTemplateHtml,
     });
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
@@ -200,7 +228,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
       prospectId: selected.id,
       templateId,
       subject,
-      body,
+      body: "",
+      bodyHtml,
       scheduleFollowUps,
     });
     setBusy(false);
@@ -315,8 +344,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
       </header>
 
       {view === "templates" ? (
-        <div className="mx-auto max-w-4xl px-6 py-6">
-          <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="mx-auto max-w-6xl px-6 py-6">
+          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
             <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Templates</p>
               <ul className="space-y-2">
@@ -337,12 +366,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
               </ul>
               <button
                 type="button"
-                onClick={() => {
-                  setEditingTemplateId(null);
-                  setEditTemplateName("Custom template");
-                  setEditTemplateSubject("Subject with {{practice_name}}");
-                  setEditTemplateBody("Hi{{#contact_name}} {{contact_name}}{{/contact_name}},\n\nYour message here.\n\nBest,\n[Your name]");
-                }}
+                onClick={startNewTemplate}
                 className="mt-3 w-full rounded-lg border border-dashed border-[#d8e4e4] px-3 py-2 text-sm font-semibold text-[#5a7272]"
               >
                 + New template
@@ -351,7 +375,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
             <section className="rounded-2xl border border-[#d8e4e4] bg-white p-5 shadow-sm">
               <h2 className="text-lg font-black text-[#0e1b1b]">Edit template</h2>
               <p className="mt-1 text-sm text-[#5a7272]">
-                Merge fields: {"{{practice_name}}"}, {"{{contact_name}}"}, {"{{postcode}}"}, {"{{pms}}"}, {"{{area}}"}, {"{{phone}}"}
+                Format text, drop in images and use <strong>Personalise</strong> to insert fields like the practice name.
               </p>
               <div className="mt-4 grid gap-3">
                 <input
@@ -364,14 +388,23 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                   value={editTemplateSubject}
                   onChange={(e) => setEditTemplateSubject(e.target.value)}
                   className="rounded-lg border border-[#d8e4e4] px-3 py-2 text-sm"
-                  placeholder="Subject"
+                  placeholder="Subject (personalise with the fields above)"
                 />
-                <textarea
-                  value={editTemplateBody}
-                  onChange={(e) => setEditTemplateBody(e.target.value)}
-                  rows={14}
-                  className="rounded-lg border border-[#d8e4e4] px-3 py-2 font-mono text-sm leading-relaxed"
-                />
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Compose</p>
+                    <RichEmailEditor
+                      key={`tmpl-${editingTemplateId ?? "new"}-${editNonce}`}
+                      initialHtml={editTemplateHtml}
+                      onChange={setEditTemplateHtml}
+                      onError={(text) => setMsg({ kind: "err", text })}
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Preview</p>
+                    <EmailPreview innerHtml={editTemplateHtml} />
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => void onSaveTemplate()}
@@ -610,15 +643,21 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2"
                     />
                   </label>
-                  <label className="block text-sm">
-                    <span className="mb-1 font-semibold">Body</span>
-                    <textarea
-                      value={body}
-                      onChange={(e) => setBody(e.target.value)}
-                      rows={12}
-                      className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2 font-mono text-sm leading-relaxed"
-                    />
-                  </label>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div>
+                      <p className="mb-1 text-sm font-semibold">Body</p>
+                      <RichEmailEditor
+                        key={`draft-${selected.id}-${draftNonce}`}
+                        initialHtml={bodyHtml}
+                        onChange={setBodyHtml}
+                        onError={(text) => setMsg({ kind: "err", text })}
+                      />
+                    </div>
+                    <div>
+                      <p className="mb-1 text-sm font-semibold">Preview</p>
+                      <EmailPreview innerHtml={bodyHtml} />
+                    </div>
+                  </div>
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"

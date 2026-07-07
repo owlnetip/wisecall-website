@@ -35,12 +35,15 @@ export async function sendViaResend(input: {
   to: string;
   subject: string;
   body: string;
+  /** When set, the email is sent as HTML; `body` becomes the text fallback. */
+  html?: string;
   replyTo?: string;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL ?? "WiseCall <hello@wisecall.io>";
   if (!apiKey) return { ok: false, error: "RESEND_API_KEY is not configured." };
 
+  const html = input.html?.trim();
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -51,7 +54,9 @@ export async function sendViaResend(input: {
       from,
       to: [input.to.trim()],
       subject: input.subject.trim(),
+      // Always include text as a fallback; add html when we have a rich body.
       text: input.body.trim(),
+      ...(html ? { html } : {}),
       ...(input.replyTo ? { reply_to: input.replyTo } : {}),
     }),
   });
