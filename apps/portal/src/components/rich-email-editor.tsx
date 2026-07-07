@@ -11,6 +11,7 @@ import {
   MousePointerClick,
   User,
   Loader2,
+  Baseline,
 } from "lucide-react";
 import { MERGE_FIELDS, wrapEmailHtml } from "@/lib/email-template";
 import { uploadOutreachImage } from "@/app/actions/outreach";
@@ -31,6 +32,17 @@ const CHIP_STYLE =
 
 const BUTTON_STYLE =
   "display:inline-block;background:#7de8eb;color:#0e1b1b;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:10px;";
+
+/** Text-colour swatches offered in the toolbar (email-safe, on-brand). */
+const TEXT_COLORS: { label: string; value: string }[] = [
+  { label: "Default", value: "#1a2b2b" },
+  { label: "Teal", value: "#0e7d82" },
+  { label: "Slate", value: "#5a7272" },
+  { label: "Blue", value: "#1d4ed8" },
+  { label: "Green", value: "#059669" },
+  { label: "Red", value: "#dc2626" },
+  { label: "Black", value: "#000000" },
+];
 
 /**
  * Lightweight WYSIWYG editor for outreach emails. Dependency-free
@@ -54,7 +66,7 @@ export function RichEmailEditor({
   const savedRange = useRef<Range | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [menu, setMenu] = useState<"none" | "merge" | "image">("none");
+  const [menu, setMenu] = useState<"none" | "merge" | "image" | "color">("none");
 
   useEffect(() => {
     if (ref.current && ref.current.innerHTML !== initialHtml) {
@@ -135,6 +147,18 @@ export function RichEmailEditor({
     [insertHtml],
   );
 
+  const applyColor = useCallback(
+    (color: string) => {
+      // Emit <span style="color:…"> (email-safe) rather than deprecated <font>.
+      restoreSelection();
+      document.execCommand("styleWithCSS", false, "true");
+      document.execCommand("foreColor", false, color);
+      emit();
+      setMenu("none");
+    },
+    [restoreSelection, emit],
+  );
+
   const insertImageUrl = useCallback(() => {
     const url = window.prompt("Image URL (https://…)");
     setMenu("none");
@@ -184,6 +208,43 @@ export function RichEmailEditor({
         <button type="button" title="Link" className={toolBtn} onMouseDown={(e) => e.preventDefault()} onClick={insertLink}>
           <Link2 className="h-4 w-4" />
         </button>
+        <div className="relative">
+          <button
+            type="button"
+            title="Text colour"
+            className={toolBtn}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setMenu(menu === "color" ? "none" : "color")}
+          >
+            <Baseline className="h-4 w-4" />
+          </button>
+          {menu === "color" && (
+            <div className="absolute z-20 mt-1 w-44 rounded-lg border border-[#d8e4e4] bg-white p-2 shadow-lg">
+              <div className="grid grid-cols-4 gap-1.5">
+                {TEXT_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    title={c.label}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyColor(c.value)}
+                    className="h-7 w-7 rounded-md border border-[#d8e4e4]"
+                    style={{ background: c.value }}
+                  />
+                ))}
+              </div>
+              <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#0e1b1b]">
+                <input
+                  type="color"
+                  className="h-6 w-6 cursor-pointer rounded border border-[#d8e4e4] bg-white p-0"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onChange={(e) => applyColor(e.target.value)}
+                />
+                Custom…
+              </label>
+            </div>
+          )}
+        </div>
         <span className="mx-1 h-5 w-px bg-[#e8efef]" />
         <div className="relative">
           <button
@@ -199,7 +260,7 @@ export function RichEmailEditor({
             <div className="absolute z-20 mt-1 w-44 rounded-lg border border-[#d8e4e4] bg-white p-1 shadow-lg">
               <button
                 type="button"
-                className="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-[#f4f7f7]"
+                className="block w-full rounded-md px-3 py-2 text-left text-sm text-[#0e1b1b] hover:bg-[#f4f7f7]"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -207,7 +268,7 @@ export function RichEmailEditor({
               </button>
               <button
                 type="button"
-                className="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-[#f4f7f7]"
+                className="block w-full rounded-md px-3 py-2 text-left text-sm text-[#0e1b1b] hover:bg-[#f4f7f7]"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={insertImageUrl}
               >
@@ -235,7 +296,7 @@ export function RichEmailEditor({
                 <button
                   key={f.token}
                   type="button"
-                  className="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-[#f4f7f7]"
+                  className="block w-full rounded-md px-3 py-2 text-left text-sm text-[#0e1b1b] hover:bg-[#f4f7f7]"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMerge(f.token, f.label)}
                 >
