@@ -1,22 +1,72 @@
 /* ============================================================================
-   WiseCall: per-section light mode
+   WiseCall: per-section light mode + clean UI tokens
    ----------------------------------------------------------------------------
-   The site stays DARK by default (nav, hero, statement sections, footer).
-   Add class="light" to any <section> to flip just that band to a clean light
-   scheme, giving the page a dark/light rhythm like the app portal.
+   Dark stays for nav, hero, statement moments, and footer.
+   Add class="light" to any <section> for a calm Stripe/Fonio-style band.
 
-   Everything here is scoped under `section.light`, so it never touches the
-   dark sections. Accent cyan (#7de8eb) stays bright for FILLS; accent TEXT is
-   deepened to #0a8a8e so it stays readable on white.
+   Accent cyan (#7de8eb) is for fills/CTAs only.
+   Accent text on light surfaces deepens to #0a8a8e for readability.
    ============================================================================ */
 
-section.light {
-  background: #f6fbfb !important;
-  color: #0c1f1f !important;
+:root {
+  --wc-ink: #0c1f1f;
+  --wc-ink-soft: rgba(12, 31, 31, 0.72);
+  --wc-ink-mute: rgba(12, 31, 31, 0.52);
+  --wc-surface: #ffffff;
+  --wc-surface-soft: #f6fbfb;
+  --wc-surface-tint: #f0f8f8;
+  --wc-border: rgba(12, 31, 31, 0.10);
+  --wc-border-strong: rgba(10, 138, 142, 0.28);
+  --wc-accent: #7de8eb;
+  --wc-accent-deep: #0a8a8e;
+  --wc-brand: #172929;
+  --wc-shadow: 0 1px 2px rgba(12, 31, 31, 0.04), 0 8px 24px rgba(12, 31, 31, 0.06);
+  --wc-font-display: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+  --wc-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Soft seam between dark→light→dark bands */
-section.light { box-shadow: inset 0 1px 0 rgba(12, 31, 31, 0.04); }
+/* Display type for headlines sitewide */
+h1, h2, .font-display {
+  font-family: var(--wc-font-display);
+  letter-spacing: -0.025em;
+}
+
+/* Quiet primary CTA — solid accent, no glow */
+.btn-primary,
+a.btn-primary,
+button.btn-primary {
+  background: var(--wc-accent) !important;
+  background-image: none !important;
+  color: var(--wc-brand) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-weight: 700;
+}
+.btn-primary:hover,
+a.btn-primary:hover,
+button.btn-primary:hover {
+  background: #9cf1f3 !important;
+  box-shadow: none !important;
+}
+
+/* Soft secondary */
+.btn-secondary,
+a.btn-secondary {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #fff !important;
+  border: 1px solid rgba(125, 232, 235, 0.28) !important;
+  box-shadow: none !important;
+}
+.btn-secondary:hover,
+a.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+section.light {
+  background: var(--wc-surface-soft) !important;
+  color: var(--wc-ink) !important;
+  box-shadow: inset 0 1px 0 rgba(12, 31, 31, 0.04);
+}
 
 /* ---- Kill the dark gradient WASH + dim glow orbs inside light sections --- */
 section.light [class*="from-[#172929]"].absolute,
@@ -27,11 +77,12 @@ section.light [class*="to-[#172929]"].absolute {
   background-color: transparent !important;
 }
 section.light [class*="blur-["].absolute.rounded-full {
-  opacity: 0.08 !important;
+  opacity: 0 !important;
+  display: none !important;
 }
 
 /* ---- Text: white opacities → graded ink --------------------------------- */
-section.light .text-white          { color: #0c1f1f !important; }
+section.light .text-white          { color: var(--wc-ink) !important; }
 section.light .text-white\/85      { color: rgba(12, 31, 31, 0.92) !important; }
 section.light .text-white\/80      { color: rgba(12, 31, 31, 0.88) !important; }
 section.light .text-white\/78      { color: rgba(12, 31, 31, 0.86) !important; }
@@ -47,51 +98,58 @@ section.light .text-white\/40,
 section.light .text-white\/30      { color: rgba(12, 31, 31, 0.42) !important; }
 
 /* Accent text: bright cyan → readable deep teal */
-section.light .text-\[\#7de8eb\] { color: #0a8a8e !important; }
+section.light .text-\[\#7de8eb\] { color: var(--wc-accent-deep) !important; }
 
 /* Placeholders (demo phone input) */
 section.light .placeholder\:text-white\/45::placeholder,
 section.light input::placeholder { color: rgba(12, 31, 31, 0.42) !important; }
-section.light input { color: #0c1f1f !important; }
+section.light input { color: var(--wc-ink) !important; }
 
 /* ---- Surfaces / cards ---------------------------------------------------- */
 section.light .card {
-  background: #ffffff !important;
-  border: 1px solid rgba(12, 31, 31, 0.10) !important;
-  box-shadow: 0 1px 2px rgba(12, 31, 31, 0.04), 0 8px 24px rgba(12, 31, 31, 0.06);
+  background: var(--wc-surface) !important;
+  border: 1px solid var(--wc-border) !important;
+  box-shadow: var(--wc-shadow);
 }
 section.light .card-strong {
   background: linear-gradient(135deg, #eefafa, #f7fdfd) !important;
   border: 1px solid rgba(10, 138, 142, 0.30) !important;
-  box-shadow: 0 1px 2px rgba(12, 31, 31, 0.04), 0 8px 24px rgba(12, 31, 31, 0.06);
+  box-shadow: var(--wc-shadow);
 }
 section.light .bg-white\/5,
 section.light .bg-white\/10,
 section.light .bg-white\/20,
 section.light .bg-white\/\[\.04\],
 section.light .bg-white\/\[\.025\] {
-  background-color: #ffffff !important;
-  box-shadow: 0 1px 2px rgba(12, 31, 31, 0.04), 0 8px 24px rgba(12, 31, 31, 0.06);
+  background-color: var(--wc-surface) !important;
+  box-shadow: var(--wc-shadow);
 }
 /* Raised section strips inside a light band → soft tint, no heavy shadow */
 section.light .bg-white\/\[\.025\],
 section.light .bg-white\/\[\.04\] {
-  background-color: #f0f8f8 !important;
+  background-color: var(--wc-surface-tint) !important;
   box-shadow: none;
 }
 
 /* Solid dark mini-surfaces → light (any opacity variant: /50, /60, /82 ...) */
 section.light [class*="bg-[#172929]"],
 section.light [class*="bg-[#1a3535]"] {
-  background-color: #f0f8f8 !important;
+  background-color: var(--wc-surface-tint) !important;
+}
+
+/* Soften cyan-tint gradient cards on light (pricing popular card etc.) */
+section.light [class*="from-[#7de8eb]"] {
+  background-image: none !important;
+  background-color: var(--wc-surface) !important;
+  box-shadow: var(--wc-shadow) !important;
 }
 
 /* Form fields inside light sections → clean light field, dark text */
 section.light input,
 section.light textarea,
 section.light select {
-  background-color: #ffffff !important;
-  color: #0c1f1f !important;
+  background-color: var(--wc-surface) !important;
+  color: var(--wc-ink) !important;
   border-color: rgba(12, 31, 31, 0.15) !important;
 }
 section.light input::placeholder,
@@ -101,13 +159,24 @@ section.light textarea::placeholder {
 
 /* ---- Buttons / chips ----------------------------------------------------- */
 section.light .btn-secondary,
-section.light .mbtn.bg-white\/10 {
-  background: #ffffff !important;
-  color: #0a8a8e !important;
-  border: 1px solid rgba(10, 138, 142, 0.30) !important;
+section.light .mbtn.bg-white\/10,
+section.light a.bg-white\/10 {
+  background: var(--wc-surface) !important;
+  color: var(--wc-accent-deep) !important;
+  border: 1px solid var(--wc-border-strong) !important;
+  box-shadow: none !important;
+}
+section.light .btn-primary,
+section.light a.btn-primary,
+section.light .mbtn[class*="from-[#7de8eb]"],
+section.light a[class*="from-[#7de8eb]"] {
+  background: var(--wc-accent) !important;
+  background-image: none !important;
+  color: var(--wc-brand) !important;
+  box-shadow: none !important;
 }
 section.light .eyebrow {
-  color: #0a8a8e !important;
+  color: var(--wc-accent-deep) !important;
   background: rgba(10, 138, 142, 0.08) !important;
   border: 1px solid rgba(10, 138, 142, 0.22) !important;
 }
@@ -122,7 +191,14 @@ section.light .border-white\/20 {
   border-color: rgba(12, 31, 31, 0.10) !important;
 }
 section.light details.card,
-section.light details.group { background: #ffffff !important; }
+section.light details.group { background: var(--wc-surface) !important; }
+
+/* Pricing popular badge on light */
+section.light .pricing-popular-badge {
+  background: var(--wc-ink) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
 
 /* ---- Demo dial box: keep it DARK on the light section for contrast ------- */
 section.light .demo-dial {
@@ -144,4 +220,4 @@ section.light .demo-dial .demo-phone-input:-webkit-autofill:focus {
   -webkit-text-fill-color: #ffffff;
   box-shadow: 0 0 0 1000px #123b3c inset !important;
 }
-section.light .demo-dial .text-\[\#7de8eb\] { color: #7de8eb !important; } /* phone icon stays bright */
+section.light .demo-dial .text-\[\#7de8eb\] { color: #7de8eb !important; }

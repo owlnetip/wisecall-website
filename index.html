@@ -54,10 +54,11 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     html { scroll-behavior: smooth; }
+    h1, h2, .font-display { font-family: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.025em; }
     body {
       font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #172929;
@@ -75,7 +76,7 @@
     .motion.in-view { opacity: 1; transform: translate(0, 0) scale(1); }
     /* Button hover */
     .mbtn { transition: transform 0.18s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.25s, border-color 0.25s, background-color 0.25s; }
-    .mbtn:hover { transform: translateY(-2px); }
+    .mbtn:hover { transform: translateY(-1px); }
     .mbtn:active { transform: translateY(0) scale(0.98); }
     /* Header */
     header.scrolled { background: rgba(23, 41, 41, 0.95); box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
@@ -197,7 +198,7 @@
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] }
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'], display: ['Plus Jakarta Sans', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] }
         }
       }
     };
@@ -216,18 +217,13 @@
       </a>
       <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
         <a href="#live-demo" class="hover:text-[#7de8eb] transition-colors">Try it</a>
-        <a href="#every-call" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
-        <a href="#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="#every-call" class="hover:text-[#7de8eb] transition-colors">How it works</a>
         <a href="#industries" class="hover:text-[#7de8eb] transition-colors">Industries</a>
-        <a href="#integrations" class="hover:text-[#7de8eb] transition-colors">Integrations</a>
+        <a href="#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
         <a href="/compare/ai-receptionist-uk-comparison/" class="hover:text-[#7de8eb] transition-colors">Compare</a>
-        <a href="#partners" class="hover:text-[#7de8eb] transition-colors">Partners</a>
-        <a href="#faq" class="hover:text-[#7de8eb] transition-colors">FAQ</a>
-        <a href="ai-consultancy.html" class="hover:text-[#7de8eb] transition-colors">Consultancy</a>
-        <a href="#" class="contact-link hover:text-[#7de8eb] transition-colors" data-inquiry="General Contact">Contact</a>
       </div>
       <div class="flex items-center gap-3">
-        <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]" data-inquiry="Demo Request">
+        <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn btn-primary hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm" data-inquiry="Demo Request">
           Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </a>
         <button id="mobileMenuToggle" aria-label="Open menu" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
@@ -238,16 +234,14 @@
     <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 right-0 bg-[#172929]/98 backdrop-blur-xl border-b border-[#7de8eb]/15 shadow-2xl">
       <div class="px-6 py-6 flex flex-col gap-4 text-white">
         <a href="#live-demo" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Try it</a>
-        <a href="#every-call" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How It Works</a>
-        <a href="#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
+        <a href="#every-call" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How it works</a>
         <a href="#industries" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Industries</a>
-        <a href="#integrations" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Integrations</a>
+        <a href="#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
         <a href="/compare/ai-receptionist-uk-comparison/" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Compare</a>
         <a href="#partners" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Partners</a>
         <a href="#faq" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">FAQ</a>
-        <a href="ai-consultancy.html" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Consultancy</a>
         <a href="#" class="contact-link py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link" data-inquiry="General Contact">Contact</a>
-        <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold" data-inquiry="Demo Request">
+        <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn btn-primary mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-sm" data-inquiry="Demo Request">
           Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </a>
       </div>
@@ -266,7 +260,7 @@
         <input type="email" id="email" name="email" placeholder="your@email.com" required class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
         <input type="tel" id="phone" name="phone" placeholder="Your phone number" class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors">
         <textarea id="message" name="message" rows="4" placeholder="What type of business, how many calls per month..." class="w-full rounded-lg bg-white/5 border border-[#7de8eb]/20 text-white placeholder-white/40 px-4 py-3 text-sm focus:outline-none focus:border-[#7de8eb]/60 transition-colors resize-none"></textarea>
-        <button type="submit" class="form-submit mbtn w-full py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)]">Send Enquiry</button>
+        <button type="submit" class="form-submit mbtn btn-primary w-full py-3 rounded-lg font-bold text-sm">Send Enquiry</button>
       </form>
     </div>
   </div>
@@ -274,8 +268,8 @@
   <!-- ───── HERO + LIVE DEMO ───── -->
   <section class="relative min-h-screen flex items-center overflow-hidden px-6 pt-24 pb-16" id="live-demo">
     <div class="absolute inset-0 bg-gradient-to-br from-[#172929] via-[#1a3535] to-[#172929]"></div>
-    <div class="absolute top-24 left-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
-    <div class="absolute bottom-16 right-1/4 w-80 h-80 bg-[#7de8eb] rounded-full blur-[120px] opacity-15 pointer-events-none"></div>
+    <div class="absolute top-24 left-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[140px] opacity-10 pointer-events-none"></div>
+    <div class="absolute bottom-16 right-1/4 w-80 h-80 bg-[#7de8eb] rounded-full blur-[120px] opacity-8 pointer-events-none"></div>
 
     <div class="relative z-10 max-w-7xl mx-auto w-full flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
       <!-- Intro: headline first on all breakpoints -->
@@ -323,7 +317,7 @@
                 <span class="orb-core"></span>
               </span>
             </a>
-            <a href="tel:+441135222277" class="mbtn inline-flex items-center justify-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)] transition-shadow w-full max-w-xs">
+            <a href="tel:+441135222277" class="mbtn inline-flex items-center justify-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg transition-shadow w-full max-w-xs">
               <i data-lucide="phone-call" class="w-5 h-5"></i>
               Call the demo
             </a>
@@ -390,7 +384,7 @@
       <!-- CTAs + trust badges: third on mobile, left column below intro on desktop -->
       <div class="order-3 lg:col-start-1 lg:row-start-2 w-full">
         <div class="motion flex flex-col sm:flex-row gap-4 mb-8 lg:mb-10" data-anim="fade-up" style="transition-delay:0.15s">
-          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10 lg:bg-gradient-to-r lg:from-[#7de8eb] lg:to-[#5dbfc2] lg:text-[#172929] lg:border-0 lg:font-bold lg:shadow-[0_0_34px_rgba(125,232,235,0.35)] lg:hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn btn-primary inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg font-semibold text-lg" data-inquiry="Demo Request">
             Try it now <i data-lucide="arrow-right" class="w-5 h-5"></i>
           </a>
           <a href="#" class="contact-link mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10" data-inquiry="Demo Request">
@@ -444,7 +438,7 @@
   </section>
 
   <!-- ───── QUICK SETUP (live wizard demo) ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="quick-setup">
+  <section class="light relative py-24 px-6 overflow-hidden" id="quick-setup">
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[560px] h-[560px] bg-[#7de8eb] rounded-full blur-[190px] opacity-[0.08] pointer-events-none"></div>
     <div class="relative z-10 max-w-6xl mx-auto">
       <div class="motion text-center mb-14" data-anim="fade-up">
@@ -475,28 +469,28 @@
         <div class="motion" data-anim="fade-up" style="transition-delay:0.08s">
           <ol class="relative space-y-6 pl-0">
             <li class="flex items-start gap-4">
-              <span class="flex-shrink-0 inline-flex w-9 h-9 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm items-center justify-center">1</span>
+              <span class="flex-shrink-0 inline-flex w-9 h-9 rounded-full bg-[#7de8eb] text-[#172929] font-bold text-sm items-center justify-center">1</span>
               <div>
                 <h3 class="text-white font-semibold mb-0.5">Paste your website</h3>
                 <p class="text-white/55 text-sm leading-relaxed">We read your site and draft the whole receptionist — what it says, what it knows, even your hours.</p>
               </div>
             </li>
             <li class="flex items-start gap-4">
-              <span class="flex-shrink-0 inline-flex w-9 h-9 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm items-center justify-center">2</span>
+              <span class="flex-shrink-0 inline-flex w-9 h-9 rounded-full bg-[#7de8eb] text-[#172929] font-bold text-sm items-center justify-center">2</span>
               <div>
                 <h3 class="text-white font-semibold mb-0.5">Review the draft</h3>
                 <p class="text-white/55 text-sm leading-relaxed">Tweak how it behaves and what it knows, in plain English. No scripts to write.</p>
               </div>
             </li>
             <li class="flex items-start gap-4">
-              <span class="flex-shrink-0 inline-flex w-9 h-9 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm items-center justify-center">3</span>
+              <span class="flex-shrink-0 inline-flex w-9 h-9 rounded-full bg-[#7de8eb] text-[#172929] font-bold text-sm items-center justify-center">3</span>
               <div>
                 <h3 class="text-white font-semibold mb-0.5">Confirm hours, pick a voice</h3>
                 <p class="text-white/55 text-sm leading-relaxed">Hours pre-filled from your site. Tap play, choose the British voice your callers hear.</p>
               </div>
             </li>
             <li class="flex items-start gap-4">
-              <span class="flex-shrink-0 inline-flex w-9 h-9 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm items-center justify-center">4</span>
+              <span class="flex-shrink-0 inline-flex w-9 h-9 rounded-full bg-[#7de8eb] text-[#172929] font-bold text-sm items-center justify-center">4</span>
               <div>
                 <h3 class="text-white font-semibold mb-0.5">Add your team, go live</h3>
                 <p class="text-white/55 text-sm leading-relaxed">Tell us where messages land and who urgent calls reach. We connect a number automatically — it answers straight away.</p>
@@ -505,7 +499,7 @@
           </ol>
 
           <div class="mt-9">
-            <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]" data-inquiry="Demo Request">
+            <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn btn-primary inline-flex items-center gap-2 px-8 py-4 rounded-lg font-bold text-lg" data-inquiry="Demo Request">
               Set yours up now <i data-lucide="arrow-right" class="w-5 h-5"></i>
             </a>
             <p class="text-white/45 text-sm mt-4">7-day pilot on live calls. No phone system needed.</p>
@@ -516,7 +510,7 @@
   </section>
 
   <!-- ───── CHANNELS ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="channels">
+  <section class="light relative py-24 px-6 overflow-hidden" id="channels">
     <div class="absolute bottom-0 left-0 w-96 h-96 bg-[#7de8eb] rounded-full blur-[170px] opacity-[0.07] pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto">
       <div class="motion text-center mb-14" data-anim="fade-up">
@@ -634,7 +628,7 @@
       <p class="motion text-center text-white/55 mt-10" data-anim="fade-up" style="transition-delay:0.2s">Same knowledge base. Same routing rules. Same summaries. Less admin for every enquiry.</p>
 
       <div class="motion flex flex-col sm:flex-row justify-center gap-4 mt-8" data-anim="fade-up" style="transition-delay:0.22s">
-        <a href="#live-demo" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]">
+        <a href="#live-demo" class="mbtn btn-primary inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg font-bold text-lg">
           Try the demo agent <i data-lucide="arrow-right" class="w-5 h-5"></i>
         </a>
         <a href="/integrations/" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
@@ -685,7 +679,7 @@
   </section>
 
   <!-- ───── WHAT HAPPENS ON EVERY CALL ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="every-call">
+  <section class="light relative py-24 px-6 overflow-hidden" id="every-call">
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#7de8eb] rounded-full blur-[200px] opacity-[0.08] pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto">
       <div class="motion text-center mb-16" data-anim="fade-up">
@@ -1012,7 +1006,7 @@
   </section>
 
   <!-- ───── SAMPLE SUMMARY ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="sample-summary">
+  <section class="light relative py-24 px-6 overflow-hidden" id="sample-summary">
     <div class="absolute left-0 top-1/2 -translate-y-1/2 w-96 h-96 bg-[#7de8eb] rounded-full blur-[160px] opacity-10 pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto">
 
@@ -1098,13 +1092,13 @@
   </section>
 
   <!-- ───── EMAIL CHANNEL ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="email-channel">
+  <section class="light relative py-24 px-6 overflow-hidden" id="email-channel">
     <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535]/40 to-[#172929] pointer-events-none"></div>
     <div class="absolute bottom-0 left-1/4 w-[460px] h-[460px] bg-[#7de8eb] rounded-full blur-[170px] opacity-10 pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
       <!-- Copy -->
       <div class="motion" data-anim="fade-up">
-        <span class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#172929] bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] rounded-full px-3 py-1 mb-5">New · Email Channel</span>
+        <span class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0a8a8e] bg-[#7de8eb]/15 border border-[#7de8eb]/25 rounded-full px-3 py-1 mb-5">New · Email Channel</span>
         <h2 class="text-4xl md:text-5xl font-bold text-white mb-5 leading-tight">Now WiseCall answers <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">email, too</span></h2>
         <p class="text-xl text-white/70 leading-relaxed mb-8">Enquiries do not only come by phone. Built into every plan, WiseCall reads inbound emails, understands the enquiry and replies, using the same knowledge base it uses on calls.</p>
         <ul class="space-y-3 mb-9">
@@ -1114,7 +1108,7 @@
           <li class="flex items-start gap-3 text-white/75"><i data-lucide="git-branch" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Escalates to your team when a human is needed</li>
         </ul>
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-          <a href="#pricing" class="mbtn inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_46px_rgba(125,232,235,0.5)]" data-inquiry="Email Channel Enquiry">See plans <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+          <a href="#pricing" class="mbtn btn-primary inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-lg font-bold" data-inquiry="Email Channel Enquiry">See plans <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
           <span class="text-white/55 text-sm"><span class="text-[#7de8eb] font-semibold">Included in every plan</span> · with a monthly AI email allowance</span>
         </div>
       </div>
@@ -1199,8 +1193,8 @@
         </div>
 
         <!-- Professional (popular) -->
-        <div class="motion relative rounded-2xl bg-gradient-to-br from-[#7de8eb]/[0.08] to-transparent border border-[#7de8eb]/40 p-7 shadow-[0_0_50px_rgba(125,232,235,0.15)] flex flex-col" data-anim="scale-in" style="transition-delay:0.08s">
-          <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-[11px] font-bold uppercase tracking-wider shadow-[0_4px_20px_rgba(125,232,235,0.4)] whitespace-nowrap">Most Popular</div>
+        <div class="motion relative rounded-2xl bg-white/5 border border-[#7de8eb]/35 p-7 flex flex-col card-strong" data-anim="scale-in" style="transition-delay:0.08s">
+          <div class="pricing-popular-badge absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#0c1f1f] text-white text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">Most Popular</div>
           <div class="mb-5 min-h-[68px]">
             <h3 class="text-2xl font-bold text-white">Professional</h3>
             <p class="text-white/50 text-sm mt-1">Growing businesses with regular inbound enquiries</p>
@@ -1219,7 +1213,7 @@
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">300</span> Live Chat Conversations</span></div>
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="bell" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">300</span> SMS Messages and Notifications</span></div>
           </div>
-          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)] mb-6" data-inquiry="Demo Request - Professional (300 calls, £199/mo)">Start a 7-day pilot</a>
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn btn-primary block text-center py-3 rounded-lg font-bold text-sm mb-6" data-inquiry="Demo Request - Professional (300 calls, £199/mo)">Start a 7-day pilot</a>
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
@@ -1301,29 +1295,29 @@
       <!-- Steps -->
       <div class="grid md:grid-cols-4 gap-6 mb-12">
         <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.05s">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">1</div>
+          <div class="w-12 h-12 rounded-full bg-[#7de8eb] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">1</div>
           <h3 class="text-lg font-semibold text-white mb-2">Apply</h3>
           <p class="text-white/55 text-sm leading-relaxed">Submit your application. We review it and come back within a few business days. We look for partners who already work with SME clients and understand the communications space.</p>
         </div>
         <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.08s">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">2</div>
+          <div class="w-12 h-12 rounded-full bg-[#7de8eb] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">2</div>
           <h3 class="text-lg font-semibold text-white mb-2">Onboard</h3>
           <p class="text-white/55 text-sm leading-relaxed">Access your partner portal, sales materials and product training. Onboarding typically takes one session. You will be ready to sell WiseCall to your first client straight away.</p>
         </div>
         <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.11s">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">3</div>
+          <div class="w-12 h-12 rounded-full bg-[#7de8eb] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">3</div>
           <h3 class="text-lg font-semibold text-white mb-2">Sell</h3>
           <p class="text-white/55 text-sm leading-relaxed">Introduce WiseCall to your clients. You manage the relationship. WiseCall provides demos, onboarding and ongoing customer support directly.</p>
         </div>
         <div class="motion rounded-xl bg-white/5 border border-[#7de8eb]/10 p-6 text-center" data-anim="fade-up" style="transition-delay:0.14s">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">4</div>
+          <div class="w-12 h-12 rounded-full bg-[#7de8eb] text-[#172929] font-bold text-xl flex items-center justify-center mx-auto mb-4">4</div>
           <h3 class="text-lg font-semibold text-white mb-2">Earn</h3>
           <p class="text-white/55 text-sm leading-relaxed">Commission paid monthly on cleared funds, alongside a partner statement showing all active accounts and payments. No chasing, no ambiguity.</p>
         </div>
       </div>
 
       <div class="motion text-center" data-anim="fade-up">
-        <a href="#" class="mbtn contact-link inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]" data-inquiry="Partner Application">
+        <a href="#" class="mbtn btn-primary contact-link inline-flex items-center gap-2 px-8 py-4 rounded-lg font-bold text-lg" data-inquiry="Partner Application">
           Apply to Become a Partner <i data-lucide="arrow-right" class="w-5 h-5"></i>
         </a>
       </div>
@@ -1371,7 +1365,7 @@
   </section>
 
   <!-- ───── FAQ ───── -->
-  <section class="relative py-24 px-6 overflow-hidden" id="faq">
+  <section class="light relative py-24 px-6 overflow-hidden" id="faq">
     <div class="relative z-10 max-w-3xl mx-auto">
       <div class="motion text-center mb-14" data-anim="fade-up">
         <span class="text-sm text-[#7de8eb] font-semibold">FAQ</span>
@@ -1482,13 +1476,13 @@
   <!-- ───── FINAL CTA ───── -->
   <section class="relative py-24 px-6 overflow-hidden">
     <div class="absolute inset-0 bg-gradient-to-br from-[#1a3535] to-[#172929] pointer-events-none"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#7de8eb] rounded-full blur-[200px] opacity-10 pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#7de8eb] rounded-full blur-[180px] opacity-6 pointer-events-none"></div>
     <div class="relative z-10 max-w-3xl mx-auto text-center">
       <div class="motion" data-anim="fade-up">
         <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">Ready to see WiseCall in action?</h2>
         <p class="text-xl text-white/70 mb-10 leading-relaxed">Book a demo and we will recommend the right plan based on your current call volumes and team setup. Most businesses are up and running within a week.</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn btn-primary inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg font-bold text-lg" data-inquiry="Demo Request">
             Try it now <i data-lucide="arrow-right" class="w-5 h-5"></i>
           </a>
           <a href="#" class="contact-link mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10" data-inquiry="Demo Request">
@@ -1513,6 +1507,7 @@
         <a href="#pricing" class="text-white/50 hover:text-[#7de8eb] transition-colors">Pricing</a>
         <a href="#industries" class="text-white/50 hover:text-[#7de8eb] transition-colors">Industries</a>
         <a href="/resources/missed-call-calculator/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Calculator</a>
+        <a href="#integrations" class="text-white/50 hover:text-[#7de8eb] transition-colors">Integrations</a>
         <a href="#partners" class="text-white/50 hover:text-[#7de8eb] transition-colors">Partners</a>
         <a href="ai-consultancy.html" class="text-white/50 hover:text-[#7de8eb] transition-colors">Consultancy</a>
         <a href="ai-workshop.html" class="text-white/50 hover:text-[#7de8eb] transition-colors">Workshop</a>
