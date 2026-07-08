@@ -76,16 +76,23 @@ section.light [class*="to-[#172929]"].absolute {
   background-image: none !important;
   background-color: transparent !important;
 }
-section.light [class*="blur-["].absolute.rounded-full {
+/* Hide every decorative blur orb in light bands — no muddy cyan wash */
+section.light .absolute[class*="blur-["],
+section.light [class*="blur-["].absolute,
+section.light [class*="blur-["].rounded-full {
   opacity: 0 !important;
+  visibility: hidden !important;
   display: none !important;
+  pointer-events: none !important;
 }
 
 /* ---- Text: white opacities → graded ink --------------------------------- */
 section.light .text-white          { color: var(--wc-ink) !important; }
+section.light .text-white\/90,
 section.light .text-white\/85      { color: rgba(12, 31, 31, 0.92) !important; }
-section.light .text-white\/80      { color: rgba(12, 31, 31, 0.88) !important; }
-section.light .text-white\/78      { color: rgba(12, 31, 31, 0.86) !important; }
+section.light .text-white\/80,
+section.light .text-white\/78,
+section.light .text-white\/75      { color: rgba(12, 31, 31, 0.82) !important; }
 section.light .text-white\/72,
 section.light .text-white\/70,
 section.light .text-white\/68,
@@ -95,6 +102,7 @@ section.light .text-white\/55      { color: rgba(12, 31, 31, 0.62) !important; }
 section.light .text-white\/50,
 section.light .text-white\/45      { color: rgba(12, 31, 31, 0.52) !important; }
 section.light .text-white\/40,
+section.light .text-white\/35,
 section.light .text-white\/30      { color: rgba(12, 31, 31, 0.42) !important; }
 
 /* Accent text: bright cyan → readable deep teal */
@@ -206,8 +214,10 @@ section.light .keep-dark .bg-white\/10 {
   background-color: rgba(255, 255, 255, 0.06) !important;
 }
 section.light .keep-dark .text-white { color: #ffffff !important; }
-section.light .keep-dark .text-white\/85 { color: rgba(255, 255, 255, 0.85) !important; }
-section.light .keep-dark .text-white\/80 { color: rgba(255, 255, 255, 0.80) !important; }
+section.light .keep-dark .text-white\/90,
+section.light .keep-dark .text-white\/85 { color: rgba(255, 255, 255, 0.90) !important; }
+section.light .keep-dark .text-white\/80,
+section.light .keep-dark .text-white\/75 { color: rgba(255, 255, 255, 0.80) !important; }
 section.light .keep-dark .text-white\/70,
 section.light .keep-dark .text-white\/65 { color: rgba(255, 255, 255, 0.68) !important; }
 section.light .keep-dark .text-white\/60,
