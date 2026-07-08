@@ -131,17 +131,105 @@ section.light .bg-white\/\[\.04\] {
   box-shadow: none;
 }
 
-/* Solid dark mini-surfaces → light (any opacity variant: /50, /60, /82 ...) */
+/* Solid dark mini-surfaces → light tint; .keep-dark overrides below */
 section.light [class*="bg-[#172929]"],
 section.light [class*="bg-[#1a3535]"] {
   background-color: var(--wc-surface-tint) !important;
 }
 
-/* Soften cyan-tint gradient cards on light (pricing popular card etc.) */
-section.light [class*="from-[#7de8eb]"] {
+/*
+  Soften ONLY large cyan-wash card fills (e.g. pricing "popular" card).
+  Do NOT touch:
+  - icon tiles (from-[#7de8eb]/20)
+  - gradient headline text (bg-clip-text)
+  - solid accent fills (bg-[#7de8eb] / from-[#7de8eb] to-[#5dbfc2])
+*/
+section.light [class*="from-[#7de8eb]/[0.08]"]:not(.keep-dark):not(.keep-dark *),
+section.light [class*="from-[#7de8eb]/[0.10]"]:not(.keep-dark):not(.keep-dark *) {
   background-image: none !important;
   background-color: var(--wc-surface) !important;
   box-shadow: var(--wc-shadow) !important;
+}
+/* Soft teal fills inside product mockups stay translucent on dark */
+section.light .keep-dark [class*="from-[#7de8eb]/[0.08]"],
+section.light .keep-dark [class*="from-[#7de8eb]/[0.10]"] {
+  background-image: linear-gradient(135deg, rgba(125, 232, 235, 0.12), transparent) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Icon tiles: keep a soft teal wash so they don't go flat white-on-white */
+section.light [class*="from-[#7de8eb]/20"],
+section.light [class*="from-[#7de8eb]/25"] {
+  background-image: linear-gradient(135deg, rgba(10, 138, 142, 0.14), rgba(10, 138, 142, 0.05)) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/*
+  Gradient clipped text must stay visible on light.
+  Preserve the clip; swap to a deeper teal gradient that reads on white.
+*/
+section.light .bg-clip-text.text-transparent,
+section.light [class*="bg-clip-text"].text-transparent {
+  background-image: linear-gradient(90deg, #0a8a8e, #0f6f72) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/*
+  Product mockup chrome stays dark so artefacts still read as UI screenshots.
+  Add class="keep-dark" to the mockup root.
+*/
+section.light .keep-dark {
+  background-color: #122929 !important;
+  color: #fff !important;
+  border-color: rgba(125, 232, 235, 0.22) !important;
+  box-shadow: 0 16px 40px rgba(12, 31, 31, 0.18) !important;
+}
+section.light .keep-dark [class*="bg-[#172929]"],
+section.light .keep-dark [class*="bg-[#1a3535]"] {
+  background-color: #1a3535 !important;
+}
+section.light .keep-dark .bg-white\/5,
+section.light .keep-dark .bg-white\/10,
+section.light .keep-dark [class*="bg-[#7de8eb]/15"],
+section.light .keep-dark [class*="bg-[#7de8eb]/10"],
+section.light .keep-dark [class*="bg-[#7de8eb]/8"] {
+  background-color: rgba(125, 232, 235, 0.12) !important;
+  box-shadow: none !important;
+}
+section.light .keep-dark .bg-white\/5,
+section.light .keep-dark .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+section.light .keep-dark .text-white { color: #ffffff !important; }
+section.light .keep-dark .text-white\/85 { color: rgba(255, 255, 255, 0.85) !important; }
+section.light .keep-dark .text-white\/80 { color: rgba(255, 255, 255, 0.80) !important; }
+section.light .keep-dark .text-white\/70,
+section.light .keep-dark .text-white\/65 { color: rgba(255, 255, 255, 0.68) !important; }
+section.light .keep-dark .text-white\/60,
+section.light .keep-dark .text-white\/55 { color: rgba(255, 255, 255, 0.58) !important; }
+section.light .keep-dark .text-white\/50,
+section.light .keep-dark .text-white\/45 { color: rgba(255, 255, 255, 0.48) !important; }
+section.light .keep-dark .text-white\/40,
+section.light .keep-dark .text-white\/30 { color: rgba(255, 255, 255, 0.40) !important; }
+section.light .keep-dark .text-\[\#7de8eb\] { color: #7de8eb !important; }
+section.light .keep-dark [class*="border-\[\#7de8eb\]\/"] {
+  border-color: rgba(125, 232, 235, 0.22) !important;
+}
+section.light .keep-dark .border-white\/10,
+section.light .keep-dark .border-white\/15,
+section.light .keep-dark .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+/* Solid accent icon badges inside mockups keep bright cyan */
+section.light .keep-dark [class*="from-[#7de8eb]"]:not([class*="from-[#7de8eb]/"]) {
+  background-image: linear-gradient(135deg, #7de8eb, #5dbfc2) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Form fields inside light sections → clean light field, dark text */
@@ -221,3 +309,34 @@ section.light .demo-dial .demo-phone-input:-webkit-autofill:focus {
   box-shadow: 0 0 0 1000px #123b3c inset !important;
 }
 section.light .demo-dial .text-\[\#7de8eb\] { color: #7de8eb !important; }
+
+
+/* Soft accent chips/pills on light */
+section.light [class*="bg-[#7de8eb]/15"],
+section.light [class*="bg-[#7de8eb]/10"],
+section.light [class*="bg-[#7de8eb]/8"] {
+  background-color: rgba(10, 138, 142, 0.10) !important;
+  box-shadow: none !important;
+}
+
+/* Sector tabs on light */
+section.light .sector-tab {
+  color: rgba(12, 31, 31, 0.62) !important;
+  background: #ffffff !important;
+  border-color: rgba(12, 31, 31, 0.12) !important;
+}
+section.light .sector-tab:hover {
+  color: var(--wc-ink) !important;
+  border-color: rgba(10, 138, 142, 0.35) !important;
+}
+section.light .sector-tab.is-active {
+  color: #fff !important;
+  background: var(--wc-accent-deep) !important;
+  border-color: var(--wc-accent-deep) !important;
+}
+
+/* FAQ chevrons / details on light */
+section.light details {
+  background: #ffffff !important;
+  border-color: rgba(12, 31, 31, 0.10) !important;
+}
