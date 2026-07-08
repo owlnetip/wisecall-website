@@ -167,6 +167,30 @@
     @media (max-width: 1023px) {
       .hero-demo-panel .orb-stage { width: 200px; height: 200px; }
     }
+    /* Demo scenario chips */
+    .demo-chip {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+      color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(125,232,235,0.18); cursor: pointer;
+      transition: color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .demo-chip:hover { color: #fff; border-color: rgba(125,232,235,0.45); }
+    .demo-chip.is-active {
+      color: #0f2a2b; background: #7de8eb; border-color: #7de8eb;
+      box-shadow: 0 0 18px rgba(125,232,235,0.28);
+    }
+    /* Demo summary payoff */
+    .demo-payoff {
+      opacity: 0.72; transform: translateY(6px);
+      transition: opacity 0.45s ease, transform 0.45s ease, box-shadow 0.45s ease, border-color 0.45s ease;
+    }
+    .demo-payoff.is-revealed {
+      opacity: 1; transform: translateY(0);
+      border-color: rgba(125,232,235,0.45);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35), 0 0 40px rgba(125,232,235,0.12);
+    }
+    .demo-payoff-field { transition: opacity 0.3s ease; }
   </style>
 
   <script>
@@ -278,9 +302,18 @@
             <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
             Live Demo
           </span>
-          <h2 class="font-bold text-white text-2xl sm:text-3xl mt-3 mb-2">Hear it for yourself</h2>
-          <p class="text-white/55 text-sm mb-6 lg:hidden">Tap below to call the WiseCall demo agent straight from your phone.</p>
-          <p class="text-white/55 text-sm mb-6 hidden lg:block">Enter your mobile and the WiseCall demo agent calls you back.</p>
+          <h2 class="font-bold text-white text-2xl sm:text-3xl mt-3 mb-2">Don't take our word for it. Call it.</h2>
+          <p class="text-white/55 text-sm mb-4">Takes about a minute. No signup. It's a real WiseCall agent.</p>
+
+          <div class="mb-5">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-white/40 mb-2.5">Things to try</p>
+            <div id="demoScenarioChips" class="flex flex-wrap justify-center gap-2" role="group" aria-label="Demo scenarios to try">
+              <button type="button" class="demo-chip is-active" data-scenario="enquiry">New enquiry</button>
+              <button type="button" class="demo-chip" data-scenario="booking">Book an appointment</button>
+              <button type="button" class="demo-chip" data-scenario="ooh">Out-of-hours message</button>
+              <button type="button" class="demo-chip" data-scenario="urgent">Urgent escalation</button>
+            </div>
+          </div>
 
           <!-- Mobile: tap-to-call orb -->
           <div class="lg:hidden flex flex-col items-center">
@@ -315,6 +348,42 @@
           <p class="text-white/40 text-sm mt-2 hidden lg:block">
             Prefer to dial in? <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white">+44 113 522 2277</a>.
           </p>
+
+          <!-- Summary payoff: what the team receives after the call -->
+          <div id="demoPayoff" class="demo-payoff mt-7 text-left rounded-2xl bg-gradient-to-br from-[#7de8eb]/[0.10] to-transparent border border-[#7de8eb]/25 overflow-hidden">
+            <div class="bg-[#1a3535]/80 border-b border-[#7de8eb]/15 px-4 py-3 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7de8eb] to-[#5dbfc2] flex items-center justify-center flex-shrink-0">
+                <i data-lucide="file-text" class="w-4 h-4 text-[#172929]"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-white font-semibold text-sm">What your team gets</p>
+                <p class="text-white/45 text-xs">The summary after this call ends</p>
+              </div>
+              <span class="ml-auto inline-flex items-center gap-1 text-[#7de8eb] text-[10px] font-semibold bg-[#7de8eb]/10 rounded-full px-2 py-1 whitespace-nowrap"><span class="pulse-dot w-1.5 h-1.5 rounded-full bg-[#7de8eb] inline-block"></span>Live</span>
+            </div>
+            <div class="px-4 py-4 space-y-2.5 text-sm">
+              <div class="demo-payoff-field flex justify-between gap-3">
+                <span class="text-white/45">Caller</span>
+                <span id="payoffCaller" class="text-white/85 font-medium text-right">You · your mobile</span>
+              </div>
+              <div class="demo-payoff-field flex justify-between gap-3">
+                <span class="text-white/45">Reason</span>
+                <span id="payoffReason" class="text-white/85 font-medium text-right">New enquiry</span>
+              </div>
+              <div class="demo-payoff-field flex justify-between gap-3">
+                <span class="text-white/45">Captured</span>
+                <span id="payoffCaptured" class="text-white/85 font-medium text-right">Name, number, intent</span>
+              </div>
+              <div class="demo-payoff-field flex items-start gap-2 rounded-lg bg-[#7de8eb]/8 border border-[#7de8eb]/20 px-3 py-2.5">
+                <i data-lucide="arrow-right-circle" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <span class="text-white/90 text-left"><span class="text-[#7de8eb] font-semibold">Next step:</span> <span id="payoffNext">Route to the right person and send confirmation</span></span>
+              </div>
+              <p class="text-white/40 text-xs pt-1 flex items-start gap-1.5">
+                <i data-lucide="message-square" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>
+                <span>After you hang up, we'll text you this summary — the same one your team would receive.</span>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1488,7 +1557,7 @@
       if (!e.target.closest('nav')) mobileMenu.classList.remove('open');
     });
 
-    // ── Live demo callback ──
+    // ── Live demo: scenarios + summary payoff + callback ──
     const WISECALL_DEMO_CALLBACK_ENDPOINT =
       window.WISECALL_DEMO_CALLBACK_ENDPOINT ||
       'https://zgzzpwaqqftmugzpccpm.supabase.co/functions/v1/wisecall-demo-callback';
@@ -1496,6 +1565,75 @@
     const demoCallbackPhone = document.getElementById('demoCallbackPhone');
     const demoCallbackButton = document.getElementById('demoCallbackButton');
     const demoCallbackStatus = document.getElementById('demoCallbackStatus');
+    const demoPayoff = document.getElementById('demoPayoff');
+    const demoScenarioChips = document.getElementById('demoScenarioChips');
+
+    const demoScenarios = {
+      enquiry: {
+        reason: 'New enquiry',
+        captured: 'Name, number, intent',
+        next: 'Route to the right person and send confirmation'
+      },
+      booking: {
+        reason: 'Appointment request',
+        captured: 'Preferred day, service, contact details',
+        next: 'Book the slot and email confirmation to the caller'
+      },
+      ooh: {
+        reason: 'Out-of-hours message',
+        captured: 'Callback number, reason, urgency',
+        next: 'Queue for first-thing follow-up and notify the on-call contact'
+      },
+      urgent: {
+        reason: 'Urgent escalation',
+        captured: 'Issue, location, best callback number',
+        next: 'Ring the on-call mobile immediately with a full summary'
+      }
+    };
+
+    function applyDemoScenario(key) {
+      const scenario = demoScenarios[key] || demoScenarios.enquiry;
+      const reasonEl = document.getElementById('payoffReason');
+      const capturedEl = document.getElementById('payoffCaptured');
+      const nextEl = document.getElementById('payoffNext');
+      if (reasonEl) reasonEl.textContent = scenario.reason;
+      if (capturedEl) capturedEl.textContent = scenario.captured;
+      if (nextEl) nextEl.textContent = scenario.next;
+      demoScenarioChips?.querySelectorAll('.demo-chip').forEach((chip) => {
+        chip.classList.toggle('is-active', chip.dataset.scenario === key);
+      });
+    }
+
+    function revealDemoPayoff() {
+      demoPayoff?.classList.add('is-revealed');
+      demoPayoff?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    demoScenarioChips?.addEventListener('click', (event) => {
+      const chip = event.target.closest('.demo-chip');
+      if (!chip) return;
+      applyDemoScenario(chip.dataset.scenario);
+    });
+
+    // Soft-reveal the payoff as the demo panel enters view
+    if (demoPayoff && 'IntersectionObserver' in window) {
+      const payoffObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            demoPayoff.classList.add('is-revealed');
+            payoffObserver.disconnect();
+          }
+        });
+      }, { threshold: 0.35 });
+      payoffObserver.observe(demoPayoff);
+    } else {
+      demoPayoff?.classList.add('is-revealed');
+    }
+
+    // Mobile tap-to-call also highlights the payoff
+    document.querySelectorAll('a[href="tel:+441135222277"]').forEach((link) => {
+      link.addEventListener('click', () => revealDemoPayoff());
+    });
 
     function setDemoCallbackStatus(message, state = 'idle') {
       demoCallbackStatus.textContent = message;
@@ -1524,6 +1662,7 @@
       demoCallbackButton.disabled = true;
       demoCallbackButton.textContent = 'Calling...';
       setDemoCallbackStatus('Starting your multi-industry WiseCall demo...', 'idle');
+      revealDemoPayoff();
 
       try {
         const response = await fetch(WISECALL_DEMO_CALLBACK_ENDPOINT, {
@@ -1542,7 +1681,11 @@
           throw new Error(result.error || 'Could not start the demo call.');
         }
 
-        setDemoCallbackStatus(result.message || 'The WiseCall demo agent is calling now.', 'success');
+        setDemoCallbackStatus(
+          (result.message || 'The WiseCall demo agent is calling now.') +
+            ' After the call, check your texts for the summary.',
+          'success'
+        );
       } catch (error) {
         setDemoCallbackStatus(error.message || 'Could not start the demo call. Please try again.', 'error');
       } finally {
