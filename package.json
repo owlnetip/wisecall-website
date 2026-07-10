@@ -13,7 +13,8 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
-    "serve": "npx serve ."
+    "serve": "npx serve .",
+    "test:voice-agent": "npm run test:voice-agent --prefix apps/portal"
   },
   "dependencies": {
     "react": "^19.2.0",

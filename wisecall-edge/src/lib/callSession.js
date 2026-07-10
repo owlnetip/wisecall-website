@@ -13,6 +13,7 @@ const { sendCallEmailSummary } = require("./emailSummary");
 const { triggerPortalAnalysis } = require("./portalWebhook");
 const { buildSystemPrompt } = require("../prompt");
 const { saveCallLog } = require("../saveCallLog");
+const { recordTurnLatency } = require("../latencyInstrumentation");
 
 async function isCallAllowed(profileId) {
   const sb = getSupabase();
@@ -56,10 +57,10 @@ function mergeIntegrationTools(session, builtInTools = []) {
 /**
  * Run at call connect, after loading the profile, before the LLM session starts.
  */
-async function prepareCallSession(profile, { callId, callerId }) {
+async function prepareCallSession(profile, { callId, callerId, latencyTestRunId } = {}) {
   const profileId = profile.id;
   const metadata = profile.metadata || {};
-  const context = { profileId, callId, callerId };
+  const context = { profileId, callId, callerId, latencyTestRunId: latencyTestRunId || null };
 
   const allowed = await isCallAllowed(profileId);
   if (!allowed) {
@@ -92,6 +93,7 @@ async function prepareCallSession(profile, { callId, callerId }) {
     preCallResults: pre.results,
     integrationTools,
     integrationToolByName: indexIntegrationTools(integrationTools),
+    latencyTestRunId: latencyTestRunId || null,
   };
 }
 
@@ -194,4 +196,5 @@ module.exports = {
   finalizeCallSession,
   mergeIntegrationTools,
   isCallAllowed,
+  recordTurnLatency,
 };

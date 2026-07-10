@@ -4,6 +4,7 @@ const integrationWebhooks = require("./lib/integrationWebhooks");
 const emailSummary = require("./lib/emailSummary");
 const { buildSystemPrompt } = require("./prompt");
 const { saveCallLog } = require("./saveCallLog");
+const latencyInstrumentation = require("./latencyInstrumentation");
 
 module.exports = {
   ...callSession,
@@ -12,4 +13,5 @@ module.exports = {
   ...emailSummary,
   buildSystemPrompt,
   saveCallLog,
+  ...latencyInstrumentation,
 };
