@@ -75,6 +75,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 const SMART_LISTS: Array<{ value: OutreachSmartList; label: string; hint: string }> = [
   { value: "all", label: "All", hint: "Everything in this segment" },
+  { value: "owner_email_found", label: "Owner emails", hint: "FullEnrich/name-matched owner contacts first" },
   { value: "ready_to_email", label: "Ready to email", hint: "Has email, first send not yet sent" },
   { value: "awaiting_reply", label: "Awaiting reply", hint: "First email sent, no reply yet" },
   { value: "opened_no_reply", label: "Opened · no reply", hint: "They opened — chase or call" },
@@ -390,6 +391,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
           <div className="mx-auto mt-4 grid w-full max-w-[2200px] gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             {[
               { label: "Dentally", value: stats.dentallyActive },
+              { label: "Owner emails", value: stats.ownerEmailFound },
               { label: "Have email", value: stats.withEmail },
               { label: "Ready to send", value: stats.readyToEmail },
               { label: "First email sent", value: stats.firstEmailSent },
@@ -514,7 +516,10 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                 key={list.value}
                 type="button"
                 title={list.hint}
-                onClick={() => setSmartList(list.value)}
+                onClick={() => {
+                  setSmartList(list.value);
+                  if (list.value === "owner_email_found") setSegmentFilter("dentally_active");
+                }}
                 className={`rounded-full px-3 py-1 text-xs font-bold ${
                   smartList === list.value
                     ? "bg-[#0e7d82] text-white"
@@ -572,12 +577,20 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       <p className="text-xs text-[#5a7272]">
                         {p.region.toUpperCase()} · {p.postcode}
                       </p>
+                      {p.ownerEmail && (
+                        <p className="mt-1 text-xs font-semibold text-[#0e7d82]">
+                          {p.ownerName || "Owner contact"}{p.ownerTitle ? ` · ${p.ownerTitle}` : ""}
+                        </p>
+                      )}
                     </div>
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${STATUS_BADGE[p.status] ?? STATUS_BADGE.new}`}>
                       {p.status.replace("_", " ")}
                     </span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                    {p.ownerEmail && (
+                      <span className="rounded-full bg-[#7de8eb]/20 px-2 py-0.5 text-[#0e7d82]">Owner email</span>
+                    )}
                     {p.firstEmailSentAt ? (
                       <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-800">
                         Sent {formatWhen(p.firstEmailSentAt)}
@@ -665,6 +678,18 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                     <p className="text-sm font-bold text-[#0e1b1b]">{formatWhen(selected.lastRepliedAt)}</p>
                   </div>
                 </div>
+                {selected.ownerEmail && (
+                  <div className="mt-3 rounded-xl border border-[#7de8eb]/35 bg-[#7de8eb]/10 px-3 py-2 text-sm">
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#0e7d82]">Enriched owner contact</p>
+                    <p className="mt-1 font-semibold text-[#0e1b1b]">
+                      {selected.ownerName || selected.contactName || "Owner"}{selected.ownerTitle ? ` · ${selected.ownerTitle}` : ""}
+                    </p>
+                    <p className="text-[#5a7272]">
+                      {selected.ownerEmail}
+                      {selected.ownerEmailStatus ? ` · ${selected.ownerEmailStatus.replace(/_/g, " ")}` : ""}
+                    </p>
+                  </div>
+                )}
                 {(selected.status === "contacted" || selected.status === "replied") && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button

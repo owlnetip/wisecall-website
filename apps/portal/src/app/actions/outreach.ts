@@ -43,6 +43,10 @@ export type OutreachProspect = {
   status: string;
   sequenceStatus: string;
   outreachSegment: string;
+  ownerName: string | null;
+  ownerTitle: string | null;
+  ownerEmailStatus: string | null;
+  ownerEmail: string | null;
   lastContactedAt: string | null;
   nextFollowUpAt: string | null;
   firstEmailSentAt: string | null;
@@ -88,6 +92,7 @@ export type OutreachEmail = {
 
 export type OutreachSmartList =
   | "all"
+  | "owner_email_found"
   | "ready_to_email"
   | "awaiting_reply"
   | "opened_no_reply"
@@ -98,6 +103,7 @@ export type OutreachSmartList =
 
 export type OutreachCrmStats = {
   dentallyActive: number;
+  ownerEmailFound: number;
   withEmail: number;
   firstEmailSent: number;
   opened: number;
@@ -129,6 +135,7 @@ async function requireAdmin() {
 }
 
 function mapProspect(row: Record<string, unknown>): OutreachProspect {
+  const mergeFields = row.merge_fields as Record<string, unknown> | null;
   return {
     id: row.id as string,
     practiceName: (row.practice_name as string) ?? "",
@@ -145,6 +152,10 @@ function mapProspect(row: Record<string, unknown>): OutreachProspect {
     status: (row.status as string) ?? "new",
     sequenceStatus: (row.sequence_status as string) ?? "none",
     outreachSegment: (row.outreach_segment as string) ?? "unknown_queued",
+    ownerName: (mergeFields?.owner_name as string) ?? null,
+    ownerTitle: (mergeFields?.owner_title as string) ?? null,
+    ownerEmailStatus: (mergeFields?.owner_email_status as string) ?? null,
+    ownerEmail: (mergeFields?.owner_email as string) ?? null,
     lastContactedAt: (row.last_contacted_at as string) ?? null,
     nextFollowUpAt: (row.next_follow_up_at as string) ?? null,
     firstEmailSentAt: (row.first_email_sent_at as string) ?? null,
@@ -226,7 +237,36 @@ function mergeFieldsForProspect(p: OutreachProspect): Record<string, string> {
     pms: p.pms ?? "",
     tier: p.tier ?? "",
     website: p.website ?? "",
+    owner_name: p.ownerName ?? "",
+    owner_title: p.ownerTitle ?? "",
+    owner_email: p.ownerEmail ?? p.email ?? "",
+    owner_email_status: p.ownerEmailStatus ?? "",
   };
+}
+
+function hasOwnerEmail(row: Record<string, unknown>): boolean {
+  const mergeFields = row.merge_fields as Record<string, unknown> | null;
+  const ownerEmail = typeof mergeFields?.owner_email === "string" ? mergeFields.owner_email.trim() : "";
+  const priority = typeof mergeFields?.outreach_priority === "string" ? mergeFields.outreach_priority : "";
+  return Boolean(ownerEmail || priority === "owner_email_found");
+}
+
+function prospectPriority(row: Record<string, unknown>): number {
+  if (hasOwnerEmail(row)) return 0;
+  if (typeof row.email === "string" && row.email.trim() && !row.first_email_sent_at) return 1;
+  if (row.status === "contacted" && row.first_email_opened_at) return 2;
+  if (row.status === "contacted") return 3;
+  return 9;
+}
+
+function sortProspectRows(a: Record<string, unknown>, b: Record<string, unknown>): number {
+  const priorityDiff = prospectPriority(a) - prospectPriority(b);
+  if (priorityDiff !== 0) return priorityDiff;
+
+  const regionDiff = String(a.region ?? "").localeCompare(String(b.region ?? ""));
+  if (regionDiff !== 0) return regionDiff;
+
+  return String(a.practice_name ?? "").localeCompare(String(b.practice_name ?? ""));
 }
 
 export async function listOutreachProspects(filters?: {
@@ -252,7 +292,9 @@ export async function listOutreachProspects(filters?: {
 
   const smart = filters?.smartList ?? "all";
   const now = new Date().toISOString();
-  if (smart === "ready_to_email") {
+  if (smart === "owner_email_found") {
+    q = q.eq("outreach_segment", "dentally_active");
+  } else if (smart === "ready_to_email") {
     q = q
       .eq("outreach_segment", "dentally_active")
       .eq("status", "new")
@@ -288,7 +330,10 @@ export async function listOutreachProspects(filters?: {
 
   const { data, error } = await q;
   if (error) return { ok: false, error: error.message };
-  return { ok: true, data: (data ?? []).map(mapProspect) };
+  const rows = ((data ?? []) as Record<string, unknown>[])
+    .filter((row) => (smart === "owner_email_found" ? hasOwnerEmail(row) : true))
+    .sort(sortProspectRows);
+  return { ok: true, data: rows.map(mapProspect) };
 }
 
 export async function getOutreachCrmStats(): Promise<Result<OutreachCrmStats>> {
@@ -301,12 +346,13 @@ export async function getOutreachCrmStats(): Promise<Result<OutreachCrmStats>> {
   const { data: rows, error } = await service
     .from("wisecall_outreach_prospects")
     .select(
-      "outreach_segment, status, email, first_email_sent_at, first_email_opened_at, sequence_status, next_follow_up_at",
+      "outreach_segment, status, email, merge_fields, first_email_sent_at, first_email_opened_at, sequence_status, next_follow_up_at",
     )
     .eq("outreach_segment", "dentally_active");
   if (error) return { ok: false, error: error.message };
 
   const list = rows ?? [];
+  const ownerEmailFound = list.filter((r) => hasOwnerEmail(r as Record<string, unknown>)).length;
   const withEmail = list.filter((r) => !!(r.email as string)?.trim()).length;
   const firstEmailSent = list.filter((r) => !!r.first_email_sent_at).length;
   const opened = list.filter((r) => !!r.first_email_opened_at).length;
@@ -326,6 +372,7 @@ export async function getOutreachCrmStats(): Promise<Result<OutreachCrmStats>> {
     ok: true,
     data: {
       dentallyActive: list.length,
+      ownerEmailFound,
       withEmail,
       firstEmailSent,
       opened,
@@ -796,6 +843,9 @@ export async function importDentalProspectsFromSeed(): Promise<
     const key = prospectKey(p.practice_name ?? "", p.postcode ?? "", p.region ?? "");
     const existing = existingByKey.get(key);
 
+    const ownerName = (p.owner_name || p.contact_name || "").trim();
+    const ownerEmail = (p.owner_email || p.email || "").trim();
+
     const metadata = {
       practice_name: p.practice_name,
       postcode: (p.postcode || "").toUpperCase(),
@@ -824,8 +874,8 @@ export async function importDentalProspectsFromSeed(): Promise<
 
     upsertBatch.push({
       ...metadata,
-      contact_name: p.contact_name || null,
-      email: p.email || null,
+      contact_name: ownerName || null,
+      email: ownerEmail || null,
       phone: p.phone || null,
       notes: p.notes || null,
       status: "new",
