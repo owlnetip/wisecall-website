@@ -232,9 +232,9 @@ export function OutreachCrm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7f7]">
+    <div className="min-h-screen bg-[#f4f7f7] text-[#0e1b1b]">
       <header className="border-b border-[#d8e4e4] bg-white px-6 py-5">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
+        <div className="mx-auto flex w-full max-w-[2200px] flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-[#0e1b1b]">Dental outreach CRM</h1>
             <p className="mt-1 text-sm text-[#5a7272]">
@@ -297,7 +297,7 @@ export function OutreachCrm() {
         </div>
         {msg && (
           <p
-            className={`mx-auto mt-3 max-w-7xl text-sm font-semibold ${msg.kind === "ok" ? "text-emerald-700" : "text-red-600"}`}
+            className={`mx-auto mt-3 w-full max-w-[2200px] text-sm font-semibold ${msg.kind === "ok" ? "text-emerald-700" : "text-red-600"}`}
           >
             {msg.text}
           </p>
@@ -305,8 +305,8 @@ export function OutreachCrm() {
       </header>
 
       {view === "templates" ? (
-        <div className="mx-auto max-w-4xl px-6 py-6">
-          <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="mx-auto w-full max-w-[2200px] px-6 py-6">
+          <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
             <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Templates</p>
               <ul className="space-y-2">
@@ -376,7 +376,7 @@ export function OutreachCrm() {
           </div>
         </div>
       ) : (
-      <div className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[360px_1fr]">
+      <div className="mx-auto grid w-full max-w-[2200px] gap-6 px-6 py-6 xl:grid-cols-[390px_minmax(0,1fr)]">
         <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap gap-2">
             {SEGMENT_OPTIONS.map((s) => (
