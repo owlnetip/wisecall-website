@@ -139,6 +139,18 @@ The recommended approach is a staged refinement, beginning with trust and safety
 
 Release gate: typecheck, unit tests, production build, lint delta review, and authenticated desktop/mobile browser verification.
 
+### Phase 2A - Visible workflow refinement (current branch)
+
+- Simplify agent configuration into Setup, Knowledge, Routing, Outbound, and Advanced.
+- Keep live phone state visible in a compact summary instead of showing routing controls above every tab.
+- Move office hours into Setup and number management into Routing.
+- Remove duplicated billing information from agent configuration.
+- Track unsaved changes per agent and use one truthful save state for voice, availability, routing, and advanced settings.
+- Lead call detail with outcome, follow-up requirement, and handling agent.
+- Merge duplicate summaries and keep the full transcript available behind progressive disclosure.
+
+Release gate: targeted lint, typecheck, unit tests, production build, and authenticated responsive browser verification.
+
 ### Phase 2 - Production state and integrations
 
 - Persist Draft, Testing, Live, Paused, Error, and Disconnected states.
