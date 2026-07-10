@@ -1,0 +1,43 @@
+{
+  "id": "cambridge",
+  "name": "Cambridge & Ely",
+  "postcode_regex": "^CB\\d",
+  "area_column": "area",
+  "file_prefix": "cambridge-cb-dental",
+  "overrides_file": "cambridge-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "CB4",
+    "CB1",
+    "CB2",
+    "CB8",
+    "CB22",
+    "CB7",
+    "CB10",
+    "CB23",
+    "CB24",
+    "CB5",
+    "CB9",
+    "CB3"
+  ],
+  "core_segment_prefix": "cambridge-core",
+  "area_labels": {
+    "CB1": "Cambridge & Ely (CB1)",
+    "CB10": "Cambridge & Ely (CB10)",
+    "CB11": "Cambridge & Ely (CB11)",
+    "CB2": "Cambridge & Ely (CB2)",
+    "CB21": "Cambridge & Ely (CB21)",
+    "CB22": "Cambridge & Ely (CB22)",
+    "CB23": "Cambridge & Ely (CB23)",
+    "CB24": "Cambridge & Ely (CB24)",
+    "CB25": "Cambridge & Ely (CB25)",
+    "CB3": "Cambridge & Ely (CB3)",
+    "CB4": "Cambridge & Ely (CB4)",
+    "CB5": "Cambridge & Ely (CB5)",
+    "CB6": "Cambridge & Ely (CB6)",
+    "CB7": "Cambridge & Ely (CB7)",
+    "CB8": "Cambridge & Ely (CB8)",
+    "CB9": "Cambridge & Ely (CB9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

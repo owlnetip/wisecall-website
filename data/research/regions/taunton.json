@@ -1,0 +1,42 @@
+{
+  "id": "taunton",
+  "name": "Taunton & Somerset west",
+  "postcode_regex": "^TA\\d",
+  "area_column": "area",
+  "file_prefix": "taunton-ta-dental",
+  "overrides_file": "taunton-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "TA1",
+    "TA6",
+    "TA8",
+    "TA18",
+    "TA21",
+    "TA4",
+    "TA24",
+    "TA10",
+    "TA11",
+    "TA12",
+    "TA20",
+    "TA2"
+  ],
+  "core_segment_prefix": "taunton-core",
+  "area_labels": {
+    "TA1": "Taunton & Somerset west (TA1)",
+    "TA10": "Taunton & Somerset west (TA10)",
+    "TA11": "Taunton & Somerset west (TA11)",
+    "TA12": "Taunton & Somerset west (TA12)",
+    "TA14": "Taunton & Somerset west (TA14)",
+    "TA18": "Taunton & Somerset west (TA18)",
+    "TA19": "Taunton & Somerset west (TA19)",
+    "TA2": "Taunton & Somerset west (TA2)",
+    "TA20": "Taunton & Somerset west (TA20)",
+    "TA21": "Taunton & Somerset west (TA21)",
+    "TA22": "Taunton & Somerset west (TA22)",
+    "TA24": "Taunton & Somerset west (TA24)",
+    "TA4": "Taunton & Somerset west (TA4)",
+    "TA6": "Taunton & Somerset west (TA6)",
+    "TA8": "Taunton & Somerset west (TA8)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "bolton",
+  "name": "Bolton",
+  "postcode_regex": "^BL\\d",
+  "area_column": "area",
+  "file_prefix": "bolton-bl-dental",
+  "overrides_file": "bolton-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "BL1",
+    "BL9",
+    "BL3",
+    "BL2",
+    "BL0",
+    "BL4",
+    "BL8",
+    "BL6",
+    "BL5",
+    "BL7"
+  ],
+  "core_segment_prefix": "bolton-core",
+  "area_labels": {
+    "BL0": "Bolton (BL0)",
+    "BL1": "Bolton (BL1)",
+    "BL2": "Bolton (BL2)",
+    "BL3": "Bolton (BL3)",
+    "BL4": "Bolton (BL4)",
+    "BL5": "Bolton (BL5)",
+    "BL6": "Bolton (BL6)",
+    "BL7": "Bolton (BL7)",
+    "BL8": "Bolton (BL8)",
+    "BL9": "Bolton (BL9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

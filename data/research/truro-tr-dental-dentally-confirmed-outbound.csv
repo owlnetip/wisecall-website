@@ -1,0 +1,4 @@
+name,phone,company,postcode,area,pms,segment,tier,adg_corporate,adg_group,bda_good_practice,website,notes
+Penryn Dental Practice,01326 372298,Penryn Dental Practice,TR10 8GZ,Truro & Cornwall (TR10),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.penryndentalpractice.com/,
+Threemilestone Dental Practice,01872 271463,Threemilestone Dental Practice,TR3 6DP,Truro & Cornwall (TR3),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.threemilestone-dental.co.uk,
+Smile Dental Care,01326 569323,Smile Dental Care,TR13 8AB,Truro & Cornwall (TR13),Dentally,Dentally confirmed,Tier 4 - ADG corporate group (lower priority),Yes,Smile Dental Care,No,https://www.smile-dentalcare.co.uk/dentist-helston/,

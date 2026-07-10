@@ -4,9 +4,28 @@ import { revalidatePath } from "next/cache";
 import { readFile } from "fs/promises";
 import path from "path";
 import { isAdmin } from "@/lib/admin";
-import { renderOutreachTemplate, sendViaResend, addDays, followUpDaysForStep } from "@/lib/outreach-email";
+import {
+  renderOutreachTemplate,
+  sendViaResend,
+  addDays,
+  followUpDaysForStep,
+  templateFamilyForSegment,
+} from "@/lib/outreach-email";
+import {
+  sanitizeEmailHtml,
+  unwrapMergeChips,
+  htmlToText,
+  wrapEmailHtml,
+  isHtmlBody,
+} from "@/lib/email-template";
 import { getServiceSupabase } from "@/lib/supabase";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+/** Normalise editor HTML for storage: unwrap merge pills, then sanitise. */
+function cleanEditorHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  return sanitizeEmailHtml(unwrapMergeChips(html));
+}
 
 export type OutreachProspect = {
   id: string;
@@ -26,6 +45,11 @@ export type OutreachProspect = {
   outreachSegment: string;
   lastContactedAt: string | null;
   nextFollowUpAt: string | null;
+  firstEmailSentAt: string | null;
+  firstEmailOpenedAt: string | null;
+  lastOpenedAt: string | null;
+  openCount: number;
+  lastRepliedAt: string | null;
   updatedAt: string;
 };
 
@@ -35,8 +59,11 @@ export type OutreachTemplate = {
   name: string;
   category: string;
   sequenceStep: string;
+  templateFamily: string;
   subjectTemplate: string;
   bodyTemplate: string;
+  /** Rich HTML body (visual editor). Null/empty = legacy plain-text template. */
+  bodyHtml: string | null;
 };
 
 export type OutreachEmail = {
@@ -45,15 +72,51 @@ export type OutreachEmail = {
   sequenceStep: string;
   subject: string;
   body: string;
+  bodyHtml: string | null;
   toEmail: string;
   status: string;
   scheduledFor: string | null;
   sentAt: string | null;
+  deliveredAt: string | null;
+  openedAt: string | null;
+  openCount: number;
+  clickedAt: string | null;
+  bouncedAt: string | null;
   errorMessage: string | null;
   createdAt: string;
 };
 
+export type OutreachSmartList =
+  | "all"
+  | "ready_to_email"
+  | "awaiting_reply"
+  | "opened_no_reply"
+  | "replied"
+  | "follow_up_due"
+  | "never_opened"
+  | "no_email";
+
+export type OutreachCrmStats = {
+  dentallyActive: number;
+  withEmail: number;
+  firstEmailSent: number;
+  opened: number;
+  awaitingReply: number;
+  replied: number;
+  followUpsDue: number;
+  readyToEmail: number;
+};
+
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
+
+export type DentalProspectsSeedStats = {
+  total: number;
+  bySegment: Record<string, number>;
+  generatedFrom: string | null;
+};
+
+const SEED_PATH = path.join(process.cwd(), "src", "data", "dental-prospects-seed.json");
+const IMPORT_BATCH_SIZE = 500;
 
 async function requireAdmin() {
   const auth = await createSupabaseServerClient();
@@ -84,7 +147,68 @@ function mapProspect(row: Record<string, unknown>): OutreachProspect {
     outreachSegment: (row.outreach_segment as string) ?? "unknown_queued",
     lastContactedAt: (row.last_contacted_at as string) ?? null,
     nextFollowUpAt: (row.next_follow_up_at as string) ?? null,
+    firstEmailSentAt: (row.first_email_sent_at as string) ?? null,
+    firstEmailOpenedAt: (row.first_email_opened_at as string) ?? null,
+    lastOpenedAt: (row.last_opened_at as string) ?? null,
+    openCount: Number(row.open_count ?? 0),
+    lastRepliedAt: (row.last_replied_at as string) ?? null,
     updatedAt: (row.updated_at as string) ?? "",
+  };
+}
+
+function mapEmail(r: Record<string, unknown>): OutreachEmail {
+  return {
+    id: r.id as string,
+    prospectId: r.prospect_id as string,
+    sequenceStep: (r.sequence_step as string) ?? "custom",
+    subject: (r.subject as string) ?? "",
+    body: (r.body as string) ?? "",
+    bodyHtml: (r.body_html as string) ?? null,
+    toEmail: (r.to_email as string) ?? "",
+    status: (r.status as string) ?? "draft",
+    scheduledFor: (r.scheduled_for as string) ?? null,
+    sentAt: (r.sent_at as string) ?? null,
+    deliveredAt: (r.delivered_at as string) ?? null,
+    openedAt: (r.opened_at as string) ?? null,
+    openCount: Number(r.open_count ?? 0),
+    clickedAt: (r.clicked_at as string) ?? null,
+    bouncedAt: (r.bounced_at as string) ?? null,
+    errorMessage: (r.error_message as string) ?? null,
+    createdAt: (r.created_at as string) ?? "",
+  };
+}
+
+function prospectKey(practiceName: string, postcode: string, region: string): string {
+  return `${practiceName.trim().toLowerCase()}|${postcode.toUpperCase().replace(/\s/g, "")}|${region.trim()}`;
+}
+
+async function readDentalProspectsSeed(): Promise<{ prospects?: Record<string, string>[] } | null> {
+  try {
+    return JSON.parse(await readFile(SEED_PATH, "utf-8")) as { prospects?: Record<string, string>[] };
+  } catch {
+    return null;
+  }
+}
+
+export async function getDentalProspectsSeedStats(): Promise<Result<DentalProspectsSeedStats>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const raw = await readDentalProspectsSeed();
+  if (!raw?.prospects) {
+    return { ok: false, error: "Seed file missing. Run: python3 scripts/sync-dental-prospects-seed.py" };
+  }
+  const bySegment: Record<string, number> = {};
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "unknown_queued";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+  }
+  return {
+    ok: true,
+    data: {
+      total: raw.prospects.length,
+      bySegment,
+      generatedFrom: (raw as { generated_from?: string }).generated_from ?? null,
+    },
   };
 }
 
@@ -109,6 +233,7 @@ export async function listOutreachProspects(filters?: {
   region?: string;
   status?: string;
   outreachSegment?: string;
+  smartList?: OutreachSmartList;
 }): Promise<Result<OutreachProspect[]>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -125,9 +250,91 @@ export async function listOutreachProspects(filters?: {
   if (filters?.status) q = q.eq("status", filters.status);
   if (filters?.outreachSegment) q = q.eq("outreach_segment", filters.outreachSegment);
 
+  const smart = filters?.smartList ?? "all";
+  const now = new Date().toISOString();
+  if (smart === "ready_to_email") {
+    q = q
+      .eq("outreach_segment", "dentally_active")
+      .eq("status", "new")
+      .not("email", "is", null)
+      .neq("email", "")
+      .is("first_email_sent_at", null);
+  } else if (smart === "awaiting_reply") {
+    q = q
+      .eq("outreach_segment", "dentally_active")
+      .eq("status", "contacted")
+      .not("first_email_sent_at", "is", null);
+  } else if (smart === "opened_no_reply") {
+    q = q
+      .eq("outreach_segment", "dentally_active")
+      .eq("status", "contacted")
+      .not("first_email_opened_at", "is", null);
+  } else if (smart === "replied") {
+    q = q.in("status", ["replied", "interested"]);
+  } else if (smart === "follow_up_due") {
+    q = q
+      .eq("sequence_status", "active")
+      .not("next_follow_up_at", "is", null)
+      .lte("next_follow_up_at", now);
+  } else if (smart === "never_opened") {
+    q = q
+      .eq("outreach_segment", "dentally_active")
+      .eq("status", "contacted")
+      .not("first_email_sent_at", "is", null)
+      .is("first_email_opened_at", null);
+  } else if (smart === "no_email") {
+    q = q.eq("outreach_segment", "dentally_active").or("email.is.null,email.eq.");
+  }
+
   const { data, error } = await q;
   if (error) return { ok: false, error: error.message };
   return { ok: true, data: (data ?? []).map(mapProspect) };
+}
+
+export async function getOutreachCrmStats(): Promise<Result<OutreachCrmStats>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const now = new Date().toISOString();
+  const { data: rows, error } = await service
+    .from("wisecall_outreach_prospects")
+    .select(
+      "outreach_segment, status, email, first_email_sent_at, first_email_opened_at, sequence_status, next_follow_up_at",
+    )
+    .eq("outreach_segment", "dentally_active");
+  if (error) return { ok: false, error: error.message };
+
+  const list = rows ?? [];
+  const withEmail = list.filter((r) => !!(r.email as string)?.trim()).length;
+  const firstEmailSent = list.filter((r) => !!r.first_email_sent_at).length;
+  const opened = list.filter((r) => !!r.first_email_opened_at).length;
+  const awaitingReply = list.filter((r) => r.status === "contacted" && !!r.first_email_sent_at).length;
+  const replied = list.filter((r) => r.status === "replied" || r.status === "interested").length;
+  const followUpsDue = list.filter(
+    (r) =>
+      r.sequence_status === "active" &&
+      !!r.next_follow_up_at &&
+      (r.next_follow_up_at as string) <= now,
+  ).length;
+  const readyToEmail = list.filter(
+    (r) => r.status === "new" && !!(r.email as string)?.trim() && !r.first_email_sent_at,
+  ).length;
+
+  return {
+    ok: true,
+    data: {
+      dentallyActive: list.length,
+      withEmail,
+      firstEmailSent,
+      opened,
+      awaitingReply,
+      replied,
+      followUpsDue,
+      readyToEmail,
+    },
+  };
 }
 
 export async function updateOutreachProspect(input: {
@@ -153,6 +360,9 @@ export async function updateOutreachProspect(input: {
     if (["interested", "not_interested", "paused", "replied"].includes(input.status)) {
       patch.sequence_status = "stopped";
       patch.next_follow_up_at = null;
+      if (input.status === "replied" || input.status === "interested") {
+        patch.last_replied_at = new Date().toISOString();
+      }
       await service
         .from("wisecall_outreach_emails")
         .update({ status: "cancelled", updated_at: new Date().toISOString() })
@@ -192,8 +402,10 @@ export async function listOutreachTemplates(): Promise<Result<OutreachTemplate[]
       name: (r.name as string) ?? "",
       category: (r.category as string) ?? "dental",
       sequenceStep: (r.sequence_step as string) ?? "custom",
+      templateFamily: (r.template_family as string) ?? "general",
       subjectTemplate: (r.subject_template as string) ?? "",
       bodyTemplate: (r.body_template as string) ?? "",
+      bodyHtml: (r.body_html as string) ?? null,
     })),
   };
 }
@@ -203,6 +415,7 @@ export async function saveOutreachTemplate(input: {
   name: string;
   subjectTemplate: string;
   bodyTemplate: string;
+  bodyHtml?: string | null;
   sequenceStep?: string;
 }): Promise<Result<{ id: string }>> {
   const gate = await requireAdmin();
@@ -212,9 +425,12 @@ export async function saveOutreachTemplate(input: {
 
   const name = input.name.trim();
   const subject = input.subjectTemplate.trim();
-  const body = input.bodyTemplate.trim();
+  const bodyHtml = cleanEditorHtml(input.bodyHtml);
+  // For HTML templates the plain-text body_template is the auto text fallback;
+  // for legacy text templates it's the body itself.
+  const body = bodyHtml ? htmlToText(bodyHtml) : input.bodyTemplate.trim();
   if (!name || subject.length < 5 || body.length < 20) {
-    return { ok: false, error: "Template needs a name, subject and body." };
+    return { ok: false, error: "Template needs a name, subject and a bit of body content." };
   }
 
   const step = input.sequenceStep || "custom";
@@ -222,6 +438,7 @@ export async function saveOutreachTemplate(input: {
     name,
     subject_template: subject,
     body_template: body,
+    body_html: bodyHtml || null,
     sequence_step: step,
     updated_at: new Date().toISOString(),
   };
@@ -247,6 +464,36 @@ export async function saveOutreachTemplate(input: {
   return { ok: true, data: { id: data.id as string } };
 }
 
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/** Upload an image for use in an outreach email; returns its public URL. */
+export async function uploadOutreachImage(formData: FormData): Promise<Result<{ url: string }>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, error: "No file provided." };
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return { ok: false, error: "Use a PNG, JPG, GIF or WEBP image." };
+  }
+  if (file.size > MAX_IMAGE_BYTES) return { ok: false, error: "Image must be under 5 MB." };
+
+  const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+  const objectPath = `${new Date().getFullYear()}/${crypto.randomUUID()}.${ext}`;
+  const buffer = new Uint8Array(await file.arrayBuffer());
+
+  const { error } = await service.storage
+    .from("outreach-assets")
+    .upload(objectPath, buffer, { contentType: file.type, upsert: false });
+  if (error) return { ok: false, error: error.message };
+
+  const { data } = service.storage.from("outreach-assets").getPublicUrl(objectPath);
+  return { ok: true, data: { url: data.publicUrl } };
+}
+
 export async function listProspectEmails(prospectId: string): Promise<Result<OutreachEmail[]>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -262,19 +509,7 @@ export async function listProspectEmails(prospectId: string): Promise<Result<Out
 
   return {
     ok: true,
-    data: (data ?? []).map((r) => ({
-      id: r.id as string,
-      prospectId: r.prospect_id as string,
-      sequenceStep: (r.sequence_step as string) ?? "custom",
-      subject: (r.subject as string) ?? "",
-      body: (r.body as string) ?? "",
-      toEmail: (r.to_email as string) ?? "",
-      status: (r.status as string) ?? "draft",
-      scheduledFor: (r.scheduled_for as string) ?? null,
-      sentAt: (r.sent_at as string) ?? null,
-      errorMessage: (r.error_message as string) ?? null,
-      createdAt: (r.created_at as string) ?? "",
-    })),
+    data: (data ?? []).map((r) => mapEmail(r as Record<string, unknown>)),
   };
 }
 
@@ -283,7 +518,8 @@ export async function previewOutreachEmail(input: {
   templateId: string;
   subjectOverride?: string;
   bodyOverride?: string;
-}): Promise<Result<{ subject: string; body: string }>> {
+  bodyHtmlOverride?: string;
+}): Promise<Result<{ subject: string; body: string; bodyHtml: string | null }>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
   const service = getServiceSupabase();
@@ -300,11 +536,17 @@ export async function previewOutreachEmail(input: {
     input.subjectOverride?.trim() || (template.subject_template as string),
     fields,
   );
+
+  // Prefer the HTML body when the template (or the caller's live edit) has one.
+  const rawHtml = input.bodyHtmlOverride !== undefined
+    ? cleanEditorHtml(input.bodyHtmlOverride)
+    : ((template.body_html as string) ?? "");
+  const bodyHtml = isHtmlBody(rawHtml) ? renderOutreachTemplate(rawHtml, fields) : null;
   const body = renderOutreachTemplate(
     input.bodyOverride?.trim() || (template.body_template as string),
     fields,
   );
-  return { ok: true, data: { subject, body } };
+  return { ok: true, data: { subject, body, bodyHtml } };
 }
 
 async function scheduleFollowUps(
@@ -313,22 +555,35 @@ async function scheduleFollowUps(
   sentAt: string,
   userId: string,
 ) {
+  const family = templateFamilyForSegment(prospect.outreachSegment);
   const { data: templates } = await service
     .from("wisecall_outreach_email_templates")
     .select("*")
+    .eq("template_family", family)
     .in("sequence_step", ["follow_up_3", "follow_up_7", "follow_up_14"]);
   if (!templates?.length) return;
+
+  // Never stack duplicate sequences for the same prospect.
+  await service
+    .from("wisecall_outreach_emails")
+    .update({ status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("prospect_id", prospect.id)
+    .eq("status", "scheduled");
 
   const fields = mergeFieldsForProspect(prospect);
   const rows = templates.map((t) => {
     const step = t.sequence_step as string;
     const days = followUpDaysForStep(step) ?? 0;
+    const tmplHtml = (t.body_html as string) ?? "";
+    const innerHtml = isHtmlBody(tmplHtml) ? renderOutreachTemplate(tmplHtml, fields) : null;
+    const textBody = renderOutreachTemplate(t.body_template as string, fields);
     return {
       prospect_id: prospect.id,
       template_id: t.id,
       sequence_step: step,
       subject: renderOutreachTemplate(t.subject_template as string, fields),
-      body: renderOutreachTemplate(t.body_template as string, fields),
+      body: textBody || (innerHtml ? htmlToText(innerHtml) : ""),
+      body_html: innerHtml,
       to_email: prospect.email,
       status: "scheduled",
       scheduled_for: addDays(sentAt, days),
@@ -353,7 +608,10 @@ export async function sendOutreachEmail(input: {
   templateId: string;
   subject: string;
   body: string;
+  bodyHtml?: string | null;
   scheduleFollowUps?: boolean;
+  /** Allow a second initial send (default false). */
+  forceResend?: boolean;
 }): Promise<Result<{ emailId: string }>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -381,11 +639,53 @@ export async function sendOutreachEmail(input: {
   }
   if (!prospect.email) return { ok: false, error: "Add a recipient email before sending." };
 
+  const { data: templateRow } = await service
+    .from("wisecall_outreach_email_templates")
+    .select("id, sequence_step, template_family, slug")
+    .eq("id", input.templateId)
+    .maybeSingle();
+  if (!templateRow) return { ok: false, error: "Template not found." };
+
+  const family = (templateRow.template_family as string) || "general";
+  if (family !== "dentally" && !(templateRow.slug as string)?.startsWith("dental-dentally-")) {
+    return { ok: false, error: "Use a Dentally template for dentally_active prospects." };
+  }
+
+  const sequenceStep = (templateRow.sequence_step as string) || "initial";
+  if (sequenceStep === "initial" && !input.forceResend) {
+    const { data: existingInitial } = await service
+      .from("wisecall_outreach_emails")
+      .select("id, sent_at")
+      .eq("prospect_id", prospect.id)
+      .eq("sequence_step", "initial")
+      .eq("status", "sent")
+      .limit(1)
+      .maybeSingle();
+    if (existingInitial) {
+      return {
+        ok: false,
+        error:
+          "First email already sent for this practice. Mark as force resend only if you intentionally want another initial.",
+      };
+    }
+  }
+
+  // Rich HTML when the composer sent a body_html; the plain-text body remains
+  // the fallback. Legacy text-only sends are unchanged.
+  const innerHtml = cleanEditorHtml(input.bodyHtml);
+  const textFallback = input.body?.trim() || (innerHtml ? htmlToText(innerHtml) : "");
+  const replyTo = gate.user.email ?? undefined;
   const sent = await sendViaResend({
     to: prospect.email,
     subject: input.subject,
-    body: input.body,
-    replyTo: gate.user.email ?? undefined,
+    body: textFallback,
+    html: innerHtml ? wrapEmailHtml(innerHtml) : undefined,
+    replyTo,
+    tags: [
+      { name: "outreach", value: "dental" },
+      { name: "segment", value: "dentally_active" },
+      { name: "step", value: sequenceStep },
+    ],
   });
 
   const now = new Date().toISOString();
@@ -394,9 +694,10 @@ export async function sendOutreachEmail(input: {
     .insert({
       prospect_id: prospect.id,
       template_id: input.templateId,
-      sequence_step: "initial",
+      sequence_step: sequenceStep,
       subject: input.subject,
-      body: input.body,
+      body: textFallback,
+      body_html: innerHtml || null,
       to_email: prospect.email,
       status: sent.ok ? "sent" : "failed",
       sent_at: sent.ok ? now : null,
@@ -409,17 +710,24 @@ export async function sendOutreachEmail(input: {
   if (eErr) return { ok: false, error: eErr.message };
   if (!sent.ok) return { ok: false, error: sent.error };
 
-  await service
-    .from("wisecall_outreach_prospects")
-    .update({
-      status: "contacted",
-      last_contacted_at: now,
-      updated_at: now,
-    })
-    .eq("id", prospect.id);
+  const prospectUpdate: Record<string, unknown> = {
+    status: prospect.status === "new" ? "contacted" : prospect.status,
+    last_contacted_at: now,
+    updated_at: now,
+  };
+  if (sequenceStep === "initial" && !prospect.firstEmailSentAt) {
+    prospectUpdate.first_email_sent_at = now;
+  }
 
-  if (input.scheduleFollowUps !== false) {
-    await scheduleFollowUps(service, { ...prospect, email: prospect.email }, now, gate.user.id);
+  await service.from("wisecall_outreach_prospects").update(prospectUpdate).eq("id", prospect.id);
+
+  if (input.scheduleFollowUps !== false && sequenceStep === "initial") {
+    await scheduleFollowUps(
+      service,
+      { ...prospect, email: prospect.email },
+      now,
+      gate.user.id,
+    );
   }
 
   revalidatePath("/admin/outreach");
@@ -427,37 +735,66 @@ export async function sendOutreachEmail(input: {
 }
 
 export async function importDentalProspectsFromSeed(): Promise<
-  Result<{ imported: number; updated: number; skipped: number; bySegment: Record<string, number> }>
+  Result<{
+    imported: number;
+    updated: number;
+    skipped: number;
+    seedTotal: number;
+    bySegment: Record<string, number>;
+  }>
 > {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
   const service = getServiceSupabase();
   if (!service) return { ok: false, error: "Server not configured." };
 
-  const seedPath = path.join(process.cwd(), "src", "data", "dental-prospects-seed.json");
-  let raw: { prospects?: Record<string, string>[] };
-  try {
-    raw = JSON.parse(await readFile(seedPath, "utf-8"));
-  } catch {
+  const raw = await readDentalProspectsSeed();
+  if (!raw?.prospects?.length) {
     return { ok: false, error: "Seed file missing. Run: python3 scripts/sync-dental-prospects-seed.py" };
+  }
+
+  const bySegment: Record<string, number> = {};
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "unknown_queued";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+  }
+
+  const { data: existingRows, error: existingError } = await service
+    .from("wisecall_outreach_prospects")
+    .select("id, practice_name, postcode, region, status");
+  if (existingError) return { ok: false, error: existingError.message };
+
+  const existingByKey = new Map<string, { id: string; status: string }>();
+  for (const row of existingRows ?? []) {
+    existingByKey.set(
+      prospectKey(row.practice_name as string, (row.postcode as string) ?? "", row.region as string),
+      { id: row.id as string, status: (row.status as string) ?? "new" },
+    );
   }
 
   let imported = 0;
   let updated = 0;
   let skipped = 0;
-  const bySegment: Record<string, number> = {};
+  const upsertBatch: Record<string, unknown>[] = [];
+  const now = new Date().toISOString();
 
-  for (const p of raw.prospects ?? []) {
+  async function flushUpsertBatch() {
+    if (!upsertBatch.length) return;
+    const { error } = await service!.from("wisecall_outreach_prospects").upsert(upsertBatch, {
+      onConflict: "practice_name,postcode,region",
+    });
+    if (error) {
+      skipped += upsertBatch.length;
+    } else {
+      imported += upsertBatch.length;
+    }
+    upsertBatch.length = 0;
+  }
+
+  for (const p of raw.prospects) {
     const segment = p.outreach_segment || "unknown_queued";
-    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
-
-    const { data: existing } = await service
-      .from("wisecall_outreach_prospects")
-      .select("id, status, email, contact_name, notes")
-      .eq("practice_name", p.practice_name)
-      .eq("postcode", (p.postcode || "").toUpperCase())
-      .eq("region", p.region)
-      .maybeSingle();
+    const key = prospectKey(p.practice_name ?? "", p.postcode ?? "", p.region ?? "");
+    const existing = existingByKey.get(key);
 
     const metadata = {
       practice_name: p.practice_name,
@@ -469,7 +806,7 @@ export async function importDentalProspectsFromSeed(): Promise<
       website: p.website || null,
       outreach_segment: segment,
       merge_fields: p,
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     };
 
     if (existing && existing.status !== "new") {
@@ -485,7 +822,7 @@ export async function importDentalProspectsFromSeed(): Promise<
       continue;
     }
 
-    const row = {
+    upsertBatch.push({
       ...metadata,
       contact_name: p.contact_name || null,
       email: p.email || null,
@@ -493,17 +830,20 @@ export async function importDentalProspectsFromSeed(): Promise<
       notes: p.notes || null,
       status: "new",
       sequence_status: "none",
-    };
-
-    const { error } = await service.from("wisecall_outreach_prospects").upsert(row, {
-      onConflict: "practice_name,postcode,region",
     });
-    if (error) skipped += 1;
-    else imported += 1;
+
+    if (upsertBatch.length >= IMPORT_BATCH_SIZE) {
+      await flushUpsertBatch();
+    }
   }
 
+  await flushUpsertBatch();
+
   revalidatePath("/admin/outreach");
-  return { ok: true, data: { imported, updated, skipped, bySegment } };
+  return {
+    ok: true,
+    data: { imported, updated, skipped, seedTotal: raw.prospects.length, bySegment },
+  };
 }
 
 export async function processDueOutreachFollowUps(): Promise<
@@ -562,10 +902,22 @@ export async function processDueOutreachFollowUpsInternal(
       continue;
     }
 
+    const storedHtml = (row.body_html as string) ?? "";
+    const replyTo =
+      process.env.OUTREACH_REPLY_TO?.trim() ||
+      process.env.RESEND_FROM_EMAIL?.replace(/^.*<([^>]+)>.*$/, "$1") ||
+      undefined;
     const result = await sendViaResend({
       to: p.email,
       subject: row.subject as string,
       body: row.body as string,
+      html: isHtmlBody(storedHtml) ? wrapEmailHtml(storedHtml) : undefined,
+      replyTo,
+      tags: [
+        { name: "outreach", value: "dental" },
+        { name: "segment", value: "dentally_active" },
+        { name: "step", value: (row.sequence_step as string) || "follow_up" },
+      ],
     });
 
     await service

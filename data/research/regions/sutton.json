@@ -1,0 +1,29 @@
+{
+  "id": "sutton",
+  "name": "Sutton & Morden",
+  "postcode_regex": "^SM\\d",
+  "area_column": "area",
+  "file_prefix": "sutton-sm-dental",
+  "overrides_file": "sutton-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "SM1",
+    "SM6",
+    "SM2",
+    "SM3",
+    "SM4",
+    "SM5",
+    "SM7"
+  ],
+  "core_segment_prefix": "sutton-core",
+  "area_labels": {
+    "SM1": "Sutton & Morden (SM1)",
+    "SM2": "Sutton & Morden (SM2)",
+    "SM3": "Sutton & Morden (SM3)",
+    "SM4": "Sutton & Morden (SM4)",
+    "SM5": "Sutton & Morden (SM5)",
+    "SM6": "Sutton & Morden (SM6)",
+    "SM7": "Sutton & Morden (SM7)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

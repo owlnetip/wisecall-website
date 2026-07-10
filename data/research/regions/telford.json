@@ -1,0 +1,37 @@
+{
+  "id": "telford",
+  "name": "Telford & Shrewsbury east",
+  "postcode_regex": "^TF\\d",
+  "area_column": "area",
+  "file_prefix": "telford-tf-dental",
+  "overrides_file": "telford-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "TF1",
+    "TF9",
+    "TF10",
+    "TF2",
+    "TF3",
+    "TF4",
+    "TF7",
+    "TF11",
+    "TF5",
+    "TF12",
+    "TF13"
+  ],
+  "core_segment_prefix": "telford-core",
+  "area_labels": {
+    "TF1": "Telford & Shrewsbury east (TF1)",
+    "TF10": "Telford & Shrewsbury east (TF10)",
+    "TF11": "Telford & Shrewsbury east (TF11)",
+    "TF12": "Telford & Shrewsbury east (TF12)",
+    "TF13": "Telford & Shrewsbury east (TF13)",
+    "TF2": "Telford & Shrewsbury east (TF2)",
+    "TF3": "Telford & Shrewsbury east (TF3)",
+    "TF4": "Telford & Shrewsbury east (TF4)",
+    "TF5": "Telford & Shrewsbury east (TF5)",
+    "TF7": "Telford & Shrewsbury east (TF7)",
+    "TF9": "Telford & Shrewsbury east (TF9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

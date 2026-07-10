@@ -1,0 +1,29 @@
+{
+  "id": "halifax",
+  "name": "Halifax",
+  "postcode_regex": "^HX\\d",
+  "area_column": "area",
+  "file_prefix": "halifax-hx-dental",
+  "overrides_file": "halifax-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "HX1",
+    "HX3",
+    "HX6",
+    "HX2",
+    "HX5",
+    "HX7",
+    "HX4"
+  ],
+  "core_segment_prefix": "halifax-core",
+  "area_labels": {
+    "HX1": "Halifax (HX1)",
+    "HX2": "Halifax (HX2)",
+    "HX3": "Halifax (HX3)",
+    "HX4": "Halifax (HX4)",
+    "HX5": "Halifax (HX5)",
+    "HX6": "Halifax (HX6)",
+    "HX7": "Halifax (HX7)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

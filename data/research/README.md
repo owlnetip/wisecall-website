@@ -8,20 +8,106 @@ Research lists for WiseCall outbound blasts targeting dental practices by UK pos
 |----------|----------------|
 | `data/research/` | Master CSVs, outbound blast CSVs, region configs, ADG/BDA flags |
 | `data/research/regions/*.json` | Per-city postcode + core area config |
-| `scripts/build-dental-marketing-list.py` | Regenerate lists + website PMS scan |
+| `data/research/regions/manifest.json` | Master list of all **123** UK regions (phases 1–12) |
+| `scripts/extend-uk-manifest.py` | Add remaining England postcode areas for full CQC coverage |
+| `scripts/extend-devolved-nations-manifest.py` | Add Scotland, Wales and Northern Ireland regions |
+| `scripts/generate-dental-region-configs.py` | Regenerate region JSON from manifest + CQC |
+| `scripts/region-build-status.py` | Print build status table |
+| `scripts/build-dental-marketing-list.py` | Regenerate lists + website PMS scan (`--all`, `--phase N`) |
 | `apps/portal/src/data/dental-prospects-seed.json` | Dentally Tier 1 independents bundled for CRM import |
 | **Admin portal → `/admin/outreach`** | CRM to track sends, draft emails, 3/7/14-day follow-ups |
 
-| Region | Postcodes | Master list | Tier 1 independents (Dentally) |
-|--------|-----------|-------------|--------------------------------|
-| **York** | YO* | `york-yo-dental-marketing-list.csv` (108) | 6 |
-| **Leeds** | LS* | `leeds-ls-dental-marketing-list.csv` (182) | 7 |
-| **Harrogate** | HG* | `harrogate-hg-dental-marketing-list.csv` | (run build) |
-| **Bradford** | BD* | `bradford-bd-dental-marketing-list.csv` | (run build) |
-| **Hull** | HU* | `hull-hu-dental-marketing-list.csv` | (run build) |
-| **Sheffield** | S* | `sheffield-s-dental-marketing-list.csv` | (run build) |
+| Region | Postcodes | Practices | Dentally T1 |
+|--------|-----------|-----------|-------------|
+| **Phase 1 — Yorkshire core** | | | |
+| York | YO* | 108 | 6 |
+| Leeds | LS* | 182 | 7 |
+| Harrogate | HG* | 40 | 2 |
+| Bradford | BD* | 99 | 0 |
+| Hull | HU* | 68 | 0 |
+| Sheffield | S* | 235 | 3 |
+| **Phase 2 — Yorkshire ring** | | | |
+| Wakefield | WF* | 78 | 6 |
+| Doncaster | DN* | 112 | 1 |
+| Huddersfield | HD* | 55 | 1 |
+| Halifax | HX* | 26 | 0 |
+| Teesside | TS* | 95 | 0 |
+| Durham | DH* | 48 | 1 |
+| Darlington | DL* | 55 | 1 |
+| Lincoln | LN* | 45 | 0 |
+| **Phase 3 — North West / East Midlands** | | | |
+| Manchester | M* | 256 | 8 |
+| Liverpool | L* | 154 | 8 |
+| Newcastle | NE* | 184 | 4 |
+| Nottingham | NG* | 198 | 3 |
+| Leicester | LE* | 197 | 11 |
+| Preston | PR* | 101 | 1 |
+| Chester | CH* | 106 | 1 |
+| Blackburn | BB* | 97 | 3 |
+| Oldham | OL* | 86 | 3 |
+| Warrington | WA* | 130 | 2 |
+| **Phase 4 — West Midlands / wider North** | | | |
+| Birmingham | B* | 369 | 9 |
+| Stoke | ST* | 126 | 5 |
+| Derby | DE* | 120 | 1 |
+| Coventry | CV* | 140 | 4 |
+| Stockport | SK* | 150 | 1 |
+| Bolton | BL* | 65 | 5 |
+| Blackpool | FY* | 41 | 3 |
+| Wigan | WN* | 48 | 2 |
+| Carlisle | CA* | 54 | 1 |
+| Lancaster | LA* | 67 | 1 |
+| Sunderland | SR* | 29 | 0 |
+| **Total (phases 1–4)** | **35 regions** | **3,964** | **104** |
+| **Phase 5 — London & Home Counties** | 26 regions | 3,251 | 136 |
+| **Phase 6 — South & South West** | 18 regions | 2,117 | 47 |
+| **Phase 7 — East & Anglia** | 11 regions | 1,193 | 24 |
+| **Phase 8 — West Midlands remainder** | 9 regions | 546 | 13 |
+| **Phase 9 — Edge postcodes (TD/NP)** | 2 regions | 5 | 1 |
+| **Full England (CQC)** | **101 regions** | **11,076** | **325** |
+| **Phase 10 — Scotland (NHS PHS)** | 16 regions | 989 | 0* |
+| **Phase 11 — Wales (HIW)** | 6 regions | 548 | 0* |
+| **Phase 12 — Northern Ireland (BSO)** | 1 region | 322 | 0* |
+| **Full UK** | **123 regions** | **12,934** | **324** |
 
-Add more cities by creating a JSON config in `data/research/regions/` and running the build script.
+\*Devolved-nation registers do not include practice websites. PMS fingerprinting only runs when a website is known (manual overrides or future enrichment). Wales and NI contacts still enter the CRM on phone for qualification calls.
+
+### Website discovery via search (Scotland / Wales / NI)
+
+Registers for Scotland, Wales and NI usually omit websites. To find Dentally practices there, run a search enrichment pass first:
+
+```bash
+export GOOGLE_CSE_API_KEY=your_key
+export GOOGLE_CSE_CX=your_search_engine_id   # https://programmablesearchengine.google.com/
+
+# Per-practice search (recommended — e.g. "Glasgow South Dental Care G41 dentist")
+python3 scripts/enrich-dental-websites-search.py --region glasgow --limit 20 --dry-run
+python3 scripts/enrich-dental-websites-search.py --country scotland
+
+# City batch (faster, fuzzier — e.g. one query "dentists in Glasgow")
+python3 scripts/enrich-dental-websites-search.py --region glasgow --mode city
+
+# Then rescan for Dentally/Exact fingerprints
+python3 scripts/build-dental-marketing-list.py --phase 10
+python3 scripts/sync-dental-prospects-seed.py
+```
+
+Per-practice queries match NHS/HIW register names more reliably than a single "dentists in Glasgow" search. City mode is useful for gap-fill but expect some false matches — review overrides before blasting.
+
+Alternative: `SERPAPI_KEY` instead of Google Custom Search.
+
+| Country | Data source | Register |
+|---------|-------------|----------|
+| England | CQC directory CSV | Dentist + orthodontist services with phone/website |
+| Scotland | PHS open data | NHS dental practices (address only — no phone/website) |
+| Wales | HIW service directory CSV | Regulated dental practices with phone |
+| Northern Ireland | BSO dental surgery list | NHS dental surgeries with phone |
+
+CQC directory covers **England only**. Scotland, Wales and NI use the registers above.
+
+Run `python3 scripts/region-build-status.py` for the latest counts.
+
+Add a new city: add an entry to `data/research/regions/manifest.json`, run `python3 scripts/generate-dental-region-configs.py`, then `python3 scripts/build-dental-marketing-list.py --region <id>`.
 
 ## Important limitation
 
@@ -93,12 +179,10 @@ python3 scripts/build-dental-marketing-list.py --region leeds --skip-website-sca
 ## Regenerating
 
 ```bash
-# Full rebuild with website PMS scan
 python3 scripts/build-dental-marketing-list.py --region leeds
-python3 scripts/build-dental-marketing-list.py --region york
-
-# York-only wrapper (same as --region york)
-python3 scripts/build-york-dental-marketing-list.py
+python3 scripts/build-dental-marketing-list.py --all          # all regions (skips scan if CSV exists)
+python3 scripts/build-dental-marketing-list.py --phase 2      # Yorkshire ring only
+python3 scripts/build-dental-marketing-list.py --region york --skip-website-scan
 ```
 
 On first run the script downloads the latest CQC directory CSV (~19MB) into this folder.
@@ -211,4 +295,4 @@ Regenerate the CRM seed after adding regions:
 python3 scripts/sync-dental-prospects-seed.py
 ```
 
-Current seed totals (~644 contacts): 19 Dentally active, 519 unknown queued, 106 corporate hold, 0 Exact queued (none detected in scans yet).
+Current seed totals (10,830 contacts): **334** Dentally active, **2** Exact queued, **9,217** unknown queued, **1,277** corporate hold.

@@ -1,0 +1,23 @@
+{
+  "id": "outer-hebrides",
+  "name": "Outer Hebrides",
+  "postcode_regex": "^HS\\d",
+  "area_column": "area",
+  "file_prefix": "outer-hebrides-hs-dental",
+  "overrides_file": "outer-hebrides-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "HS1",
+    "HS3",
+    "HS7",
+    "HS9"
+  ],
+  "core_segment_prefix": "outer-hebrides-core",
+  "area_labels": {
+    "HS1": "Outer Hebrides (HS1)",
+    "HS3": "Outer Hebrides (HS3)",
+    "HS7": "Outer Hebrides (HS7)",
+    "HS9": "Outer Hebrides (HS9)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

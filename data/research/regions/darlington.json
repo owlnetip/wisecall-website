@@ -1,0 +1,42 @@
+{
+  "id": "darlington",
+  "name": "Darlington",
+  "postcode_regex": "^DL\\d",
+  "area_column": "area",
+  "file_prefix": "darlington-dl-dental",
+  "overrides_file": "darlington-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "DL3",
+    "DL1",
+    "DL14",
+    "DL7",
+    "DL8",
+    "DL2",
+    "DL5",
+    "DL6",
+    "DL10",
+    "DL12",
+    "DL15",
+    "DL16"
+  ],
+  "core_segment_prefix": "darlington-core",
+  "area_labels": {
+    "DL1": "Darlington (DL1)",
+    "DL10": "Darlington (DL10)",
+    "DL12": "Darlington (DL12)",
+    "DL14": "Darlington (DL14)",
+    "DL15": "Darlington (DL15)",
+    "DL16": "Darlington (DL16)",
+    "DL17": "Darlington (DL17)",
+    "DL2": "Darlington (DL2)",
+    "DL3": "Darlington (DL3)",
+    "DL4": "Darlington (DL4)",
+    "DL5": "Darlington (DL5)",
+    "DL6": "Darlington (DL6)",
+    "DL7": "Darlington (DL7)",
+    "DL8": "Darlington (DL8)",
+    "DL9": "Darlington (DL9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

@@ -1,0 +1,37 @@
+{
+  "id": "lincoln",
+  "name": "Lincoln",
+  "postcode_regex": "^LN\\d",
+  "area_column": "area",
+  "file_prefix": "lincoln-ln-dental",
+  "overrides_file": "lincoln-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "LN1",
+    "LN2",
+    "LN6",
+    "LN11",
+    "LN5",
+    "LN8",
+    "LN4",
+    "LN12",
+    "LN9",
+    "LN10",
+    "LN13"
+  ],
+  "core_segment_prefix": "lincoln-core",
+  "area_labels": {
+    "LN1": "Lincoln (LN1)",
+    "LN10": "Lincoln (LN10)",
+    "LN11": "Lincoln (LN11)",
+    "LN12": "Lincoln (LN12)",
+    "LN13": "Lincoln (LN13)",
+    "LN2": "Lincoln (LN2)",
+    "LN4": "Lincoln (LN4)",
+    "LN5": "Lincoln (LN5)",
+    "LN6": "Lincoln (LN6)",
+    "LN8": "Lincoln (LN8)",
+    "LN9": "Lincoln (LN9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

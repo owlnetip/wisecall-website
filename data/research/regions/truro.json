@@ -1,0 +1,43 @@
+{
+  "id": "truro",
+  "name": "Truro & Cornwall",
+  "postcode_regex": "^TR\\d",
+  "area_column": "area",
+  "file_prefix": "truro-tr-dental",
+  "overrides_file": "truro-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "TR1",
+    "TR11",
+    "TR7",
+    "TR18",
+    "TR3",
+    "TR13",
+    "TR26",
+    "TR14",
+    "TR2",
+    "TR5",
+    "TR10",
+    "TR15"
+  ],
+  "core_segment_prefix": "truro-core",
+  "area_labels": {
+    "TR1": "Truro & Cornwall (TR1)",
+    "TR10": "Truro & Cornwall (TR10)",
+    "TR11": "Truro & Cornwall (TR11)",
+    "TR13": "Truro & Cornwall (TR13)",
+    "TR14": "Truro & Cornwall (TR14)",
+    "TR15": "Truro & Cornwall (TR15)",
+    "TR18": "Truro & Cornwall (TR18)",
+    "TR2": "Truro & Cornwall (TR2)",
+    "TR21": "Truro & Cornwall (TR21)",
+    "TR26": "Truro & Cornwall (TR26)",
+    "TR27": "Truro & Cornwall (TR27)",
+    "TR3": "Truro & Cornwall (TR3)",
+    "TR5": "Truro & Cornwall (TR5)",
+    "TR6": "Truro & Cornwall (TR6)",
+    "TR7": "Truro & Cornwall (TR7)",
+    "TR9": "Truro & Cornwall (TR9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

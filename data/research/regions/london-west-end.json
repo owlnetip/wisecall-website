@@ -1,0 +1,37 @@
+{
+  "id": "london-west-end",
+  "name": "West End London",
+  "postcode_regex": "^WC\\d",
+  "area_column": "area",
+  "file_prefix": "london-west-end-wc-dental",
+  "overrides_file": "london-west-end-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "WC2H",
+    "WC1N",
+    "WC1X",
+    "WC1H",
+    "WC1V",
+    "WC2A",
+    "WC1A",
+    "WC1E",
+    "WC1B",
+    "WC2N",
+    "WC2R"
+  ],
+  "core_segment_prefix": "london-west-end-core",
+  "area_labels": {
+    "WC1A": "West End London (WC1A)",
+    "WC1B": "West End London (WC1B)",
+    "WC1E": "West End London (WC1E)",
+    "WC1H": "West End London (WC1H)",
+    "WC1N": "West End London (WC1N)",
+    "WC1V": "West End London (WC1V)",
+    "WC1X": "West End London (WC1X)",
+    "WC2A": "West End London (WC2A)",
+    "WC2H": "West End London (WC2H)",
+    "WC2N": "West End London (WC2N)",
+    "WC2R": "West End London (WC2R)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

@@ -1,0 +1,33 @@
+{
+  "id": "croydon",
+  "name": "Croydon",
+  "postcode_regex": "^CR\\d",
+  "area_column": "area",
+  "file_prefix": "croydon-cr-dental",
+  "overrides_file": "croydon-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "CR0",
+    "CR2",
+    "CR3",
+    "CR5",
+    "CR4",
+    "CR7",
+    "CR8",
+    "CR6",
+    "CR9"
+  ],
+  "core_segment_prefix": "croydon-core",
+  "area_labels": {
+    "CR0": "Croydon (CR0)",
+    "CR2": "Croydon (CR2)",
+    "CR3": "Croydon (CR3)",
+    "CR4": "Croydon (CR4)",
+    "CR5": "Croydon (CR5)",
+    "CR6": "Croydon (CR6)",
+    "CR7": "Croydon (CR7)",
+    "CR8": "Croydon (CR8)",
+    "CR9": "Croydon (CR9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

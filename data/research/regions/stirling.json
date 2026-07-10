@@ -1,0 +1,43 @@
+{
+  "id": "stirling",
+  "name": "Stirling & Falkirk",
+  "postcode_regex": "^FK\\d",
+  "area_column": "area",
+  "file_prefix": "stirling-fk-dental",
+  "overrides_file": "stirling-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "FK8",
+    "FK1",
+    "FK2",
+    "FK5",
+    "FK7",
+    "FK10",
+    "FK3",
+    "FK9",
+    "FK15",
+    "FK4",
+    "FK6",
+    "FK12"
+  ],
+  "core_segment_prefix": "stirling-core",
+  "area_labels": {
+    "FK1": "Stirling & Falkirk (FK1)",
+    "FK10": "Stirling & Falkirk (FK10)",
+    "FK12": "Stirling & Falkirk (FK12)",
+    "FK13": "Stirling & Falkirk (FK13)",
+    "FK14": "Stirling & Falkirk (FK14)",
+    "FK15": "Stirling & Falkirk (FK15)",
+    "FK17": "Stirling & Falkirk (FK17)",
+    "FK2": "Stirling & Falkirk (FK2)",
+    "FK21": "Stirling & Falkirk (FK21)",
+    "FK3": "Stirling & Falkirk (FK3)",
+    "FK4": "Stirling & Falkirk (FK4)",
+    "FK5": "Stirling & Falkirk (FK5)",
+    "FK6": "Stirling & Falkirk (FK6)",
+    "FK7": "Stirling & Falkirk (FK7)",
+    "FK8": "Stirling & Falkirk (FK8)",
+    "FK9": "Stirling & Falkirk (FK9)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

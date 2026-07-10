@@ -1,0 +1,40 @@
+{
+  "id": "torquay",
+  "name": "Torquay & South Devon",
+  "postcode_regex": "^TQ\\d",
+  "area_column": "area",
+  "file_prefix": "torquay-tq-dental",
+  "overrides_file": "torquay-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "TQ12",
+    "TQ2",
+    "TQ1",
+    "TQ13",
+    "TQ9",
+    "TQ4",
+    "TQ7",
+    "TQ5",
+    "TQ14",
+    "TQ3",
+    "TQ6",
+    "TQ8"
+  ],
+  "core_segment_prefix": "torquay-core",
+  "area_labels": {
+    "TQ1": "Torquay & South Devon (TQ1)",
+    "TQ10": "Torquay & South Devon (TQ10)",
+    "TQ12": "Torquay & South Devon (TQ12)",
+    "TQ13": "Torquay & South Devon (TQ13)",
+    "TQ14": "Torquay & South Devon (TQ14)",
+    "TQ2": "Torquay & South Devon (TQ2)",
+    "TQ3": "Torquay & South Devon (TQ3)",
+    "TQ4": "Torquay & South Devon (TQ4)",
+    "TQ5": "Torquay & South Devon (TQ5)",
+    "TQ6": "Torquay & South Devon (TQ6)",
+    "TQ7": "Torquay & South Devon (TQ7)",
+    "TQ8": "Torquay & South Devon (TQ8)",
+    "TQ9": "Torquay & South Devon (TQ9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

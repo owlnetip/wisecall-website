@@ -1,0 +1,43 @@
+{
+  "id": "wakefield",
+  "name": "Wakefield",
+  "postcode_regex": "^WF\\d",
+  "area_column": "area",
+  "file_prefix": "wakefield-wf-dental",
+  "overrides_file": "wakefield-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "WF1",
+    "WF2",
+    "WF8",
+    "WF9",
+    "WF4",
+    "WF17",
+    "WF13",
+    "WF12",
+    "WF5",
+    "WF10",
+    "WF14",
+    "WF16"
+  ],
+  "core_segment_prefix": "wakefield-core",
+  "area_labels": {
+    "WF1": "Wakefield (WF1)",
+    "WF10": "Wakefield (WF10)",
+    "WF11": "Wakefield (WF11)",
+    "WF12": "Wakefield (WF12)",
+    "WF13": "Wakefield (WF13)",
+    "WF14": "Wakefield (WF14)",
+    "WF16": "Wakefield (WF16)",
+    "WF17": "Wakefield (WF17)",
+    "WF2": "Wakefield (WF2)",
+    "WF3": "Wakefield (WF3)",
+    "WF4": "Wakefield (WF4)",
+    "WF5": "Wakefield (WF5)",
+    "WF6": "Wakefield (WF6)",
+    "WF7": "Wakefield (WF7)",
+    "WF8": "Wakefield (WF8)",
+    "WF9": "Wakefield (WF9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

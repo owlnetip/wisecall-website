@@ -1,0 +1,25 @@
+{
+  "id": "wales-mid",
+  "name": "Mid Wales",
+  "postcode_regex": "^LD\\d",
+  "area_column": "area",
+  "file_prefix": "wales-mid-ld-dental",
+  "overrides_file": "wales-mid-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "LD3",
+    "LD1",
+    "LD2",
+    "LD6",
+    "LD7"
+  ],
+  "core_segment_prefix": "wales-mid-core",
+  "area_labels": {
+    "LD1": "Mid Wales (LD1)",
+    "LD2": "Mid Wales (LD2)",
+    "LD3": "Mid Wales (LD3)",
+    "LD6": "Mid Wales (LD6)",
+    "LD7": "Mid Wales (LD7)"
+  },
+  "data_source": "wales_hiw",
+  "country": "wales"
+}

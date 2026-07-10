@@ -1,0 +1,39 @@
+{
+  "id": "lanarkshire",
+  "name": "Lanarkshire",
+  "postcode_regex": "^ML\\d",
+  "area_column": "area",
+  "file_prefix": "lanarkshire-ml-dental",
+  "overrides_file": "lanarkshire-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "ML3",
+    "ML5",
+    "ML1",
+    "ML6",
+    "ML2",
+    "ML11",
+    "ML8",
+    "ML9",
+    "ML4",
+    "ML7",
+    "ML10",
+    "ML12"
+  ],
+  "core_segment_prefix": "lanarkshire-core",
+  "area_labels": {
+    "ML1": "Lanarkshire (ML1)",
+    "ML10": "Lanarkshire (ML10)",
+    "ML11": "Lanarkshire (ML11)",
+    "ML12": "Lanarkshire (ML12)",
+    "ML2": "Lanarkshire (ML2)",
+    "ML3": "Lanarkshire (ML3)",
+    "ML4": "Lanarkshire (ML4)",
+    "ML5": "Lanarkshire (ML5)",
+    "ML6": "Lanarkshire (ML6)",
+    "ML7": "Lanarkshire (ML7)",
+    "ML8": "Lanarkshire (ML8)",
+    "ML9": "Lanarkshire (ML9)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "wolverhampton",
+  "name": "Wolverhampton",
+  "postcode_regex": "^WV\\d",
+  "area_column": "area",
+  "file_prefix": "wolverhampton-wv-dental",
+  "overrides_file": "wolverhampton-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "WV3",
+    "WV10",
+    "WV14",
+    "WV1",
+    "WV6",
+    "WV8",
+    "WV16",
+    "WV2",
+    "WV11",
+    "WV4",
+    "WV5",
+    "WV12"
+  ],
+  "core_segment_prefix": "wolverhampton-core",
+  "area_labels": {
+    "WV1": "Wolverhampton (WV1)",
+    "WV10": "Wolverhampton (WV10)",
+    "WV11": "Wolverhampton (WV11)",
+    "WV12": "Wolverhampton (WV12)",
+    "WV13": "Wolverhampton (WV13)",
+    "WV14": "Wolverhampton (WV14)",
+    "WV16": "Wolverhampton (WV16)",
+    "WV2": "Wolverhampton (WV2)",
+    "WV3": "Wolverhampton (WV3)",
+    "WV4": "Wolverhampton (WV4)",
+    "WV5": "Wolverhampton (WV5)",
+    "WV6": "Wolverhampton (WV6)",
+    "WV7": "Wolverhampton (WV7)",
+    "WV8": "Wolverhampton (WV8)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

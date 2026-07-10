@@ -1,0 +1,43 @@
+{
+  "id": "warrington",
+  "name": "Warrington",
+  "postcode_regex": "^WA\\d",
+  "area_column": "area",
+  "file_prefix": "warrington-wa-dental",
+  "overrides_file": "warrington-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "WA14",
+    "WA15",
+    "WA8",
+    "WA3",
+    "WA10",
+    "WA4",
+    "WA16",
+    "WA1",
+    "WA2",
+    "WA7",
+    "WA11",
+    "WA13"
+  ],
+  "core_segment_prefix": "warrington-core",
+  "area_labels": {
+    "WA1": "Warrington (WA1)",
+    "WA10": "Warrington (WA10)",
+    "WA11": "Warrington (WA11)",
+    "WA12": "Warrington (WA12)",
+    "WA13": "Warrington (WA13)",
+    "WA14": "Warrington (WA14)",
+    "WA15": "Warrington (WA15)",
+    "WA16": "Warrington (WA16)",
+    "WA2": "Warrington (WA2)",
+    "WA3": "Warrington (WA3)",
+    "WA4": "Warrington (WA4)",
+    "WA5": "Warrington (WA5)",
+    "WA6": "Warrington (WA6)",
+    "WA7": "Warrington (WA7)",
+    "WA8": "Warrington (WA8)",
+    "WA9": "Warrington (WA9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

@@ -1,0 +1,29 @@
+{
+  "id": "scotland-borders",
+  "name": "Scottish Borders",
+  "postcode_regex": "^TD\\d",
+  "area_column": "area",
+  "file_prefix": "scotland-borders-td-dental",
+  "overrides_file": "scotland-borders-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "TD9",
+    "TD1",
+    "TD5",
+    "TD8",
+    "TD11",
+    "TD7",
+    "TD14"
+  ],
+  "core_segment_prefix": "scotland-borders-core",
+  "area_labels": {
+    "TD1": "Scottish Borders (TD1)",
+    "TD11": "Scottish Borders (TD11)",
+    "TD14": "Scottish Borders (TD14)",
+    "TD5": "Scottish Borders (TD5)",
+    "TD7": "Scottish Borders (TD7)",
+    "TD8": "Scottish Borders (TD8)",
+    "TD9": "Scottish Borders (TD9)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

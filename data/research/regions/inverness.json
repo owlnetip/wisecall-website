@@ -1,0 +1,41 @@
+{
+  "id": "inverness",
+  "name": "Inverness & Highlands",
+  "postcode_regex": "^IV\\d",
+  "area_column": "area",
+  "file_prefix": "inverness-iv-dental",
+  "overrides_file": "inverness-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "IV2",
+    "IV30",
+    "IV3",
+    "IV1",
+    "IV15",
+    "IV12",
+    "IV18",
+    "IV36",
+    "IV17",
+    "IV19",
+    "IV25",
+    "IV31"
+  ],
+  "core_segment_prefix": "inverness-core",
+  "area_labels": {
+    "IV1": "Inverness & Highlands (IV1)",
+    "IV12": "Inverness & Highlands (IV12)",
+    "IV15": "Inverness & Highlands (IV15)",
+    "IV17": "Inverness & Highlands (IV17)",
+    "IV18": "Inverness & Highlands (IV18)",
+    "IV19": "Inverness & Highlands (IV19)",
+    "IV2": "Inverness & Highlands (IV2)",
+    "IV25": "Inverness & Highlands (IV25)",
+    "IV3": "Inverness & Highlands (IV3)",
+    "IV30": "Inverness & Highlands (IV30)",
+    "IV31": "Inverness & Highlands (IV31)",
+    "IV36": "Inverness & Highlands (IV36)",
+    "IV40": "Inverness & Highlands (IV40)",
+    "IV51": "Inverness & Highlands (IV51)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

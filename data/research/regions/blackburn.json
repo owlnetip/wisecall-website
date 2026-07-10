@@ -1,0 +1,40 @@
+{
+  "id": "blackburn",
+  "name": "Blackburn",
+  "postcode_regex": "^BB\\d",
+  "area_column": "area",
+  "file_prefix": "blackburn-bb-dental",
+  "overrides_file": "blackburn-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "BB5",
+    "BB2",
+    "BB7",
+    "BB1",
+    "BB9",
+    "BB3",
+    "BB10",
+    "BB11",
+    "BB18",
+    "BB4",
+    "BB8",
+    "BB12"
+  ],
+  "core_segment_prefix": "blackburn-core",
+  "area_labels": {
+    "BB1": "Blackburn (BB1)",
+    "BB10": "Blackburn (BB10)",
+    "BB11": "Blackburn (BB11)",
+    "BB12": "Blackburn (BB12)",
+    "BB18": "Blackburn (BB18)",
+    "BB2": "Blackburn (BB2)",
+    "BB3": "Blackburn (BB3)",
+    "BB4": "Blackburn (BB4)",
+    "BB5": "Blackburn (BB5)",
+    "BB6": "Blackburn (BB6)",
+    "BB7": "Blackburn (BB7)",
+    "BB8": "Blackburn (BB8)",
+    "BB9": "Blackburn (BB9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

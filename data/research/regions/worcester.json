@@ -1,0 +1,39 @@
+{
+  "id": "worcester",
+  "name": "Worcester & Herefordshire",
+  "postcode_regex": "^WR\\d",
+  "area_column": "area",
+  "file_prefix": "worcester-wr-dental",
+  "overrides_file": "worcester-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "WR11",
+    "WR14",
+    "WR1",
+    "WR5",
+    "WR9",
+    "WR3",
+    "WR15",
+    "WR2",
+    "WR10",
+    "WR4",
+    "WR8",
+    "WR12"
+  ],
+  "core_segment_prefix": "worcester-core",
+  "area_labels": {
+    "WR1": "Worcester & Herefordshire (WR1)",
+    "WR10": "Worcester & Herefordshire (WR10)",
+    "WR11": "Worcester & Herefordshire (WR11)",
+    "WR12": "Worcester & Herefordshire (WR12)",
+    "WR14": "Worcester & Herefordshire (WR14)",
+    "WR15": "Worcester & Herefordshire (WR15)",
+    "WR2": "Worcester & Herefordshire (WR2)",
+    "WR3": "Worcester & Herefordshire (WR3)",
+    "WR4": "Worcester & Herefordshire (WR4)",
+    "WR5": "Worcester & Herefordshire (WR5)",
+    "WR8": "Worcester & Herefordshire (WR8)",
+    "WR9": "Worcester & Herefordshire (WR9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

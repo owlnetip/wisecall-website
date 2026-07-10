@@ -1,0 +1,37 @@
+{
+  "id": "salisbury",
+  "name": "Salisbury & Wiltshire south",
+  "postcode_regex": "^SP\\d",
+  "area_column": "area",
+  "file_prefix": "salisbury-sp-dental",
+  "overrides_file": "salisbury-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "SP1",
+    "SP10",
+    "SP2",
+    "SP7",
+    "SP5",
+    "SP4",
+    "SP8",
+    "SP9",
+    "SP3",
+    "SP6",
+    "SP11"
+  ],
+  "core_segment_prefix": "salisbury-core",
+  "area_labels": {
+    "SP1": "Salisbury & Wiltshire south (SP1)",
+    "SP10": "Salisbury & Wiltshire south (SP10)",
+    "SP11": "Salisbury & Wiltshire south (SP11)",
+    "SP2": "Salisbury & Wiltshire south (SP2)",
+    "SP3": "Salisbury & Wiltshire south (SP3)",
+    "SP4": "Salisbury & Wiltshire south (SP4)",
+    "SP5": "Salisbury & Wiltshire south (SP5)",
+    "SP6": "Salisbury & Wiltshire south (SP6)",
+    "SP7": "Salisbury & Wiltshire south (SP7)",
+    "SP8": "Salisbury & Wiltshire south (SP8)",
+    "SP9": "Salisbury & Wiltshire south (SP9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

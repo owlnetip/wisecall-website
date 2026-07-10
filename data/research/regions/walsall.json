@@ -1,0 +1,42 @@
+{
+  "id": "walsall",
+  "name": "Walsall & Cannock",
+  "postcode_regex": "^WS\\d",
+  "area_column": "area",
+  "file_prefix": "walsall-ws-dental",
+  "overrides_file": "walsall-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "WS1",
+    "WS10",
+    "WS13",
+    "WS3",
+    "WS11",
+    "WS14",
+    "WS15",
+    "WS9",
+    "WS12",
+    "WS6",
+    "WS7",
+    "WS8"
+  ],
+  "core_segment_prefix": "walsall-core",
+  "area_labels": {
+    "WS1": "Walsall & Cannock (WS1)",
+    "WS10": "Walsall & Cannock (WS10)",
+    "WS11": "Walsall & Cannock (WS11)",
+    "WS12": "Walsall & Cannock (WS12)",
+    "WS13": "Walsall & Cannock (WS13)",
+    "WS14": "Walsall & Cannock (WS14)",
+    "WS15": "Walsall & Cannock (WS15)",
+    "WS2": "Walsall & Cannock (WS2)",
+    "WS3": "Walsall & Cannock (WS3)",
+    "WS4": "Walsall & Cannock (WS4)",
+    "WS5": "Walsall & Cannock (WS5)",
+    "WS6": "Walsall & Cannock (WS6)",
+    "WS7": "Walsall & Cannock (WS7)",
+    "WS8": "Walsall & Cannock (WS8)",
+    "WS9": "Walsall & Cannock (WS9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

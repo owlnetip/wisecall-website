@@ -1,0 +1,35 @@
+{
+  "id": "harrow",
+  "name": "Harrow & Uxbridge",
+  "postcode_regex": "^HA\\d",
+  "area_column": "area",
+  "file_prefix": "harrow-ha-dental",
+  "overrides_file": "harrow-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "HA8",
+    "HA3",
+    "HA5",
+    "HA2",
+    "HA1",
+    "HA6",
+    "HA4",
+    "HA7",
+    "HA9",
+    "HA0"
+  ],
+  "core_segment_prefix": "harrow-core",
+  "area_labels": {
+    "HA0": "Harrow & Uxbridge (HA0)",
+    "HA1": "Harrow & Uxbridge (HA1)",
+    "HA2": "Harrow & Uxbridge (HA2)",
+    "HA3": "Harrow & Uxbridge (HA3)",
+    "HA4": "Harrow & Uxbridge (HA4)",
+    "HA5": "Harrow & Uxbridge (HA5)",
+    "HA6": "Harrow & Uxbridge (HA6)",
+    "HA7": "Harrow & Uxbridge (HA7)",
+    "HA8": "Harrow & Uxbridge (HA8)",
+    "HA9": "Harrow & Uxbridge (HA9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

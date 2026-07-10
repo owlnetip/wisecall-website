@@ -13,27 +13,32 @@ from __future__ import annotations
 import csv
 import json
 import re
+from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RESEARCH = ROOT / "data" / "research"
-OUT = ROOT / "apps" / "portal" / "src" / "data" / "dental-prospects-seed.json"
+OUT = ROOT / "apps/portal" / "src" / "data" / "dental-prospects-seed.json"
+REGIONS_DIR = RESEARCH / "regions"
+ADG_GROUPS = RESEARCH / "adg-corporate-groups.json"
 
-REGION_MAP = {
-    "york-yo": "york",
-    "leeds-ls": "leeds",
-    "harrogate-hg": "harrogate",
-    "bradford-bd": "bradford",
-    "hull-hu": "hull",
-    "sheffield-s": "sheffield",
-}
+
+def load_region_map() -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for path in sorted(REGIONS_DIR.glob("*.json")):
+        if path.name == "manifest.json":
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        mapping[data["file_prefix"]] = data["id"]
+    return mapping
 
 
 def region_from_stem(stem: str) -> str:
-    if stem in REGION_MAP:
-        return REGION_MAP[stem]
-    for key, val in REGION_MAP.items():
-        if stem.startswith(key.split("-")[0]):
+    region_map = load_region_map()
+    if stem in region_map:
+        return region_map[stem]
+    for prefix, val in region_map.items():
+        if stem.startswith(prefix):
             return val
     return stem.split("-")[0] if "-" in stem else stem
 
@@ -46,9 +51,79 @@ def area_column(region: str) -> str:
     return "area"
 
 
-def classify_segment(row: dict[str, str]) -> str | None:
-    adg = (row.get("adg_corporate") or "").strip().lower()
-    if adg == "yes":
+def load_corporate_patterns() -> list[tuple[str, list[str]]]:
+    if not ADG_GROUPS.exists():
+        return []
+    data = json.loads(ADG_GROUPS.read_text(encoding="utf-8"))
+    return [(str(g.get("name", "")), [str(p).lower() for p in g.get("patterns", [])]) for g in data.get("groups", [])]
+
+
+def corporate_haystack(row: dict[str, str]) -> str:
+    return " ".join(
+        [
+            row.get("practice_name", ""),
+            row.get("also_known_as", ""),
+            row.get("provider_name", ""),
+            row.get("website", ""),
+        ]
+    ).lower()
+
+
+def match_corporate_patterns(row: dict[str, str], patterns: list[tuple[str, list[str]]]) -> str | None:
+    hay = corporate_haystack(row)
+    for name, pats in patterns:
+        for pat in pats:
+            if pat and pat in hay:
+                return name
+    return None
+
+
+# A provider running this many Tier-1 Dentally sites is treated as a corporate
+# group. Kept at 4+ (not 2+) so a genuine independent dentist who owns two or
+# three practices isn't miscategorised as corporate and dropped from outreach —
+# named corporate groups are still caught by adg-corporate-groups.json patterns
+# regardless of site count.
+MULTI_SITE_CORPORATE_THRESHOLD = 4
+
+
+def load_multi_site_providers() -> set[str]:
+    """Providers running several Tier 1 Dentally sites nationally."""
+    counts: Counter[str] = Counter()
+    for path in RESEARCH.glob("*-marketing-list.csv"):
+        with path.open(newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                tier = (row.get("wisecall_tier") or "").strip()
+                blast = (row.get("blast_segment") or "").strip()
+                pms = (row.get("pms_detected") or "").strip()
+                if not tier.startswith("Tier 1"):
+                    continue
+                if "Dentally" not in pms and "Dentally" not in blast:
+                    continue
+                provider = (row.get("provider_name") or "").strip()
+                if provider:
+                    counts[provider] += 1
+    return {provider for provider, count in counts.items() if count >= MULTI_SITE_CORPORATE_THRESHOLD}
+
+
+def is_corporate_group(
+    row: dict[str, str],
+    patterns: list[tuple[str, list[str]]],
+    multi_site_providers: set[str],
+) -> bool:
+    if (row.get("adg_corporate") or "").strip().lower() == "yes":
+        return True
+    if match_corporate_patterns(row, patterns):
+        return True
+    provider = (row.get("provider_name") or "").strip()
+    return bool(provider and provider in multi_site_providers)
+
+
+def classify_segment(
+    row: dict[str, str],
+    patterns: list[tuple[str, list[str]]],
+    multi_site_providers: set[str],
+) -> str | None:
+    if is_corporate_group(row, patterns, multi_site_providers):
         return "corporate_hold"
 
     tier = (row.get("wisecall_tier") or row.get("tier") or "").strip()
@@ -87,6 +162,8 @@ def prospect_from_row(row: dict[str, str], region: str, area_col: str, segment: 
 
 
 def load_all_prospects() -> list[dict[str, str]]:
+    patterns = load_corporate_patterns()
+    multi_site_providers = load_multi_site_providers()
     prospects: list[dict[str, str]] = []
     seen: set[str] = set()
 
@@ -97,7 +174,7 @@ def load_all_prospects() -> list[dict[str, str]]:
 
         with path.open(newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                segment = classify_segment(row)
+                segment = classify_segment(row, patterns, multi_site_providers)
                 if not segment:
                     continue
                 name = (row.get("practice_name") or "").strip()

@@ -1,0 +1,3 @@
+name,phone,company,postcode,area,pms,segment,tier,adg_corporate,adg_group,bda_good_practice,website,notes
+Ward & Allison Dental Practice,01159 324811,Ward & Allison Dental Practice,DE7 5QU,Derby (DE7),Dentally,Dentally confirmed,Tier 1 - Dentally integration ready,No,,No,https://www.wardandallisondentalclinic.co.uk,
+Revive Dental Practice,01332 666646,Revive Dental Practice,DE21 6ET,Derby (DE21),Dentally,Dentally confirmed,Tier 4 - ADG corporate group (lower priority),Yes,Rodericks Dental,No,https://www.revivedental.co.uk,

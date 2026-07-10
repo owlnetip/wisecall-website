@@ -1,0 +1,37 @@
+{
+  "id": "dundee",
+  "name": "Dundee & Angus",
+  "postcode_regex": "^DD\\d",
+  "area_column": "area",
+  "file_prefix": "dundee-dd-dental",
+  "overrides_file": "dundee-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "DD1",
+    "DD5",
+    "DD2",
+    "DD3",
+    "DD4",
+    "DD8",
+    "DD11",
+    "DD10",
+    "DD6",
+    "DD7",
+    "DD9"
+  ],
+  "core_segment_prefix": "dundee-core",
+  "area_labels": {
+    "DD1": "Dundee & Angus (DD1)",
+    "DD10": "Dundee & Angus (DD10)",
+    "DD11": "Dundee & Angus (DD11)",
+    "DD2": "Dundee & Angus (DD2)",
+    "DD3": "Dundee & Angus (DD3)",
+    "DD4": "Dundee & Angus (DD4)",
+    "DD5": "Dundee & Angus (DD5)",
+    "DD6": "Dundee & Angus (DD6)",
+    "DD7": "Dundee & Angus (DD7)",
+    "DD8": "Dundee & Angus (DD8)",
+    "DD9": "Dundee & Angus (DD9)"
+  },
+  "data_source": "scotland_nhs",
+  "country": "scotland"
+}

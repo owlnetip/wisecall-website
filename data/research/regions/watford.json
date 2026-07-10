@@ -1,0 +1,37 @@
+{
+  "id": "watford",
+  "name": "Watford & Hertfordshire south",
+  "postcode_regex": "^WD\\d",
+  "area_column": "area",
+  "file_prefix": "watford-wd-dental",
+  "overrides_file": "watford-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "WD6",
+    "WD3",
+    "WD17",
+    "WD7",
+    "WD23",
+    "WD18",
+    "WD24",
+    "WD19",
+    "WD25",
+    "WD5",
+    "WD4"
+  ],
+  "core_segment_prefix": "watford-core",
+  "area_labels": {
+    "WD17": "Watford & Hertfordshire south (WD17)",
+    "WD18": "Watford & Hertfordshire south (WD18)",
+    "WD19": "Watford & Hertfordshire south (WD19)",
+    "WD23": "Watford & Hertfordshire south (WD23)",
+    "WD24": "Watford & Hertfordshire south (WD24)",
+    "WD25": "Watford & Hertfordshire south (WD25)",
+    "WD3": "Watford & Hertfordshire south (WD3)",
+    "WD4": "Watford & Hertfordshire south (WD4)",
+    "WD5": "Watford & Hertfordshire south (WD5)",
+    "WD6": "Watford & Hertfordshire south (WD6)",
+    "WD7": "Watford & Hertfordshire south (WD7)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

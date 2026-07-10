@@ -1,0 +1,35 @@
+{
+  "id": "dorchester",
+  "name": "Dorchester & Weymouth",
+  "postcode_regex": "^DT\\d",
+  "area_column": "area",
+  "file_prefix": "dorchester-dt-dental",
+  "overrides_file": "dorchester-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "DT1",
+    "DT4",
+    "DT9",
+    "DT11",
+    "DT5",
+    "DT6",
+    "DT10",
+    "DT3",
+    "DT7",
+    "DT8"
+  ],
+  "core_segment_prefix": "dorchester-core",
+  "area_labels": {
+    "DT1": "Dorchester & Weymouth (DT1)",
+    "DT10": "Dorchester & Weymouth (DT10)",
+    "DT11": "Dorchester & Weymouth (DT11)",
+    "DT3": "Dorchester & Weymouth (DT3)",
+    "DT4": "Dorchester & Weymouth (DT4)",
+    "DT5": "Dorchester & Weymouth (DT5)",
+    "DT6": "Dorchester & Weymouth (DT6)",
+    "DT7": "Dorchester & Weymouth (DT7)",
+    "DT8": "Dorchester & Weymouth (DT8)",
+    "DT9": "Dorchester & Weymouth (DT9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

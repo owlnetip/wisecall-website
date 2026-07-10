@@ -152,7 +152,7 @@
     .modal-overlay.active { display: flex; }
     /* Stat number font */
     .stat-num { font-variant-numeric: tabular-nums; }
-    [data-lucide] { width: 1em; height: 1em; }
+    [data-lucide], svg.lucide { flex-shrink: 0; display: block; }
     /* Video */
     .video-frame { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 1.5rem; border: 1px solid rgba(125, 232, 235, 0.22); box-shadow: 0 40px 110px rgba(0,0,0,0.55), 0 0 0 1px rgba(125,232,235,0.08), 0 0 80px rgba(125,232,235,0.12); background: #0f1f1f; }
     .video-frame iframe,
@@ -187,8 +187,8 @@
   <!-- ───── HEADER ───── -->
   <header id="siteHeader" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#172929]/70 border-b border-[#7de8eb]/10 transition-all duration-300">
     <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
-      <a href="/" class="flex items-center gap-3 text-white font-bold text-lg" style="text-decoration:none;">
-        <img src="owl-logo.png" alt="WiseCall" style="height:46px;margin-right:8px;">WiseCall
+      <a href="/" class="flex items-center gap-3 text-white font-bold text-lg min-w-0 no-underline">
+        <img src="owl-logo.png" alt="WiseCall" class="h-11 w-auto flex-shrink-0 object-contain">WiseCall
       </a>
       <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
         <a href="#every-call" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
@@ -444,43 +444,109 @@
         <p class="text-xl text-white/70 max-w-3xl mx-auto">WiseCall starts with your calls, then keeps the same customer knowledge, booking rules and follow-up process working across email, WhatsApp, live chat and SMS.</p>
       </div>
 
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <!-- Phone: featured, phone-first -->
-        <div class="motion md:col-span-2 lg:col-span-4 rounded-2xl bg-gradient-to-br from-[#7de8eb]/[0.10] to-transparent border border-[#7de8eb]/30 p-7 shadow-[0_20px_60px_rgba(0,0,0,0.3)]" data-anim="fade-up" style="transition-delay:0.05s">
-          <div class="flex flex-col sm:flex-row sm:items-start gap-5">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7de8eb]/25 to-[#5dbfc2]/10 flex items-center justify-center flex-shrink-0"><i data-lucide="phone-call" class="w-6 h-6 text-[#7de8eb]"></i></div>
-            <div>
-              <div class="flex items-center gap-3 mb-2">
-                <h3 class="text-xl font-semibold text-white">Phone calls</h3>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold px-2.5 py-1">Where WiseCall starts</span>
-              </div>
-              <p class="text-white/60 text-sm leading-relaxed max-w-3xl">Answer missed, busy and out-of-hours calls, qualify callers, book appointments, route urgent enquiries and send instant summaries to your team.</p>
+      <!-- Phone: featured, phone-first -->
+      <div class="motion rounded-2xl bg-gradient-to-br from-[#7de8eb]/[0.10] to-transparent border border-[#7de8eb]/30 p-7 shadow-[0_20px_60px_rgba(0,0,0,0.3)] mb-5" data-anim="fade-up" style="transition-delay:0.05s">
+        <div class="flex flex-col sm:flex-row sm:items-start gap-5">
+          <div class="w-12 h-12 shrink-0 aspect-square rounded-xl bg-gradient-to-br from-[#7de8eb]/25 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="phone-call" class="w-6 h-6 text-[#7de8eb]"></i></div>
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <h3 class="text-xl font-semibold text-white">Phone calls</h3>
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold px-2.5 py-1">Where WiseCall starts</span>
+            </div>
+            <p class="text-white/60 text-sm leading-relaxed max-w-3xl">Answer missed, busy and out-of-hours calls, qualify callers, book appointments, route urgent enquiries and send instant summaries to your team.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-8 items-stretch min-w-0">
+        <!-- Left: compact channel list -->
+        <div class="motion flex flex-col gap-4 min-w-0" data-anim="fade-up" style="transition-delay:0.08s">
+          <div class="flex items-start gap-4 rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-5 lg:flex-1 min-w-0">
+            <div class="w-11 h-11 shrink-0 aspect-square rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="mail" class="w-5 h-5 text-[#7de8eb]"></i></div>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-lg font-semibold text-white mb-1">Email</h3>
+              <p class="text-white/55 text-sm leading-relaxed">Drafts and sends helpful replies using your website, FAQs, services, opening hours and booking rules.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-5 lg:flex-1 min-w-0">
+            <div class="w-11 h-11 shrink-0 aspect-square rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="message-circle" class="w-5 h-5 text-[#7de8eb]"></i></div>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-lg font-semibold text-white mb-1">WhatsApp</h3>
+              <p class="text-white/55 text-sm leading-relaxed">Confirms details, collects missing information and keeps customers updated in the channel they already use.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-5 lg:flex-1 min-w-0">
+            <div class="w-11 h-11 shrink-0 aspect-square rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="messages-square" class="w-5 h-5 text-[#7de8eb]"></i></div>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-lg font-semibold text-white mb-1">Live chat</h3>
+              <p class="text-white/55 text-sm leading-relaxed">Turns website visitors into captured enquiries with instant answers and clear next steps.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-5 lg:flex-1 min-w-0">
+            <div class="w-11 h-11 shrink-0 aspect-square rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center"><i data-lucide="message-square-text" class="w-5 h-5 text-[#7de8eb]"></i></div>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-lg font-semibold text-white mb-1">SMS</h3>
+              <p class="text-white/55 text-sm leading-relaxed">A genuine two-way channel — answers texted-in questions using your knowledge base, plus sends confirmations, reminders and call summaries.</p>
             </div>
           </div>
         </div>
 
-        <div class="motion rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.08s">
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="mail" class="w-5 h-5 text-[#7de8eb]"></i></div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">Email</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Draft and send helpful replies using your website, FAQs, services, opening hours and booking rules — without your team rewriting the same answers all day.</p>
-        </div>
+        <!-- Right: unified inbox mockup -->
+        <div class="motion rounded-2xl bg-gradient-to-br from-[#7de8eb]/[0.10] to-transparent border border-[#7de8eb]/30 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.4)] flex flex-col min-w-0 overflow-hidden" data-anim="fade-left" style="transition-delay:0.1s">
+          <div class="flex items-center justify-between gap-3 mb-4 min-w-0">
+            <div class="flex items-center gap-2 min-w-0">
+              <i data-lucide="inbox" class="w-5 h-5 text-[#7de8eb]"></i>
+              <p class="text-white font-bold text-sm">Today's enquiries</p>
+            </div>
+            <span class="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-[#7de8eb]"><span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>One inbox</span>
+          </div>
 
-        <div class="motion rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.11s">
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="message-circle" class="w-5 h-5 text-[#7de8eb]"></i></div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">WhatsApp</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Continue conversations, confirm details, collect missing information and keep customers updated in the channel they already use.</p>
-        </div>
+          <div class="flex-1 flex flex-col justify-between gap-1 text-sm min-w-0">
+            <div class="flex items-center gap-2 sm:gap-3 py-3 border-t border-white/10 min-w-0">
+              <span class="w-9 h-9 shrink-0 aspect-square rounded-lg bg-[#7de8eb]/15 flex items-center justify-center"><i data-lucide="phone-incoming" class="w-4 h-4 text-[#7de8eb]"></i></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-white/85 font-medium truncate">Sarah D. &middot; New patient enquiry</p>
+                <p class="text-white/45 text-xs">Phone &middot; 2 min ago</p>
+              </div>
+              <span class="hidden sm:inline-flex shrink-0 px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold whitespace-nowrap">Summary sent</span>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3 py-3 border-t border-white/10 min-w-0">
+              <span class="w-9 h-9 shrink-0 aspect-square rounded-lg bg-[#7de8eb]/15 flex items-center justify-center"><i data-lucide="message-circle" class="w-4 h-4 text-[#7de8eb]"></i></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-white/85 font-medium truncate">James R. &middot; Reschedule request</p>
+                <p class="text-white/45 text-xs">WhatsApp &middot; 11:20</p>
+              </div>
+              <span class="hidden sm:inline-flex shrink-0 px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold whitespace-nowrap">Booking confirmed</span>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3 py-3 border-t border-white/10 min-w-0">
+              <span class="w-9 h-9 shrink-0 aspect-square rounded-lg bg-[#7de8eb]/15 flex items-center justify-center"><i data-lucide="mail" class="w-4 h-4 text-[#7de8eb]"></i></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-white/85 font-medium truncate">Quote request &middot; Boiler service</p>
+                <p class="text-white/45 text-xs">Email &middot; 10:48</p>
+              </div>
+              <span class="hidden sm:inline-flex shrink-0 px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold whitespace-nowrap">Replied</span>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3 py-3 border-t border-white/10 min-w-0">
+              <span class="w-9 h-9 shrink-0 aspect-square rounded-lg bg-[#7de8eb]/15 flex items-center justify-center"><i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb]"></i></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-white/85 font-medium truncate">Opening hours &middot; Website visitor</p>
+                <p class="text-white/45 text-xs">Live chat &middot; 10:15</p>
+              </div>
+              <span class="hidden sm:inline-flex shrink-0 px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold whitespace-nowrap">Captured</span>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3 py-3 border-t border-white/10 min-w-0">
+              <span class="w-9 h-9 shrink-0 aspect-square rounded-lg bg-[#7de8eb]/15 flex items-center justify-center"><i data-lucide="message-square-text" class="w-4 h-4 text-[#7de8eb]"></i></span>
+              <div class="min-w-0 flex-1">
+                <p class="text-white/85 font-medium truncate">"Can you fit me in this Saturday?"</p>
+                <p class="text-white/45 text-xs">SMS &middot; 09:30</p>
+              </div>
+              <span class="hidden sm:inline-flex shrink-0 px-2.5 py-1 rounded-full bg-[#7de8eb]/15 text-[#7de8eb] text-xs font-semibold whitespace-nowrap">Answered</span>
+            </div>
+          </div>
 
-        <div class="motion rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.14s">
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="messages-square" class="w-5 h-5 text-[#7de8eb]"></i></div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">Live chat</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Turn website visitors into captured enquiries with instant answers, qualification questions and clear next steps.</p>
-        </div>
-
-        <div class="motion rounded-2xl bg-white/5 border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.17s">
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4"><i data-lucide="message-square-text" class="w-5 h-5 text-[#7de8eb]"></i></div>
-          <h3 class="text-lg font-semibold text-white mb-1.5">SMS</h3>
-          <p class="text-white/55 text-sm leading-relaxed">Send confirmations, reminders, call summaries and follow-up messages so customers and staff know what happens next.</p>
+          <div class="border-t border-white/10 mt-1 pt-4">
+            <p class="text-white/45 text-xs flex items-start gap-2"><i data-lucide="file-text" class="w-3.5 h-3.5 text-[#7de8eb] flex-shrink-0 mt-0.5"></i><span>Every enquiry ends with a clear summary and next step, whichever channel it came from.</span></p>
+          </div>
         </div>
       </div>
 
@@ -1634,7 +1700,7 @@
   <!-- Mobile sticky CTA bar: appears after scrolling past the hero -->
   <div id="mobileStickyCta" class="fixed bottom-0 inset-x-0 z-40 lg:hidden translate-y-full transition-transform duration-300 bg-[#0f1f1f]/95 backdrop-blur-md border-t border-[#7de8eb]/20 px-4 pt-3 flex gap-3" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));">
     <a href="tel:+441135222277" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[#7de8eb] px-4 py-3 text-[#172929] font-bold text-sm">
-      <i data-lucide="phone-call" class="w-4 h-4"></i> Call the demo
+      <i data-lucide="phone-call" class="w-4 h-4 shrink-0"></i> Call the demo
     </a>
     <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 border border-[#7de8eb]/30 text-white font-semibold text-sm px-4 py-3">
       Try it now

@@ -1,0 +1,42 @@
+{
+  "id": "lancaster",
+  "name": "Lancaster",
+  "postcode_regex": "^LA\\d",
+  "area_column": "area",
+  "file_prefix": "lancaster-la-dental",
+  "overrides_file": "lancaster-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "LA1",
+    "LA9",
+    "LA14",
+    "LA4",
+    "LA5",
+    "LA12",
+    "LA23",
+    "LA2",
+    "LA6",
+    "LA7",
+    "LA11",
+    "LA18"
+  ],
+  "core_segment_prefix": "lancaster-core",
+  "area_labels": {
+    "LA1": "Lancaster (LA1)",
+    "LA10": "Lancaster (LA10)",
+    "LA11": "Lancaster (LA11)",
+    "LA12": "Lancaster (LA12)",
+    "LA14": "Lancaster (LA14)",
+    "LA18": "Lancaster (LA18)",
+    "LA2": "Lancaster (LA2)",
+    "LA22": "Lancaster (LA22)",
+    "LA23": "Lancaster (LA23)",
+    "LA3": "Lancaster (LA3)",
+    "LA4": "Lancaster (LA4)",
+    "LA5": "Lancaster (LA5)",
+    "LA6": "Lancaster (LA6)",
+    "LA7": "Lancaster (LA7)",
+    "LA9": "Lancaster (LA9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}

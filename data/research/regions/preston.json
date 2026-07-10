@@ -1,0 +1,37 @@
+{
+  "id": "preston",
+  "name": "Preston",
+  "postcode_regex": "^PR\\d",
+  "area_column": "area",
+  "file_prefix": "preston-pr-dental",
+  "overrides_file": "preston-dental-manual-overrides.json",
+  "core_outward_codes": [
+    "PR1",
+    "PR2",
+    "PR7",
+    "PR3",
+    "PR8",
+    "PR4",
+    "PR9",
+    "PR5",
+    "PR25",
+    "PR6",
+    "PR26"
+  ],
+  "core_segment_prefix": "preston-core",
+  "area_labels": {
+    "PR1": "Preston (PR1)",
+    "PR2": "Preston (PR2)",
+    "PR25": "Preston (PR25)",
+    "PR26": "Preston (PR26)",
+    "PR3": "Preston (PR3)",
+    "PR4": "Preston (PR4)",
+    "PR5": "Preston (PR5)",
+    "PR6": "Preston (PR6)",
+    "PR7": "Preston (PR7)",
+    "PR8": "Preston (PR8)",
+    "PR9": "Preston (PR9)"
+  },
+  "data_source": "cqc",
+  "country": "england"
+}
