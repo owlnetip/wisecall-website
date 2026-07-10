@@ -304,9 +304,9 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7f7]">
+    <div className="min-h-screen bg-[#f4f7f7] text-[#0e1b1b]">
       <header className="border-b border-[#d8e4e4] bg-white px-6 py-5">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
+        <div className="mx-auto flex w-full max-w-[2200px] flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-[#0e1b1b]">Dental outreach CRM</h1>
             <p className="mt-1 text-sm text-[#5a7272]">
@@ -369,25 +369,25 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
         </div>
         {msg && (
           <p
-            className={`mx-auto mt-3 max-w-7xl text-sm font-semibold ${msg.kind === "ok" ? "text-emerald-700" : "text-red-600"}`}
+            className={`mx-auto mt-3 w-full max-w-[2200px] text-sm font-semibold ${msg.kind === "ok" ? "text-emerald-700" : "text-red-600"}`}
           >
             {msg.text}
           </p>
         )}
         {seedStats && (seedStats.bySegment.dentally_active ?? 0) < 100 && (
-          <p className="mx-auto mt-2 max-w-7xl rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          <p className="mx-auto mt-2 w-full max-w-[2200px] rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
             Deployed seed file only has <strong>{seedStats.bySegment.dentally_active ?? 0} Dentally</strong> contacts
             ({seedStats.total} total). Merge PR #42 / #45 for the full England+UK build (~333 Dentally), redeploy, then
             import again.
           </p>
         )}
         {seedStats && (seedStats.bySegment.dentally_active ?? 0) >= 100 && (
-          <p className="mx-auto mt-2 max-w-7xl text-sm text-[#5a7272]">
+          <p className="mx-auto mt-2 w-full max-w-[2200px] text-sm text-[#5a7272]">
             Seed file: <strong>{seedStats.bySegment.dentally_active ?? 0} Dentally</strong> · {seedStats.total.toLocaleString()} total contacts
           </p>
         )}
         {stats && (
-          <div className="mx-auto mt-4 grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+          <div className="mx-auto mt-4 grid w-full max-w-[2200px] gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             {[
               { label: "Dentally", value: stats.dentallyActive },
               { label: "Have email", value: stats.withEmail },
@@ -408,8 +408,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
       </header>
 
       {view === "templates" ? (
-        <div className="mx-auto max-w-6xl px-6 py-6">
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+        <div className="mx-auto w-full max-w-[2200px] px-6 py-6">
+          <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
             <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Templates</p>
               <ul className="space-y-2">
@@ -454,7 +454,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                   className="rounded-lg border border-[#d8e4e4] px-3 py-2 text-sm"
                   placeholder="Subject (personalise with the fields above)"
                 />
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="grid gap-4 xl:grid-cols-[minmax(520px,1fr)_minmax(460px,0.9fr)]">
                   <div>
                     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Compose</p>
                     <RichEmailEditor
@@ -483,7 +483,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
           </div>
         </div>
       ) : (
-      <div className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[360px_1fr]">
+      <div className="mx-auto grid w-full max-w-[2200px] gap-6 px-6 py-6 xl:grid-cols-[390px_minmax(0,1fr)]">
         <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap gap-2">
             <button
@@ -782,7 +782,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2"
                     />
                   </label>
-                  <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(520px,1fr)_minmax(460px,0.9fr)]">
                     <div>
                       <p className="mb-1 text-sm font-semibold">Body</p>
                       <RichEmailEditor
