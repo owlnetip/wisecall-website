@@ -1,0 +1,35 @@
+practice_name,postcode,region,website,owner_name,owner_title,fullenrich_work_email,fullenrich_work_email_status,named_public_email,generic_public_email,owner_source_url
+360 Dental Care Limited,M3 4NJ,manchester,https://www.360dentalcare.co.uk,Jayme Adams,Founder,jayme@360dentalcare.co.uk,DELIVERABLE,,,https://www.360dentalcare.co.uk/team/
+Brixham Dental Practice Limited,TQ5 8NB,torquay,https://www.brixhamdental.co.uk,Paul Richardson,Owner,paul.richardson@nhs.net,DELIVERABLE,,,https://www.brixhamdental.co.uk/our-dental-practice/meet-the-team.aspx
+Caring Dental,BR5 1LY,bromley,https://www.caringdental.co.uk,Chris Prange,Owner,chris@caringdental.co.uk,DELIVERABLE,,,https://www.caringdental.co.uk/about/meet-the-team/
+Circ Dental,WN6 0HQ,wigan,https://www.circdental.co.uk,Nick Jones,Owner,nick.jones@circdental.co.uk,DELIVERABLE,,info@circdental.co.uk,https://www.circdental.co.uk
+Clover Dental & Implant Centre,SO52 9EP,southampton,https://www.cloverdental.co.uk,Sualeh Khan,Owner,sualeh@cloverdental.co.uk,DELIVERABLE,,info@cloverdental.co.uk,https://cloverdental.co.uk/about/meet-the-team/
+House of Dentistry,BN3 1NA,brighton,https://www.thehouseofdental.co.uk,Jose Cordero Bayo,Founder,jose@thehouseofdental.co.uk,DELIVERABLE,,hellohove@houseofdentistry.co.uk,https://www.houseofdentistry.co.uk/smile-makeover/
+Love Teeth Stonecot,SM3 9HF,sutton,https://loveteethdental.co.uk,Kunal Patel,Founder,kunal@loveteethdental.co.uk,HIGH_PROBABILITY,,,https://loveteethdental.co.uk/invisalign/
+Love Teeth Worcester Park,KT4 8DS,kingston,https://www.loveteethdental.co.uk,Kunal Patel,Founder,kunal@loveteethdental.co.uk,DELIVERABLE,,,https://loveteethdental.co.uk/invisalign/
+Mola Dental,S8 0LB,sheffield,https://www.moladental.com,Chetan Mistry,Owner,chetan.mistry@moladental.com,DELIVERABLE,,hello@moladental.com,https://moladental.com/team/
+"2 Green Smile LTD, trading as 2 Green Dental",DA1 4JL,dartford,https://www.2greendental.co.uk,Ameeka Patel,Principal Dentist,ameeka@2greendental.co.uk,DELIVERABLE,,,https://www.2greendental.co.uk
+Abbots Lodge Dental Practice,BN16 3NL,brighton,https://www.abbotslodge.com,Peter Saner,Principal,peter@abbotslodge.com,CATCH_ALL,,,https://www.abbotslodge.com/about-us/our-team/
+Aspects Dental and Referral,MK5 6JG,milton-keynes,https://www.aspectsdental.com,Hetal Patel,Principal Dentist,hetal@aspectsdental.com,DELIVERABLE,,info@aspectsdental.com,https://aspectsdental.com/team/
+Aura Dental,NW8 7BT,london-north-west,https://www.auradentallondon.co.uk,Ronak Shams,Principal,rshams@auradentallondon.co.uk,CATCH_ALL,,info@auradentallondon.com,https://www.auradentallondon.co.uk
+Belmont Dental Care,SM1 4DW,sutton,https://www.benhill-dental-practice.co.uk,Alexandra Fivey,Principal Dentist,alex@benhill-dental-practice.co.uk,DELIVERABLE,,reception@benhill-dental-practice.co.uk,https://www.benhill-dental-practice.co.uk
+Bridge Dental,SE1 1NL,london-south-east,https://www.bridgedental.com,Deb Ray,Principal Dentist,deb@bridgedental.com,CATCH_ALL,,,https://www.bridgedental.com
+Cobham Dental,KT11 3BN,kingston,https://www.cobhamdental.co.uk,Mohamed Motter,Principal Dentist,mohamed@cobhamdental.co.uk,DELIVERABLE,,admin@cobhamdental.co.uk,https://cobhamdental.co.uk/the-team
+Cotteswold House Dental Practice,GL4 6RH,gloucester,https://www.cotteswoldhouse.co.uk,Rachel Addison,Principal Dentist,rachel@cotteswoldhouse.co.uk,CATCH_ALL,,,https://www.cotteswoldhouse.co.uk/about/meet-the-team/
+Crofton Dental Care,PO14 2PN,portsmouth,https://www.croftondentalcare.co.uk,Basil Mashkour,Principal Dentist,basil@croftondentalcare.com,CATCH_ALL,,info@croftondentalcare.com,https://www.croftondentalcare.com/dentist-in-fareham/
+Crown Bank Dental,CW11 1FW,crewe,https://www.crownbankdental.co.uk,Mehdi Yazdi,Practice Principal,mehdi.yazdi@crownbankdental.co.uk,DELIVERABLE,,,https://www.crownbankdental.co.uk
+Optimal Dental Health,NW1 6AE,london-north-west,https://www.optimaldentalhealth.co.uk,James Goolnik,Founder,james@optimaldental.co.uk,CATCH_ALL,,hello@optimaldental.co.uk,https://www.optimaldentalhealth.co.uk
+Supernova Dental,TA6 6LQ,taunton,https://www.supernovadental.co.uk,Scott Young,Owner,scott@supernovadental.co.uk,DELIVERABLE,,enquiries@supernovadental.co.uk,https://www.supernovadental.co.uk
+The Beresford Clinic,SW1W 0EJ,london-south-west,https://www.beresforddentalclinic.co.uk,Chris Yong,Co-Founder,chris.yong@beresforddentalclinic.co.uk,DELIVERABLE,,info@beresforddentalclinic.co.uk,https://beresforddentalclinic.co.uk/team/dr-chris-yong/
+The Modern Dentist,EC2A 4AQ,london-city,https://www.themoderndentist.co.uk,Mark Flynn,Founder,mark@themoderndentist.co.uk,HIGH_PROBABILITY,,,https://www.themoderndentist.co.uk
+UltraSmile,E14 7JG,london-east,https://www.ultrasmile.co.uk,Thang Nghiem,Owner,thang@ultrasmile.co.uk,DELIVERABLE,,,https://ultrasmile.co.uk/
+Wigston Dental Care,LE18 1JW,leicester,https://www.wigstondentalcare.co.uk,Sheetal Hindocha,Owner,hindocha@wigstondentalcare.co.uk,CATCH_ALL,,reception@wigstondentalcare.co.uk,https://www.wigstondentalcare.co.uk/about/meet-the-team/
+Dental Beauty Swanley,BR8 8AE,bromley,https://dentalbeautyswanley.co.uk,Will Holmes,Principal Dentist,will@dentalbeauty.co.uk,CATCH_ALL,,info@dentalbeauty.co.uk,https://dentalbeautyswanley.co.uk
+Dental House,TW16 7BH,twickenham,https://www.dental-house.co.uk,Shamir Chandarana,Principal Dentist,shamir@dental-house.co.uk,HIGH_PROBABILITY,,info@dental-house.co.uk,https://dental-house.co.uk/our-team/
+Dental Specialists MK,MK2 2EH,milton-keynes,https://www.dentalspecialistsmk.com,Carol Subadan,Practice Principal,csubadan@dentalspecialistsmk.com,DELIVERABLE,,,https://dentalspecialistsmk.com/team/
+Denvolve,SE18 1HF,london-south-east,https://www.denvolve.co.uk,Roshan Vasaiwalla,Principal Dentist,roshan@denvolve.co.uk,HIGH_PROBABILITY,,info@denvolve.co.uk,https://denvolve.co.uk/meet-the-team/
+Dover Priory Dental Practice,CT17 9RQ,canterbury,https://www.doverpriorydental.com,Dorothy Riley,Practice Principal,dorothy@doverpriorydental.com,DELIVERABLE,,smile@doverpriorydental.com,https://www.doverpriorydental.com
+East Park Dental Practice Limited Northampton,NN1 4LB,northampton,https://www.eastparkdental.co.uk,Chris Young,Principal Dentist,chris@eastparkdental.co.uk,DELIVERABLE,,reception@eastparkdental.co.uk,https://eastparkdental.co.uk/
+Elbow Lane Dental Care,L37 4AB,liverpool,https://www.elbowlanedental.co.uk,Dan Collins,Principal Dentist,dan@elbowlanedental.co.uk,DELIVERABLE,,info@elbowlanedental.co.uk,https://www.elbowlanedental.co.uk
+Eledent Smiles,SL5 7HE,slough,https://www.frankeldentalcare.co.uk,Aman Babber,Principal,aman@eledentsmiles.co.uk,DELIVERABLE,,,https://www.eledentsmiles.co.uk/
+Foley Park Dental & Implant Centre,DY11 6LS,dudley,https://www.foleyparkdental.co.uk,Suraj Dhanda,Principal,surajdhanda@foleyparkdental.co.uk,DELIVERABLE,,reception@foleyparkdental.co.uk,https://www.foleyparkdental.co.uk/why-choose-us/meet-the-team/

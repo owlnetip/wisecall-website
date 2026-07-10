@@ -21,6 +21,7 @@ RESEARCH = ROOT / "data" / "research"
 OUT = ROOT / "apps/portal" / "src" / "data" / "dental-prospects-seed.json"
 REGIONS_DIR = RESEARCH / "regions"
 ADG_GROUPS = RESEARCH / "adg-corporate-groups.json"
+OWNER_EMAILS_READY = RESEARCH / "dentally-owner-emails-ready.csv"
 
 
 def load_region_map() -> dict[str, str]:
@@ -49,6 +50,10 @@ def area_column(region: str) -> str:
     if region == "leeds":
         return "ls_area"
     return "area"
+
+
+def prospect_key(name: str, postcode: str, region: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", name.lower()) + postcode.upper().replace(" ", "") + region
 
 
 def load_corporate_patterns() -> list[tuple[str, list[str]]]:
@@ -161,6 +166,54 @@ def prospect_from_row(row: dict[str, str], region: str, area_col: str, segment: 
     }
 
 
+def load_owner_email_enrichments() -> dict[str, dict[str, str]]:
+    if not OWNER_EMAILS_READY.exists():
+        return {}
+
+    enrichments: dict[str, dict[str, str]] = {}
+    with OWNER_EMAILS_READY.open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            practice_name = (row.get("practice_name") or "").strip()
+            postcode = (row.get("postcode") or "").strip().upper()
+            region = (row.get("region") or "").strip()
+            owner_email = (row.get("fullenrich_work_email") or "").strip()
+            if not practice_name or not postcode or not region or not owner_email:
+                continue
+            enrichments[prospect_key(practice_name, postcode, region)] = row
+    return enrichments
+
+
+def apply_owner_email_enrichments(prospects: list[dict[str, str]]) -> int:
+    enrichments = load_owner_email_enrichments()
+    matched = 0
+
+    for prospect in prospects:
+        key = prospect_key(prospect["practice_name"], prospect["postcode"], prospect["region"])
+        enrichment = enrichments.get(key)
+        if not enrichment:
+            continue
+
+        owner_name = (enrichment.get("owner_name") or "").strip()
+        owner_title = (enrichment.get("owner_title") or "").strip()
+        owner_email = (enrichment.get("fullenrich_work_email") or "").strip()
+        owner_status = (enrichment.get("fullenrich_work_email_status") or "").strip()
+
+        prospect["contact_name"] = owner_name
+        prospect["email"] = owner_email
+        prospect["owner_name"] = owner_name
+        prospect["owner_title"] = owner_title
+        prospect["owner_email"] = owner_email
+        prospect["owner_email_status"] = owner_status
+        prospect["owner_source_url"] = (enrichment.get("owner_source_url") or "").strip()
+        prospect["named_public_email"] = (enrichment.get("named_public_email") or "").strip()
+        prospect["generic_public_email"] = (enrichment.get("generic_public_email") or "").strip()
+        prospect["outreach_priority"] = "owner_email_found"
+        prospect["outreach_priority_rank"] = "1"
+        matched += 1
+
+    return matched
+
+
 def load_all_prospects() -> list[dict[str, str]]:
     patterns = load_corporate_patterns()
     multi_site_providers = load_multi_site_providers()
@@ -181,7 +234,7 @@ def load_all_prospects() -> list[dict[str, str]]:
                 postcode = (row.get("postcode") or "").strip().upper()
                 if not name:
                     continue
-                key = re.sub(r"[^a-z0-9]", "", name.lower()) + postcode.replace(" ", "") + region
+                key = prospect_key(name, postcode, region)
                 if key in seen:
                     continue
                 seen.add(key)
@@ -192,6 +245,7 @@ def load_all_prospects() -> list[dict[str, str]]:
 
 def main() -> None:
     prospects = load_all_prospects()
+    enriched_owner_contacts = apply_owner_email_enrichments(prospects)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     by_segment: dict[str, int] = {}
     by_region: dict[str, int] = {}
@@ -205,6 +259,7 @@ def main() -> None:
                 "prospects": prospects,
                 "generated_from": "*-marketing-list.csv",
                 "counts": {"by_segment": by_segment, "by_region": by_region},
+                "enriched_owner_contacts": enriched_owner_contacts,
             },
             indent=2,
         ),
@@ -213,6 +268,7 @@ def main() -> None:
     print(f"Wrote {len(prospects)} prospects -> {OUT}")
     print("By segment:", by_segment)
     print("By region:", by_region)
+    print("Enriched owner contacts:", enriched_owner_contacts)
 
 
 if __name__ == "__main__":
