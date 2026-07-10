@@ -108,7 +108,16 @@ export function wrapEmailHtml(innerHtml: string): string {
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #d8e4e4;">
 <tr><td style="background:${BRAND_DARK};padding:20px 28px;">
-<img src="${EMAIL_LOGO_URL}" alt="WiseCall" height="28" style="height:28px;display:block;" />
+<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+<tr>
+<td style="vertical-align:middle;padding:0 10px 0 0;">
+<img src="${EMAIL_LOGO_URL}" alt="" height="28" style="height:28px;width:auto;display:block;" />
+</td>
+<td style="vertical-align:middle;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:20px;line-height:1;font-weight:800;color:#ffffff;">
+WiseCall
+</td>
+</tr>
+</table>
 </td></tr>
 <tr><td style="padding:28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#1a2b2b;">
 ${innerHtml}
