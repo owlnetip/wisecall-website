@@ -151,6 +151,18 @@ Release gate: typecheck, unit tests, production build, lint delta review, and au
 
 Release gate: targeted lint, typecheck, unit tests, production build, and authenticated responsive browser verification.
 
+### Phase 2B - Integration trust and operational state (current branch)
+
+- Validate enabled integration endpoints and reject local, private, credential-bearing, or non-standard-port URLs.
+- Apply the same public-network and redirect checks inside the voice runtime so older stored configuration cannot bypass the portal guard.
+- Add a server-owned test workflow with non-customer sample data and persisted pass/fail evidence.
+- Invalidate stale test evidence whenever an integration's execution settings change.
+- Collapse integration configuration into status-led rows with explicit Not tested, Test passed, Test failed, and Disabled states.
+- Distinguish Live, Paused, Setting up, Needs review, and Not connected using the active profile and phone route together.
+- Stop dashboard contact-name repair from calling `revalidatePath` during render and triggering the route error boundary.
+
+Remaining limitation: integration status currently represents the last explicit portal test, not continuous uptime or real-call delivery history. Runtime delivery events need a dedicated event store before the UI can claim live health.
+
 ### Phase 2 - Production state and integrations
 
 - Persist Draft, Testing, Live, Paused, Error, and Disconnected states.

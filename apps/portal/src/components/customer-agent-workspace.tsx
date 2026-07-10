@@ -99,6 +99,11 @@ import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 import { OutboundManager } from "@/components/outbound-manager";
 import { AgentPreviewModal } from "./agent-preview-modal";
+import {
+  agentOperationalLabel,
+  getAgentOperationalState,
+  type AgentOperationalState,
+} from "@/lib/agent-operational-state";
 
 type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
@@ -2410,7 +2415,8 @@ function AgentCard({
   adminMode: boolean;
   onOpen: () => void;
 }) {
-  const live = assistant.status === "Live";
+  const operationalState = getAgentOperationalState(assistant);
+  const live = operationalState === "live";
   return (
     <button
       type="button"
@@ -2421,7 +2427,7 @@ function AgentCard({
         <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#172929] to-[#0e1b1b] text-base font-black text-[#7de8eb]">
           {(assistant.name || "A").charAt(0).toUpperCase()}
         </span>
-        <StatusPill status={assistant.status} />
+        <AgentStatePill assistant={assistant} />
       </div>
       <p className="mt-3 truncate text-base font-black text-ink">{assistant.name}</p>
       <p className="mt-0.5 truncate text-sm text-ink-soft">
@@ -2597,13 +2603,24 @@ function AssistantDetail({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
-  const routingLive = assistant.routing.status === "live";
-  const routingPending = assistant.routing.status === "pending";
-  const routingLabel = routingLive
-    ? "Live and answering"
-    : routingPending
-      ? "Number setting up"
-      : "Phone line not connected";
+  const operationalState = getAgentOperationalState(assistant);
+  const hasPhoneLine = assistant.routing.status === "live" && Boolean(assistant.routing.number);
+  const routingLabel =
+    operationalState === "live"
+      ? "Live and answering"
+      : operationalState === "paused"
+        ? "Paused · phone line connected"
+        : operationalState === "setting_up"
+          ? "Number setting up"
+          : operationalState === "review"
+            ? "Needs review before answering"
+            : "Phone line not connected";
+  const stateDot =
+    operationalState === "live"
+      ? "live-dot bg-good"
+      : operationalState === "setting_up" || operationalState === "review"
+        ? "bg-warn"
+        : "bg-ink-faint";
 
   return (
     <div className="anim-rise mx-auto max-w-5xl">
@@ -2747,27 +2764,25 @@ function AssistantDetail({
       <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-line py-3 text-sm">
         <span className="inline-flex items-center gap-2 font-bold text-ink">
           <span
-            className={`h-2 w-2 rounded-full ${
-              routingLive ? "live-dot bg-good" : routingPending ? "bg-warn" : "bg-ink-faint"
-            }`}
+            className={`h-2 w-2 rounded-full ${stateDot}`}
           />
           {routingLabel}
         </span>
-        {routingLive ? (
+        {hasPhoneLine ? (
           <span className="inline-flex min-w-0 items-center gap-1.5 text-ink-soft">
             <Phone className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate font-mono">{assistant.routing.number}</span>
           </span>
-        ) : (
+        ) : operationalState === "setting_up" || operationalState === "disconnected" ? (
           <button
             type="button"
             onClick={() => onTabChange("routing")}
             className="press inline-flex items-center gap-1 font-black text-teal transition hover:text-teal-deep"
           >
-            {routingPending ? "View status" : "Set up number"}
+            {operationalState === "setting_up" ? "View status" : "Set up number"}
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
-        )}
+        ) : null}
         <span className="text-ink-faint">
           {assistant.calls > 0 ? `${assistant.calls} calls handled` : "No calls yet"}
         </span>
@@ -5773,24 +5788,29 @@ function Field({
   );
 }
 
-function StatusPill({ status }: { status: Assistant["status"] }) {
-  const styles = {
-    Live: "bg-good-wash text-good",
-    Setup: "bg-teal-wash text-teal",
-    Review: "bg-warn-wash text-warn",
+function AgentStatePill({ assistant }: { assistant: Assistant }) {
+  const state = getAgentOperationalState(assistant);
+  const styles: Record<AgentOperationalState, string> = {
+    live: "bg-good-wash text-good",
+    paused: "bg-card-tint text-ink-soft",
+    setting_up: "bg-warn-wash text-warn",
+    review: "bg-warn-wash text-warn",
+    disconnected: "bg-card-tint text-ink-soft",
   };
-  const dot = {
-    Live: "live-dot bg-good",
-    Setup: "bg-teal",
-    Review: "bg-warn",
+  const dot: Record<AgentOperationalState, string> = {
+    live: "live-dot bg-good",
+    paused: "bg-ink-faint",
+    setting_up: "bg-warn",
+    review: "bg-warn",
+    disconnected: "bg-ink-faint",
   };
 
   return (
     <span
-      className={`inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${styles[status]}`}
+      className={`inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${styles[state]}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${dot[status]}`} />
-      {status}
+      <span className={`h-1.5 w-1.5 rounded-full ${dot[state]}`} />
+      {agentOperationalLabel(state)}
     </span>
   );
 }
