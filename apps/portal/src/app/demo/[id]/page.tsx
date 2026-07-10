@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Bot, Globe2, MessageSquareText } from "lucide-react";
+import { Bot, Globe2, MessageSquareText } from "lucide-react";
 import { CallbackForm } from "@/components/callback-form";
 import { getDemoByToken } from "@/lib/demo-store";
 
@@ -20,7 +20,7 @@ export default async function DemoPage({
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(125,232,235,0.14),transparent_36%),#172929] px-6 py-8 text-foreground">
       <div className="mx-auto max-w-5xl">
         <header className="mb-10 flex items-center justify-between gap-6">
-          <Link href="/" className="text-lg font-black text-white">
+          <Link href="https://wisecall.io" className="text-lg font-black text-white">
             WiseCall
           </Link>
           <span className="rounded-lg border border-accent/15 bg-white/5 px-3 py-2 text-xs font-semibold text-accent">
@@ -71,13 +71,6 @@ export default async function DemoPage({
               </p>
             </div>
             <CallbackForm source={`portal_demo_${id}`} />
-            <Link
-              href="/demo/new"
-              className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-accent hover:text-white"
-            >
-              Create another demo
-              <ArrowRight className="h-4 w-4" />
-            </Link>
           </div>
         </section>
       </div>

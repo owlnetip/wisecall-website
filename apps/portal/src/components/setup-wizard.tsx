@@ -325,11 +325,11 @@ export function SetupWizard({
         <div className="rounded-xl bg-[#1a3535] px-4 py-3.5">
           <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#7de8eb]">
             <ShieldCheck className="h-4 w-4" />
-            Nothing goes live yet
+            You control the final step
           </p>
           <p className="mt-1 text-xs leading-relaxed text-[#94b4b2]">
-            You review everything before your assistant takes its first call, and you can change
-            any of it later.
+            Nothing changes while you review. The final button clearly tells you when your first
+            number will be connected and ready for calls.
           </p>
         </div>
       </aside>

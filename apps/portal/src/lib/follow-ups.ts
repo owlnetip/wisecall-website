@@ -67,12 +67,16 @@ function mapFollowUp(row: FollowUpRow, agentName: string): FollowUp {
 
 export async function getFollowUpsForUser(userId: string): Promise<FollowUp[]> {
   const supabase = getServiceSupabase();
-  if (!supabase) return [];
+  if (!supabase) throw new Error("Follow-up data is not configured.");
 
-  const { data: profiles } = await supabase
+  const { data: profiles, error: profileError } = await supabase
     .from("wisecall_profiles")
     .select("id, business_name, clinic_name, profile_name, receptionist_name")
     .eq("metadata->>owner_id", userId);
+  if (profileError) {
+    console.error("getFollowUpsForUser profiles failed:", profileError.message);
+    throw new Error("Could not load follow-up ownership.");
+  }
 
   const profileIds = (profiles ?? []).map((p) => p.id as string);
   if (profileIds.length === 0) return [];
@@ -94,7 +98,7 @@ export async function getFollowUpsForUser(userId: string): Promise<FollowUp[]> {
 
   if (error) {
     console.error("getFollowUpsForUser failed:", error.message);
-    return [];
+    throw new Error("Could not load follow-ups.");
   }
 
   return (data as FollowUpRow[]).map((row) =>

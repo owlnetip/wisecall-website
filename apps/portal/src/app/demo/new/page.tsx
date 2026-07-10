@@ -1,7 +1,18 @@
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { DemoRequestForm } from "@/components/demo-request-form";
+import { isAdmin } from "@/lib/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export default function NewDemoPage() {
+export default async function NewDemoPage() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/?redirect=/demo/new");
+  if (!isAdmin(user)) redirect("/dashboard");
+
   return (
     <AppShell
       title="Create demo agent"

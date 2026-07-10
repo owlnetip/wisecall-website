@@ -21,6 +21,7 @@ export function EmailPreview({ innerHtml }: { innerHtml: string }) {
   return (
     <iframe
       title="Email preview"
+      sandbox=""
       className="h-[520px] w-full rounded-lg border border-[#d8e4e4] bg-white"
       srcDoc={wrapEmailHtml(innerHtml || "<p style='color:#8aa0a0'>Nothing to preview yet.</p>")}
     />

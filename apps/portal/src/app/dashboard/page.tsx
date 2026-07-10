@@ -71,26 +71,28 @@ export default async function DashboardPage() {
   // Load every panel independently and degrade gracefully: a transient failure
   // in one fetch (cold start, a Supabase/insights hiccup) must NOT 500 the whole
   // dashboard and force a refresh, render what we have and log the rest.
+  const loadIssues = new Set<string>();
   const safe = async <T,>(label: string, p: Promise<T>, fallback: T): Promise<T> => {
     try {
       return await p;
     } catch (err) {
       console.error(`dashboard load: ${label} failed`, err instanceof Error ? err.message : err);
+      loadIssues.add(label);
       return fallback;
     }
   };
 
   const [agents, callLogs, contacts, trial, insights, smsNumbers, whatsappNumbers, followUps] =
     await Promise.all([
-    safe("agents", getAgentsForUser(effectiveUserId), []),
-    safe("callLogs", getCallLogsForUser(effectiveUserId), []),
-    safe("contacts", getContactsForUser(effectiveUserId), []),
-    safe("trial", getTrialUsage(effectiveUserId, billing), null),
+    safe("Agents", getAgentsForUser(effectiveUserId), []),
+    safe("Inbox", getCallLogsForUser(effectiveUserId), []),
+    safe("Contacts", getContactsForUser(effectiveUserId), []),
+    safe("Plan usage", getTrialUsage(effectiveUserId, billing), null),
     // Default range matches the AI Insights view's default ("Last 7 days").
-    safe("insights", getInsightsForUser(effectiveUserId, "7d"), emptyInsights("7d", false)),
-    safe("smsNumbers", getSmsNumbersForUser(effectiveUserId), []),
-    safe("whatsappNumbers", getWhatsappNumbersForUser(effectiveUserId), []),
-    safe("followUps", getFollowUpsForUser(effectiveUserId), []),
+    safe("Insights", getInsightsForUser(effectiveUserId, "7d"), emptyInsights("7d", false)),
+    safe("SMS", getSmsNumbersForUser(effectiveUserId), []),
+    safe("WhatsApp", getWhatsappNumbersForUser(effectiveUserId), []),
+    safe("Follow-ups", getFollowUpsForUser(effectiveUserId), []),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.
@@ -98,10 +100,22 @@ export default async function DashboardPage() {
     acc[log.profileId] = (acc[log.profileId] ?? 0) + 1;
     return acc;
   }, {});
-  const enriched = agents?.map((agent) => ({
+  const enriched = agents.map((agent) => ({
     ...agent,
     calls: counts[agent.id] ?? agent.calls,
   }));
+
+  const issueOrder = [
+    "Agents",
+    "Inbox",
+    "Contacts",
+    "Insights",
+    "Follow-ups",
+    "Plan usage",
+    "SMS",
+    "WhatsApp",
+  ];
+  const orderedLoadIssues = issueOrder.filter((label) => loadIssues.has(label));
 
   const enrichedContacts = enrichContactsWithNames(contacts, callLogs);
   const nameBackfill = contactsNeedingNameBackfill(contacts, enrichedContacts);
@@ -111,7 +125,7 @@ export default async function DashboardPage() {
 
   return (
     <CustomerAgentWorkspace
-      initialAssistants={enriched ?? undefined}
+      initialAssistants={enriched}
       callLogs={callLogs}
       contacts={enrichedContacts}
       userEmail={impersonatingEmail ?? user.email}
@@ -132,6 +146,7 @@ export default async function DashboardPage() {
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}
       initialFollowUps={followUps}
+      loadIssues={orderedLoadIssues}
     />
   );
 }

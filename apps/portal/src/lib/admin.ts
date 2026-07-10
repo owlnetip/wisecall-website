@@ -1,14 +1,13 @@
 import type { User } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 
-// Who counts as an admin. Primary signal is a role stamped on the auth user
-// (app_metadata.role / user_metadata.role === "admin"); an optional ADMIN_EMAILS
-// allowlist (comma-separated) is a convenient fallback for granting access.
+// Who counts as an admin. app_metadata is server-controlled; user_metadata is
+// intentionally ignored because account holders can update it themselves. An
+// optional ADMIN_EMAILS allowlist is the operational fallback.
 export function isAdmin(user: User | null): boolean {
   if (!user) return false;
   const appRole = (user.app_metadata as Record<string, unknown> | null)?.role;
-  const userRole = (user.user_metadata as Record<string, unknown> | null)?.role;
-  if (appRole === "admin" || userRole === "admin") return true;
+  if (appRole === "admin") return true;
   const allow = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())

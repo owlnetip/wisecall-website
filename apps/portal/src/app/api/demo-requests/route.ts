@@ -1,9 +1,22 @@
 import { NextResponse } from "next/server";
 import { createDemoRequest } from "@/lib/demo-store";
 import { demoRequestSchema } from "@/lib/validation";
+import { isAdmin } from "@/lib/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ ok: false, error: "Not signed in." }, { status: 401 });
+    }
+    if (!isAdmin(user)) {
+      return NextResponse.json({ ok: false, error: "Admin access required." }, { status: 403 });
+    }
+
     const payload = await request.json();
     const parsed = demoRequestSchema.safeParse(payload);
 

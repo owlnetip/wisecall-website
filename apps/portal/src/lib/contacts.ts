@@ -58,12 +58,16 @@ function mapContact(row: ContactRow, agentName: string): Contact {
 
 export async function getContactsForUser(userId: string): Promise<Contact[]> {
   const supabase = getServiceSupabase();
-  if (!supabase) return [];
+  if (!supabase) throw new Error("Contact data is not configured.");
 
-  const { data: profiles } = await supabase
+  const { data: profiles, error: profileError } = await supabase
     .from("wisecall_profiles")
     .select("id, receptionist_name, business_name, clinic_name")
     .eq("metadata->>owner_id", userId);
+  if (profileError) {
+    console.error("getContactsForUser profiles failed:", profileError.message);
+    throw new Error("Could not load contact ownership.");
+  }
 
   const profileIds = (profiles ?? []).map((p) => p.id as string);
   if (profileIds.length === 0) return [];
@@ -85,7 +89,7 @@ export async function getContactsForUser(userId: string): Promise<Contact[]> {
 
   if (error) {
     console.error("getContactsForUser failed:", error.message);
-    return [];
+    throw new Error("Could not load contacts.");
   }
 
   return (data as ContactRow[]).map((row) =>
