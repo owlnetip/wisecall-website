@@ -13,8 +13,12 @@ import {
   CheckCircle2,
   XCircle,
   Save,
+  Eye,
+  MousePointerClick,
+  Inbox,
 } from "lucide-react";
 import {
+  getOutreachCrmStats,
   importDentalProspectsFromSeed,
   listDueFollowUpCount,
   listOutreachProspects,
@@ -26,8 +30,10 @@ import {
   sendOutreachEmail,
   updateOutreachProspect,
   type DentalProspectsSeedStats,
+  type OutreachCrmStats,
   type OutreachEmail,
   type OutreachProspect,
+  type OutreachSmartList,
   type OutreachTemplate,
 } from "@/app/actions/outreach";
 import { RichEmailEditor, EmailPreview } from "@/components/rich-email-editor";
@@ -67,6 +73,27 @@ const STATUS_BADGE: Record<string, string> = {
   paused: "bg-amber-100 text-amber-800",
 };
 
+const SMART_LISTS: Array<{ value: OutreachSmartList; label: string; hint: string }> = [
+  { value: "all", label: "All", hint: "Everything in this segment" },
+  { value: "ready_to_email", label: "Ready to email", hint: "Has email, first send not yet sent" },
+  { value: "awaiting_reply", label: "Awaiting reply", hint: "First email sent, no reply yet" },
+  { value: "opened_no_reply", label: "Opened · no reply", hint: "They opened — chase or call" },
+  { value: "never_opened", label: "Never opened", hint: "Sent but no open yet" },
+  { value: "follow_up_due", label: "Follow-up due", hint: "Day 3/7/14 ready to send" },
+  { value: "replied", label: "Replied / interested", hint: "Needs a human response" },
+  { value: "no_email", label: "Missing email", hint: "Dentally practices still needing an address" },
+];
+
+function formatWhen(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats | null }) {
   const [view, setView] = useState<"prospects" | "templates">("prospects");
   const [prospects, setProspects] = useState<OutreachProspect[]>([]);
@@ -76,6 +103,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   const [regionFilter, setRegionFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [segmentFilter, setSegmentFilter] = useState("dentally_active");
+  const [smartList, setSmartList] = useState<OutreachSmartList>("all");
+  const [stats, setStats] = useState<OutreachCrmStats | null>(null);
   const [dueCount, setDueCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -103,27 +132,43 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   );
 
   const canEmail = selected?.outreachSegment === "dentally_active";
+  const dentallyTemplates = useMemo(
+    () =>
+      templates.filter(
+        (t) =>
+          t.templateFamily === "dentally" ||
+          t.slug.startsWith("dental-dentally-") ||
+          t.sequenceStep === "custom",
+      ),
+    [templates],
+  );
 
   const refresh = useCallback(async () => {
-    const [p, t, d] = await Promise.all([
+    const [p, t, d, s] = await Promise.all([
       listOutreachProspects({
         region: regionFilter || undefined,
         status: statusFilter || undefined,
         outreachSegment: segmentFilter || undefined,
+        smartList,
       }),
       listOutreachTemplates(),
       listDueFollowUpCount(),
+      getOutreachCrmStats(),
     ]);
     if (p.ok) setProspects(p.data);
     if (t.ok) {
       setTemplates(t.data);
       if (!templateId && t.data.length) {
-        const initial = t.data.find((x) => x.sequenceStep === "initial") ?? t.data[0];
+        const initial =
+          t.data.find((x) => x.sequenceStep === "initial" && (x.templateFamily === "dentally" || x.slug.startsWith("dental-dentally-"))) ??
+          t.data.find((x) => x.sequenceStep === "initial") ??
+          t.data[0];
         setTemplateId(initial.id);
       }
     }
     if (d.ok) setDueCount(d.data);
-  }, [regionFilter, statusFilter, segmentFilter, templateId]);
+    if (s.ok) setStats(s.data);
+  }, [regionFilter, statusFilter, segmentFilter, smartList, templateId]);
 
   useEffect(() => {
     void refresh();
@@ -265,7 +310,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
           <div>
             <h1 className="text-2xl font-black text-[#0e1b1b]">Dental outreach CRM</h1>
             <p className="mt-1 text-sm text-[#5a7272]">
-              Dentally prospects get email now. Exact and unknown PMS contacts are stored until you are ready.
+              Dentally-first sequences with first-email sent/open tracking. Mark replies so follow-ups stop automatically.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -340,6 +385,25 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
           <p className="mx-auto mt-2 max-w-7xl text-sm text-[#5a7272]">
             Seed file: <strong>{seedStats.bySegment.dentally_active ?? 0} Dentally</strong> · {seedStats.total.toLocaleString()} total contacts
           </p>
+        )}
+        {stats && (
+          <div className="mx-auto mt-4 grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+            {[
+              { label: "Dentally", value: stats.dentallyActive },
+              { label: "Have email", value: stats.withEmail },
+              { label: "Ready to send", value: stats.readyToEmail },
+              { label: "First email sent", value: stats.firstEmailSent },
+              { label: "Opened", value: stats.opened },
+              { label: "Awaiting reply", value: stats.awaitingReply },
+              { label: "Replied", value: stats.replied },
+              { label: "Follow-ups due", value: stats.followUpsDue },
+            ].map((card) => (
+              <div key={card.label} className="rounded-xl border border-[#d8e4e4] bg-[#f8fafa] px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5a7272]">{card.label}</p>
+                <p className="text-xl font-black text-[#0e1b1b]">{card.value}</p>
+              </div>
+            ))}
+          </div>
         )}
       </header>
 
@@ -444,6 +508,23 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
               </button>
             ))}
           </div>
+          <div className="mb-3 flex flex-wrap gap-2">
+            {SMART_LISTS.map((list) => (
+              <button
+                key={list.value}
+                type="button"
+                title={list.hint}
+                onClick={() => setSmartList(list.value)}
+                className={`rounded-full px-3 py-1 text-xs font-bold ${
+                  smartList === list.value
+                    ? "bg-[#0e7d82] text-white"
+                    : "border border-[#d8e4e4] bg-white text-[#5a7272]"
+                }`}
+              >
+                {list.label}
+              </button>
+            ))}
+          </div>
           <div className="mb-4 flex gap-2">
             <select
               value={regionFilter}
@@ -496,6 +577,25 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       {p.status.replace("_", " ")}
                     </span>
                   </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                    {p.firstEmailSentAt ? (
+                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-800">
+                        Sent {formatWhen(p.firstEmailSentAt)}
+                      </span>
+                    ) : p.email ? (
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-800">Ready</span>
+                    ) : (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">No email</span>
+                    )}
+                    {p.firstEmailOpenedAt && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2 py-0.5 text-cyan-800">
+                        <Eye className="h-3 w-3" /> Opened {formatWhen(p.firstEmailOpenedAt)}
+                      </span>
+                    )}
+                    {p.openCount > 1 && (
+                      <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-cyan-800">{p.openCount} opens</span>
+                    )}
+                  </div>
                   {p.sequenceStatus === "active" && p.nextFollowUpAt && (
                     <p className="mt-1 text-[11px] text-amber-700">
                       Next follow-up: {new Date(p.nextFollowUpAt).toLocaleDateString()}
@@ -547,6 +647,45 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                     ))}
                   </select>
                 </div>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-xl border border-[#e8efef] bg-[#f8fafa] px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5a7272]">First email</p>
+                    <p className="text-sm font-bold text-[#0e1b1b]">{formatWhen(selected.firstEmailSentAt)}</p>
+                  </div>
+                  <div className="rounded-xl border border-[#e8efef] bg-[#f8fafa] px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5a7272]">First opened</p>
+                    <p className="text-sm font-bold text-[#0e1b1b]">{formatWhen(selected.firstEmailOpenedAt)}</p>
+                  </div>
+                  <div className="rounded-xl border border-[#e8efef] bg-[#f8fafa] px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5a7272]">Opens</p>
+                    <p className="text-sm font-bold text-[#0e1b1b]">{selected.openCount}</p>
+                  </div>
+                  <div className="rounded-xl border border-[#e8efef] bg-[#f8fafa] px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5a7272]">Last reply marked</p>
+                    <p className="text-sm font-bold text-[#0e1b1b]">{formatWhen(selected.lastRepliedAt)}</p>
+                  </div>
+                </div>
+                {(selected.status === "contacted" || selected.status === "replied") && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void saveProspect({ status: "replied" })}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50"
+                    >
+                      <Inbox className="h-3.5 w-3.5" />
+                      Mark replied (stops sequence)
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void saveProspect({ status: "interested" })}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      Mark interested
+                    </button>
+                  </div>
+                )}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <label className="block text-sm">
                     <span className="mb-1 flex items-center gap-1 font-semibold text-[#0e1b1b]">
@@ -628,7 +767,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       onChange={(e) => setTemplateId(e.target.value)}
                       className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2"
                     >
-                      {templates.map((t) => (
+                      {dentallyTemplates.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
                         </option>
@@ -664,16 +803,23 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       checked={scheduleFollowUps}
                       onChange={(e) => setScheduleFollowUps(e.target.checked)}
                     />
-                    Schedule automatic follow-ups on day 3, 7 and 14 (stops if marked not interested / paused)
+                    Schedule Dentally follow-ups on day 3, 7 and 14 (stops if marked replied / not interested / paused)
                   </label>
+                  {selected.firstEmailSentAt && (
+                    <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      First email already sent {formatWhen(selected.firstEmailSentAt)}.
+                      Sending again is blocked unless you intentionally force a resend from the server action.
+                      Prefer the day 3/7/14 sequence or mark replied if they answered.
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={() => void onSend()}
-                    disabled={busy || !selected.email}
+                    disabled={busy || !selected.email || !!selected.firstEmailSentAt}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7de8eb] px-4 py-3 text-sm font-black text-[#0e1b1b] hover:bg-[#5de0e5] disabled:opacity-50"
                   >
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    Send email
+                    {selected.firstEmailSentAt ? "First email already sent" : "Send first email"}
                   </button>
                 </div>
               </div>
@@ -706,18 +852,43 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                         ) : (
                           <XCircle className="mt-0.5 h-4 w-4 text-red-500" />
                         )}
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="font-semibold text-[#0e1b1b]">
                             {e.sequenceStep.replace(/_/g, " ")} · {e.status}
                           </p>
                           <p className="text-[#5a7272]">{e.subject}</p>
                           <p className="text-xs text-[#5a7272]">
                             {e.sentAt
-                              ? `Sent ${new Date(e.sentAt).toLocaleString()}`
+                              ? `Sent ${formatWhen(e.sentAt)}`
                               : e.scheduledFor
-                                ? `Scheduled ${new Date(e.scheduledFor).toLocaleString()}`
-                                : e.createdAt}
+                                ? `Scheduled ${formatWhen(e.scheduledFor)}`
+                                : formatWhen(e.createdAt)}
                           </p>
+                          <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold">
+                            {e.deliveredAt && (
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">
+                                Delivered {formatWhen(e.deliveredAt)}
+                              </span>
+                            )}
+                            {e.openedAt && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2 py-0.5 text-cyan-800">
+                                <Eye className="h-3 w-3" />
+                                Opened {formatWhen(e.openedAt)}
+                                {e.openCount > 1 ? ` · ${e.openCount}×` : ""}
+                              </span>
+                            )}
+                            {e.clickedAt && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-800">
+                                <MousePointerClick className="h-3 w-3" />
+                                Clicked {formatWhen(e.clickedAt)}
+                              </span>
+                            )}
+                            {e.bouncedAt && (
+                              <span className="rounded-full bg-red-50 px-2 py-0.5 text-red-700">
+                                Bounced {formatWhen(e.bouncedAt)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </li>
                     ))}
