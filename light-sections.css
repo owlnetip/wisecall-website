@@ -35,6 +35,7 @@ section.light .text-white          { color: #0c1f1f !important; }
 section.light .text-white\/85      { color: rgba(12, 31, 31, 0.92) !important; }
 section.light .text-white\/80      { color: rgba(12, 31, 31, 0.88) !important; }
 section.light .text-white\/78      { color: rgba(12, 31, 31, 0.86) !important; }
+section.light .text-white\/75,
 section.light .text-white\/72,
 section.light .text-white\/70,
 section.light .text-white\/68,

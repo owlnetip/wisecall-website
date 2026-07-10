@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WiseCall for Dental Practices | AI Receptionist for Dentists UK</title>
-  <meta name="description" content="AI answering service for UK dental practices. Never miss a patient enquiry. Books appointments, handles cancellations and supports your reception team 24/7. Try the Dental AI live, no signup required.">
+  <meta name="description" content="AI receptionist for UK dental practices. Answer overflow and out-of-hours calls, capture new patients, book eligible appointments into Dentally and escalate urgent calls safely.">
   <meta name="keywords" content="AI receptionist for dentists, dental missed call solution, UK dental answering service, dental practice call automation, dental practice call handling">
   <meta name="author" content="WiseCall">
   <meta name="robots" content="index, follow">
@@ -13,12 +13,12 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://wisecall.io/dental">
   <meta property="og:title" content="WiseCall for Dental Practices | Never Miss Another Enquiry">
-  <meta property="og:description" content="AI call handling built for UK dental practices. Captures new patient enquiries, books appointments and handles cancellations 24/7. Try the Dental AI live.">
+  <meta property="og:description" content="AI call handling for UK dental practices. Capture new patients, book eligible appointments into Dentally and give reception a clear handover.">
   <meta property="og:image" content="https://wisecall.io/og-image.jpg">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="WiseCall for Dental Practices | Never Miss Another Enquiry">
-  <meta name="twitter:description" content="AI call handling built for UK dental practices. Try the Dental AI live, no signup required.">
+  <meta name="twitter:description" content="AI call handling for UK dental practices, with Dentally booking, structured handovers and safe escalation.">
 
   <link rel="icon" type="image/png" href="favicon.png">
 
@@ -138,6 +138,7 @@
     };
   </script>
   <link rel="stylesheet" href="/light-sections.css" data-wc-light>
+  <link rel="stylesheet" href="/dental-refresh.css">
 </head>
 
 <body class="min-h-screen bg-[#172929] overflow-x-hidden">
@@ -150,17 +151,14 @@
         <img src="owl-logo.png" alt="WiseCall" style="height:46px;margin-right:8px;">WiseCall
       </a>
       <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
-        <a href="/#every-call" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
-        <a href="/#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
-        <a href="/#industries" class="hover:text-[#7de8eb] transition-colors">Industries</a>
-        <a href="#live-demo" class="hover:text-[#7de8eb] transition-colors">Try it</a>
+        <a href="#how-it-works" class="hover:text-[#7de8eb] transition-colors">How It Works</a>
+        <a href="#dentally" class="hover:text-[#7de8eb] transition-colors">Dentally</a>
         <a href="#calculator" class="hover:text-[#7de8eb] transition-colors">Calculator</a>
-        <a href="#faq" class="hover:text-[#7de8eb] transition-colors">FAQ</a>
-        <a href="#" class="contact-link hover:text-[#7de8eb] transition-colors" data-inquiry="Dental - General Contact">Contact</a>
+        <a href="/pricing/" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
       </div>
       <div class="flex items-center gap-3">
         <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]" data-inquiry="Dental Demo Request">
-          Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          Start a pilot <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </a>
         <button id="mobileMenuToggle" aria-label="Open menu" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
           <i data-lucide="menu" class="w-5 h-5"></i>
@@ -169,15 +167,12 @@
     </nav>
     <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 right-0 bg-[#172929]/98 backdrop-blur-xl border-b border-[#7de8eb]/15 shadow-2xl">
       <div class="px-6 py-6 flex flex-col gap-4 text-white">
-        <a href="/#every-call" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How It Works</a>
-        <a href="/#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
-        <a href="/#industries" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Industries</a>
-        <a href="#live-demo" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Try it</a>
+        <a href="#how-it-works" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">How It Works</a>
+        <a href="#dentally" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Dentally</a>
         <a href="#calculator" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Calculator</a>
-        <a href="#faq" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">FAQ</a>
-        <a href="#" class="contact-link py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link" data-inquiry="Dental - General Contact">Contact</a>
+        <a href="/pricing/" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
         <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold" data-inquiry="Dental Demo Request">
-          Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          Start a pilot <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </a>
       </div>
     </div>
@@ -210,9 +205,9 @@
     <div class="relative z-10 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
       <!-- Left: copy -->
       <div>
-        <div class="motion inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-8" data-anim="fade-up">
-          <span class="text-base">🦷</span>
-          <span class="text-sm text-white/80">WiseCall for Dental Practices &amp; Clinics</span>
+        <div class="motion inline-flex items-center gap-3 mb-6" data-anim="fade-up">
+          <span class="text-2xl leading-none" aria-hidden="true">🦷</span>
+          <span class="text-sm font-medium text-white/70">WiseCall for Dental Practices &amp; Clinics</span>
         </div>
 
         <h1 class="motion text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" data-anim="fade-up" style="transition-delay:0.05s">
@@ -220,37 +215,23 @@
           <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">patient enquiry.</span>
         </h1>
 
-        <p class="motion text-xl text-white/70 leading-relaxed mb-10 max-w-xl" data-anim="fade-up" style="transition-delay:0.1s">
-          WiseCall answers every call, books appointments, handles cancellations and supports your reception team, 24 hours a day.
+        <p class="motion text-lg md:text-xl text-white/70 leading-relaxed mb-8 max-w-xl" data-anim="fade-up" style="transition-delay:0.1s">
+          WiseCall answers when reception cannot, books eligible appointments into Dentally, captures new-patient details and escalates urgent calls to your team. It never gives clinical advice.
         </p>
 
-        <div class="motion flex flex-col sm:flex-row gap-4 mb-10" data-anim="fade-up" style="transition-delay:0.18s">
-          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Dental Demo Request">
-            Try it now <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        <div class="motion flex flex-col sm:flex-row gap-4 mb-8" data-anim="fade-up" style="transition-delay:0.18s">
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-base shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Dental Pilot Request">
+            Start a 7-day pilot <i data-lucide="arrow-right" class="w-5 h-5"></i>
           </a>
-          <a href="#calculator" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
-            Revenue Calculator
+          <a href="#" class="contact-link mbtn inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-base backdrop-blur-sm hover:bg-white/10" data-inquiry="Dental Demo Request">
+            Book a dental demo
           </a>
         </div>
 
-        <!-- Trust badges -->
-        <div class="motion grid grid-cols-2 sm:grid-cols-4 gap-3" data-anim="fade-up" style="transition-delay:0.22s">
-          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
-            <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="text-xs text-white/70">24/7 Availability</span>
-          </div>
-          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
-            <i data-lucide="calendar-check" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="text-xs text-white/70">Books Appointments</span>
-          </div>
-          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
-            <i data-lucide="map-pin" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="text-xs text-white/70">UK-Based</span>
-          </div>
-          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
-            <i data-lucide="shield-check" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="text-xs text-white/70">GDPR Compliant</span>
-          </div>
+        <div class="motion dental-trust-row flex flex-wrap items-center gap-x-6 gap-y-3" data-anim="fade-up" style="transition-delay:0.22s">
+          <span><i data-lucide="shield-plus"></i>No clinical advice</span>
+          <span><i data-lucide="calendar-check"></i>Dentally booking</span>
+          <span><i data-lucide="map-pin"></i>UK-based support</span>
         </div>
       </div>
 
@@ -261,9 +242,9 @@
             <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
             Live Demo
           </span>
-          <h3 class="font-bold text-white text-lg mt-4 mb-1">Talk to WiseCall</h3>
+          <h3 class="font-bold text-white text-lg mt-3 mb-1">Talk to the dental demo</h3>
           <p class="text-white/55 text-sm mb-6 lg:hidden">Tap below to call the demo straight from your phone.</p>
-          <p class="text-white/55 text-sm mb-6 hidden lg:block">Enter your mobile and say "dental" when Ava asks.</p>
+          <p class="text-white/55 text-sm mb-5 hidden lg:block">Enter your mobile and choose dental when Ava asks.</p>
 
           <!-- Mobile: tap to call -->
           <div class="lg:hidden flex flex-col items-center">
@@ -298,6 +279,7 @@
           <p class="text-white/40 text-sm mt-2 hidden lg:block">
             Prefer to dial in? <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white">+44 113 522 2277</a>.
           </p>
+
         </div>
       </div>
     </div>
@@ -318,8 +300,8 @@
           <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4">
             <i data-lucide="phone-missed" class="w-6 h-6 text-[#7de8eb]"></i>
           </div>
-          <h3 class="text-xl font-semibold text-white mb-2">20 to 40% go unanswered</h3>
-          <p class="text-white/60 text-sm leading-relaxed">During peak times, a large share of calls to dental practices go unanswered. Lunch hours are worst, with reduced cover and higher call volume colliding at exactly the wrong moment.</p>
+          <h3 class="text-xl font-semibold text-white mb-2">Peak-time calls are easy to miss</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Lunch, patient check-in and busy treatment periods put call demand against the moments when reception has the least capacity to answer.</p>
         </div>
         <div class="motion rounded-xl bg-white/5 backdrop-blur-sm border border-[#7de8eb]/10 p-6" data-anim="fade-up" style="transition-delay:0.08s">
           <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4">
@@ -342,7 +324,7 @@
   </section>
 
   <!-- ───── WHAT WISECALL DOES ───── -->
-  <section class="relative py-24 px-6 overflow-hidden">
+  <section class="relative py-24 px-6 overflow-hidden" id="how-it-works">
     <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-[#7de8eb] rounded-full blur-[180px] opacity-10 pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto">
       <div class="motion text-center mb-16" data-anim="fade-up">
@@ -396,8 +378,74 @@
           <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7de8eb]/20 to-[#5dbfc2]/10 flex items-center justify-center mb-4 group-hover:shadow-[0_0_20px_rgba(125,232,235,0.25)] transition-shadow">
             <i data-lucide="plug" class="w-6 h-6 text-[#7de8eb]"></i>
           </div>
-          <h3 class="text-xl font-semibold text-white mb-2">Works with your software</h3>
-          <p class="text-white/60 text-sm leading-relaxed">Designed to fit around leading dental practice management systems, including Dentally, Software of Excellence and EXACT. No phone system needed: we provide a dedicated number, or connect your existing PBX.</p>
+          <h3 class="text-xl font-semibold text-white mb-2">Fits your current workflow</h3>
+          <p class="text-white/60 text-sm leading-relaxed">Connect Dentally for eligible appointment booking. If you use SOE, EXACT or another system, WiseCall delivers structured summaries and follow-up tasks for your team. No new phone system is required.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── DENTALLY WORKFLOW ───── -->
+  <section class="light relative py-24 px-6 overflow-hidden" id="dentally">
+    <div class="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+      <div class="motion" data-anim="fade-right">
+        <div class="flex items-center gap-3 mb-7">
+          <div class="w-12 h-12 rounded-lg bg-white border border-[#0c1f1f]/10 flex items-center justify-center p-2 shadow-sm">
+            <img src="/images/integrations/dentally.png" alt="Dentally" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <span class="block text-sm text-[#0a8a8e] font-semibold">Dentally workflow</span>
+            <span class="block text-xs text-[#0c1f1f]/50 mt-0.5">Direct booking where configured</span>
+          </div>
+        </div>
+        <h2 class="text-4xl font-bold text-white mb-5 leading-tight">From call to booked appointment</h2>
+        <p class="text-xl text-white/70 leading-relaxed mb-8">WiseCall can check the rules and availability you approve, book eligible appointment types into Dentally and hand reception a complete record of what happened.</p>
+        <ul class="space-y-4 mb-9">
+          <li class="flex items-start gap-3 text-white/75"><i data-lucide="calendar-search" class="w-5 h-5 text-[#0a8a8e] flex-shrink-0 mt-0.5"></i><span>Offer only the clinicians, locations and appointment types you approve.</span></li>
+          <li class="flex items-start gap-3 text-white/75"><i data-lucide="calendar-check-2" class="w-5 h-5 text-[#0a8a8e] flex-shrink-0 mt-0.5"></i><span>Book eligible enquiries into Dentally while the caller is still on the phone.</span></li>
+          <li class="flex items-start gap-3 text-white/75"><i data-lucide="send" class="w-5 h-5 text-[#0a8a8e] flex-shrink-0 mt-0.5"></i><span>Send confirmation to the patient and a structured summary to reception.</span></li>
+        </ul>
+        <a href="#" class="dentally-cta contact-link mbtn inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#172929] text-white rounded-lg font-semibold" data-inquiry="Dental Dentally Demo Request">
+          Book a Dentally demo <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+
+      <div class="motion dental-flow-card p-6 md:p-8" data-anim="scale-in" style="transition-delay:0.08s">
+        <div class="flex items-center justify-between gap-4 pb-5 border-b border-white/10">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-lg bg-[#7de8eb]/15 flex items-center justify-center"><i data-lucide="phone-incoming" class="w-5 h-5 text-[#7de8eb]"></i></span>
+            <div>
+              <span class="flow-muted block text-[10px] font-bold uppercase tracking-wider">New patient call</span>
+              <span class="flow-title block text-sm font-semibold mt-0.5">Sarah M. · Check-up</span>
+            </div>
+          </div>
+          <span class="flow-live inline-flex items-center gap-1.5 text-xs font-semibold"><span class="w-2 h-2 rounded-full bg-[#7de8eb]"></span>Handled</span>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-3 py-6">
+          <div class="flow-step p-4">
+            <span class="flow-index">01</span>
+            <strong>Qualify</strong>
+            <small>New patient, routine check-up, Wednesday preferred</small>
+          </div>
+          <div class="flow-step p-4">
+            <span class="flow-index">02</span>
+            <strong>Book</strong>
+            <small>Wednesday, 10:30 with approved clinician</small>
+          </div>
+          <div class="flow-step p-4">
+            <span class="flow-index">03</span>
+            <strong>Confirm</strong>
+            <small>Dentally updated and confirmation sent</small>
+          </div>
+        </div>
+
+        <div class="flow-result flex items-start gap-3 p-4">
+          <i data-lucide="check" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
+          <div>
+            <span class="block text-xs font-bold uppercase tracking-wider">Appointment booked</span>
+            <p class="mt-1 text-sm">Reception receives the caller details, appointment outcome and the full call summary.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -629,16 +677,26 @@
         <img src="owl-logo.png" alt="WiseCall" class="h-10">
         <span class="text-white font-bold text-xl">WiseCall</span>
       </div>
-      <p class="text-white/50 max-w-sm mx-auto mb-8 text-sm leading-relaxed">AI receptionist for UK businesses. No phone system needed, or connect your PBX. UK-based.</p>
+      <p class="text-white/50 max-w-md mx-auto mb-8 text-sm leading-relaxed">AI receptionist for UK dental practices. Capture new patients, book eligible appointments into Dentally and support reception during busy and closed hours.</p>
       <div class="flex flex-wrap justify-center gap-6 mb-8 text-sm">
         <a href="/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Home</a>
-        <a href="/#every-call" class="text-white/50 hover:text-[#7de8eb] transition-colors">How It Works</a>
-        <a href="/#pricing" class="text-white/50 hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="#how-it-works" class="text-white/50 hover:text-[#7de8eb] transition-colors">How It Works</a>
+        <a href="#dentally" class="text-white/50 hover:text-[#7de8eb] transition-colors">Dentally</a>
+        <a href="/pricing/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Pricing</a>
         <a href="/#industries" class="text-white/50 hover:text-[#7de8eb] transition-colors">Industries</a>
+        <a href="/integrations/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Integrations</a>
+        <a href="/compare/ai-receptionist-uk-comparison/" class="text-white/50 hover:text-[#7de8eb] transition-colors">Compare</a>
+        <a href="/#partners" class="text-white/50 hover:text-[#7de8eb] transition-colors">Partners</a>
         <a href="#calculator" class="text-white/50 hover:text-[#7de8eb] transition-colors">Calculator</a>
+        <a href="#faq" class="text-white/50 hover:text-[#7de8eb] transition-colors">FAQ</a>
+        <a href="/ai-consultancy.html" class="text-white/50 hover:text-[#7de8eb] transition-colors">Consultancy</a>
         <a href="#" class="contact-link text-[#7de8eb] font-semibold hover:text-white transition-colors" data-inquiry="Dental - General Contact">Get in Touch</a>
       </div>
       <div class="border-t border-[#7de8eb]/8 pt-6 text-white/30 text-xs">
+        <div class="flex flex-wrap justify-center gap-5 mb-3">
+          <a href="/privacy-policy.html" class="text-white/40 hover:text-[#7de8eb] transition-colors">Privacy Policy</a>
+          <a href="/terms.html" class="text-white/40 hover:text-[#7de8eb] transition-colors">Terms &amp; Conditions</a>
+        </div>
         <p>&copy; 2026 WiseCall. All rights reserved.</p>
       </div>
     </div>
@@ -707,7 +765,7 @@
 
       demoCallbackButton.disabled = true;
       demoCallbackButton.textContent = 'Calling...';
-      setDemoCallbackStatus('Starting your multi-industry WiseCall demo...', 'idle');
+      setDemoCallbackStatus('Starting your WiseCall demo. Choose dental when Ava asks...', 'idle');
 
       try {
         const response = await fetch(WISECALL_DEMO_CALLBACK_ENDPOINT, {
@@ -845,7 +903,7 @@
       <i data-lucide="phone-call" class="w-4 h-4"></i> Call the demo
     </a>
     <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 border border-[#7de8eb]/30 text-white font-semibold text-sm px-4 py-3">
-      Try it now
+      Start pilot
     </a>
   </div>
   <script>

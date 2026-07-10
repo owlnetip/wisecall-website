@@ -1,0 +1,91 @@
+.dental-trust-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dental-trust-row svg {
+  width: 1rem;
+  height: 1rem;
+  color: #7de8eb;
+}
+
+#live-demo .orb-stage {
+  width: 190px;
+  height: 190px;
+}
+
+section.light .dentally-cta {
+  color: #ffffff !important;
+  background: #172929 !important;
+  border: 1px solid #172929 !important;
+  box-shadow: none !important;
+}
+
+section.light .dentally-cta:hover {
+  color: #172929 !important;
+  background: #7de8eb !important;
+  border-color: #7de8eb !important;
+}
+
+section.light .dental-flow-card {
+  color: #ffffff !important;
+  background: #102e2e !important;
+  border: 1px solid rgba(125, 232, 235, 0.18);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(12, 31, 31, 0.18);
+}
+
+section.light .dental-flow-card .flow-title { color: #ffffff !important; }
+section.light .dental-flow-card .flow-muted { color: rgba(255, 255, 255, 0.45) !important; }
+section.light .dental-flow-card .flow-live { color: #7de8eb !important; }
+
+section.light .dental-flow-card .flow-step {
+  display: grid;
+  min-height: 144px;
+  align-content: start;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+section.light .dental-flow-card .flow-index {
+  margin-bottom: 18px;
+  color: #7de8eb !important;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+section.light .dental-flow-card .flow-step strong {
+  color: #ffffff !important;
+  font-size: 14px;
+}
+
+section.light .dental-flow-card .flow-step small {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.56) !important;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+section.light .dental-flow-card .flow-result {
+  color: #0c2a2b !important;
+  background: #7de8eb !important;
+  border-radius: 8px;
+}
+
+section.light .dental-flow-card .flow-result span,
+section.light .dental-flow-card .flow-result p,
+section.light .dental-flow-card .flow-result svg {
+  color: #0c2a2b !important;
+}
+
+@media (max-width: 767px) {
+  #live-demo .orb-stage { width: 175px; height: 175px; }
+  section.light .dental-flow-card .flow-step { min-height: 0; }
+}
