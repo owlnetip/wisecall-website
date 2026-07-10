@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { readFile } from "fs/promises";
 import path from "path";
 import { isAdmin } from "@/lib/admin";
-import { renderOutreachTemplate, sendViaResend, addDays, followUpDaysForStep } from "@/lib/outreach-email";
+import {
+  renderOutreachTemplate,
+  sendViaResend,
+  addDays,
+  followUpDaysForStep,
+  templateFamilyForSegment,
+} from "@/lib/outreach-email";
 import {
   sanitizeEmailHtml,
   unwrapMergeChips,
@@ -39,6 +45,11 @@ export type OutreachProspect = {
   outreachSegment: string;
   lastContactedAt: string | null;
   nextFollowUpAt: string | null;
+  firstEmailSentAt: string | null;
+  firstEmailOpenedAt: string | null;
+  lastOpenedAt: string | null;
+  openCount: number;
+  lastRepliedAt: string | null;
   updatedAt: string;
 };
 
@@ -48,6 +59,7 @@ export type OutreachTemplate = {
   name: string;
   category: string;
   sequenceStep: string;
+  templateFamily: string;
   subjectTemplate: string;
   bodyTemplate: string;
   /** Rich HTML body (visual editor). Null/empty = legacy plain-text template. */
@@ -65,8 +77,34 @@ export type OutreachEmail = {
   status: string;
   scheduledFor: string | null;
   sentAt: string | null;
+  deliveredAt: string | null;
+  openedAt: string | null;
+  openCount: number;
+  clickedAt: string | null;
+  bouncedAt: string | null;
   errorMessage: string | null;
   createdAt: string;
+};
+
+export type OutreachSmartList =
+  | "all"
+  | "ready_to_email"
+  | "awaiting_reply"
+  | "opened_no_reply"
+  | "replied"
+  | "follow_up_due"
+  | "never_opened"
+  | "no_email";
+
+export type OutreachCrmStats = {
+  dentallyActive: number;
+  withEmail: number;
+  firstEmailSent: number;
+  opened: number;
+  awaitingReply: number;
+  replied: number;
+  followUpsDue: number;
+  readyToEmail: number;
 };
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -109,7 +147,34 @@ function mapProspect(row: Record<string, unknown>): OutreachProspect {
     outreachSegment: (row.outreach_segment as string) ?? "unknown_queued",
     lastContactedAt: (row.last_contacted_at as string) ?? null,
     nextFollowUpAt: (row.next_follow_up_at as string) ?? null,
+    firstEmailSentAt: (row.first_email_sent_at as string) ?? null,
+    firstEmailOpenedAt: (row.first_email_opened_at as string) ?? null,
+    lastOpenedAt: (row.last_opened_at as string) ?? null,
+    openCount: Number(row.open_count ?? 0),
+    lastRepliedAt: (row.last_replied_at as string) ?? null,
     updatedAt: (row.updated_at as string) ?? "",
+  };
+}
+
+function mapEmail(r: Record<string, unknown>): OutreachEmail {
+  return {
+    id: r.id as string,
+    prospectId: r.prospect_id as string,
+    sequenceStep: (r.sequence_step as string) ?? "custom",
+    subject: (r.subject as string) ?? "",
+    body: (r.body as string) ?? "",
+    bodyHtml: (r.body_html as string) ?? null,
+    toEmail: (r.to_email as string) ?? "",
+    status: (r.status as string) ?? "draft",
+    scheduledFor: (r.scheduled_for as string) ?? null,
+    sentAt: (r.sent_at as string) ?? null,
+    deliveredAt: (r.delivered_at as string) ?? null,
+    openedAt: (r.opened_at as string) ?? null,
+    openCount: Number(r.open_count ?? 0),
+    clickedAt: (r.clicked_at as string) ?? null,
+    bouncedAt: (r.bounced_at as string) ?? null,
+    errorMessage: (r.error_message as string) ?? null,
+    createdAt: (r.created_at as string) ?? "",
   };
 }
 
@@ -168,6 +233,7 @@ export async function listOutreachProspects(filters?: {
   region?: string;
   status?: string;
   outreachSegment?: string;
+  smartList?: OutreachSmartList;
 }): Promise<Result<OutreachProspect[]>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -184,9 +250,91 @@ export async function listOutreachProspects(filters?: {
   if (filters?.status) q = q.eq("status", filters.status);
   if (filters?.outreachSegment) q = q.eq("outreach_segment", filters.outreachSegment);
 
+  const smart = filters?.smartList ?? "all";
+  const now = new Date().toISOString();
+  if (smart === "ready_to_email") {
+    q = q
+      .eq("outreach_segment", "dentally_active")
+      .eq("status", "new")
+      .not("email", "is", null)
+      .neq("email", "")
+      .is("first_email_sent_at", null);
+  } else if (smart === "awaiting_reply") {
+    q = q
+      .eq("outreach_segment", "dentally_active")
+      .eq("status", "contacted")
+      .not("first_email_sent_at", "is", null);
+  } else if (smart === "opened_no_reply") {
+    q = q
+      .eq("outreach_segment", "dentally_active")
+      .eq("status", "contacted")
+      .not("first_email_opened_at", "is", null);
+  } else if (smart === "replied") {
+    q = q.in("status", ["replied", "interested"]);
+  } else if (smart === "follow_up_due") {
+    q = q
+      .eq("sequence_status", "active")
+      .not("next_follow_up_at", "is", null)
+      .lte("next_follow_up_at", now);
+  } else if (smart === "never_opened") {
+    q = q
+      .eq("outreach_segment", "dentally_active")
+      .eq("status", "contacted")
+      .not("first_email_sent_at", "is", null)
+      .is("first_email_opened_at", null);
+  } else if (smart === "no_email") {
+    q = q.eq("outreach_segment", "dentally_active").or("email.is.null,email.eq.");
+  }
+
   const { data, error } = await q;
   if (error) return { ok: false, error: error.message };
   return { ok: true, data: (data ?? []).map(mapProspect) };
+}
+
+export async function getOutreachCrmStats(): Promise<Result<OutreachCrmStats>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const now = new Date().toISOString();
+  const { data: rows, error } = await service
+    .from("wisecall_outreach_prospects")
+    .select(
+      "outreach_segment, status, email, first_email_sent_at, first_email_opened_at, sequence_status, next_follow_up_at",
+    )
+    .eq("outreach_segment", "dentally_active");
+  if (error) return { ok: false, error: error.message };
+
+  const list = rows ?? [];
+  const withEmail = list.filter((r) => !!(r.email as string)?.trim()).length;
+  const firstEmailSent = list.filter((r) => !!r.first_email_sent_at).length;
+  const opened = list.filter((r) => !!r.first_email_opened_at).length;
+  const awaitingReply = list.filter((r) => r.status === "contacted" && !!r.first_email_sent_at).length;
+  const replied = list.filter((r) => r.status === "replied" || r.status === "interested").length;
+  const followUpsDue = list.filter(
+    (r) =>
+      r.sequence_status === "active" &&
+      !!r.next_follow_up_at &&
+      (r.next_follow_up_at as string) <= now,
+  ).length;
+  const readyToEmail = list.filter(
+    (r) => r.status === "new" && !!(r.email as string)?.trim() && !r.first_email_sent_at,
+  ).length;
+
+  return {
+    ok: true,
+    data: {
+      dentallyActive: list.length,
+      withEmail,
+      firstEmailSent,
+      opened,
+      awaitingReply,
+      replied,
+      followUpsDue,
+      readyToEmail,
+    },
+  };
 }
 
 export async function updateOutreachProspect(input: {
@@ -212,6 +360,9 @@ export async function updateOutreachProspect(input: {
     if (["interested", "not_interested", "paused", "replied"].includes(input.status)) {
       patch.sequence_status = "stopped";
       patch.next_follow_up_at = null;
+      if (input.status === "replied" || input.status === "interested") {
+        patch.last_replied_at = new Date().toISOString();
+      }
       await service
         .from("wisecall_outreach_emails")
         .update({ status: "cancelled", updated_at: new Date().toISOString() })
@@ -251,6 +402,7 @@ export async function listOutreachTemplates(): Promise<Result<OutreachTemplate[]
       name: (r.name as string) ?? "",
       category: (r.category as string) ?? "dental",
       sequenceStep: (r.sequence_step as string) ?? "custom",
+      templateFamily: (r.template_family as string) ?? "general",
       subjectTemplate: (r.subject_template as string) ?? "",
       bodyTemplate: (r.body_template as string) ?? "",
       bodyHtml: (r.body_html as string) ?? null,
@@ -357,20 +509,7 @@ export async function listProspectEmails(prospectId: string): Promise<Result<Out
 
   return {
     ok: true,
-    data: (data ?? []).map((r) => ({
-      id: r.id as string,
-      prospectId: r.prospect_id as string,
-      sequenceStep: (r.sequence_step as string) ?? "custom",
-      subject: (r.subject as string) ?? "",
-      body: (r.body as string) ?? "",
-      bodyHtml: (r.body_html as string) ?? null,
-      toEmail: (r.to_email as string) ?? "",
-      status: (r.status as string) ?? "draft",
-      scheduledFor: (r.scheduled_for as string) ?? null,
-      sentAt: (r.sent_at as string) ?? null,
-      errorMessage: (r.error_message as string) ?? null,
-      createdAt: (r.created_at as string) ?? "",
-    })),
+    data: (data ?? []).map((r) => mapEmail(r as Record<string, unknown>)),
   };
 }
 
@@ -416,11 +555,20 @@ async function scheduleFollowUps(
   sentAt: string,
   userId: string,
 ) {
+  const family = templateFamilyForSegment(prospect.outreachSegment);
   const { data: templates } = await service
     .from("wisecall_outreach_email_templates")
     .select("*")
+    .eq("template_family", family)
     .in("sequence_step", ["follow_up_3", "follow_up_7", "follow_up_14"]);
   if (!templates?.length) return;
+
+  // Never stack duplicate sequences for the same prospect.
+  await service
+    .from("wisecall_outreach_emails")
+    .update({ status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("prospect_id", prospect.id)
+    .eq("status", "scheduled");
 
   const fields = mergeFieldsForProspect(prospect);
   const rows = templates.map((t) => {
@@ -462,6 +610,8 @@ export async function sendOutreachEmail(input: {
   body: string;
   bodyHtml?: string | null;
   scheduleFollowUps?: boolean;
+  /** Allow a second initial send (default false). */
+  forceResend?: boolean;
 }): Promise<Result<{ emailId: string }>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -489,16 +639,53 @@ export async function sendOutreachEmail(input: {
   }
   if (!prospect.email) return { ok: false, error: "Add a recipient email before sending." };
 
+  const { data: templateRow } = await service
+    .from("wisecall_outreach_email_templates")
+    .select("id, sequence_step, template_family, slug")
+    .eq("id", input.templateId)
+    .maybeSingle();
+  if (!templateRow) return { ok: false, error: "Template not found." };
+
+  const family = (templateRow.template_family as string) || "general";
+  if (family !== "dentally" && !(templateRow.slug as string)?.startsWith("dental-dentally-")) {
+    return { ok: false, error: "Use a Dentally template for dentally_active prospects." };
+  }
+
+  const sequenceStep = (templateRow.sequence_step as string) || "initial";
+  if (sequenceStep === "initial" && !input.forceResend) {
+    const { data: existingInitial } = await service
+      .from("wisecall_outreach_emails")
+      .select("id, sent_at")
+      .eq("prospect_id", prospect.id)
+      .eq("sequence_step", "initial")
+      .eq("status", "sent")
+      .limit(1)
+      .maybeSingle();
+    if (existingInitial) {
+      return {
+        ok: false,
+        error:
+          "First email already sent for this practice. Mark as force resend only if you intentionally want another initial.",
+      };
+    }
+  }
+
   // Rich HTML when the composer sent a body_html; the plain-text body remains
   // the fallback. Legacy text-only sends are unchanged.
   const innerHtml = cleanEditorHtml(input.bodyHtml);
   const textFallback = input.body?.trim() || (innerHtml ? htmlToText(innerHtml) : "");
+  const replyTo = gate.user.email ?? undefined;
   const sent = await sendViaResend({
     to: prospect.email,
     subject: input.subject,
     body: textFallback,
     html: innerHtml ? wrapEmailHtml(innerHtml) : undefined,
-    replyTo: gate.user.email ?? undefined,
+    replyTo,
+    tags: [
+      { name: "outreach", value: "dental" },
+      { name: "segment", value: "dentally_active" },
+      { name: "step", value: sequenceStep },
+    ],
   });
 
   const now = new Date().toISOString();
@@ -507,7 +694,7 @@ export async function sendOutreachEmail(input: {
     .insert({
       prospect_id: prospect.id,
       template_id: input.templateId,
-      sequence_step: "initial",
+      sequence_step: sequenceStep,
       subject: input.subject,
       body: textFallback,
       body_html: innerHtml || null,
@@ -523,17 +710,24 @@ export async function sendOutreachEmail(input: {
   if (eErr) return { ok: false, error: eErr.message };
   if (!sent.ok) return { ok: false, error: sent.error };
 
-  await service
-    .from("wisecall_outreach_prospects")
-    .update({
-      status: "contacted",
-      last_contacted_at: now,
-      updated_at: now,
-    })
-    .eq("id", prospect.id);
+  const prospectUpdate: Record<string, unknown> = {
+    status: prospect.status === "new" ? "contacted" : prospect.status,
+    last_contacted_at: now,
+    updated_at: now,
+  };
+  if (sequenceStep === "initial" && !prospect.firstEmailSentAt) {
+    prospectUpdate.first_email_sent_at = now;
+  }
 
-  if (input.scheduleFollowUps !== false) {
-    await scheduleFollowUps(service, { ...prospect, email: prospect.email }, now, gate.user.id);
+  await service.from("wisecall_outreach_prospects").update(prospectUpdate).eq("id", prospect.id);
+
+  if (input.scheduleFollowUps !== false && sequenceStep === "initial") {
+    await scheduleFollowUps(
+      service,
+      { ...prospect, email: prospect.email },
+      now,
+      gate.user.id,
+    );
   }
 
   revalidatePath("/admin/outreach");
@@ -709,11 +903,21 @@ export async function processDueOutreachFollowUpsInternal(
     }
 
     const storedHtml = (row.body_html as string) ?? "";
+    const replyTo =
+      process.env.OUTREACH_REPLY_TO?.trim() ||
+      process.env.RESEND_FROM_EMAIL?.replace(/^.*<([^>]+)>.*$/, "$1") ||
+      undefined;
     const result = await sendViaResend({
       to: p.email,
       subject: row.subject as string,
       body: row.body as string,
       html: isHtmlBody(storedHtml) ? wrapEmailHtml(storedHtml) : undefined,
+      replyTo,
+      tags: [
+        { name: "outreach", value: "dental" },
+        { name: "segment", value: "dentally_active" },
+        { name: "step", value: (row.sequence_step as string) || "follow_up" },
+      ],
     });
 
     await service
