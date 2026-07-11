@@ -3592,7 +3592,7 @@ function ContactCard({
             const transferMode = e.target.value as TransferMode;
             onChange({
               transferMode,
-              transfer: transferMode === "message_only" ? false : contact.transfer || true,
+              transfer: transferMode !== "message_only",
             });
           }}
           className="h-12 w-full max-w-md rounded-lg border border-line-strong bg-white px-3 text-sm outline-none transition focus:border-ink"
