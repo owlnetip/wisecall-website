@@ -99,6 +99,23 @@ function morProvisionHeaders(serviceRoleKey: string): Record<string, string> {
   return headers;
 }
 
+// Cartesia voice catalogue: each selectable voice name → its Cartesia voice
+// UUID (kept in env, CARTESIA_VOICE_<NAME>). Persisted to the cartesia_voice_id
+// column so the live call runtime uses the owner's chosen voice — the runtime
+// reads that column, not metadata.voice.
+const CARTESIA_VOICES: Record<string, string | undefined> = {
+  Gemma: process.env.CARTESIA_VOICE_GEMMA,
+  Hugo: process.env.CARTESIA_VOICE_HUGO,
+  Archie: process.env.CARTESIA_VOICE_ARCHIE,
+  Victoria: process.env.CARTESIA_VOICE_VICTORIA,
+  Benedict: process.env.CARTESIA_VOICE_BENEDICT,
+  Julia: process.env.CARTESIA_VOICE_JULIA,
+};
+
+function resolveCartesiaVoiceId(voice: string | null | undefined): string | null {
+  return (voice && CARTESIA_VOICES[voice]) || null;
+}
+
 // Creates a brand-new agent owned by the signed-in user. The first real DDI for
 // an owner is included and goes live when assignment succeeds. Extra numbered
 // agents stay in setup until an additional number is provisioned/charged.
@@ -159,6 +176,9 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
       business_context: input.knowledge ?? "",
       timezone: input.timezone ?? "Europe/London",
       is_active: false,
+      // Column the live runtime reads for the Cartesia voice. Without this the
+      // chosen voice (metadata.voice) is ignored and the agent uses the default.
+      cartesia_voice_id: resolveCartesiaVoiceId(input.voice ?? "Gemma"),
       metadata,
     })
     .select("id")
@@ -409,6 +429,9 @@ export async function updateAgent(
   // metadata copies above stay mirrored for backward compatibility.
   if (patch.greeting !== undefined) update.greeting = patch.greeting;
   if (patch.knowledge !== undefined) update.business_context = patch.knowledge;
+  // Voice: write the cartesia_voice_id column the live runtime reads (the
+  // metadata.voice mirror above is not what the phone agent uses).
+  if (patch.voice !== undefined) update.cartesia_voice_id = resolveCartesiaVoiceId(patch.voice);
   // After-hours message is a column the live runtime reads (settings.js greeting,
   // prompt.js after-hours section). Write it so edits reach the phone agent.
   if (patch.outOfHoursMessage !== undefined) update.after_hours_message = patch.outOfHoursMessage;
@@ -438,15 +461,6 @@ export type TestVoiceResult = {
 // The Cartesia model used for the in-portal voice preview. Kept in sync with the
 // live call pipeline, both default to Sonic 3.5. Override with CARTESIA_MODEL.
 const CARTESIA_MODEL = process.env.CARTESIA_MODEL || "sonic-3.5";
-
-const CARTESIA_VOICES: Record<string, string | undefined> = {
-  Gemma: process.env.CARTESIA_VOICE_GEMMA,
-  Hugo: process.env.CARTESIA_VOICE_HUGO,
-  Archie: process.env.CARTESIA_VOICE_ARCHIE,
-  Victoria: process.env.CARTESIA_VOICE_VICTORIA,
-  Benedict: process.env.CARTESIA_VOICE_BENEDICT,
-  Julia: process.env.CARTESIA_VOICE_JULIA,
-};
 
 // Synthesises a short sample with the chosen Cartesia voice and returns it as
 // base64 mp3 for in-browser playback. The API key stays server-side. Used by the

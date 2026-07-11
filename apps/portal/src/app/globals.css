@@ -9,6 +9,12 @@
    ──────────────────────────────────────────────────────────────────────────── */
 
 :root {
+  /* The app is light-surfaced (white cards, dark ink). Pin the colour scheme
+     to light so the browser renders native form controls (text inputs,
+     selects, textareas) in light mode even when the OS is in dark mode —
+     otherwise their text goes white on our white inputs and is invisible. */
+  color-scheme: light;
+
   /* Brand */
   --background: #172929; /* deep teal, dark chrome + auth screens */
   --foreground: #f7fbfb;
