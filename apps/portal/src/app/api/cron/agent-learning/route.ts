@@ -6,14 +6,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 /**
- * Daily cron: continuous knowledge-gap learning across all active agents.
- * POST with Authorization: Bearer CRON_SECRET.
- *
- * Each agent's recent unanswered questions are clustered; recurring topics
- * make the agent auto-adopt a graceful handling line and surface a fillable
- * gap to the owner. Only handling behaviour is auto-applied — never facts.
+ * Daily cron: continuous knowledge-gap learning for opted-in agents
+ * (metadata.learning_enabled = true). Vercel Cron invokes this via GET and
+ * injects Authorization: Bearer CRON_SECRET; POST is accepted too for manual
+ * triggering. Only the graceful handling behaviour is auto-applied — never
+ * factual answers.
  */
-export async function POST(request: Request) {
+async function handle(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
     return NextResponse.json({ ok: false, error: "CRON_SECRET not configured" }, { status: 503 });
@@ -27,3 +26,6 @@ export async function POST(request: Request) {
   const result = await detectKnowledgeGapsForAllAgents();
   return NextResponse.json(result, { status: result.ok ? 200 : 207 });
 }
+
+export const GET = handle;
+export const POST = handle;

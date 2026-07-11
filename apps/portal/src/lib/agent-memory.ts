@@ -424,10 +424,14 @@ export async function detectKnowledgeGapsForAllAgents(): Promise<{
   const supabase = getServiceSupabase();
   if (!supabase) return { ok: false, processed: 0, created: 0, reinforced: 0, errors: ["no supabase"] };
 
+  // Opt-in only: an agent is learned from once its metadata.learning_enabled
+  // is true. Rolling this out per agent (starting with one) keeps autonomous
+  // knowledge edits deliberate rather than switched on for everyone at once.
   const { data: profiles } = await supabase
     .from("wisecall_profiles")
     .select("id, metadata")
     .eq("is_active", true)
+    .eq("metadata->>learning_enabled", "true")
     .limit(500);
 
   let created = 0;
