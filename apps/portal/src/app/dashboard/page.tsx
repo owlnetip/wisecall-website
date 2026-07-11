@@ -17,6 +17,7 @@ import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
 import { getFollowUpsForUser } from "@/lib/follow-ups";
 import { getInsightsForUser, emptyInsights } from "@/lib/insights";
 import { isAnalysisConfigured } from "@/lib/call-analysis";
+import { getPendingLearningForUser } from "@/lib/agent-learning";
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -80,7 +81,7 @@ export default async function DashboardPage() {
     }
   };
 
-  const [agents, callLogs, contacts, trial, insights, smsNumbers, whatsappNumbers, followUps] =
+  const [agents, callLogs, contacts, trial, insights, smsNumbers, whatsappNumbers, followUps, learning] =
     await Promise.all([
     safe("agents", getAgentsForUser(effectiveUserId), []),
     safe("callLogs", getCallLogsForUser(effectiveUserId), []),
@@ -91,6 +92,7 @@ export default async function DashboardPage() {
     safe("smsNumbers", getSmsNumbersForUser(effectiveUserId), []),
     safe("whatsappNumbers", getWhatsappNumbersForUser(effectiveUserId), []),
     safe("followUps", getFollowUpsForUser(effectiveUserId), []),
+    safe("learning", getPendingLearningForUser(effectiveUserId), []),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.
@@ -132,6 +134,7 @@ export default async function DashboardPage() {
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}
       initialFollowUps={followUps}
+      initialLearning={learning}
     />
   );
 }

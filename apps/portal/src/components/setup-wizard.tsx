@@ -868,6 +868,7 @@ function TeamEditor({
         transfer: true,
         notify: true,
         useDefaultEmail: false,
+        transferMode: "confirm_caller",
       },
     ]);
   }

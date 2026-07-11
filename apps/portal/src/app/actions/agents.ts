@@ -16,6 +16,11 @@ import {
   type IntegrationWebhook,
   serializeIntegrationWebhooks,
 } from "@/lib/integration-webhooks";
+import {
+  DEFAULT_CALL_SCREENING,
+  normaliseTransferMode,
+  type CallScreening,
+} from "@/lib/routing-policy";
 
 export type AgentPatch = {
   name?: string;
@@ -33,6 +38,7 @@ export type AgentPatch = {
   transferNumber?: string;
   defaultEmail?: string;
   contacts?: RoutingContact[];
+  callScreening?: CallScreening;
   officeHours?: OfficeHours;
   outOfHoursMessage?: string;
   chatAccentColor?: string;
@@ -42,17 +48,30 @@ export type AgentPatch = {
 };
 
 // Builds the legacy transfer_routes object (keyed route → { label, phone,
-// timeout_secs }) from the canonical contacts list, so the existing call
-// pipeline keeps routing transfers without any backend change.
+// timeout_secs, mode }) from the canonical contacts list, so the existing call
+// pipeline keeps routing transfers without any backend change. `mode` is additive
+// for newer runtimes that support ask-first / immediate put-through.
 function toTransferRoutes(
   contacts: RoutingContact[],
-): Record<string, { label: string; phone: string; timeout_secs: number }> {
-  const routes: Record<string, { label: string; phone: string; timeout_secs: number }> = {};
+): Record<
+  string,
+  { label: string; phone: string; timeout_secs: number; mode: string }
+> {
+  const routes: Record<
+    string,
+    { label: string; phone: string; timeout_secs: number; mode: string }
+  > = {};
   for (const c of contacts) {
     const phone = (c.phone ?? "").trim();
-    if (!c.transfer || !phone) continue;
+    const mode = normaliseTransferMode(c.transferMode);
+    if (!c.transfer || mode === "message_only" || !phone) continue;
     const key = slugify(c.name).replace(/-/g, "_") || c.id;
-    routes[key] = { label: c.name.trim() || key, phone, timeout_secs: 25 };
+    routes[key] = {
+      label: c.name.trim() || key,
+      phone,
+      timeout_secs: mode === "ask_client" ? 15 : 25,
+      mode,
+    };
   }
   return routes;
 }
@@ -144,6 +163,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     default_routing_email: "",
     routing_contacts: input.contacts ?? [],
     transfer_routes: toTransferRoutes(input.contacts ?? []),
+    call_screening: { ...DEFAULT_CALL_SCREENING },
   };
 
   const { data, error } = await service
@@ -379,6 +399,13 @@ export async function updateAgent(
     nextMetadata.routing_contacts = patch.contacts;
     // …mirrored into the legacy structure the live pipeline already reads.
     nextMetadata.transfer_routes = toTransferRoutes(patch.contacts);
+  }
+  if (patch.callScreening !== undefined) {
+    nextMetadata.call_screening = {
+      salesPolicy: patch.callScreening.salesPolicy,
+      spamPolicy: patch.callScreening.spamPolicy,
+      namedPersonPolicy: patch.callScreening.namedPersonPolicy,
+    };
   }
   if (patch.officeHours !== undefined) {
     // Per-day open/close the runtime reads for after-hours mode (metadata.office_hours).

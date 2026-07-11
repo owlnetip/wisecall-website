@@ -19,6 +19,7 @@ Separate Next.js app for `app.wisecall.io`.
 - `/api/insights` - authenticated, tenant-scoped AI Insights roll-up (`?range=today|7d|30d`)
 - `/api/insights/backfill` - authenticated, analyses a small batch of the tenant's un-analysed calls
 - `/api/webhooks/call-completed` - service webhook the call runtime POSTs after a call completes; runs the after-call AI analysis (secret-protected)
+- `/api/cron/weekly-agent-learning` - Monday cron that reviews recent analysed calls and drafts improvement suggestions (secret-protected)
 
 ## AI Insights
 
@@ -39,6 +40,23 @@ analysis one of these ways:
   history the first time a customer opens AI Insights.
 - **Bulk backfill script**: `node scripts/backfill-call-analysis.mjs [--limit=200] [--owner=<auth-user-id>]`.
 
+## Weekly agent learning
+
+Every Monday (`0 8 * * 1`), `/api/cron/weekly-agent-learning` reviews the last
+week of analysed calls per active agent and stores pending suggestions in
+`wisecall_agent_learning` (migration `0021_agent_learning.sql`). Customers see
+them on the Home / AI Insights view and can **Apply improvements** (appends to
+knowledge / system prompt) or **Dismiss**. Requires `CRON_SECRET` and the same
+Claude API key as call analysis.
+
+## Call screening & flexible routing
+
+Agent **Routing** settings include call screening policies (sales, spam, named-person
+put-through) plus per-contact transfer modes: put through immediately, confirm
+caller details first, ask the client first, or message only. These are stored in
+`metadata.call_screening` and `metadata.routing_contacts[].transferMode`, mirrored
+into `transfer_routes.mode` for the voice pipeline, and injected into the edge
+system prompt as `[CALL ROUTING & SCREENING]`.
 ## Environment
 
 Copy `.env.example` to `.env.local` for local development.

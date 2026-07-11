@@ -12,6 +12,7 @@ const copies = [
   ["portalWebhook.js", "portalWebhook.runtime.js"],
   ["callSession.js", "callSession.runtime.js"],
   ["callerIntake.js", "callerIntake.runtime.js"],
+  ["routingPolicy.js", "routingPolicy.runtime.js"],
 ];
 
 for (const [srcName, destName] of copies) {
