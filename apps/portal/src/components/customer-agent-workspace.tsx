@@ -98,6 +98,10 @@ import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 import { OutboundManager } from "@/components/outbound-manager";
 import { AgentPreviewModal } from "./agent-preview-modal";
+import { LearningReviewSection } from "./learning-review-section";
+import type { AgentLearningReview } from "@/lib/agent-learning";
+import type { CallScreening, TransferMode } from "@/lib/routing-policy";
+import { DEFAULT_CALL_SCREENING } from "@/lib/routing-policy";
 
 type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
@@ -131,7 +135,11 @@ export type RoutingContact = {
   transfer: boolean; // route the live call to phone
   notify: boolean; // email a summary
   useDefaultEmail: boolean; // when notifying, send to the agent's pooled inbox
+  /** How to handle put-through when this person is requested. */
+  transferMode?: TransferMode;
 };
+
+export type { CallScreening, TransferMode };
 
 // Business knowledge captured as friendly, labelled sections instead of one
 // freeform box. Stored structured (metadata.knowledge_fields) and also composed
@@ -219,6 +227,7 @@ export type Assistant = {
   transferNumber: string;
   defaultEmail: string; // pooled inbox used when a contact opts for "send to default"
   contacts: RoutingContact[];
+  callScreening?: CallScreening;
   calls: number;
   cost: string;
   routing: AgentRouting;
@@ -1464,6 +1473,7 @@ export function CustomerAgentWorkspace({
   initialInsights,
   analysisEnabled = false,
   initialFollowUps = [],
+  initialLearning = [],
 }: {
   initialAssistants?: Assistant[];
   callLogs?: CallLog[];
@@ -1484,6 +1494,7 @@ export function CustomerAgentWorkspace({
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
   initialFollowUps?: FollowUp[];
+  initialLearning?: AgentLearningReview[];
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
   // A real customer with no agents yet has an empty list, don't assume [0] exists.
@@ -1738,6 +1749,7 @@ export function CustomerAgentWorkspace({
         knowledgeFields: selectedAssistant.knowledgeFields,
         defaultEmail: selectedAssistant.defaultEmail,
         contacts: selectedAssistant.contacts,
+        callScreening: selectedAssistant.callScreening ?? DEFAULT_CALL_SCREENING,
         website: selectedAssistant.website,
         fallbackEmail: selectedAssistant.fallbackEmail,
         transferNumber: selectedAssistant.transferNumber,
@@ -2129,6 +2141,7 @@ export function CustomerAgentWorkspace({
                 analysisEnabled={analysisEnabled}
                 followUps={followUps}
                 onFollowUpStatus={handleFollowUpStatus}
+                learning={initialLearning}
                 onViewCalls={() => setView("calls")}
                 onOpenCall={(callId) => {
                   // One click from an insight straight into the conversation.
@@ -2806,11 +2819,13 @@ function AssistantDetail({
         <RoutingTab
           contacts={assistant.contacts}
           defaultEmail={assistant.defaultEmail}
+          callScreening={assistant.callScreening ?? DEFAULT_CALL_SCREENING}
           saved={saved}
           isPending={isPending}
           saveError={saveError}
           onChange={(contacts) => onChange({ contacts })}
           onDefaultEmailChange={(defaultEmail) => onChange({ defaultEmail })}
+          onCallScreeningChange={(callScreening) => onChange({ callScreening })}
           onSave={onSave}
         />
       ) : tab === "outbound" ? (
@@ -3317,20 +3332,24 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
 function RoutingTab({
   contacts,
   defaultEmail,
+  callScreening,
   saved,
   isPending,
   saveError,
   onChange,
   onDefaultEmailChange,
+  onCallScreeningChange,
   onSave,
 }: {
   contacts: RoutingContact[];
   defaultEmail: string;
+  callScreening: CallScreening;
   saved: boolean;
   isPending: boolean;
   saveError: string | null;
   onChange: (contacts: RoutingContact[]) => void;
   onDefaultEmailChange: (value: string) => void;
+  onCallScreeningChange: (value: CallScreening) => void;
   onSave: () => void;
 }) {
   function update(id: string, patch: Partial<RoutingContact>) {
@@ -3351,6 +3370,7 @@ function RoutingTab({
         transfer: true,
         notify: false,
         useDefaultEmail: false,
+        transferMode: callScreening.namedPersonPolicy,
       },
     ]);
   }
@@ -3360,10 +3380,74 @@ function RoutingTab({
       <div className="mb-5 flex items-start gap-3 rounded-2xl border border-teal/20 bg-teal-wash px-5 py-4">
         <Users className="mt-0.5 h-5 w-5 flex-shrink-0 text-teal" />
         <p className="text-sm text-[#0e4b4d]">
-          Add the people or teams calls should reach. When a caller mentions any of a
-          contact&apos;s keywords, the agent transfers them to that number and/or emails a
-          summary.
+          Decide who gets put through, how sales and spam are handled, and whether
+          the agent should ask you first before transferring a call.
         </p>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-line bg-card p-5 shadow-card">
+        <span className="flex items-center gap-2 text-sm font-black">
+          Call screening
+        </span>
+        <p className="mt-1 mb-4 text-sm text-ink-soft">
+          Rules the AI follows on every call for sales pitches, spam, and named-person
+          requests.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className="block text-sm">
+            <span className="mb-2 block font-black">Sales / vendors</span>
+            <select
+              value={callScreening.salesPolicy}
+              onChange={(e) =>
+                onCallScreeningChange({
+                  ...callScreening,
+                  salesPolicy: e.target.value as CallScreening["salesPolicy"],
+                })
+              }
+              className="h-12 w-full rounded-lg border border-line-strong bg-white px-3 text-sm outline-none transition focus:border-ink"
+            >
+              <option value="field">Field the call (AI handles)</option>
+              <option value="qualify_and_message">Qualify, then take a message</option>
+              <option value="transfer">Transfer when a sales contact matches</option>
+              <option value="politely_decline">Politely decline</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="mb-2 block font-black">Spam / robocalls</span>
+            <select
+              value={callScreening.spamPolicy}
+              onChange={(e) =>
+                onCallScreeningChange({
+                  ...callScreening,
+                  spamPolicy: e.target.value as CallScreening["spamPolicy"],
+                })
+              }
+              className="h-12 w-full rounded-lg border border-line-strong bg-white px-3 text-sm outline-none transition focus:border-ink"
+            >
+              <option value="politely_end">End politely</option>
+              <option value="message_only">Message only, never transfer</option>
+              <option value="block">Refuse and end quickly</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="mb-2 block font-black">Ask for someone by name</span>
+            <select
+              value={callScreening.namedPersonPolicy}
+              onChange={(e) =>
+                onCallScreeningChange({
+                  ...callScreening,
+                  namedPersonPolicy: e.target.value as CallScreening["namedPersonPolicy"],
+                })
+              }
+              className="h-12 w-full rounded-lg border border-line-strong bg-white px-3 text-sm outline-none transition focus:border-ink"
+            >
+              <option value="immediate">Put through straight away</option>
+              <option value="confirm_caller">Confirm caller details first</option>
+              <option value="ask_client">Ask me first if I want the call</option>
+              <option value="message_only">Take a message only</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <div className="mb-6 rounded-2xl border border-line bg-card p-5 shadow-card">
@@ -3390,6 +3474,7 @@ function RoutingTab({
               key={contact.id}
               contact={contact}
               defaultEmail={defaultEmail}
+              defaultTransferMode={callScreening.namedPersonPolicy}
               onChange={(patch) => update(contact.id, patch)}
               onRemove={() => remove(contact.id)}
             />
@@ -3429,14 +3514,17 @@ function RoutingTab({
 function ContactCard({
   contact,
   defaultEmail,
+  defaultTransferMode,
   onChange,
   onRemove,
 }: {
   contact: RoutingContact;
   defaultEmail: string;
+  defaultTransferMode: TransferMode;
   onChange: (patch: Partial<RoutingContact>) => void;
   onRemove: () => void;
 }) {
+  const mode = contact.transferMode ?? defaultTransferMode;
   return (
     <div className="rounded-xl border border-line bg-white p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -3496,12 +3584,38 @@ function ContactCard({
         />
       </div>
 
+      <div className="mt-4">
+        <span className="mb-2 block text-sm font-black">When someone asks for them</span>
+        <select
+          value={mode}
+          onChange={(e) => {
+            const transferMode = e.target.value as TransferMode;
+            onChange({
+              transferMode,
+              transfer: transferMode === "message_only" ? false : contact.transfer || true,
+            });
+          }}
+          className="h-12 w-full max-w-md rounded-lg border border-line-strong bg-white px-3 text-sm outline-none transition focus:border-ink"
+        >
+          <option value="immediate">Put through straight away</option>
+          <option value="confirm_caller">Confirm caller details, then transfer</option>
+          <option value="ask_client">Ask me first if I want the call</option>
+          <option value="message_only">Take a message only</option>
+        </select>
+      </div>
+
       <div className="mt-4 flex flex-wrap gap-2">
         <RouteToggle
-          active={contact.transfer}
+          active={contact.transfer && mode !== "message_only"}
           icon={Phone}
           label="Transfer call"
-          onClick={() => onChange({ transfer: !contact.transfer })}
+          onClick={() =>
+            onChange({
+              transfer: !contact.transfer,
+              transferMode:
+                !contact.transfer && mode === "message_only" ? "confirm_caller" : mode,
+            })
+          }
         />
         <RouteToggle
           active={contact.notify}
@@ -3761,6 +3875,7 @@ function AiInsights({
   analysisEnabled,
   followUps,
   onFollowUpStatus,
+  learning = [],
   onViewCalls,
   onOpenCall,
 }: {
@@ -3768,6 +3883,7 @@ function AiInsights({
   analysisEnabled: boolean;
   followUps: FollowUp[];
   onFollowUpStatus: (id: string, status: FollowUp["status"]) => void;
+  learning?: AgentLearningReview[];
   onViewCalls: () => void;
   onOpenCall: (callId: string) => void;
 }) {
@@ -3923,6 +4039,7 @@ function AiInsights({
     return (
       <div className="anim-rise">
         {header}
+        <LearningReviewSection initial={learning} />
         <div className="rounded-2xl border border-dashed border-line-strong bg-card px-5 py-20 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-wash">
             <Sparkles className="h-7 w-7 text-teal" />
@@ -3945,6 +4062,8 @@ function AiInsights({
   return (
     <div className="anim-rise">
       {header}
+
+      <LearningReviewSection initial={learning} />
 
       {/* AI-generated briefing */}
       <section className="mb-6 rounded-2xl border border-teal/20 bg-gradient-to-br from-[#f0fafa] via-card to-card px-5 py-5 shadow-card sm:px-6">

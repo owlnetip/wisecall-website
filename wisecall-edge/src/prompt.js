@@ -1,6 +1,7 @@
 // Builds the system prompt the LLM receives. Mirrors prompt.js on the live server.
 
 const { buildCallerIntakeSection } = require("./lib/callerIntake");
+const { buildRoutingPolicySection } = require("./lib/routingPolicy");
 
 function buildSystemPrompt(profile, { contactBlock, integrationBlock, callerId } = {}) {
   const parts = [];
@@ -11,6 +12,9 @@ function buildSystemPrompt(profile, { contactBlock, integrationBlock, callerId }
 
   const intake = buildCallerIntakeSection({ callerId, metadata });
   if (intake) parts.push(intake);
+
+  const routingPolicy = buildRoutingPolicySection(metadata);
+  if (routingPolicy) parts.push(routingPolicy);
 
   if (profile.system_prompt) parts.push(profile.system_prompt);
 

@@ -8,6 +8,14 @@ import type {
   RoutingStatus,
 } from "@/components/customer-agent-workspace";
 import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
+import {
+  DEFAULT_CALL_SCREENING,
+  normaliseTransferMode,
+  readCallScreening,
+  type CallScreening,
+} from "@/lib/routing-policy";
+
+export type { CallScreening };
 
 // The subdomain the email channel listens on. Must match the edge function's
 // WISECALL_EMAIL_INBOUND_DOMAIN (wisecall-email-inbound).
@@ -95,6 +103,7 @@ function readContacts(row: ProfileRow): RoutingContact[] {
         transfer: c.transfer !== false,
         notify: c.notify === true,
         useDefaultEmail: c.useDefaultEmail === true,
+        transferMode: normaliseTransferMode(c.transferMode ?? c.transfer_mode),
       };
     });
   }
@@ -118,6 +127,7 @@ function readContacts(row: ProfileRow): RoutingContact[] {
         transfer: true,
         notify: false,
         useDefaultEmail: false,
+        transferMode: normaliseTransferMode(v.mode ?? v.transfer_mode),
       };
     });
   }
@@ -198,6 +208,7 @@ function mapProfile(row: ProfileRow): Assistant {
     transferNumber: meta(row, "transfer_number"),
     defaultEmail: readDefaultEmail(row),
     contacts: readContacts(row),
+    callScreening: row.metadata ? readCallScreening(row.metadata) : { ...DEFAULT_CALL_SCREENING },
     // Greeting & business knowledge are columns the live runtime reads
     // (settings.js greeting, prompt.js business_context); fall back to legacy
     // metadata for portal-created agents that only have the metadata copy.
