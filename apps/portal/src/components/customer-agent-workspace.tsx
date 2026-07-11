@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
+import { AgentLearningPanel } from "@/components/agent-learning-panel";
 import type { EmailChannelUsage, ChannelUsage, CallUsage } from "@/lib/billing";
 import {
   createAgent,
@@ -2124,18 +2125,21 @@ export function CustomerAgentWorkspace({
 
           <div key={view} className="anim-fade px-4 pb-24 pt-6 sm:px-5 sm:py-8 md:pb-8 lg:px-10">
             {view === "insights" && (
-              <AiInsights
-                initial={initialInsights}
-                analysisEnabled={analysisEnabled}
-                followUps={followUps}
-                onFollowUpStatus={handleFollowUpStatus}
-                onViewCalls={() => setView("calls")}
-                onOpenCall={(callId) => {
-                  // One click from an insight straight into the conversation.
-                  setSelectedCallId(callLogs.some((c) => c.id === callId) ? callId : null);
-                  setView("calls");
-                }}
-              />
+              <div className="space-y-6">
+                <AiInsights
+                  initial={initialInsights}
+                  analysisEnabled={analysisEnabled}
+                  followUps={followUps}
+                  onFollowUpStatus={handleFollowUpStatus}
+                  onViewCalls={() => setView("calls")}
+                  onOpenCall={(callId) => {
+                    // One click from an insight straight into the conversation.
+                    setSelectedCallId(callLogs.some((c) => c.id === callId) ? callId : null);
+                    setView("calls");
+                  }}
+                />
+                <AgentLearningPanel />
+              </div>
             )}
 
             {(view === "assistants") && (
