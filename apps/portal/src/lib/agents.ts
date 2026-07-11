@@ -220,12 +220,12 @@ function mapProfile(row: ProfileRow): Assistant {
 // Returns only the agents owned by this user. Enforced server-side: we query
 // with the service role but always filter by metadata->>owner_id = userId, so a
 // customer can never receive another customer's rows. Ownership is stored in the
-// existing `metadata` jsonb (no schema change needed). Returns null only when
-// Supabase isn't configured (so the UI can fall back to demo data).
-export async function getAgentsForUser(userId: string): Promise<Assistant[] | null> {
+// existing `metadata` jsonb (no schema change needed). Authenticated product
+// screens must never fall back to demo agents when this read fails.
+export async function getAgentsForUser(userId: string): Promise<Assistant[]> {
   const supabase = getServiceSupabase();
   if (!supabase) {
-    return null;
+    throw new Error("Agent data is not configured.");
   }
 
   const { data, error } = await supabase
@@ -238,7 +238,7 @@ export async function getAgentsForUser(userId: string): Promise<Assistant[] | nu
 
   if (error) {
     console.error("getAgentsForUser failed:", error.message);
-    return [];
+    throw new Error("Could not load agents.");
   }
 
   return (data as ProfileRow[]).map(mapProfile);
@@ -344,12 +344,16 @@ function duration(started: string | null, finished: string | null): string {
 // resolve the user's owned profile ids first, then only fetch logs for those ids.
 export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
   const supabase = getServiceSupabase();
-  if (!supabase) return [];
+  if (!supabase) throw new Error("Inbox data is not configured.");
 
-  const { data: owned } = await supabase
+  const { data: owned, error: ownedError } = await supabase
     .from("wisecall_profiles")
     .select("id")
     .eq("metadata->>owner_id", userId);
+  if (ownedError) {
+    console.error("getCallLogsForUser profiles failed:", ownedError.message);
+    throw new Error("Could not load inbox ownership.");
+  }
 
   const ids = (owned ?? []).map((row) => row.id as string);
   if (ids.length === 0) return [];
@@ -365,7 +369,7 @@ export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
 
   if (error) {
     console.error("getCallLogsForUser failed:", error.message);
-    return [];
+    throw new Error("Could not load inbox conversations.");
   }
 
   return (data as CallRow[]).map(mapCallRow);
@@ -449,19 +453,23 @@ export type AgentWhatsappNumber = { profileId: string; whatsappNumber: string; d
 
 async function getProfileIdsForUser(userId: string): Promise<string[]> {
   const supabase = getServiceSupabase();
-  if (!supabase) return [];
+  if (!supabase) throw new Error("Channel data is not configured.");
 
-  const { data: profiles } = await supabase
+  const { data: profiles, error } = await supabase
     .from("wisecall_profiles")
     .select("id")
     .eq("metadata->>owner_id", userId);
+  if (error) {
+    console.error("getProfileIdsForUser failed:", error.message);
+    throw new Error("Could not load channel ownership.");
+  }
   return (profiles ?? []).map((p) => p.id as string);
 }
 
 export async function getSmsNumbersForProfiles(profileIds: string[]): Promise<AgentSmsNumber[]> {
   if (!profileIds.length) return [];
   const supabase = getServiceSupabase();
-  if (!supabase) return [];
+  if (!supabase) throw new Error("SMS data is not configured.");
 
   const { data, error } = await supabase
     .from("wisecall_sms_numbers")
@@ -471,7 +479,7 @@ export async function getSmsNumbersForProfiles(profileIds: string[]): Promise<Ag
 
   if (error) {
     console.error("getSmsNumbersForProfiles failed:", error.message);
-    return [];
+    throw new Error("Could not load SMS numbers.");
   }
 
   return (data ?? []).map((row) => ({
@@ -485,7 +493,7 @@ export async function getWhatsappNumbersForProfiles(
 ): Promise<AgentWhatsappNumber[]> {
   if (!profileIds.length) return [];
   const supabase = getServiceSupabase();
-  if (!supabase) return [];
+  if (!supabase) throw new Error("WhatsApp data is not configured.");
 
   const { data, error } = await supabase
     .from("wisecall_whatsapp_numbers")
@@ -495,7 +503,7 @@ export async function getWhatsappNumbersForProfiles(
 
   if (error) {
     console.error("getWhatsappNumbersForProfiles failed:", error.message);
-    return [];
+    throw new Error("Could not load WhatsApp numbers.");
   }
 
   return (data ?? [])

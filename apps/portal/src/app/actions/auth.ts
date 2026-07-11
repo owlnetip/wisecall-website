@@ -4,14 +4,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/env";
+import { safeInternalRedirect } from "@/lib/redirects";
 
 export type AuthState = { error?: string; message?: string };
-
-function safeRedirect(target: FormDataEntryValue | null): string {
-  const value = typeof target === "string" ? target : "";
-  // Only allow internal paths to avoid open-redirects.
-  return value.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
-}
 
 export async function signInAction(
   _prev: AuthState,
@@ -19,7 +14,7 @@ export async function signInAction(
 ): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const redirectTo = safeRedirect(formData.get("redirect"));
+  const redirectTo = safeInternalRedirect(formData.get("redirect"));
 
   if (!email || !password) {
     return { error: "Enter your email and password." };

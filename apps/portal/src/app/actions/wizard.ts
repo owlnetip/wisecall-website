@@ -4,6 +4,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { isAdmin } from "@/lib/admin";
+import {
+  PublicUrlError,
+  assertPublicHttpUrl,
+  fetchPublicHttpUrl,
+  readResponseText,
+} from "@/lib/public-url";
 import type {
   KnowledgeFields,
   OfficeHours,
@@ -56,7 +62,6 @@ function normaliseUrl(input: string): string | null {
   if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
   try {
     const u = new URL(url);
-    if (!u.hostname.includes(".")) return null;
     return u.toString();
   } catch {
     return null;
@@ -89,9 +94,8 @@ async function fetchSiteTextDirect(url: string): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
   try {
-    const res = await fetch(url, {
+    const res = await fetchPublicHttpUrl(url, {
       signal: controller.signal,
-      redirect: "follow",
       headers: {
         "user-agent": FETCH_UA,
         accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -99,7 +103,16 @@ async function fetchSiteTextDirect(url: string): Promise<string> {
       },
     });
     if (!res.ok) throw new Error(`Site returned ${res.status}`);
-    const html = await res.text();
+    const contentType = res.headers.get("content-type")?.toLowerCase() ?? "";
+    if (
+      contentType &&
+      !contentType.includes("text/html") &&
+      !contentType.includes("application/xhtml+xml") &&
+      !contentType.includes("text/plain")
+    ) {
+      throw new PublicUrlError("That address does not point to a readable webpage.");
+    }
+    const html = await readResponseText(res);
     return htmlToText(html);
   } finally {
     clearTimeout(timer);
@@ -140,7 +153,8 @@ async function fetchSiteText(url: string): Promise<string> {
   try {
     const direct = await fetchSiteTextDirect(url);
     if (direct.length >= 80) return direct;
-  } catch {
+  } catch (error) {
+    if (error instanceof PublicUrlError) throw error;
     // Direct fetch often fails on Cloudflare/WAF-protected sites, try Reader.
   }
   return fetchSiteTextViaJina(url);
@@ -159,8 +173,23 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
     return { ok: false, error: "Start your free trial first." };
   }
 
-  const url = normaliseUrl(websiteInput);
-  if (!url) return { ok: false, error: "That doesn't look like a valid website address." };
+  const normalisedUrl = normaliseUrl(websiteInput);
+  if (!normalisedUrl) {
+    return { ok: false, error: "That doesn't look like a valid website address." };
+  }
+
+  let url: string;
+  try {
+    url = (await assertPublicHttpUrl(normalisedUrl)).toString();
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof PublicUrlError
+          ? error.message
+          : "That doesn't look like a valid public website address.",
+    };
+  }
 
   // Accept either name so the key set in Vercel works whichever it's called.
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_WISECASE;
@@ -175,7 +204,9 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
     return {
       ok: false,
       error:
-        err instanceof Error && err.name === "AbortError"
+        err instanceof PublicUrlError
+          ? err.message
+          : err instanceof Error && err.name === "AbortError"
           ? "The website took too long to load. Check the address and try again."
           : "Couldn't read that website. Check the address, or set the agent up manually.",
     };

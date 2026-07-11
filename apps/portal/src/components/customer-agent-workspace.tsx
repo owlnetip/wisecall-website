@@ -1465,6 +1465,7 @@ export function CustomerAgentWorkspace({
   initialInsights,
   analysisEnabled = false,
   initialFollowUps = [],
+  loadIssues = [],
 }: {
   initialAssistants?: Assistant[];
   callLogs?: CallLog[];
@@ -1485,11 +1486,12 @@ export function CustomerAgentWorkspace({
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
   initialFollowUps?: FollowUp[];
+  loadIssues?: string[];
 }) {
-  const [assistants, setAssistants] = useState(initialAssistants ?? demoAssistants);
+  const [assistants, setAssistants] = useState(initialAssistants ?? []);
   // A real customer with no agents yet has an empty list, don't assume [0] exists.
   const [selectedId, setSelectedId] = useState(
-    (initialAssistants ?? demoAssistants)[0]?.id ?? "",
+    initialAssistants?.[0]?.id ?? "",
   );
   const [view, setView] = useState<View>("insights");
   const [detailTab, setDetailTab] = useState<DetailTab>("behaviour");
@@ -1730,7 +1732,6 @@ export function CustomerAgentWorkspace({
         name: selectedAssistant.name,
         businessName: selectedAssistant.businessName,
         industry: selectedAssistant.industry,
-        phoneNumber: selectedAssistant.phoneNumber,
         timezone: selectedAssistant.timezone,
         prompt: selectedAssistant.prompt,
         greeting: selectedAssistant.greeting,
@@ -1742,7 +1743,12 @@ export function CustomerAgentWorkspace({
         website: selectedAssistant.website,
         fallbackEmail: selectedAssistant.fallbackEmail,
         transferNumber: selectedAssistant.transferNumber,
-        status: selectedAssistant.status,
+        ...(isAdmin
+          ? {
+              phoneNumber: selectedAssistant.phoneNumber,
+              status: selectedAssistant.status,
+            }
+          : {}),
       });
       if (result.ok) {
         setSaved(true);
@@ -1898,13 +1904,6 @@ export function CustomerAgentWorkspace({
                       <Mail className="h-5 w-5 flex-shrink-0" />
                       Dental outreach
                     </a>
-                    <a
-                      href="/admin/partners"
-                      className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
-                    >
-                      <Users className="h-5 w-5 flex-shrink-0" />
-                      Partners
-                    </a>
                   </>
                 ) : (
                   isAdmin && (
@@ -1915,13 +1914,6 @@ export function CustomerAgentWorkspace({
                       >
                         <ShieldCheck className="h-5 w-5 flex-shrink-0" />
                         Admin
-                      </a>
-                      <a
-                        href="/admin/partners"
-                        className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
-                      >
-                        <Users className="h-5 w-5 flex-shrink-0" />
-                        Partners
                       </a>
                     </>
                   )
@@ -2004,13 +1996,6 @@ export function CustomerAgentWorkspace({
                   <Mail className="h-5 w-5 flex-shrink-0" />
                   Dental outreach
                 </a>
-                <a
-                  href="/admin/partners"
-                  className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
-                >
-                  <Users className="h-5 w-5 flex-shrink-0" />
-                  Partners
-                </a>
               </>
             ) : (
               isAdmin && (
@@ -2028,13 +2013,6 @@ export function CustomerAgentWorkspace({
                   >
                     <Mail className="h-5 w-5 flex-shrink-0" />
                     Dental outreach
-                  </a>
-                  <a
-                    href="/admin/partners"
-                    className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white"
-                  >
-                    <Users className="h-5 w-5 flex-shrink-0" />
-                    Partners
                   </a>
                 </>
               )
@@ -2124,6 +2102,31 @@ export function CustomerAgentWorkspace({
           </header>
 
           <div key={view} className="anim-fade px-4 pb-24 pt-6 sm:px-5 sm:py-8 md:pb-8 lg:px-10">
+            {loadIssues.length > 0 && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-5 flex flex-col gap-3 rounded-xl border border-warn/25 bg-warn-wash px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warn" />
+                  <div>
+                    <p className="font-black text-ink">Some information could not be refreshed</p>
+                    <p className="mt-0.5 text-ink-soft">
+                      {loadIssues.join(", ")} may be incomplete. Your saved settings were not changed.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="press inline-flex h-9 flex-shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-warn/30 bg-white px-3 text-xs font-black text-ink transition hover:border-warn sm:self-auto"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Refresh data
+                </button>
+              </div>
+            )}
             {view === "insights" && (
               <div className="space-y-6">
                 <AiInsights
@@ -2844,11 +2847,13 @@ function AssistantDetail({
             value={assistant.industry}
             onChange={(value) => onChange({ industry: value })}
           />
-          <Field
-            label="Phone number"
-            value={assistant.phoneNumber}
-            onChange={(value) => onChange({ phoneNumber: value })}
-          />
+          {adminMode ? (
+            <Field
+              label="Phone number"
+              value={assistant.phoneNumber}
+              onChange={(value) => onChange({ phoneNumber: value })}
+            />
+          ) : null}
           <Field
             label="Website"
             value={assistant.website}

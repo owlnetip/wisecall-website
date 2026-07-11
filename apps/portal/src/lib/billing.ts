@@ -114,7 +114,7 @@ function mapBilling(row: BillingRow): Billing {
 // yet (user hasn't started a trial) or Supabase isn't configured.
 export async function getBillingForUser(userId: string): Promise<Billing | null> {
   const supabase = getServiceSupabase();
-  if (!supabase) return null;
+  if (!supabase) throw new Error("Billing data is not configured.");
 
   const { data, error } = await supabase
     .from("wisecall_billing")
@@ -124,7 +124,7 @@ export async function getBillingForUser(userId: string): Promise<Billing | null>
 
   if (error) {
     console.error("getBillingForUser failed:", error.message);
-    return null;
+    throw new Error("Could not load billing status.");
   }
   return data ? mapBilling(data as BillingRow) : null;
 }
@@ -240,21 +240,29 @@ export async function getTrialUsage(
   if (billing?.status !== "trialing") return null;
 
   const supabase = getServiceSupabase();
-  if (!supabase) return null;
+  if (!supabase) throw new Error("Plan usage is not configured.");
 
-  const { data: owned } = await supabase
+  const { data: owned, error: ownedError } = await supabase
     .from("wisecall_profiles")
     .select("id")
     .eq("metadata->>owner_id", userId);
+  if (ownedError) {
+    console.error("getTrialUsage profiles failed:", ownedError.message);
+    throw new Error("Could not load plan usage ownership.");
+  }
 
   const ids = (owned ?? []).map((row) => row.id as string);
   const cap = billing.trialCallCap;
   if (ids.length === 0) return { used: 0, cap, blocked: false };
 
-  const { count } = await supabase
+  const { count, error: countError } = await supabase
     .from("wisecall_call_logs")
     .select("id", { count: "exact", head: true })
     .in("profile_id", ids);
+  if (countError) {
+    console.error("getTrialUsage count failed:", countError.message);
+    throw new Error("Could not load plan usage.");
+  }
 
   const used = count ?? 0;
   return { used, cap, blocked: used >= cap };

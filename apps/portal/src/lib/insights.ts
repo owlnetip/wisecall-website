@@ -1,5 +1,6 @@
 import { getServiceSupabase } from "@/lib/supabase";
 import type { CallAnalysis, Sentiment } from "@/lib/call-analysis";
+import { calculateConversionRate } from "@/lib/insight-metrics";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WiseCall AI Insights aggregation
@@ -69,7 +70,7 @@ export type DashboardInsights = {
   complaintCount: number;
   leadCount: number;
   bookingCount: number;
-  conversionRate: number; // 0..100, (bookings + leads) / total calls
+  conversionRate: number; // 0..100, unique calls with a booking or lead signal
   handledByAi: number; // analysed calls where the AI fully resolved without human help
   handledByAiRate: number; // 0..100, handledByAi / analysedCalls
   topReasons: LabelCount[];
@@ -195,11 +196,15 @@ function buildSummary(i: DashboardInsights): string {
 // Resolves the profile ids owned by this user. Empty array means "no agents".
 async function ownedProfileIds(userId: string): Promise<string[]> {
   const supabase = getServiceSupabase();
-  if (!supabase) return [];
-  const { data } = await supabase
+  if (!supabase) throw new Error("Insight data is not configured.");
+  const { data, error } = await supabase
     .from("wisecall_profiles")
     .select("id")
     .eq("metadata->>owner_id", userId);
+  if (error) {
+    console.error("getInsightsForUser profiles failed:", error.message);
+    throw new Error("Could not load insight ownership.");
+  }
   return (data ?? []).map((r) => r.id as string);
 }
 
@@ -208,17 +213,21 @@ export async function getInsightsForUser(
   range: InsightsRange,
 ): Promise<DashboardInsights> {
   const supabase = getServiceSupabase();
-  if (!supabase) return emptyInsights(range, false);
+  if (!supabase) throw new Error("Insight data is not configured.");
 
   const ids = await ownedProfileIds(userId);
   if (ids.length === 0) return emptyInsights(range, false);
 
   // Is there any call at all (across all time)? Lets the UI tell "brand new
   // account" apart from "quiet date range".
-  const { count: lifetimeCount } = await supabase
+  const { count: lifetimeCount, error: lifetimeError } = await supabase
     .from("wisecall_call_logs")
     .select("id", { count: "exact", head: true })
     .in("profile_id", ids);
+  if (lifetimeError) {
+    console.error("getInsightsForUser lifetime count failed:", lifetimeError.message);
+    throw new Error("Could not load insight history.");
+  }
   const hasAnyCalls = (lifetimeCount ?? 0) > 0;
 
   const since = rangeStart(range).toISOString();
@@ -232,7 +241,7 @@ export async function getInsightsForUser(
 
   if (error) {
     console.error("getInsightsForUser failed:", error.message);
-    return emptyInsights(range, hasAnyCalls);
+    throw new Error("Could not load insights.");
   }
 
   const rows = (data as InsightRow[]) ?? [];
@@ -321,9 +330,9 @@ export async function getInsightsForUser(
   result.opportunities = result.opportunities.slice(0, 10);
   result.attention = result.attention.slice(0, 12);
 
-  const conversions = result.bookingCount + result.leadCount;
-  result.conversionRate =
-    result.totalCalls > 0 ? Math.round((conversions / result.totalCalls) * 100) : 0;
+  result.conversionRate = calculateConversionRate(
+    rows.map((row) => ({ lead: row.lead_detected, booking: row.booking_detected })),
+  );
   result.handledByAiRate =
     result.analysedCalls > 0
       ? Math.round((result.handledByAi / result.analysedCalls) * 100)

@@ -361,10 +361,17 @@ export async function updateAgent(
     data: { user },
   } = await auth.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
+  const admin = isAdmin(user);
 
   // Billing gate: customers must be trialing/active to edit an agent.
-  if (!isAdmin(user) && !hasActiveAccess(await getBillingForUser(user.id))) {
+  if (!admin && !hasActiveAccess(await getBillingForUser(user.id))) {
     return { ok: false, error: "Start your free trial first." };
+  }
+  if (!admin && (patch.phoneNumber !== undefined || patch.status !== undefined)) {
+    return {
+      ok: false,
+      error: "Assigned phone numbers and live status can only be changed through provisioning.",
+    };
   }
 
   const service = getServiceSupabase();
@@ -380,7 +387,6 @@ export async function updateAgent(
   if (!row) return { ok: false, error: "Agent not found." };
 
   const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
-  const admin = isAdmin(user);
   if (metadata.owner_id !== user.id && !admin) {
     return { ok: false, error: "You don't have access to this agent." };
   }
