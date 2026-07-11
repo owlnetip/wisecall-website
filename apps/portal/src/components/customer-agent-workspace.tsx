@@ -2542,6 +2542,47 @@ function AssistantsList({
   );
 }
 
+function AgentNumberSummary({
+  icon: Icon,
+  label,
+  number,
+  iconClass,
+}: {
+  icon: LucideIcon;
+  label: string;
+  number: string;
+  iconClass: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard?.writeText(number).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      },
+      () => {},
+    );
+  }
+
+  return (
+    <div className="group inline-flex min-w-0 items-center gap-1.5 text-xs">
+      <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${iconClass}`} />
+      <span className="flex-shrink-0 font-black text-ink">{label}</span>
+      <span className="truncate font-mono text-ink-soft">{number}</span>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={`Copy ${label} number ${number}`}
+        title={`Copy ${label} number`}
+        className="press flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-ink-faint opacity-100 transition hover:bg-card-tint hover:text-ink focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+      >
+        {copied ? <Check className="h-3.5 w-3.5 text-good" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
+    </div>
+  );
+}
+
 function AssistantDetail({
   assistant,
   tab,
@@ -2761,31 +2802,55 @@ function AssistantDetail({
         </div>
       )}
 
-      <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-line py-3 text-sm">
-        <span className="inline-flex items-center gap-2 font-bold text-ink">
-          <span
-            className={`h-2 w-2 rounded-full ${stateDot}`}
-          />
-          {routingLabel}
-        </span>
-        {hasPhoneLine ? (
-          <span className="inline-flex min-w-0 items-center gap-1.5 text-ink-soft">
-            <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="truncate font-mono">{assistant.routing.number}</span>
+      <div className="mb-5 divide-y divide-line border-y border-line">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 py-3 text-sm">
+          <span className="inline-flex items-center gap-2 font-bold text-ink">
+            <span className={`h-2 w-2 rounded-full ${stateDot}`} />
+            {routingLabel}
           </span>
-        ) : operationalState === "setting_up" || operationalState === "disconnected" ? (
-          <button
-            type="button"
-            onClick={() => onTabChange("routing")}
-            className="press inline-flex items-center gap-1 font-black text-teal transition hover:text-teal-deep"
-          >
-            {operationalState === "setting_up" ? "View status" : "Set up number"}
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
+          {!hasPhoneLine &&
+          (operationalState === "setting_up" || operationalState === "disconnected") ? (
+            <button
+              type="button"
+              onClick={() => onTabChange("routing")}
+              className="press inline-flex items-center gap-1 font-black text-teal transition hover:text-teal-deep"
+            >
+              {operationalState === "setting_up" ? "View status" : "Set up number"}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+          <span className="text-ink-faint sm:ml-auto">
+            {assistant.calls > 0 ? `${assistant.calls} calls handled` : "No calls yet"}
+          </span>
+        </div>
+        {hasPhoneLine || smsNumber || whatsappNumber ? (
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
+            {hasPhoneLine ? (
+              <AgentNumberSummary
+                icon={Phone}
+                label="Calls"
+                number={assistant.routing.number}
+                iconClass="text-teal"
+              />
+            ) : null}
+            {smsNumber ? (
+              <AgentNumberSummary
+                icon={MessageSquare}
+                label="SMS"
+                number={smsNumber}
+                iconClass="text-[#7c3aed]"
+              />
+            ) : null}
+            {whatsappNumber ? (
+              <AgentNumberSummary
+                icon={MessageCircle}
+                label="WhatsApp"
+                number={whatsappNumber}
+                iconClass="text-good"
+              />
+            ) : null}
+          </div>
         ) : null}
-        <span className="text-ink-faint">
-          {assistant.calls > 0 ? `${assistant.calls} calls handled` : "No calls yet"}
-        </span>
       </div>
 
       {saveError ? (
