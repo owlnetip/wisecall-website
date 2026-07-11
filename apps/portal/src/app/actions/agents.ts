@@ -154,6 +154,10 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     owner_id: user.id,
     industry: input.industry,
     source: "portal_create",
+    // New agents auto-enrol in continuous learning (knowledge-gap detection).
+    // The daily cron only touches agents with this flag; existing agents stay
+    // opt-in individually.
+    learning_enabled: true,
     greeting: input.greeting ?? "",
     voice: input.voice ?? "Gemma",
     knowledge: input.knowledge ?? "",
