@@ -2974,14 +2974,14 @@ function AssistantDetail({
         </div>
       ) : tab === "routing" ? (
         <div key="routing" className="anim-fade">
-          <RoutingCard
-            routing={assistant.routing}
-            smsNumber={smsNumber}
-            whatsappNumber={whatsappNumber}
-            isProvisioning={isProvisioning}
-            error={provisionError}
-            onProvision={onProvision}
-          />
+          {assistant.routing.status !== "live" ? (
+            <RoutingCard
+              routing={assistant.routing}
+              isProvisioning={isProvisioning}
+              error={provisionError}
+              onProvision={onProvision}
+            />
+          ) : null}
           <RoutingTab
             contacts={assistant.contacts}
             defaultEmail={assistant.defaultEmail}
@@ -5189,15 +5189,11 @@ function NumberRow({
 
 function RoutingCard({
   routing,
-  smsNumber,
-  whatsappNumber,
   isProvisioning,
   error,
   onProvision,
 }: {
   routing: AgentRouting;
-  smsNumber?: string;
-  whatsappNumber?: string;
   isProvisioning: boolean;
   error: string | null;
   onProvision: () => void;
@@ -5223,22 +5219,6 @@ function RoutingCard({
             live={live}
             pendingDot={pending}
           />
-          {smsNumber ? (
-            <NumberRow
-              icon={MessageSquare}
-              iconClass="bg-[#f5f0ff] text-[#7c3aed]"
-              number={smsNumber}
-              purpose="SMS messages & notifications"
-            />
-          ) : null}
-          {whatsappNumber ? (
-            <NumberRow
-              icon={MessageCircle}
-              iconClass="bg-good-wash text-good"
-              number={whatsappNumber}
-              purpose="WhatsApp messaging"
-            />
-          ) : null}
         </div>
         {live ? null : (
           <button
