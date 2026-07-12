@@ -5,7 +5,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAgentsForUser, getCallLogsForUser, getSmsNumbersForUser, getWhatsappNumbersForUser } from "@/lib/agents";
 import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, getCallUsage, getWhatsappUsage, getLivechatUsage, getSmsUsage, reconcileBillingFromStripe } from "@/lib/billing";
-import { planDisplayName } from "@/lib/stripe";
 import { getContactsForUser } from "@/lib/contacts";
 import {
   enrichContactsWithNames,
@@ -134,7 +133,6 @@ export default async function DashboardPage() {
       // still uses the real `admin` flag, not this prop.
       isAdmin={impersonateId ? false : admin}
       trial={trial ?? undefined}
-      planName={billing?.plan ? planDisplayName(billing.plan) : undefined}
       emailChannel={emailChannel}
       callUsage={callUsage}
       whatsappChannel={whatsappChannel}

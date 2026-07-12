@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Check, Clock, Loader2 } from "lucide-react";
-import { updateAgent } from "@/app/actions/agents";
+import { Check, Clock } from "lucide-react";
 import type { OfficeHours } from "./customer-agent-workspace";
 
 export const OFFICE_DAYS: { key: string; label: string }[] = [
@@ -92,6 +90,7 @@ export function OfficeHoursGrid({
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <input
                   type="time"
+                  aria-label={`${label} opening time`}
                   value={day!.open}
                   onChange={(e) => setTime(key, "open", e.target.value)}
                   className="rounded-lg border border-line bg-white px-2 py-1 font-mono text-sm text-ink outline-none transition focus:border-teal"
@@ -99,6 +98,7 @@ export function OfficeHoursGrid({
                 <span className="text-ink-faint">–</span>
                 <input
                   type="time"
+                  aria-label={`${label} closing time`}
                   value={day!.close}
                   onChange={(e) => setTime(key, "close", e.target.value)}
                   className="rounded-lg border border-line bg-white px-2 py-1 font-mono text-sm text-ink outline-none transition focus:border-teal"
@@ -129,42 +129,23 @@ function defaultOutOfHoursMessage(businessName?: string) {
 }
 
 export function OfficeHoursCard({
-  agentId,
-  initial,
-  initialMessage,
+  hours,
+  message,
   businessName,
   timezone,
+  onChange,
 }: {
-  agentId: string;
-  initial?: OfficeHours;
-  initialMessage?: string;
+  hours?: OfficeHours;
+  message?: string;
   businessName?: string;
   timezone?: string;
+  onChange: (patch: { officeHours?: OfficeHours; outOfHoursMessage?: string }) => void;
 }) {
-  const [hours, setHours] = useState<OfficeHours>(initial ?? {});
-  const [message, setMessage] = useState(initialMessage ?? "");
-  const [pending, start] = useTransition();
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [dirty, setDirty] = useState(false);
-
-  const hasHours = Object.keys(hours).length > 0;
-
-  function save() {
-    setMsg(null);
-    start(async () => {
-      const r = await updateAgent(agentId, { officeHours: hours, outOfHoursMessage: message });
-      if (r.ok) {
-        setDirty(false);
-        setMsg({ ok: true, text: "Saved" });
-        setTimeout(() => setMsg(null), 2000);
-      } else {
-        setMsg({ ok: false, text: r.error ?? "Couldn't save." });
-      }
-    });
-  }
+  const currentHours = hours ?? {};
+  const hasHours = Object.keys(currentHours).length > 0;
 
   return (
-    <div className="mb-6 rounded-2xl border border-line bg-card px-5 py-4 shadow-card">
+    <div className="rounded-2xl border border-line bg-card px-5 py-4 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-teal-wash text-teal">
@@ -178,40 +159,12 @@ export function OfficeHoursCard({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {msg && (
-            <span
-              aria-live="polite"
-              className={`anim-pop text-sm font-bold ${msg.ok ? "text-good" : "text-danger"}`}
-            >
-              {msg.ok ? (
-                <span className="inline-flex items-center gap-1">
-                  <Check className="h-4 w-4" /> {msg.text}
-                </span>
-              ) : (
-                msg.text
-              )}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={save}
-            disabled={pending || !dirty}
-            className="press inline-flex h-9 items-center gap-2 rounded-lg bg-ink px-4 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-40"
-          >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {pending ? "Saving…" : "Save"}
-          </button>
-        </div>
       </div>
 
       <div className="mt-4">
         <OfficeHoursGrid
-          hours={hours}
-          onChange={(next) => {
-            setHours(next);
-            setDirty(true);
-          }}
+          hours={currentHours}
+          onChange={(officeHours) => onChange({ officeHours })}
         />
       </div>
 
@@ -224,11 +177,8 @@ export function OfficeHoursCard({
           </p>
           <textarea
             rows={3}
-            value={message}
-            onChange={(e) => {
-              setMessage(e.target.value);
-              setDirty(true);
-            }}
+            value={message ?? ""}
+            onChange={(event) => onChange({ outOfHoursMessage: event.target.value })}
             placeholder={defaultOutOfHoursMessage(businessName)}
             className="w-full rounded-xl border border-line bg-card-tint px-3 py-2 text-sm leading-relaxed text-ink outline-none transition placeholder:text-ink-faint focus:border-teal focus:bg-white"
           />

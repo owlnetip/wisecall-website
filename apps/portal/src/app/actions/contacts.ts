@@ -112,6 +112,8 @@ export async function backfillInferredContactNames(
     if (!error) written += 1;
   }
 
-  if (written > 0) revalidatePath("/dashboard");
+  // This repair currently runs while the dashboard server component is loading.
+  // Calling revalidatePath during render throws in Next.js; the current response
+  // already contains the inferred names, so no additional invalidation is needed.
   return { ok: true, written };
 }

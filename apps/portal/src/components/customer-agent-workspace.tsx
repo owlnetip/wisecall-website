@@ -99,6 +99,11 @@ import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 import { OutboundManager } from "@/components/outbound-manager";
 import { AgentPreviewModal } from "./agent-preview-modal";
+import {
+  agentOperationalLabel,
+  getAgentOperationalState,
+  type AgentOperationalState,
+} from "@/lib/agent-operational-state";
 
 type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
@@ -1453,7 +1458,6 @@ export function CustomerAgentWorkspace({
   isAdmin = false,
   adminMode = false,
   trial,
-  planName,
   emailChannel,
   callUsage,
   whatsappChannel,
@@ -1474,7 +1478,6 @@ export function CustomerAgentWorkspace({
   isAdmin?: boolean;
   adminMode?: boolean; // rendered on /admin with every customer's agents
   trial?: { used: number; cap: number; blocked: boolean }; // free-trial call usage
-  planName?: string; // subscription plan label (Core / Growth / Pro)
   emailChannel?: EmailChannelUsage;
   callUsage?: CallUsage; // bundled AI-call allowance + usage
   whatsappChannel?: ChannelUsage; // bundled WhatsApp allowance + usage
@@ -1506,7 +1509,9 @@ export function CustomerAgentWorkspace({
   const [newAssistantName, setNewAssistantName] = useState("");
   const [newBusinessName, setNewBusinessName] = useState("");
   const [newTemplateId, setNewTemplateId] = useState(agentTemplates[0].id);
-  const [saved, setSaved] = useState(false);
+  const [savedAgentId, setSavedAgentId] = useState<string | null>(null);
+  const [dirtyAgentIds, setDirtyAgentIds] = useState<Set<string>>(() => new Set());
+  const editRevisionRef = useRef<Map<string, number>>(new Map());
   const [saveError, setSaveError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
@@ -1577,10 +1582,23 @@ export function CustomerAgentWorkspace({
     );
   }, [assistants, searchTerm]);
 
-  function updateSelected(patch: Partial<Assistant>) {
+  function updateSelected(patch: Partial<Assistant>, markDirty = true) {
+    if (!selectedAssistant) return;
     setAssistants((current) =>
       current.map((a) => (a.id === selectedAssistant.id ? { ...a, ...patch } : a)),
     );
+    if (markDirty) {
+      setSavedAgentId(null);
+      editRevisionRef.current.set(
+        selectedAssistant.id,
+        (editRevisionRef.current.get(selectedAssistant.id) ?? 0) + 1,
+      );
+      setDirtyAgentIds((current) => {
+        const next = new Set(current);
+        next.add(selectedAssistant.id);
+        return next;
+      });
+    }
   }
 
   function deleteSelected() {
@@ -1588,6 +1606,12 @@ export function CustomerAgentWorkspace({
       const result = await deleteAgent(selectedAssistant.id);
       if (!result.ok) return; // leave on page; AssistantDetail shows the error
       setAssistants((current) => current.filter((a) => a.id !== selectedAssistant.id));
+      setDirtyAgentIds((current) => {
+        const next = new Set(current);
+        next.delete(selectedAssistant.id);
+        return next;
+      });
+      editRevisionRef.current.delete(selectedAssistant.id);
       setView("assistants");
     });
   }
@@ -1727,32 +1751,52 @@ export function CustomerAgentWorkspace({
 
   function save() {
     setSaveError(null);
+    const assistantToSave = selectedAssistant;
+    if (!assistantToSave) return;
+    const revisionAtSave = editRevisionRef.current.get(assistantToSave.id) ?? 0;
     startTransition(async () => {
-      const result = await updateAgent(selectedAssistant.id, {
-        name: selectedAssistant.name,
-        businessName: selectedAssistant.businessName,
-        industry: selectedAssistant.industry,
-        timezone: selectedAssistant.timezone,
-        prompt: selectedAssistant.prompt,
-        greeting: selectedAssistant.greeting,
-        voice: selectedAssistant.voice,
-        knowledge: selectedAssistant.knowledge,
-        knowledgeFields: selectedAssistant.knowledgeFields,
-        defaultEmail: selectedAssistant.defaultEmail,
-        contacts: selectedAssistant.contacts,
-        website: selectedAssistant.website,
-        fallbackEmail: selectedAssistant.fallbackEmail,
-        transferNumber: selectedAssistant.transferNumber,
+      const result = await updateAgent(assistantToSave.id, {
+        name: assistantToSave.name,
+        businessName: assistantToSave.businessName,
+        industry: assistantToSave.industry,
+        timezone: assistantToSave.timezone,
+        prompt: assistantToSave.prompt,
+        greeting: assistantToSave.greeting,
+        voice: assistantToSave.voice,
+        knowledge: assistantToSave.knowledge,
+        knowledgeFields: assistantToSave.knowledgeFields,
+        defaultEmail: assistantToSave.defaultEmail,
+        contacts: assistantToSave.contacts,
+        website: assistantToSave.website,
+        fallbackEmail: assistantToSave.fallbackEmail,
+        transferNumber: assistantToSave.transferNumber,
+        officeHours: assistantToSave.officeHours,
+        outOfHoursMessage: assistantToSave.outOfHoursMessage,
         ...(isAdmin
           ? {
-              phoneNumber: selectedAssistant.phoneNumber,
-              status: selectedAssistant.status,
+              phoneNumber: assistantToSave.phoneNumber,
+              status: assistantToSave.status,
             }
           : {}),
       });
       if (result.ok) {
-        setSaved(true);
-        window.setTimeout(() => setSaved(false), 1600);
+        const hasNewerChanges =
+          (editRevisionRef.current.get(assistantToSave.id) ?? 0) !== revisionAtSave;
+        if (!hasNewerChanges) {
+          setDirtyAgentIds((current) => {
+            const next = new Set(current);
+            next.delete(assistantToSave.id);
+            return next;
+          });
+          setSavedAgentId(assistantToSave.id);
+          window.setTimeout(
+            () =>
+              setSavedAgentId((current) =>
+                current === assistantToSave.id ? null : current,
+              ),
+            1600,
+          );
+        }
       } else {
         setSaveError(result.error ?? "Save failed.");
       }
@@ -1764,11 +1808,14 @@ export function CustomerAgentWorkspace({
     startProvision(async () => {
       const result = await provisionNumber(selectedAssistant.id);
       if (result.ok && result.routing) {
-        updateSelected({
-          routing: result.routing,
-          phoneNumber: result.routing.number || "Number pending",
-          status: result.routing.status === "live" ? "Live" : "Setup",
-        });
+        updateSelected(
+          {
+            routing: result.routing,
+            phoneNumber: result.routing.number || "Number pending",
+            status: result.routing.status === "live" ? "Live" : "Setup",
+          },
+          false,
+        );
       } else {
         setProvisionError(result.error ?? "Could not assign a number yet.");
       }
@@ -2156,6 +2203,7 @@ export function CustomerAgentWorkspace({
                   setSelectedId(assistantId);
                   setView("detail");
                   setDetailTab("behaviour");
+                  setSaveError(null);
                 }}
               />
             )}
@@ -2164,7 +2212,8 @@ export function CustomerAgentWorkspace({
               <AssistantDetail
                 assistant={selectedAssistant}
                 tab={detailTab}
-                saved={saved}
+                dirty={dirtyAgentIds.has(selectedAssistant.id)}
+                saved={savedAgentId === selectedAssistant.id}
                 isPending={isPending}
                 saveError={saveError}
                 isProvisioning={isProvisioning}
@@ -2193,7 +2242,6 @@ export function CustomerAgentWorkspace({
                 onProvision={provision}
                 onDelete={isAdmin ? deleteSelected : undefined}
                 adminMode={adminMode}
-                planName={planName}
                 smsNumber={smsNumbers?.find((n) => n.profileId === selectedAssistant.id)?.smsNumber}
                 whatsappNumber={
                   whatsappNumbers?.find((n) => n.profileId === selectedAssistant.id)?.whatsappNumber
@@ -2367,7 +2415,8 @@ function AgentCard({
   adminMode: boolean;
   onOpen: () => void;
 }) {
-  const live = assistant.status === "Live";
+  const operationalState = getAgentOperationalState(assistant);
+  const live = operationalState === "live";
   return (
     <button
       type="button"
@@ -2378,7 +2427,7 @@ function AgentCard({
         <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#172929] to-[#0e1b1b] text-base font-black text-[#7de8eb]">
           {(assistant.name || "A").charAt(0).toUpperCase()}
         </span>
-        <StatusPill status={assistant.status} />
+        <AgentStatePill assistant={assistant} />
       </div>
       <p className="mt-3 truncate text-base font-black text-ink">{assistant.name}</p>
       <p className="mt-0.5 truncate text-sm text-ink-soft">
@@ -2493,9 +2542,51 @@ function AssistantsList({
   );
 }
 
+function AgentNumberSummary({
+  icon: Icon,
+  label,
+  number,
+  iconClass,
+}: {
+  icon: LucideIcon;
+  label: string;
+  number: string;
+  iconClass: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard?.writeText(number).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      },
+      () => {},
+    );
+  }
+
+  return (
+    <div className="group inline-flex min-w-0 items-center gap-1.5 text-xs">
+      <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${iconClass}`} />
+      <span className="flex-shrink-0 font-black text-ink">{label}</span>
+      <span className="truncate font-mono text-ink-soft">{number}</span>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={`Copy ${label} number ${number}`}
+        title={`Copy ${label} number`}
+        className="press flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-ink-faint opacity-100 transition hover:bg-card-tint hover:text-ink focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+      >
+        {copied ? <Check className="h-3.5 w-3.5 text-good" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
+    </div>
+  );
+}
+
 function AssistantDetail({
   assistant,
   tab,
+  dirty,
   saved,
   isPending,
   saveError,
@@ -2512,12 +2603,12 @@ function AssistantDetail({
   onProvision,
   onDelete,
   adminMode = false,
-  planName,
   smsNumber,
   whatsappNumber,
 }: {
   assistant: Assistant;
   tab: DetailTab;
+  dirty: boolean;
   saved: boolean;
   isPending: boolean;
   saveError: string | null;
@@ -2534,7 +2625,6 @@ function AssistantDetail({
   onProvision: () => void;
   onDelete?: () => void;
   adminMode?: boolean;
-  planName?: string;
   smsNumber?: string;
   whatsappNumber?: string;
 }) {
@@ -2554,6 +2644,25 @@ function AssistantDetail({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
+  const operationalState = getAgentOperationalState(assistant);
+  const hasPhoneLine = assistant.routing.status === "live" && Boolean(assistant.routing.number);
+  const routingLabel =
+    operationalState === "live"
+      ? "Live and answering"
+      : operationalState === "paused"
+        ? "Paused · phone line connected"
+        : operationalState === "setting_up"
+          ? "Number setting up"
+          : operationalState === "review"
+            ? "Needs review before answering"
+            : "Phone line not connected";
+  const stateDot =
+    operationalState === "live"
+      ? "live-dot bg-good"
+      : operationalState === "setting_up" || operationalState === "review"
+        ? "bg-warn"
+        : "bg-ink-faint";
+
   return (
     <div className="anim-rise mx-auto max-w-5xl">
       <button
@@ -2567,14 +2676,11 @@ function AssistantDetail({
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#172929] to-[#0e1b1b] text-xl font-black text-[#7de8eb] shadow-card">
+          <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-ink text-xl font-black text-[#7de8eb] shadow-card">
             {(assistant.name || "A").charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <h1 className="flex items-center gap-3 text-2xl font-black text-ink sm:text-3xl">
-              <span className="truncate">{assistant.name}</span>
-              <StatusPill status={assistant.status} />
-            </h1>
+            <h1 className="truncate text-2xl font-black text-ink sm:text-3xl">{assistant.name}</h1>
             <p className="mt-0.5 truncate text-sm text-ink-soft">
               {assistant.businessName}
               {assistant.industry ? ` · ${assistant.industry}` : ""}
@@ -2582,6 +2688,25 @@ function AssistantDetail({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={isPending || !dirty}
+            aria-live="polite"
+            className={`press inline-flex h-9 min-w-[116px] items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-black transition disabled:cursor-default ${
+              dirty
+                ? "border-ink bg-ink text-white hover:bg-[#263130] disabled:opacity-70"
+                : "border-line bg-card text-good"
+            }`}
+            title={dirty ? "Save agent changes" : "All changes are saved"}
+          >
+            {isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )}
+            {isPending ? "Saving…" : saved || !dirty ? "Saved" : "Save changes"}
+          </button>
           <button
             type="button"
             onClick={() => setPreviewOpen(true)}
@@ -2677,42 +2802,83 @@ function AssistantDetail({
         </div>
       )}
 
-      <RoutingCard
-        routing={assistant.routing}
-        smsNumber={smsNumber}
-        whatsappNumber={whatsappNumber}
-        isProvisioning={isProvisioning}
-        error={provisionError}
-        onProvision={onProvision}
-      />
+      <div className="mb-5 divide-y divide-line border-y border-line">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 py-3 text-sm">
+          <span className="inline-flex items-center gap-2 font-bold text-ink">
+            <span className={`h-2 w-2 rounded-full ${stateDot}`} />
+            {routingLabel}
+          </span>
+          {!hasPhoneLine &&
+          (operationalState === "setting_up" || operationalState === "disconnected") ? (
+            <button
+              type="button"
+              onClick={() => onTabChange("routing")}
+              className="press inline-flex items-center gap-1 font-black text-teal transition hover:text-teal-deep"
+            >
+              {operationalState === "setting_up" ? "View status" : "Set up number"}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+          <span className="text-ink-faint sm:ml-auto">
+            {assistant.calls > 0 ? `${assistant.calls} calls handled` : "No calls yet"}
+          </span>
+        </div>
+        {hasPhoneLine || smsNumber || whatsappNumber ? (
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
+            {hasPhoneLine ? (
+              <AgentNumberSummary
+                icon={Phone}
+                label="Calls"
+                number={assistant.routing.number}
+                iconClass="text-teal"
+              />
+            ) : null}
+            {smsNumber ? (
+              <AgentNumberSummary
+                icon={MessageSquare}
+                label="SMS"
+                number={smsNumber}
+                iconClass="text-[#7c3aed]"
+              />
+            ) : null}
+            {whatsappNumber ? (
+              <AgentNumberSummary
+                icon={MessageCircle}
+                label="WhatsApp"
+                number={whatsappNumber}
+                iconClass="text-good"
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
-      <OfficeHoursCard
-        agentId={assistant.id}
-        initial={assistant.officeHours}
-        initialMessage={assistant.outOfHoursMessage}
-        businessName={assistant.businessName}
-        timezone={assistant.timezone}
-      />
+      {saveError ? (
+        <div role="alert" className="mb-5 flex items-start gap-2 rounded-xl border border-danger/20 bg-danger-wash px-4 py-3 text-sm font-semibold text-danger">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>{saveError} Your changes are still here; try saving again.</span>
+        </div>
+      ) : null}
 
-      <div className="mb-8 flex gap-1 overflow-x-auto rounded-xl border border-line bg-card p-1 shadow-card">
+      <div className="mb-7 flex gap-6 overflow-x-auto border-b border-line">
         {(["behaviour", "knowledge", "routing", "outbound", "technical"] as DetailTab[]).map((item) => (
           <button
             type="button"
             key={item}
             onClick={() => onTabChange(item)}
-            className={`press whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-bold transition ${
+            className={`press relative whitespace-nowrap border-b-2 px-0.5 pb-3 pt-1 text-sm font-bold transition ${
               tab === item
-                ? "bg-ink text-white shadow-card"
-                : "text-ink-soft hover:bg-card-tint hover:text-ink"
+                ? "border-teal text-ink"
+                : "border-transparent text-ink-soft hover:text-ink"
             }`}
           >
             {
               {
-                behaviour: "Behaviour",
-                knowledge: "Knowledge Base",
+                behaviour: "Setup",
+                knowledge: "Knowledge",
                 routing: "Routing",
                 outbound: "Outbound",
-                technical: "Technical",
+                technical: "Advanced",
               }[item]
             }
           </button>
@@ -2721,22 +2887,6 @@ function AssistantDetail({
 
       {tab === "behaviour" ? (
         <div key="behaviour" className="anim-fade space-y-4">
-          <a
-            href="/billing"
-            className="lift press flex w-full items-center justify-between rounded-2xl border border-line bg-card px-5 py-4 text-left shadow-card"
-          >
-            <span className="flex items-center gap-3">
-              <Bot className="h-5 w-5 text-teal" />
-              <span className="font-black">Plan</span>
-            </span>
-            <span className="flex items-center gap-3">
-              <span className="rounded-full border border-line px-3 py-1 text-sm font-bold">
-                {planName ?? "Choose plan"}
-              </span>
-              <ChevronRight className="h-5 w-5 text-ink-soft" />
-            </span>
-          </a>
-
           <button
             type="button"
             onClick={onGreeting}
@@ -2804,22 +2954,45 @@ function AssistantDetail({
               />
             </div>
           </div>
+
+          <div className="pt-4">
+            <p className="mb-3 px-1 text-xs font-black uppercase tracking-wide text-ink-faint">
+              Availability
+            </p>
+            <OfficeHoursCard
+              hours={assistant.officeHours}
+              message={assistant.outOfHoursMessage}
+              businessName={assistant.businessName}
+              timezone={assistant.timezone}
+              onChange={onChange}
+            />
+          </div>
         </div>
       ) : tab === "knowledge" ? (
         <div key="knowledge" className="anim-fade">
           <KnowledgeBaseTab assistant={assistant} />
         </div>
       ) : tab === "routing" ? (
-        <RoutingTab
-          contacts={assistant.contacts}
-          defaultEmail={assistant.defaultEmail}
-          saved={saved}
-          isPending={isPending}
-          saveError={saveError}
-          onChange={(contacts) => onChange({ contacts })}
-          onDefaultEmailChange={(defaultEmail) => onChange({ defaultEmail })}
-          onSave={onSave}
-        />
+        <div key="routing" className="anim-fade">
+          {assistant.routing.status !== "live" ? (
+            <RoutingCard
+              routing={assistant.routing}
+              isProvisioning={isProvisioning}
+              error={provisionError}
+              onProvision={onProvision}
+            />
+          ) : null}
+          <RoutingTab
+            contacts={assistant.contacts}
+            defaultEmail={assistant.defaultEmail}
+            dirty={dirty}
+            isPending={isPending}
+            saveError={saveError}
+            onChange={(contacts) => onChange({ contacts })}
+            onDefaultEmailChange={(defaultEmail) => onChange({ defaultEmail })}
+            onSave={onSave}
+          />
+        </div>
       ) : tab === "outbound" ? (
         <div key="outbound" className="anim-fade">
           <OutboundManager profileId={assistant.id} businessName={assistant.businessName} />
@@ -2878,15 +3051,12 @@ function AssistantDetail({
             <button
               type="button"
               onClick={onSave}
-              disabled={isPending}
+              disabled={isPending || !dirty}
               className="inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
             >
-              {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-              {isPending ? "Saving…" : saved ? "Saved" : "Save changes"}
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : dirty ? <Save className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+              {isPending ? "Saving…" : dirty ? "Save changes" : "Saved"}
             </button>
-            {saveError && (
-              <p className="mt-2 text-sm text-danger">{saveError}</p>
-            )}
           </div>
           </div>
         </div>
@@ -3326,7 +3496,7 @@ function KnowledgeBaseTab({ assistant }: { assistant: Assistant }) {
 function RoutingTab({
   contacts,
   defaultEmail,
-  saved,
+  dirty,
   isPending,
   saveError,
   onChange,
@@ -3335,7 +3505,7 @@ function RoutingTab({
 }: {
   contacts: RoutingContact[];
   defaultEmail: string;
-  saved: boolean;
+  dirty: boolean;
   isPending: boolean;
   saveError: string | null;
   onChange: (contacts: RoutingContact[]) => void;
@@ -3423,11 +3593,11 @@ function RoutingTab({
         <button
           type="button"
           onClick={onSave}
-          disabled={isPending}
+          disabled={isPending || !dirty}
           className="inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
         >
-          {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-          {isPending ? "Saving…" : saved ? "Saved" : "Save routing"}
+          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : dirty ? <Save className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+          {isPending ? "Saving…" : dirty ? "Save changes" : "Saved"}
         </button>
         {saveError && <p className="mt-2 text-sm text-danger">{saveError}</p>}
       </div>
@@ -4474,6 +4644,9 @@ function ConversationDetail({
   const isPhone = looksLikePhone(log.caller);
   const callFollowUps = followUps.filter((item) => item.callLogId === log.id && item.status === "open");
   const actionItems = log.actionItems.length ? log.actionItems : callFollowUps.map((item) => item.title);
+  const primarySummary = log.aiInsightSummary || log.summary;
+  const outcomeLabel = friendlyOutcome(log.outcome);
+  const [transcriptOpen, setTranscriptOpen] = useState(!primarySummary);
   return (
     <div key={log.id} className="anim-fade flex h-full min-h-0 flex-col overflow-y-auto">
       {/* Mobile back */}
@@ -4513,28 +4686,36 @@ function ConversationDetail({
           {log.caller && (
             <CopyChip value={log.caller} label={isPhone ? "Copy number" : "Copy address"} />
           )}
-          {log.outcome && (
-            <span className="inline-flex h-9 items-center rounded-lg bg-card-tint px-3 text-xs font-bold text-ink-soft">
-              {friendlyOutcome(log.outcome)}
-            </span>
-          )}
+        </div>
+      </div>
+
+      <div className="grid border-b border-line bg-card-tint/70 sm:grid-cols-3">
+        <div className="border-b border-line px-4 py-3 sm:border-b-0 sm:border-r sm:px-6">
+          <p className="text-[10px] font-black uppercase tracking-wide text-ink-faint">Outcome</p>
+          <p className="mt-1 truncate text-sm font-black text-ink">
+            {outcomeLabel === "-" ? "Conversation recorded" : outcomeLabel}
+          </p>
+        </div>
+        <div className="border-b border-line px-4 py-3 sm:border-b-0 sm:border-r sm:px-6">
+          <p className="text-[10px] font-black uppercase tracking-wide text-ink-faint">Next step</p>
+          <p className={`mt-1 truncate text-sm font-black ${actionItems.length ? "text-teal-deep" : "text-good"}`}>
+            {actionItems.length
+              ? `${actionItems.length} follow-up${actionItems.length === 1 ? "" : "s"} needed`
+              : "No follow-up needed"}
+          </p>
+        </div>
+        <div className="px-4 py-3 sm:px-6">
+          <p className="text-[10px] font-black uppercase tracking-wide text-ink-faint">Handled by</p>
+          <p className="mt-1 truncate text-sm font-black text-ink">{log.agentName || "WiseCall"}</p>
         </div>
       </div>
 
       <div className="flex-1 space-y-5 px-4 py-4 sm:px-6 sm:py-5">
-        {log.aiInsightSummary && (
-          <div className="rounded-xl border border-line bg-card-tint px-4 py-3">
-            <p className="mb-1 text-[11px] font-black uppercase tracking-wide text-ink-faint">
-              Manager summary
-            </p>
-            <p className="text-sm leading-relaxed text-ink-soft">{log.aiInsightSummary}</p>
-          </div>
-        )}
         {actionItems.length > 0 && (
           <div className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3">
             <p className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-teal">
               <CalendarCheck className="h-3.5 w-3.5" />
-              Action items
+              Follow-up needed
             </p>
             <ul className="space-y-2">
               {callFollowUps.length > 0
@@ -4559,22 +4740,32 @@ function ConversationDetail({
             </ul>
           </div>
         )}
-        {log.summary && (
-          <div className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3">
-            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-teal">
+        {primarySummary && (
+          <section aria-labelledby={`conversation-summary-${log.id}`}>
+            <h3
+              id={`conversation-summary-${log.id}`}
+              className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-ink-faint"
+            >
               <Sparkles className="h-3.5 w-3.5" />
-              AI summary
-            </p>
-            <p className="text-sm leading-relaxed text-[#0e4b4d]">{log.summary}</p>
-          </div>
+              What happened
+            </h3>
+            <p className="max-w-3xl text-sm leading-6 text-ink-soft">{primarySummary}</p>
+          </section>
         )}
         {log.transcript ? (
-          <div>
-            <p className="mb-2 text-[11px] font-black uppercase tracking-wide text-ink-faint">
-              Conversation
-            </p>
-            <TranscriptView transcript={log.transcript} />
-          </div>
+          <details
+            open={transcriptOpen}
+            onToggle={(event) => setTranscriptOpen(event.currentTarget.open)}
+            className="group border-t border-line pt-1"
+          >
+            <summary className="press flex cursor-pointer list-none items-center justify-between gap-3 py-3 text-sm font-black text-ink marker:content-none">
+              <span>Conversation transcript</span>
+              <ChevronDown className="h-4 w-4 text-ink-faint transition group-open:rotate-180" />
+            </summary>
+            <div className="pb-2">
+              <TranscriptView transcript={log.transcript} />
+            </div>
+          </details>
         ) : (
           <p className="rounded-xl bg-card-tint px-4 py-6 text-center text-sm text-ink-faint">
             No transcript was recorded for this conversation.
@@ -4727,6 +4918,7 @@ function UnifiedInbox({
         >
           {selected ? (
             <ConversationDetail
+              key={selected.id}
               log={selected}
               followUps={followUps}
               onFollowUpStatus={onFollowUpStatus}
@@ -4997,15 +5189,11 @@ function NumberRow({
 
 function RoutingCard({
   routing,
-  smsNumber,
-  whatsappNumber,
   isProvisioning,
   error,
   onProvision,
 }: {
   routing: AgentRouting;
-  smsNumber?: string;
-  whatsappNumber?: string;
   isProvisioning: boolean;
   error: string | null;
   onProvision: () => void;
@@ -5031,22 +5219,6 @@ function RoutingCard({
             live={live}
             pendingDot={pending}
           />
-          {smsNumber ? (
-            <NumberRow
-              icon={MessageSquare}
-              iconClass="bg-[#f5f0ff] text-[#7c3aed]"
-              number={smsNumber}
-              purpose="SMS messages & notifications"
-            />
-          ) : null}
-          {whatsappNumber ? (
-            <NumberRow
-              icon={MessageCircle}
-              iconClass="bg-good-wash text-good"
-              number={whatsappNumber}
-              purpose="WhatsApp messaging"
-            />
-          ) : null}
         </div>
         {live ? null : (
           <button
@@ -5661,24 +5833,29 @@ function Field({
   );
 }
 
-function StatusPill({ status }: { status: Assistant["status"] }) {
-  const styles = {
-    Live: "bg-good-wash text-good",
-    Setup: "bg-teal-wash text-teal",
-    Review: "bg-warn-wash text-warn",
+function AgentStatePill({ assistant }: { assistant: Assistant }) {
+  const state = getAgentOperationalState(assistant);
+  const styles: Record<AgentOperationalState, string> = {
+    live: "bg-good-wash text-good",
+    paused: "bg-card-tint text-ink-soft",
+    setting_up: "bg-warn-wash text-warn",
+    review: "bg-warn-wash text-warn",
+    disconnected: "bg-card-tint text-ink-soft",
   };
-  const dot = {
-    Live: "live-dot bg-good",
-    Setup: "bg-teal",
-    Review: "bg-warn",
+  const dot: Record<AgentOperationalState, string> = {
+    live: "live-dot bg-good",
+    paused: "bg-ink-faint",
+    setting_up: "bg-warn",
+    review: "bg-warn",
+    disconnected: "bg-ink-faint",
   };
 
   return (
     <span
-      className={`inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${styles[status]}`}
+      className={`inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${styles[state]}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${dot[status]}`} />
-      {status}
+      <span className={`h-1.5 w-1.5 rounded-full ${dot[state]}`} />
+      {agentOperationalLabel(state)}
     </span>
   );
 }
