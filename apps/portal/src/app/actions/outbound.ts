@@ -5,6 +5,13 @@ import { isAdmin } from "@/lib/admin";
 import { getServiceSupabase } from "@/lib/supabase";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { renderObjective } from "@/lib/csv";
+import {
+  getLargeBlastConfirmation,
+  isValidIdempotencyKey,
+  OUTBOUND_RECIPIENT_CAP,
+  prepareOutboundRecipients,
+  type OutboundRecipientCandidate,
+} from "@/lib/outbound-safeguards";
 
 // Server actions for AI outbound call blasts (service-only v1). Mirrors the
 // access/service-role pattern in knowledge-base.ts: all DB work uses the service
@@ -19,11 +26,7 @@ export type OutboundTemplate = {
   isSystem: boolean;
 };
 
-export type OutboundRecipientInput = {
-  toNumber: string;
-  contactName?: string;
-  mergeFields?: Record<string, string>;
-};
+export type OutboundRecipientInput = OutboundRecipientCandidate;
 
 export type OutboundCallRow = {
   id: string;
@@ -186,6 +189,8 @@ export async function createBlast(input: {
   quietHoursStart?: number;
   quietHoursEnd?: number;
   maxAttempts?: number;
+  idempotencyKey: string;
+  confirmation?: string;
   recipients: OutboundRecipientInput[];
 }): Promise<Result<{ blastId: string; queued: number }>> {
   const access = await getAccessibleProfile(input.agentId);
@@ -193,9 +198,43 @@ export async function createBlast(input: {
   const service = getServiceSupabase();
   if (!service) return { ok: false, error: "Server not configured." };
 
-  const recipients = (input.recipients || []).filter((r) => (r.toNumber || "").trim());
-  if (!recipients.length) return { ok: false, error: "Add at least one recipient." };
+  const candidates = input.recipients || [];
+  if (candidates.length > OUTBOUND_RECIPIENT_CAP) {
+    return {
+      ok: false,
+      error: `A blast can contain at most ${OUTBOUND_RECIPIENT_CAP} imported recipients. Split this list into smaller sends.`,
+    };
+  }
+  const maxAttempts = Math.min(5, Math.max(1, Math.trunc(input.maxAttempts ?? 2) || 1));
+  const review = prepareOutboundRecipients(candidates, maxAttempts);
+  if (!review.recipients.length) return { ok: false, error: "Add at least one valid recipient." };
+  const requiredConfirmation = getLargeBlastConfirmation(review.recipientCount);
+  if (requiredConfirmation && input.confirmation !== requiredConfirmation) {
+    return { ok: false, error: `Type ${requiredConfirmation} to confirm this large blast.` };
+  }
+  if (!isValidIdempotencyKey(input.idempotencyKey)) {
+    return { ok: false, error: "This blast request is missing a valid submission key. Review it again." };
+  }
   if (input.objective.trim().length < 10) return { ok: false, error: "The objective looks empty." };
+
+  async function findExistingBlast() {
+    const { data: existing } = await service!
+      .from("wisecall_outbound_blasts")
+      .select("id")
+      .eq("profile_id", input.agentId)
+      .eq("idempotency_key", input.idempotencyKey)
+      .maybeSingle();
+    if (!existing) return null;
+
+    const { count } = await service!
+      .from("wisecall_outbound_calls")
+      .select("id", { count: "exact", head: true })
+      .eq("blast_id", existing.id);
+    return { blastId: existing.id as string, queued: count ?? review.recipientCount };
+  }
+
+  const existing = await findExistingBlast();
+  if (existing) return { ok: true, data: existing };
 
   const { data: blast, error: blastErr } = await service
     .from("wisecall_outbound_blasts")
@@ -207,15 +246,22 @@ export async function createBlast(input: {
       scheduled_at: input.scheduledAt ?? new Date().toISOString(),
       quiet_hours_start: input.quietHoursStart ?? 8,
       quiet_hours_end: input.quietHoursEnd ?? 21,
-      max_attempts: input.maxAttempts ?? 2,
+      max_attempts: maxAttempts,
       created_by: access.ownerId,
+      idempotency_key: input.idempotencyKey,
     })
     .select("id")
     .single();
-  if (blastErr) return { ok: false, error: blastErr.message };
+  if (blastErr) {
+    if (blastErr.code === "23505") {
+      const duplicate = await findExistingBlast();
+      if (duplicate) return { ok: true, data: duplicate };
+    }
+    return { ok: false, error: blastErr.message };
+  }
 
   const blastId = blast.id as string;
-  const rows = recipients.map((r) => {
+  const rows = review.recipients.map((r) => {
     const fields = { ...(r.mergeFields || {}), name: r.contactName || r.mergeFields?.name || "" };
     return {
       blast_id: blastId,
@@ -228,10 +274,10 @@ export async function createBlast(input: {
     };
   });
 
-  // Insert in chunks to stay well under payload limits on large lists.
-  for (let i = 0; i < rows.length; i += 500) {
-    const { error } = await service.from("wisecall_outbound_calls").insert(rows.slice(i, i + 500));
-    if (error) return { ok: false, error: error.message };
+  const { error: callsError } = await service.from("wisecall_outbound_calls").insert(rows);
+  if (callsError) {
+    await service.from("wisecall_outbound_blasts").update({ status: "failed" }).eq("id", blastId);
+    return { ok: false, error: callsError.message };
   }
 
   revalidatePath("/dashboard");
