@@ -14,8 +14,12 @@ import type {
 } from "@/components/customer-agent-workspace";
 import {
   type IntegrationWebhook,
+  mergeStoredWebhookTestEvidence,
+  readIntegrationWebhooks,
   serializeIntegrationWebhooks,
+  validateIntegrationWebhooks,
 } from "@/lib/integration-webhooks";
+import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
 
 export type AgentPatch = {
   name?: string;
@@ -391,6 +395,28 @@ export async function updateAgent(
     return { ok: false, error: "You don't have access to this agent." };
   }
 
+  if (patch.integrationWebhooks !== undefined) {
+    const validationError = validateIntegrationWebhooks(patch.integrationWebhooks);
+    if (validationError) return { ok: false, error: validationError };
+    for (const hook of patch.integrationWebhooks) {
+      if (!hook.enabled) continue;
+      try {
+        await assertPublicHttpUrl(hook.url);
+      } catch (error) {
+        const detail =
+          error instanceof PublicUrlError
+            ? error.message
+                .replace(/website address(?:es)?/gi, "integration endpoint")
+                .replace(/webpage/gi, "endpoint")
+            : "Enter a valid public integration endpoint.";
+        return {
+          ok: false,
+          error: `${hook.friendlyName.trim() || hook.name}: ${detail}`,
+        };
+      }
+    }
+  }
+
   // Merge metadata-held fields without clobbering existing keys.
   const nextMetadata = { ...metadata };
   if (patch.industry !== undefined) nextMetadata.industry = patch.industry;
@@ -425,7 +451,10 @@ export async function updateAgent(
   if (patch.chatBackgroundColor !== undefined) nextMetadata.chat_background_color = patch.chatBackgroundColor;
   if (patch.integrationWebhooks !== undefined) {
     // Custom before/during/after call webhooks (integrationWebhooks.runtime.js).
-    nextMetadata.integration_webhooks = serializeIntegrationWebhooks(patch.integrationWebhooks);
+    const storedWebhooks = readIntegrationWebhooks(metadata);
+    nextMetadata.integration_webhooks = serializeIntegrationWebhooks(
+      mergeStoredWebhookTestEvidence(patch.integrationWebhooks, storedWebhooks),
+    );
   }
 
   const update: Record<string, unknown> = { metadata: nextMetadata };

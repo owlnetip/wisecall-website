@@ -5,6 +5,9 @@ const {
   substituteTemplates,
   readWebhooks,
   buildDuringCallTools,
+  buildHeaders,
+  assertPublicWebhookUrl,
+  fetchWebhookUrl,
 } = require("../src/lib/integrationWebhooks");
 const { buildSystemPrompt } = require("../src/prompt");
 const { mergeIntegrationTools } = require("../src/lib/callSession");
@@ -56,6 +59,45 @@ test("buildDuringCallTools produces OpenAI function schemas", () => {
   assert.equal(tools.length, 1);
   assert.equal(tools[0].function.name, "create_ticket");
   assert.deepEqual(tools[0].function.parameters.required, ["subject"]);
+});
+
+test("integration requests ignore transport-controlled headers", () => {
+  const headers = buildHeaders([
+    { key: "Host", value: "internal.service" },
+    { key: "Content-Length", value: "999" },
+    { key: "Authorization", value: "Bearer token" },
+  ]);
+  assert.equal(headers.Host, undefined);
+  assert.equal(headers["Content-Length"], undefined);
+  assert.equal(headers.Authorization, "Bearer token");
+});
+
+test("integration requests reject private and local endpoints", async () => {
+  await assert.rejects(() => assertPublicWebhookUrl("http://127.0.0.1/admin"), /public/);
+  await assert.rejects(() => assertPublicWebhookUrl("http://metadata.internal/token"), /public/);
+});
+
+test("integration requests validate every redirect before following it", async () => {
+  let calls = 0;
+  const resolver = async () => [{ address: "8.8.8.8", family: 4 }];
+  const fetcher = async () => {
+    calls += 1;
+    return new Response(null, {
+      status: 302,
+      headers: { location: "http://169.254.169.254/latest/meta-data" },
+    });
+  };
+
+  await assert.rejects(
+    () =>
+      fetchWebhookUrl(
+        "https://public.example.org/webhook",
+        { method: "POST" },
+        { resolver, fetcher },
+      ),
+    /public/,
+  );
+  assert.equal(calls, 1);
 });
 
 test("buildSystemPrompt prepends integration and contact blocks", () => {
