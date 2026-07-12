@@ -17,6 +17,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { updateAgent } from "@/app/actions/agents";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import {
   testIntegrationWebhook,
   type IntegrationWebhookTestResult,
@@ -173,6 +175,7 @@ function WebhookCard({
   onTest: () => void;
 }) {
   const [expanded, setExpanded] = useState(!hook.url.trim());
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const testDisabled = dirty || testBusy || !hook.enabled || hook.method === "DELETE";
   const displayedTestError =
     testResult?.error ||
@@ -366,7 +369,7 @@ function WebhookCard({
           <div className="mt-5 flex justify-end border-t border-line pt-4">
             <button
               type="button"
-              onClick={onRemove}
+              onClick={() => setRemoveConfirmOpen(true)}
               className="press inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-black text-danger transition hover:bg-danger-wash"
             >
               <Trash2 className="h-3.5 w-3.5" /> Remove integration
@@ -374,6 +377,31 @@ function WebhookCard({
           </div>
         </div>
       ) : null}
+
+      <Dialog
+        open={removeConfirmOpen}
+        onOpenChange={setRemoveConfirmOpen}
+        title={`Remove ${hook.friendlyName.trim() || "integration"}?`}
+        description="This removes the integration from your draft. Save changes afterwards to apply the removal to the live agent."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRemoveConfirmOpen(false)}>
+              Keep integration
+            </Button>
+            <Button
+              variant="danger"
+              data-autofocus
+              onClick={() => {
+                setRemoveConfirmOpen(false);
+                onRemove();
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+              Remove integration
+            </Button>
+          </>
+        }
+      />
     </div>
   );
 }

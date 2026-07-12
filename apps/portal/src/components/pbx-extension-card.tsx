@@ -21,6 +21,9 @@ import {
   type SipRegistrationStatus,
   type SipTransport,
 } from "@/lib/pbx";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const FIELD =
   "w-full rounded-lg border border-line bg-card-tint px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-teal/40";
@@ -79,6 +82,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
   const [pending, start] = useTransition();
   const [deleting, startDelete] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const userTouchedTransport = useRef(false);
 
   useEffect(() => {
@@ -270,7 +274,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
 
             <div>
               <label className={LABEL}>PBX address</label>
-              <input
+              <Input
                 value={sipDomain}
                 onChange={(e) => setSipDomain(e.target.value)}
                 placeholder={tlsSelected ? "pbx.example.com:5061" : "pbx.example.com"}
@@ -280,7 +284,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
 
             <div>
               <label className={LABEL}>Outbound proxy (optional)</label>
-              <input
+              <Input
                 value={sipProxy}
                 onChange={(e) => setSipProxy(e.target.value)}
                 placeholder="Leave blank to use the PBX address"
@@ -290,7 +294,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
 
             <div>
               <label className={LABEL}>Extension / SIP username</label>
-              <input
+              <Input
                 value={sipUsername}
                 onChange={(e) => setSipUsername(e.target.value)}
                 placeholder="e.g. 1001"
@@ -300,7 +304,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
 
             <div>
               <label className={LABEL}>SIP password</label>
-              <input
+              <Input
                 type="password"
                 value={sipPassword}
                 onChange={(e) => setSipPassword(e.target.value)}
@@ -342,7 +346,7 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
             {configured ? (
               <button
                 type="button"
-                onClick={remove}
+                onClick={() => setRemoveConfirmOpen(true)}
                 disabled={deleting || pending}
                 className="inline-flex h-9 items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:opacity-60"
               >
@@ -374,6 +378,32 @@ export function PbxExtensionCard({ agentId }: { agentId: string }) {
               {msg.text}
             </p>
           ) : null}
+
+          <Dialog
+            open={removeConfirmOpen}
+            onOpenChange={setRemoveConfirmOpen}
+            title="Remove PBX connection?"
+            description="WiseCall will stop registering this agent as an extension. You can reconnect it later by entering the PBX details again."
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setRemoveConfirmOpen(false)}>
+                  Keep connection
+                </Button>
+                <Button
+                  variant="danger"
+                  data-autofocus
+                  disabled={deleting || pending}
+                  onClick={() => {
+                    setRemoveConfirmOpen(false);
+                    remove();
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remove connection
+                </Button>
+              </>
+            }
+          />
         </>
       )}
     </div>

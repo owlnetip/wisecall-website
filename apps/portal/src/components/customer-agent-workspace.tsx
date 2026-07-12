@@ -99,6 +99,9 @@ import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
 import { OutboundManager } from "@/components/outbound-manager";
 import { AgentPreviewModal } from "./agent-preview-modal";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   agentOperationalLabel,
   getAgentOperationalState,
@@ -2629,6 +2632,7 @@ function AssistantDetail({
   whatsappNumber?: string;
 }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -2772,35 +2776,56 @@ function AssistantDetail({
         />
       )}
 
-      {deleteConfirm && (
-        <div className="anim-fade fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="anim-scale-in w-full max-w-sm rounded-2xl bg-white p-6 shadow-float">
-            <h2 className="text-lg font-black text-ink">Delete &apos;{assistant.name}&apos;?</h2>
-            <p className="mt-2 text-sm text-ink-soft">
-              This will permanently delete the agent. If it has a pooled number (+{assistant.phoneNumber.replace(/[^\d]/g, "")}), that number will be returned to the pool automatically.
-            </p>
-            <p className="mt-2 text-sm font-bold text-red-700">This cannot be undone.</p>
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirm(false)}
-                className="rounded-lg border border-line px-4 py-2 text-sm font-bold text-ink-soft transition hover:bg-card-tint"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => { setDeleteConfirm(false); onDelete?.(); }}
-                disabled={isDeleting}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-black text-white transition hover:bg-red-700 disabled:opacity-60"
-              >
-                <Trash2 className="h-4 w-4" />
-                Yes, delete it
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={deleteConfirm}
+        onOpenChange={(open) => {
+          setDeleteConfirm(open);
+          if (!open) setDeleteConfirmationText("");
+        }}
+        title={`Delete '${assistant.name}'?`}
+        description={
+          <>
+            This permanently deletes the agent and returns its pooled number (+
+            {assistant.phoneNumber.replace(/[^\d]/g, "")}) to the pool. This cannot be undone.
+          </>
+        }
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDeleteConfirm(false);
+                setDeleteConfirmationText("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setDeleteConfirm(false);
+                setDeleteConfirmationText("");
+                onDelete?.();
+              }}
+              disabled={isDeleting || deleteConfirmationText !== assistant.name}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete agent
+            </Button>
+          </>
+        }
+      >
+        <label className="mb-1.5 block text-sm font-bold text-ink" htmlFor="delete-agent-confirmation">
+          Type <strong>{assistant.name}</strong> to confirm
+        </label>
+        <Input
+          id="delete-agent-confirmation"
+          data-autofocus
+          value={deleteConfirmationText}
+          onChange={(event) => setDeleteConfirmationText(event.target.value)}
+          autoComplete="off"
+        />
+      </Dialog>
 
       <div className="mb-5 divide-y divide-line border-y border-line">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 py-3 text-sm">
