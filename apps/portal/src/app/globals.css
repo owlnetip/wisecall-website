@@ -261,12 +261,23 @@ textarea {
   .anim-scale-in,
   .anim-slide-right,
   .anim-pop,
-  .stagger > * {
-    animation: none;
+  .stagger > *,
+  .animate-ping,
+  .animate-pulse,
+  .skeleton,
+  .live-dot,
+  .support-owl svg,
+  .support-owl .owl-wing-l,
+  .support-owl .owl-wing-r {
+    animation: none !important;
   }
   .press:active,
-  .lift:hover {
-    transform: none;
+  .lift:hover,
+  .support-owl:hover svg {
+    transform: none !important;
+  }
+  .support-owl svg {
+    transition: none !important;
   }
   * {
     scroll-behavior: auto !important;
