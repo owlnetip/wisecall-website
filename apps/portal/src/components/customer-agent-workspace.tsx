@@ -29,6 +29,7 @@ import {
   MessageSquare,
   MessageSquareText,
   MoreHorizontal,
+  Pause,
   Phone,
   PhoneMissed,
   PhoneOutgoing,
@@ -58,6 +59,7 @@ import {
   deleteAgent,
   getPendingAgentsStatus,
   provisionNumber,
+  setAgentLive,
   testVoice,
   updateAgent,
 } from "@/app/actions/agents";
@@ -104,6 +106,8 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   agentOperationalLabel,
+  canPauseAgent,
+  canResumeAgent,
   getAgentOperationalState,
   type AgentOperationalState,
 } from "@/lib/agent-operational-state";
@@ -1519,11 +1523,26 @@ export function CustomerAgentWorkspace({
   const [createError, setCreateError] = useState<string | null>(null);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [provisionError, setProvisionError] = useState<string | null>(null);
+  const [liveError, setLiveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isCreating, startCreate] = useTransition();
   const [isProvisioning, startProvision] = useTransition();
   const [isDeleting, startDelete] = useTransition();
+  const [isSettingLive, startSetLive] = useTransition();
   const [followUps, setFollowUps] = useState(initialFollowUps);
+
+  // Warn before a full page unload (tab close, refresh, external navigation)
+  // while any agent has unsaved edits, so in-progress configuration isn't lost.
+  // In-app view switches keep local edits alive, so they don't need a prompt.
+  useEffect(() => {
+    if (dirtyAgentIds.size === 0) return;
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [dirtyAgentIds]);
 
   function handleFollowUpStatus(followUpId: string, status: FollowUp["status"]) {
     startTransition(async () => {
@@ -1821,6 +1840,26 @@ export function CustomerAgentWorkspace({
         );
       } else {
         setProvisionError(result.error ?? "Could not assign a number yet.");
+      }
+    });
+  }
+
+  function setLive(live: boolean) {
+    if (!selectedAssistant) return;
+    setLiveError(null);
+    const target = selectedAssistant.id;
+    startSetLive(async () => {
+      const result = await setAgentLive(target, live);
+      if (result.ok) {
+        // status feeds getAgentOperationalState: "Live" → live; with a connected
+        // number, anything else → paused. This is a persisted change, not a
+        // pending edit, so markDirty=false. The runtime already gates on
+        // is_active, so the phone agent reflects it immediately.
+        updateSelected({ status: live ? "Live" : "Setup" }, false);
+      } else {
+        setLiveError(
+          result.error ?? (live ? "Could not resume the agent." : "Could not pause the agent."),
+        );
       }
     });
   }
@@ -2243,6 +2282,9 @@ export function CustomerAgentWorkspace({
                 }}
                 onSave={save}
                 onProvision={provision}
+                onSetLive={setLive}
+                isSettingLive={isSettingLive}
+                liveError={liveError}
                 onDelete={isAdmin ? deleteSelected : undefined}
                 adminMode={adminMode}
                 smsNumber={smsNumbers?.find((n) => n.profileId === selectedAssistant.id)?.smsNumber}
@@ -2604,6 +2646,9 @@ function AssistantDetail({
   onAbility,
   onSave,
   onProvision,
+  onSetLive,
+  isSettingLive = false,
+  liveError,
   onDelete,
   adminMode = false,
   smsNumber,
@@ -2626,6 +2671,9 @@ function AssistantDetail({
   onAbility: (key: "knowledge" | "transfer") => void;
   onSave: () => void;
   onProvision: () => void;
+  onSetLive: (live: boolean) => void;
+  isSettingLive?: boolean;
+  liveError?: string | null;
   onDelete?: () => void;
   adminMode?: boolean;
   smsNumber?: string;
@@ -2720,6 +2768,37 @@ function AssistantDetail({
             <Phone className="h-3.5 w-3.5" />
             Test agent
           </button>
+          {canPauseAgent(operationalState) ? (
+            <button
+              type="button"
+              onClick={() => onSetLive(false)}
+              disabled={isSettingLive}
+              className="press inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-xs font-black text-ink transition hover:bg-card-tint disabled:opacity-60"
+              title="Take this agent offline — it will stop answering calls until you resume it"
+            >
+              {isSettingLive ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Pause className="h-3.5 w-3.5" />
+              )}
+              {isSettingLive ? "Pausing…" : "Pause"}
+            </button>
+          ) : canResumeAgent(operationalState) ? (
+            <button
+              type="button"
+              onClick={() => onSetLive(true)}
+              disabled={isSettingLive}
+              className="press inline-flex h-9 items-center gap-1.5 rounded-lg bg-good px-3 text-xs font-black text-white transition hover:opacity-90 disabled:opacity-60"
+              title="Bring this agent back online so it answers calls again"
+            >
+              {isSettingLive ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Play className="h-3.5 w-3.5" />
+              )}
+              {isSettingLive ? "Resuming…" : "Resume"}
+            </button>
+          ) : null}
           {adminMode && assistant.ownerId ? (
             <form action={impersonateUser.bind(null, assistant.ownerId)}>
               <button
@@ -2882,6 +2961,22 @@ function AssistantDetail({
         <div role="alert" className="mb-5 flex items-start gap-2 rounded-xl border border-danger/20 bg-danger-wash px-4 py-3 text-sm font-semibold text-danger">
           <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
           <span>{saveError} Your changes are still here; try saving again.</span>
+        </div>
+      ) : null}
+
+      {liveError ? (
+        <div role="alert" className="mb-5 flex items-start gap-2 rounded-xl border border-danger/20 bg-danger-wash px-4 py-3 text-sm font-semibold text-danger">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>{liveError}</span>
+        </div>
+      ) : null}
+
+      {operationalState === "paused" ? (
+        <div className="mb-5 flex items-start gap-2 rounded-xl border border-line bg-card-tint px-4 py-3 text-sm font-semibold text-ink-soft">
+          <Pause className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>
+            This agent is paused and won&apos;t answer calls on its number. Resume it when you&apos;re ready to go back live.
+          </span>
         </div>
       ) : null}
 
@@ -5404,7 +5499,15 @@ function CreateAssistantModal({
 
         {error && <p className="mt-4 text-sm text-danger">{error}</p>}
 
-        <div className="mt-6 flex justify-end gap-3">
+        <p className="mt-5 flex items-start gap-2 rounded-xl bg-card-tint px-4 py-3 text-xs font-semibold text-ink-soft">
+          <Phone className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-teal" />
+          <span>
+            Your first agent gets a phone number and goes live straight away. You can pause it
+            any time from its page.
+          </span>
+        </p>
+
+        <div className="mt-5 flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
@@ -5419,7 +5522,7 @@ function CreateAssistantModal({
             disabled={isCreating}
             className="rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
           >
-            {isCreating ? "Creating…" : "Create Assistant"}
+            {isCreating ? "Creating…" : "Create & go live"}
           </button>
         </div>
       </div>

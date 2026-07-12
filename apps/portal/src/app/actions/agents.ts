@@ -487,6 +487,74 @@ export async function updateAgent(
   return { ok: true };
 }
 
+// Pause or resume an agent. This is the one legitimate way an owner changes
+// live status themselves: unlike updateAgent's provider-managed `status` field
+// (locked to admins by the C4 guard so customers can't desync provisioning),
+// pause/resume only flips is_active on an agent that already has its own
+// number. The call runtime gates on is_active (wisecallConfigStore only matches
+// is_active=true profiles), so pausing genuinely stops the agent answering and
+// resuming brings it back — no number is released and nothing is re-provisioned,
+// so it's fully reversible.
+export async function setAgentLive(
+  agentId: string,
+  live: boolean,
+): Promise<UpdateResult> {
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+  const admin = isAdmin(user);
+
+  if (!admin && !hasActiveAccess(await getBillingForUser(user.id))) {
+    return { ok: false, error: "Start your free trial first." };
+  }
+
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const { data: row, error: readError } = await service
+    .from("wisecall_profiles")
+    .select("telnyx_number, metadata")
+    .eq("id", agentId)
+    .maybeSingle();
+  if (readError) return { ok: false, error: readError.message };
+  if (!row) return { ok: false, error: "Agent not found." };
+
+  const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
+  if (metadata.owner_id !== user.id && !admin) {
+    return { ok: false, error: "You don't have access to this agent." };
+  }
+
+  // Only a connected agent can be paused/resumed. Guard against showing a
+  // misleading "Live" state on an agent that has no number to answer on.
+  const routing = (metadata.routing as { number?: string } | undefined) ?? undefined;
+  const telnyxNumber = String(row.telnyx_number ?? "").trim();
+  const morNumber = String(routing?.number ?? "").trim();
+  const hasNumber = telnyxNumber.startsWith("+") || morNumber.startsWith("+");
+  if (!hasNumber) {
+    return { ok: false, error: "This agent doesn't have a phone number yet." };
+  }
+
+  const nextMetadata = { ...metadata };
+  if (live) {
+    delete nextMetadata.paused_at;
+  } else {
+    nextMetadata.paused_at = new Date().toISOString();
+  }
+
+  let writeQuery = service
+    .from("wisecall_profiles")
+    .update({ is_active: live, metadata: nextMetadata })
+    .eq("id", agentId);
+  if (!admin) writeQuery = writeQuery.eq("metadata->>owner_id", user.id);
+  const { error: writeError } = await writeQuery;
+  if (writeError) return { ok: false, error: writeError.message };
+
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
 export type TestVoiceResult = {
   ok: boolean;
   audio?: string; // base64 mp3

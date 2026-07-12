@@ -29,3 +29,16 @@ export function agentOperationalLabel(state: AgentOperationalState): string {
   if (state === "review") return "Needs review";
   return "Not connected";
 }
+
+// Pause/Resume is only meaningful for an agent whose phone line is connected.
+// A live agent can be taken offline (pause → is_active=false, which the call
+// runtime honours by not matching the profile); a paused one can be brought
+// back. Agents still setting up, in review, or disconnected have no number to
+// answer, so neither control applies.
+export function canPauseAgent(state: AgentOperationalState): boolean {
+  return state === "live";
+}
+
+export function canResumeAgent(state: AgentOperationalState): boolean {
+  return state === "paused";
+}
