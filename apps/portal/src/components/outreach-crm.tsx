@@ -185,18 +185,21 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     });
   }, [selectedId]);
 
-  useEffect(() => {
+  const loadPreview = useCallback(async () => {
     if (!selectedId || !templateId) return;
-    void previewOutreachEmail({ prospectId: selectedId, templateId }).then((r) => {
-      if (r.ok) {
-        setSubject(r.data.subject);
-        // Always compose in the visual editor: use the rendered HTML when the
-        // template has one, else upgrade the plain-text body to simple HTML.
-        setBodyHtml(r.data.bodyHtml ?? textToHtml(r.data.body));
-        setDraftNonce((n) => n + 1);
-      }
-    });
+    const r = await previewOutreachEmail({ prospectId: selectedId, templateId });
+    if (r.ok) {
+      setSubject(r.data.subject);
+      // Always compose in the visual editor: use the rendered HTML when the
+      // template has one, else upgrade the plain-text body to simple HTML.
+      setBodyHtml(r.data.bodyHtml ?? textToHtml(r.data.body));
+      setDraftNonce((n) => n + 1);
+    }
   }, [selectedId, templateId]);
+
+  useEffect(() => {
+    void loadPreview();
+  }, [loadPreview]);
 
   async function saveProspect(patch: Partial<OutreachProspect>) {
     if (!selected) return;
@@ -263,6 +266,10 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     setMsg({ kind: "ok", text: "Template saved." });
     setEditingTemplateId(res.data.id);
     await refresh();
+    // The compose panel's preview effect only re-fires when selectedId/templateId
+    // change; if this template is already selected there, force a reload so the
+    // edit just saved shows up without having to reselect the template.
+    if (res.data.id === templateId) void loadPreview();
   }
 
   async function onSend() {
