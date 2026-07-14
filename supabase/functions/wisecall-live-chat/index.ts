@@ -6,6 +6,12 @@ import {
   resolveContact,
   triggerPortalAnalysis,
 } from "../_shared/contact-memory.ts";
+import {
+  compressConversationForLlm,
+  compressionStateToMetadata,
+  normaliseCompressionState,
+  type ChatTurn,
+} from "../_shared/conversation-compress.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -304,19 +310,20 @@ async function callOpenAi(
   history: ChatMessage[],
   kbContext: string | null,
   memoryBlock: string,
+  existingCompression: ReturnType<typeof normaliseCompressionState>,
 ) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return null;
 
   const prompt = buildProfilePrompt(profile, profile?.metadata || {});
+  const compressed = await compressConversationForLlm(history as ChatTurn[], {
+    existing: existingCompression,
+  });
   const messages = [
     { role: "system", content: prompt },
     ...(kbContext ? [{ role: "system", content: kbContext }] : []),
     ...(memoryBlock ? [{ role: "system", content: memoryBlock }] : []),
-    ...history.slice(-18).map((message) => ({
-      role: message.role === "assistant" ? "assistant" : "user",
-      content: message.content,
-    })),
+    ...compressed.messages,
   ];
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -335,11 +342,14 @@ async function callOpenAi(
 
   if (!response.ok) {
     console.error("WiseCall live chat OpenAI error:", response.status, await response.text());
-    return null;
+    return { reply: null, compression: compressed };
   }
 
   const result = await response.json();
-  return normaliseText(result?.choices?.[0]?.message?.content);
+  return {
+    reply: normaliseText(result?.choices?.[0]?.message?.content),
+    compression: compressed,
+  };
 }
 
 function fallbackReply(profile: any, collected: Record<string, unknown>) {
@@ -535,8 +545,19 @@ serve(async (req) => {
       email: collected.contact_email as string | undefined,
     });
     const memoryBlock = buildMemoryBlock(contactContext);
-    const reply =
-      (await callOpenAi(profile, history, kbContext, memoryBlock)) || fallbackReply(profile, collected);
+    const existingCompression = normaliseCompressionState(chatLog.metadata || {});
+    const llmResult = await callOpenAi(
+      profile,
+      history,
+      kbContext,
+      memoryBlock,
+      existingCompression,
+    );
+    const reply = llmResult?.reply || fallbackReply(profile, collected);
+    const compressionMeta =
+      llmResult?.compression?.state?.runningSummary
+        ? compressionStateToMetadata(llmResult.compression.state)
+        : {};
     const updatedMessages = [...history, { role: "assistant", content: reply } as ChatMessage];
     const transcript = formatTranscript(updatedMessages);
 
@@ -552,6 +573,10 @@ serve(async (req) => {
         collected,
         last_page_url: body.page_url || chatLog.metadata?.page_url,
         last_message_at: new Date().toISOString(),
+        ...compressionMeta,
+        ...(llmResult?.compression?.compressed
+          ? { conversation_compressed: true }
+          : {}),
       },
     };
 
