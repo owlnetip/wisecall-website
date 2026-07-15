@@ -114,8 +114,8 @@ export function wrapEmailHtml(innerHtml: string): string {
 <td style="vertical-align:middle;padding:0 10px 0 0;">
 <img src="${EMAIL_LOGO_URL}" alt="" height="34" style="height:34px;width:auto;display:block;" />
 </td>
-<td style="vertical-align:middle;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:20px;line-height:1;font-weight:800;color:#ffffff;">
-WiseCall
+<td style="vertical-align:middle;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:20px;line-height:1;font-weight:800;">
+<span style="color:#ffffff;">Wise</span><span style="color:#7de8eb;">Call</span>
 </td>
 </tr>
 </table>
