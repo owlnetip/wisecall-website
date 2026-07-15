@@ -722,7 +722,13 @@ export async function sendOutreachEmail(input: {
   // the fallback. Legacy text-only sends are unchanged.
   const innerHtml = cleanEditorHtml(input.bodyHtml);
   const textFallback = input.body?.trim() || (innerHtml ? htmlToText(innerHtml) : "");
-  const replyTo = gate.user.email ?? undefined;
+  // A fixed reply-to (not whichever admin happens to be logged in) so replies
+  // reliably land in one shared inbox regardless of who sends the campaign.
+  const replyTo =
+    process.env.OUTREACH_REPLY_TO?.trim() ||
+    process.env.RESEND_FROM_EMAIL?.replace(/^.*<([^>]+)>.*$/, "$1") ||
+    gate.user.email ||
+    undefined;
   const sent = await sendViaResend({
     to: prospect.email,
     subject: input.subject,
