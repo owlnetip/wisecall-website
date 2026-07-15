@@ -120,6 +120,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   const [editTemplateName, setEditTemplateName] = useState("");
   const [editTemplateSubject, setEditTemplateSubject] = useState("");
   const [editTemplateHtml, setEditTemplateHtml] = useState("");
+  const [editTemplateSequenceStep, setEditTemplateSequenceStep] = useState("custom");
   const [editNonce, setEditNonce] = useState(0);
 
   const selected = useMemo(
@@ -237,6 +238,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     setEditTemplateName(t.name);
     setEditTemplateSubject(t.subjectTemplate);
     setEditTemplateHtml(t.bodyHtml || textToHtml(t.bodyTemplate));
+    setEditTemplateSequenceStep(t.sequenceStep);
     setEditNonce((n) => n + 1);
     setView("templates");
   }
@@ -248,6 +250,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     setEditTemplateHtml(
       "<p>Hi <span data-merge=\"contact_name\" contenteditable=\"false\" style=\"display:inline-block;padding:1px 8px;border-radius:9999px;background:#e0f7f8;color:#0e7d82;font-weight:600;font-size:0.9em;\">Contact name</span>,</p><p>Your message here.</p><p>Best,<br/>The WiseCall team</p>",
     );
+    setEditTemplateSequenceStep("custom");
     setEditNonce((n) => n + 1);
   }
 
@@ -260,6 +263,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
       subjectTemplate: editTemplateSubject,
       bodyTemplate: "",
       bodyHtml: editTemplateHtml,
+      sequenceStep: editTemplateSequenceStep,
     });
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
