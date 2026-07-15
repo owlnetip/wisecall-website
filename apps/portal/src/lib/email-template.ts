@@ -124,7 +124,7 @@ ${innerHtml}
 </td></tr>
 <tr><td style="padding:20px 28px;background:#f4f7f7;border-top:1px solid #d8e4e4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#5a7272;">
 WiseCall · AI receptionists for UK businesses<br/>
-<a href="https://wisecall.io" style="color:#0e7d82;text-decoration:none;">wisecall.io</a>
+<a href="https://wisecall.io/dental" style="color:#0e7d82;text-decoration:none;">wisecall.io/dental</a>
 </td></tr>
 </table>
 </td></tr>
