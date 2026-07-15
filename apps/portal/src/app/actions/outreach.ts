@@ -241,6 +241,7 @@ function mergeFieldsForProspect(p: OutreachProspect): Record<string, string> {
     owner_title: p.ownerTitle ?? "",
     owner_email: p.ownerEmail ?? p.email ?? "",
     owner_email_status: p.ownerEmailStatus ?? "",
+    unsubscribe_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.wisecall.io"}/api/outreach/unsubscribe?id=${p.id}`,
   };
 }
 

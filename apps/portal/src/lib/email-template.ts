@@ -23,9 +23,10 @@ export const MERGE_FIELDS: MergeField[] = [
   { token: "pms", label: "PMS / software" },
   { token: "phone", label: "Phone" },
   { token: "website", label: "Website" },
+  { token: "unsubscribe_url", label: "Unsubscribe link" },
 ];
 
-const BRAND_DARK = "#0e1b1b";
+const BRAND_DARK = "#172929";
 
 /** Public, absolutely-hosted logo (served by the portal itself). */
 export const EMAIL_LOGO_URL =
@@ -111,7 +112,7 @@ export function wrapEmailHtml(innerHtml: string): string {
 <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
 <tr>
 <td style="vertical-align:middle;padding:0 10px 0 0;">
-<img src="${EMAIL_LOGO_URL}" alt="" height="28" style="height:28px;width:auto;display:block;" />
+<img src="${EMAIL_LOGO_URL}" alt="" height="34" style="height:34px;width:auto;display:block;" />
 </td>
 <td style="vertical-align:middle;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:20px;line-height:1;font-weight:800;color:#ffffff;">
 WiseCall
