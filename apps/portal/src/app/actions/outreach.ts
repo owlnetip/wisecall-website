@@ -19,6 +19,7 @@ import {
   isHtmlBody,
 } from "@/lib/email-template";
 import {
+  buildProspectContactRepair,
   resolveProspectContact,
 } from "@/lib/outreach-contact";
 import { getServiceSupabase } from "@/lib/supabase";
@@ -433,7 +434,7 @@ export async function updateOutreachProspect(input: {
   return { ok: true, data: mapProspect(data as Record<string, unknown>) };
 }
 
-/** Copy enriched owner name/email into the primary send fields. */
+/** Copy enriched owner / seed contact into the primary send fields. */
 export async function applyEnrichedOwnerContact(
   id: string,
 ): Promise<Result<OutreachProspect>> {
@@ -450,16 +451,24 @@ export async function applyEnrichedOwnerContact(
   if (loadError || !row) return { ok: false, error: "Prospect not found." };
 
   const prospect = mapProspect(row as Record<string, unknown>);
-  const resolved = resolveProspectContact(prospect);
-  if (!resolved.usedEnrichedOwner) {
-    return { ok: false, error: "Stored contact already matches the enriched owner." };
+  const raw = await readDentalProspectsSeed();
+  const seedRow = raw?.prospects?.find(
+    (p) =>
+      prospectKey(p.practice_name ?? "", p.postcode ?? "", p.region ?? "") ===
+      prospectKey(prospect.practiceName, prospect.postcode, prospect.region),
+  );
+  const patch = buildProspectContactRepair(
+    { ...prospect, firstEmailSentAt: prospect.firstEmailSentAt },
+    seedRow ?? null,
+  );
+  if (!patch) {
+    return { ok: false, error: "Stored contact already matches this practice." };
   }
 
   const { data, error } = await service
     .from("wisecall_outreach_prospects")
     .update({
-      contact_name: resolved.name || null,
-      email: resolved.email || null,
+      ...patch,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -469,6 +478,50 @@ export async function applyEnrichedOwnerContact(
 
   revalidatePath("/admin/outreach");
   return { ok: true, data: mapProspect(data as Record<string, unknown>) };
+}
+
+/** Scan every prospect and repair cross-practice contact contamination from seed/owner data. */
+export async function repairAllOutreachContactMismatches(): Promise<
+  Result<{ scanned: number; repaired: number }>
+> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const raw = await readDentalProspectsSeed();
+  const seedByKey = new Map<string, Record<string, string>>();
+  for (const p of raw?.prospects ?? []) {
+    seedByKey.set(prospectKey(p.practice_name ?? "", p.postcode ?? "", p.region ?? ""), p);
+  }
+
+  const { data: rows, error } = await service
+    .from("wisecall_outreach_prospects")
+    .select("*")
+    .eq("outreach_segment", "dentally_active");
+  if (error) return { ok: false, error: error.message };
+
+  let repaired = 0;
+  const now = new Date().toISOString();
+
+  for (const row of rows ?? []) {
+    const prospect = mapProspect(row as Record<string, unknown>);
+    const seed = seedByKey.get(prospectKey(prospect.practiceName, prospect.postcode, prospect.region));
+    const patch = buildProspectContactRepair(
+      { ...prospect, firstEmailSentAt: prospect.firstEmailSentAt },
+      seed ?? null,
+    );
+    if (!patch) continue;
+
+    const { error: updateError } = await service
+      .from("wisecall_outreach_prospects")
+      .update({ ...patch, updated_at: now })
+      .eq("id", prospect.id);
+    if (!updateError) repaired += 1;
+  }
+
+  revalidatePath("/admin/outreach");
+  return { ok: true, data: { scanned: rows?.length ?? 0, repaired } };
 }
 
 export async function listOutreachTemplates(): Promise<Result<OutreachTemplate[]>> {

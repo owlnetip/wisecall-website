@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Loader2,
   Mail,
@@ -27,6 +27,7 @@ import {
   listProspectEmails,
   previewOutreachEmail,
   processDueOutreachFollowUps,
+  repairAllOutreachContactMismatches,
   saveOutreachTemplate,
   sendOutreachEmail,
   updateOutreachProspect,
@@ -117,6 +118,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   const [bodyHtml, setBodyHtml] = useState("");
   const [draftNonce, setDraftNonce] = useState(0);
   const [scheduleFollowUps, setScheduleFollowUps] = useState(true);
+  const repairRan = useRef(false);
+  const repairedProspectIds = useRef(new Set<string>());
 
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [editTemplateName, setEditTemplateName] = useState("");
@@ -137,6 +140,12 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   const canEmail = selected?.outreachSegment === "dentally_active";
   const contactMismatch = selected ? hasProspectContactMismatch(selected) : false;
   const resolvedContact = selected ? resolveProspectContact(selected) : null;
+  const displayContactName = contactMismatch && resolvedContact
+    ? resolvedContact.name
+    : (selected?.contactName ?? "");
+  const displayEmail = contactMismatch && resolvedContact
+    ? resolvedContact.email
+    : (selected?.email ?? "");
   const dentallyTemplates = useMemo(
     () =>
       templates.filter(
@@ -178,6 +187,34 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (repairRan.current) return;
+    repairRan.current = true;
+    void repairAllOutreachContactMismatches().then((result) => {
+      if (result.ok && result.data.repaired > 0) {
+        setMsg({
+          kind: "ok",
+          text: `Fixed ${result.data.repaired} cross-practice contact mismatches (scanned ${result.data.scanned}).`,
+        });
+        void refresh();
+      }
+    });
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!selectedId || repairedProspectIds.current.has(selectedId)) return;
+    const prospect = prospects.find((p) => p.id === selectedId);
+    if (!prospect || !hasProspectContactMismatch(prospect)) return;
+    repairedProspectIds.current.add(selectedId);
+    void applyEnrichedOwnerContact(selectedId).then((result) => {
+      if (result.ok) {
+        setProspects((prev) => prev.map((p) => (p.id === result.data.id ? result.data : p)));
+      } else {
+        repairedProspectIds.current.delete(selectedId);
+      }
+    });
+  }, [selectedId, prospects]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -223,16 +260,20 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     setMsg({ kind: "ok", text: "Saved." });
   }
 
-  async function onApplyEnrichedContact() {
-    if (!selected) return;
+  async function onRepairAll() {
     setBusy(true);
     setMsg(null);
-    const res = await applyEnrichedOwnerContact(selected.id);
+    const res = await repairAllOutreachContactMismatches();
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
-    setProspects((prev) => prev.map((p) => (p.id === res.data.id ? res.data : p)));
-    setMsg({ kind: "ok", text: "Contact updated from enriched owner." });
-    await loadPreview();
+    setMsg({
+      kind: "ok",
+      text:
+        res.data.repaired > 0
+          ? `Fixed ${res.data.repaired} mismatches across ${res.data.scanned} Dentally practices.`
+          : `All ${res.data.scanned} Dentally practices have matching contacts.`,
+    });
+    await refresh();
   }
 
   async function onImport() {
@@ -246,6 +287,14 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
       text: `Imported ${res.data.imported} new, updated ${res.data.updated}, skipped ${res.data.skipped}. Seed has ${res.data.seedTotal} contacts (${res.data.bySegment.dentally_active ?? 0} Dentally).`,
     });
     await refresh();
+    const repair = await repairAllOutreachContactMismatches();
+    if (repair.ok && repair.data.repaired > 0) {
+      setMsg({
+        kind: "ok",
+        text: `Import done. Fixed ${repair.data.repaired} contact mismatches.`,
+      });
+      await refresh();
+    }
   }
 
   function startEditTemplate(t: OutreachTemplate) {
@@ -290,7 +339,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
 
   async function onSend() {
     if (!selected || !templateId) return;
-    if (!selected.email) return setMsg({ kind: "err", text: "Add an email address first." });
+    const toEmail = resolvedContact?.email || selected.email;
+    if (!toEmail) return setMsg({ kind: "err", text: "Add an email address first." });
     setBusy(true);
     setMsg(null);
     const res = await sendOutreachEmail({
@@ -360,6 +410,14 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
             >
               Admin home
             </a>
+            <button
+              type="button"
+              onClick={() => void onRepairAll()}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-50"
+            >
+              Fix contact mismatches
+            </button>
             <button
               type="button"
               onClick={() => void onImport()}
@@ -715,20 +773,11 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                 )}
                 {contactMismatch && resolvedContact ? (
                   <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-950">
-                    <p className="font-bold">Contact mismatch</p>
+                    <p className="font-bold">Contact mismatch detected</p>
                     <p className="mt-1">
-                      Stored contact is <strong>{selected.contactName || "blank"}</strong> ({selected.email}) but the
-                      enriched owner is <strong>{resolvedContact.name}</strong> ({resolvedContact.email}) for this
-                      practice website. Drafts and sends will use the enriched owner until you fix this.
+                      Stored contact pointed at another practice ({selected.contactName || "blank"} · {selected.email}).
+                      Using <strong>{resolvedContact.name}</strong> · {resolvedContact.email} from enrichment/seed.
                     </p>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void onApplyEnrichedContact()}
-                      className="mt-2 inline-flex items-center rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700 disabled:opacity-50"
-                    >
-                      Use enriched contact
-                    </button>
                   </div>
                 ) : null}
                 {(selected.status === "contacted" || selected.status === "replied") && (
@@ -758,8 +807,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       <User className="h-4 w-4" /> Contact name
                     </span>
                     <input
-                      key={`contact-name-${selected.id}`}
-                      defaultValue={selected.contactName ?? ""}
+                      key={`contact-name-${selected.id}-${displayContactName}`}
+                      defaultValue={displayContactName}
                       onBlur={(e) => {
                         if (e.target.value !== (selected.contactName ?? "")) {
                           void saveProspect({ contactName: e.target.value });
@@ -774,8 +823,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       <Mail className="h-4 w-4" /> Email
                     </span>
                     <input
-                      key={`contact-email-${selected.id}`}
-                      defaultValue={selected.email ?? ""}
+                      key={`contact-email-${selected.id}-${displayEmail}`}
+                      defaultValue={displayEmail}
                       onBlur={(e) => {
                         if (e.target.value !== (selected.email ?? "")) {
                           void saveProspect({ email: e.target.value });

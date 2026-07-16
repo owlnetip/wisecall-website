@@ -29,6 +29,7 @@ export function emailMatchesWebsite(
 export type ProspectContactFields = {
   contactName: string | null;
   email: string | null;
+  phone?: string | null;
   ownerName: string | null;
   ownerEmail: string | null;
   website: string | null;
@@ -40,6 +41,21 @@ export type ResolvedProspectContact = {
   /** True when enriched owner overrides mismatched stored contact fields. */
   usedEnrichedOwner: boolean;
 };
+
+export type SeedContactFields = {
+  contact_name?: string;
+  owner_name?: string;
+  email?: string;
+  owner_email?: string;
+  phone?: string;
+};
+
+/** Stored contact email belongs to a different practice than this record's website. */
+export function hasWrongDomainContactEmail(p: ProspectContactFields): boolean {
+  const contactEmail = (p.email ?? "").trim();
+  if (!contactEmail || !p.website) return false;
+  return !emailMatchesWebsite(contactEmail, p.website);
+}
 
 /** Prefer enriched owner when their email matches the practice website but stored contact does not. */
 export function resolveProspectContact(p: ProspectContactFields): ResolvedProspectContact {
@@ -66,5 +82,33 @@ export function resolveProspectContact(p: ProspectContactFields): ResolvedProspe
 }
 
 export function hasProspectContactMismatch(p: ProspectContactFields): boolean {
-  return resolveProspectContact(p).usedEnrichedOwner;
+  return resolveProspectContact(p).usedEnrichedOwner || hasWrongDomainContactEmail(p);
+}
+
+/** Build a repair patch from seed + enriched owner data. Returns null when no fix is needed/possible. */
+export function buildProspectContactRepair(
+  p: ProspectContactFields & { firstEmailSentAt?: string | null },
+  seed?: SeedContactFields | null,
+): { contact_name?: string; email?: string; phone?: string } | null {
+  if (p.firstEmailSentAt) return null;
+  if (!hasProspectContactMismatch(p)) return null;
+
+  const seedName = (seed?.owner_name || seed?.contact_name || "").trim();
+  const seedEmail = (seed?.owner_email || seed?.email || "").trim();
+  const seedPhone = (seed?.phone || "").trim();
+  const resolved = resolveProspectContact(p);
+
+  const name = seedName || resolved.name;
+  const email = seedEmail || resolved.email;
+  if (!name && !email) return null;
+  if (email && p.website && !emailMatchesWebsite(email, p.website)) return null;
+
+  const patch: { contact_name?: string; email?: string; phone?: string } = {};
+  if (name && (p.contactName ?? "").trim() !== name) patch.contact_name = name;
+  if (email && (p.email ?? "").trim().toLowerCase() !== email.toLowerCase()) patch.email = email;
+  if (seedPhone && hasWrongDomainContactEmail(p) && (p.phone ?? "").trim() !== seedPhone) {
+    patch.phone = seedPhone;
+  }
+
+  return Object.keys(patch).length ? patch : null;
 }
