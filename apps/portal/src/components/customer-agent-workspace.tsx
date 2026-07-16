@@ -2053,7 +2053,7 @@ export function CustomerAgentWorkspace({
         )}
 
         {/* Sidebar */}
-        <aside className="hidden w-[280px] flex-shrink-0 flex-col bg-gradient-to-b from-[#172929] to-[#0e1b1b] md:flex">
+        <aside className="sticky top-0 hidden h-screen w-[280px] flex-shrink-0 flex-col overflow-y-auto bg-gradient-to-b from-[#172929] to-[#0e1b1b] md:flex lg:h-[calc(100vh-48px)]">
           <div className="flex h-[72px] items-center gap-3 px-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/owl-logo.png" alt="" className="h-8 w-8 object-contain" />
