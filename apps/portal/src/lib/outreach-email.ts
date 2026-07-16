@@ -23,6 +23,17 @@ export function templateFamilyForSegment(segment: string): string {
   return "general";
 }
 
+/** Shared inbox for dental outreach replies — never the logged-in admin address. */
+export const DEFAULT_OUTREACH_REPLY_TO = "info@owlnet.io";
+
+export function outreachReplyTo(): string {
+  const fromEnv = process.env.OUTREACH_REPLY_TO?.trim();
+  if (fromEnv) return fromEnv;
+  const fromAddress = process.env.RESEND_FROM_EMAIL?.replace(/^.*<([^>]+)>.*$/, "$1").trim();
+  if (fromAddress) return fromAddress;
+  return DEFAULT_OUTREACH_REPLY_TO;
+}
+
 /** Render {{tokens}} and optional {{#contact_name}}...{{/contact_name}} blocks. */
 export function renderOutreachTemplate(
   template: string,

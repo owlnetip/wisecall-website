@@ -10,6 +10,7 @@ import {
   addDays,
   followUpDaysForStep,
   templateFamilyForSegment,
+  outreachReplyTo,
 } from "@/lib/outreach-email";
 import {
   sanitizeEmailHtml,
@@ -820,13 +821,7 @@ export async function sendOutreachEmail(input: {
   // the fallback. Legacy text-only sends are unchanged.
   const innerHtml = cleanEditorHtml(input.bodyHtml);
   const textFallback = input.body?.trim() || (innerHtml ? htmlToText(innerHtml) : "");
-  // A fixed reply-to (not whichever admin happens to be logged in) so replies
-  // reliably land in one shared inbox regardless of who sends the campaign.
-  const replyTo =
-    process.env.OUTREACH_REPLY_TO?.trim() ||
-    process.env.RESEND_FROM_EMAIL?.replace(/^.*<([^>]+)>.*$/, "$1") ||
-    gate.user.email ||
-    undefined;
+  const replyTo = outreachReplyTo();
   const sent = await sendViaResend({
     to: sendContact.email,
     subject: input.subject,
@@ -1080,10 +1075,7 @@ export async function processDueOutreachFollowUpsInternal(
     }
 
     const storedHtml = (row.body_html as string) ?? "";
-    const replyTo =
-      process.env.OUTREACH_REPLY_TO?.trim() ||
-      process.env.RESEND_FROM_EMAIL?.replace(/^.*<([^>]+)>.*$/, "$1") ||
-      undefined;
+    const replyTo = outreachReplyTo();
     const result = await sendViaResend({
       to: toEmail,
       subject: row.subject as string,

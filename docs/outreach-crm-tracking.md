@@ -17,7 +17,7 @@ Light/Mailchimp-style organisation for Dentally sequences (day 0 → 3 → 7 →
    - URL: `https://app.wisecall.io/api/webhooks/resend`
    - Events: `email.delivered`, `email.opened`, `email.clicked`, `email.bounced`, `email.complained`
    - Copy signing secret → env `RESEND_WEBHOOK_SECRET`
-3. Optional: `OUTREACH_REPLY_TO=you@wisecall.io` so day 3/7/14 replies land in your inbox.
+3. Set `OUTREACH_REPLY_TO=info@owlnet.io` in Vercel production so initial + follow-up replies land in the shared inbox (defaults to `info@owlnet.io` if unset; never the logged-in admin address).
 
 Until the webhook is live, sent/scheduled tracking still works; opens stay empty.
 
