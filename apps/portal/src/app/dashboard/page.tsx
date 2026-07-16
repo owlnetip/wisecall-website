@@ -12,7 +12,7 @@ import {
 } from "@/lib/enrich-contacts";
 import { backfillInferredContactNames } from "@/app/actions/contacts";
 import { isAdmin } from "@/lib/admin";
-import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
+import { IMPERSONATE_AGENT_COOKIE, IMPERSONATE_COOKIE } from "@/lib/impersonation";
 import { getFollowUpsForUser } from "@/lib/follow-ups";
 import { getInsightsForUser, emptyInsights } from "@/lib/insights";
 import { isAnalysisConfigured } from "@/lib/call-analysis";
@@ -32,9 +32,10 @@ export default async function DashboardPage() {
 
   // Admin "view as customer": only honoured when the real signed-in user is an
   // admin, so a forged cookie does nothing for a normal customer.
-  const impersonateId = admin
-    ? (await cookies()).get(IMPERSONATE_COOKIE)?.value
-    : undefined;
+  const cookieStore = await cookies();
+  const impersonateId = admin ? cookieStore.get(IMPERSONATE_COOKIE)?.value : undefined;
+  const impersonateAgentId =
+    admin && impersonateId ? cookieStore.get(IMPERSONATE_AGENT_COOKIE)?.value : undefined;
   const effectiveUserId = impersonateId || user.id;
 
   let impersonatingEmail: string | undefined;
@@ -88,7 +89,7 @@ export default async function DashboardPage() {
     safe("Contacts", getContactsForUser(effectiveUserId), []),
     safe("Plan usage", getTrialUsage(effectiveUserId, billing), null),
     // Default range matches the AI Insights view's default ("Last 7 days").
-    safe("Insights", getInsightsForUser(effectiveUserId, "7d"), emptyInsights("7d", false)),
+    safe("Insights", getInsightsForUser(effectiveUserId, "7d", impersonateAgentId), emptyInsights("7d", false)),
     safe("SMS", getSmsNumbersForUser(effectiveUserId), []),
     safe("WhatsApp", getWhatsappNumbersForUser(effectiveUserId), []),
     safe("Follow-ups", getFollowUpsForUser(effectiveUserId), []),
@@ -122,11 +123,27 @@ export default async function DashboardPage() {
     await backfillInferredContactNames(nameBackfill);
   }
 
+  let scopedAgents = enriched;
+  let scopedCallLogs = callLogs;
+  let scopedContacts = enrichedContacts;
+  let scopedFollowUps = followUps;
+
+  if (impersonateAgentId) {
+    scopedAgents = enriched.filter((agent) => agent.id === impersonateAgentId);
+    scopedCallLogs = callLogs.filter((log) => log.profileId === impersonateAgentId);
+    scopedContacts = enrichedContacts.filter((contact) => contact.profileId === impersonateAgentId);
+    scopedFollowUps = followUps.filter((followUp) => followUp.profileId === impersonateAgentId);
+  }
+
+  const impersonatingAgentName = impersonateAgentId
+    ? scopedAgents.find((agent) => agent.id === impersonateAgentId)?.name
+    : undefined;
+
   return (
     <CustomerAgentWorkspace
-      initialAssistants={enriched}
-      callLogs={callLogs}
-      contacts={enrichedContacts}
+      initialAssistants={scopedAgents}
+      callLogs={scopedCallLogs}
+      contacts={scopedContacts}
       userEmail={impersonatingEmail ?? user.email}
       // While impersonating, render the customer's own chrome (no Admin link) so
       // it's a faithful view of what they see. The billing-gate bypass above
@@ -140,10 +157,17 @@ export default async function DashboardPage() {
       smsChannel={smsChannel}
       smsNumbers={smsNumbers}
       whatsappNumbers={whatsappNumbers}
-      impersonating={impersonateId ? { email: impersonatingEmail ?? impersonateId } : undefined}
+      impersonating={
+        impersonateId
+          ? {
+              email: impersonatingEmail ?? impersonateId,
+              agentName: impersonatingAgentName,
+            }
+          : undefined
+      }
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}
-      initialFollowUps={followUps}
+      initialFollowUps={scopedFollowUps}
       loadIssues={orderedLoadIssues}
     />
   );

@@ -19,7 +19,11 @@ export async function GET(request: Request) {
   const range = parseRange(new URL(request.url).searchParams.get("range"));
 
   try {
-    const insights = await getInsightsForUser(session.effectiveUserId, range);
+    const insights = await getInsightsForUser(
+      session.effectiveUserId,
+      range,
+      session.impersonateAgentId,
+    );
     return NextResponse.json({ ok: true, insights });
   } catch (error) {
     console.error("/api/insights failed:", error);

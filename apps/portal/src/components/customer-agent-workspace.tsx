@@ -1492,7 +1492,7 @@ export function CustomerAgentWorkspace({
   smsChannel?: ChannelUsage; // bundled SMS allowance + usage
   smsNumbers?: AgentSmsNumber[]; // already-provisioned Vonage SMS numbers
   whatsappNumbers?: AgentWhatsappNumber[]; // already-provisioned WhatsApp numbers
-  impersonating?: { email: string }; // admin viewing as this customer
+  impersonating?: { email: string; agentName?: string }; // admin viewing as this customer
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
   initialFollowUps?: FollowUp[];
@@ -1592,6 +1592,21 @@ export function CustomerAgentWorkspace({
 
   const selectedAssistant =
     assistants.find((assistant) => assistant.id === selectedId) ?? assistants[0];
+
+  const scopedCallLogs = useMemo(() => {
+    if (!adminMode || !selectedAssistant) return callLogs;
+    return callLogs.filter((log) => log.profileId === selectedAssistant.id);
+  }, [adminMode, selectedAssistant, callLogs]);
+
+  const scopedContacts = useMemo(() => {
+    if (!adminMode || !selectedAssistant) return contacts;
+    return contacts.filter((contact) => contact.profileId === selectedAssistant.id);
+  }, [adminMode, selectedAssistant, contacts]);
+
+  const scopedFollowUps = useMemo(() => {
+    if (!adminMode || !selectedAssistant) return followUps;
+    return followUps.filter((item) => item.profileId === selectedAssistant.id);
+  }, [adminMode, selectedAssistant, followUps]);
 
   const filteredAssistants = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -1889,7 +1904,14 @@ export function CustomerAgentWorkspace({
       {impersonating ? (
         <div className="mx-auto mb-3 flex max-w-[1920px] flex-wrap items-center justify-between gap-3 rounded-xl bg-[#7a2e2e] px-4 py-2.5 text-sm font-semibold text-white">
           <span>
-            👁 Viewing as <strong>{impersonating.email}</strong>, changes you make apply to this customer&apos;s account.
+            👁 Viewing as <strong>{impersonating.email}</strong>
+            {impersonating.agentName ? (
+              <>
+                {" "}
+                · agent <strong>{impersonating.agentName}</strong>
+              </>
+            ) : null}
+            , changes you make apply to this customer&apos;s account.
           </span>
           <form action={stopImpersonating}>
             <button
@@ -2221,12 +2243,12 @@ export function CustomerAgentWorkspace({
                 <AiInsights
                   initial={initialInsights}
                   analysisEnabled={analysisEnabled}
-                  followUps={followUps}
+                  followUps={scopedFollowUps}
                   onFollowUpStatus={handleFollowUpStatus}
                   onViewCalls={() => setView("calls")}
                   onOpenCall={(callId) => {
                     // One click from an insight straight into the conversation.
-                    setSelectedCallId(callLogs.some((c) => c.id === callId) ? callId : null);
+                    setSelectedCallId(scopedCallLogs.some((c) => c.id === callId) ? callId : null);
                     setView("calls");
                   }}
                 />
@@ -2296,8 +2318,8 @@ export function CustomerAgentWorkspace({
 
             {view === "calls" && (
               <UnifiedInbox
-                callLogs={callLogs}
-                followUps={followUps}
+                callLogs={scopedCallLogs}
+                followUps={scopedFollowUps}
                 onFollowUpStatus={handleFollowUpStatus}
                 selectedId={selectedCallId}
                 onSelect={setSelectedCallId}
@@ -2305,7 +2327,7 @@ export function CustomerAgentWorkspace({
             )}
 
             {view === "contacts" && (
-              <ContactsView contacts={contacts} callLogs={callLogs} followUps={followUps} />
+              <ContactsView contacts={scopedContacts} callLogs={scopedCallLogs} followUps={scopedFollowUps} />
             )}
 
             {view === "channels" && (
@@ -2325,7 +2347,7 @@ export function CustomerAgentWorkspace({
         </main>
       </div>
 
-      {/* Mobile bottom tab bar: the five core destinations are always one thumb
+      {/* Mobile bottom tab bar: the core destinations are always one thumb
           tap away. Secondary items (billing, admin, support) stay in the drawer. */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-md items-stretch justify-around">
@@ -2800,14 +2822,14 @@ function AssistantDetail({
             </button>
           ) : null}
           {adminMode && assistant.ownerId ? (
-            <form action={impersonateUser.bind(null, assistant.ownerId)}>
+            <form action={impersonateUser.bind(null, assistant.ownerId, assistant.id)}>
               <button
                 type="submit"
                 className="press inline-flex h-9 max-w-[11rem] items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-black text-white transition hover:bg-[#263130]"
-                title={`Open ${assistant.ownerEmail ?? "this customer"}'s account`}
+                title={`View ${assistant.name} as the customer sees it — inbox scoped to this agent`}
               >
                 <LogOut className="h-3.5 w-3.5 shrink-0 rotate-180" />
-                <span className="truncate">View as {assistant.ownerEmail ?? "owner"}</span>
+                <span className="truncate">Login as</span>
               </button>
             </form>
           ) : null}
