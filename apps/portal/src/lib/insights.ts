@@ -211,11 +211,14 @@ async function ownedProfileIds(userId: string): Promise<string[]> {
 export async function getInsightsForUser(
   userId: string,
   range: InsightsRange,
+  profileId?: string,
 ): Promise<DashboardInsights> {
   const supabase = getServiceSupabase();
   if (!supabase) throw new Error("Insight data is not configured.");
 
-  const ids = await ownedProfileIds(userId);
+  const ownedIds = await ownedProfileIds(userId);
+  const ids =
+    profileId && ownedIds.includes(profileId) ? [profileId] : profileId ? [] : ownedIds;
   if (ids.length === 0) return emptyInsights(range, false);
 
   // Is there any call at all (across all time)? Lets the UI tell "brand new
