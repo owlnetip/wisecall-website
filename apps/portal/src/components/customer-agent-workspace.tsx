@@ -1904,9 +1904,9 @@ export function CustomerAgentWorkspace({
   }
 
   return (
-    <div className="min-h-screen bg-surface px-0 py-0 text-ink lg:px-6 lg:py-6">
+    <div className="flex h-screen flex-col bg-surface px-0 py-0 text-ink lg:px-6 lg:py-6">
       {impersonating ? (
-        <div className="mx-auto mb-3 flex max-w-[1920px] flex-wrap items-center justify-between gap-3 rounded-xl bg-[#7a2e2e] px-4 py-2.5 text-sm font-semibold text-white">
+        <div className="mx-auto mb-3 flex max-w-[1920px] flex-shrink-0 flex-wrap items-center justify-between gap-3 rounded-xl bg-[#7a2e2e] px-4 py-2.5 text-sm font-semibold text-white">
           <span>
             👁 Viewing as <strong>{impersonating.email}</strong>
             {impersonating.agentName ? (
@@ -1928,7 +1928,7 @@ export function CustomerAgentWorkspace({
         </div>
       ) : null}
       {trial ? (
-        <div className="mx-auto mb-3 max-w-[1920px] px-4 lg:px-0">
+        <div className="mx-auto mb-3 max-w-[1920px] flex-shrink-0 px-4 lg:px-0">
           <div
             className={`flex flex-col gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-card sm:flex-row sm:items-center sm:justify-between ${
               trial.blocked
@@ -1952,7 +1952,7 @@ export function CustomerAgentWorkspace({
           </div>
         </div>
       ) : null}
-      <div className="mx-auto flex min-h-screen max-w-[1920px] overflow-hidden bg-white shadow-[0_24px_90px_rgba(17,23,22,0.14)] lg:min-h-[calc(100vh-48px)] lg:rounded-[22px] lg:border lg:border-line">
+      <div className="mx-auto flex min-h-0 w-full flex-1 max-w-[1920px] overflow-hidden bg-white shadow-[0_24px_90px_rgba(17,23,22,0.14)] lg:rounded-[22px] lg:border lg:border-line">
         {/* Mobile nav drawer */}
         {mobileNavOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
@@ -2053,7 +2053,7 @@ export function CustomerAgentWorkspace({
         )}
 
         {/* Sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-[280px] flex-shrink-0 flex-col overflow-y-auto bg-gradient-to-b from-[#172929] to-[#0e1b1b] md:flex lg:h-[calc(100vh-48px)]">
+        <aside className="hidden w-[280px] flex-shrink-0 flex-col overflow-y-auto bg-gradient-to-b from-[#172929] to-[#0e1b1b] md:flex">
           <div className="flex h-[72px] items-center gap-3 px-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/owl-logo.png" alt="" className="h-8 w-8 object-contain" />
@@ -2148,7 +2148,7 @@ export function CustomerAgentWorkspace({
         </aside>
 
         {/* Main */}
-        <main className="min-w-0 flex-1 bg-white">
+        <main className="min-w-0 flex-1 overflow-y-auto bg-white">
           <header className="flex h-[72px] items-center justify-between border-b border-line px-5 lg:px-8">
             <div className="flex min-w-0 max-w-[calc(100vw-7rem)] items-center gap-2 overflow-x-auto whitespace-nowrap text-sm font-semibold text-ink-soft sm:max-w-none">
               <button
