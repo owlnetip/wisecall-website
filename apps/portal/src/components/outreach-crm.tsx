@@ -18,6 +18,7 @@ import {
   Inbox,
 } from "lucide-react";
 import {
+  applyEnrichedOwnerContact,
   getOutreachCrmStats,
   importDentalProspectsFromSeed,
   listDueFollowUpCount,
@@ -37,6 +38,7 @@ import {
   type OutreachTemplate,
 } from "@/app/actions/outreach";
 import { RichEmailEditor, EmailPreview } from "@/components/rich-email-editor";
+import { hasProspectContactMismatch, resolveProspectContact } from "@/lib/outreach-contact";
 
 /** Seed the visual editor from a legacy plain-text body (newlines → paragraphs). */
 function textToHtml(text: string): string {
@@ -133,6 +135,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   );
 
   const canEmail = selected?.outreachSegment === "dentally_active";
+  const contactMismatch = selected ? hasProspectContactMismatch(selected) : false;
+  const resolvedContact = selected ? resolveProspectContact(selected) : null;
   const dentallyTemplates = useMemo(
     () =>
       templates.filter(
@@ -217,6 +221,18 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
     setProspects((prev) => prev.map((p) => (p.id === res.data.id ? res.data : p)));
     setMsg({ kind: "ok", text: "Saved." });
+  }
+
+  async function onApplyEnrichedContact() {
+    if (!selected) return;
+    setBusy(true);
+    setMsg(null);
+    const res = await applyEnrichedOwnerContact(selected.id);
+    setBusy(false);
+    if (!res.ok) return setMsg({ kind: "err", text: res.error });
+    setProspects((prev) => prev.map((p) => (p.id === res.data.id ? res.data : p)));
+    setMsg({ kind: "ok", text: "Contact updated from enriched owner." });
+    await loadPreview();
   }
 
   async function onImport() {
@@ -697,6 +713,24 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                     </p>
                   </div>
                 )}
+                {contactMismatch && resolvedContact ? (
+                  <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+                    <p className="font-bold">Contact mismatch</p>
+                    <p className="mt-1">
+                      Stored contact is <strong>{selected.contactName || "blank"}</strong> ({selected.email}) but the
+                      enriched owner is <strong>{resolvedContact.name}</strong> ({resolvedContact.email}) for this
+                      practice website. Drafts and sends will use the enriched owner until you fix this.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onApplyEnrichedContact()}
+                      className="mt-2 inline-flex items-center rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      Use enriched contact
+                    </button>
+                  </div>
+                ) : null}
                 {(selected.status === "contacted" || selected.status === "replied") && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
@@ -724,6 +758,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       <User className="h-4 w-4" /> Contact name
                     </span>
                     <input
+                      key={`contact-name-${selected.id}`}
                       defaultValue={selected.contactName ?? ""}
                       onBlur={(e) => {
                         if (e.target.value !== (selected.contactName ?? "")) {
@@ -739,6 +774,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       <Mail className="h-4 w-4" /> Email
                     </span>
                     <input
+                      key={`contact-email-${selected.id}`}
                       defaultValue={selected.email ?? ""}
                       onBlur={(e) => {
                         if (e.target.value !== (selected.email ?? "")) {
@@ -752,6 +788,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                   <label className="block text-sm">
                     <span className="mb-1 font-semibold text-[#0e1b1b]">Phone</span>
                     <input
+                      key={`contact-phone-${selected.id}`}
                       defaultValue={selected.phone ?? ""}
                       onBlur={(e) => {
                         if (e.target.value !== (selected.phone ?? "")) {
@@ -775,6 +812,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                 <label className="mt-3 block text-sm">
                   <span className="mb-1 font-semibold text-[#0e1b1b]">Notes</span>
                   <textarea
+                    key={`contact-notes-${selected.id}`}
                     defaultValue={selected.notes ?? ""}
                     rows={2}
                     onBlur={(e) => {
@@ -847,7 +885,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                   <button
                     type="button"
                     onClick={() => void onSend()}
-                    disabled={busy || !selected.email || !!selected.firstEmailSentAt}
+                    disabled={busy || !(resolvedContact?.email || selected.email) || !!selected.firstEmailSentAt}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7de8eb] px-4 py-3 text-sm font-black text-[#0e1b1b] hover:bg-[#5de0e5] disabled:opacity-50"
                   >
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

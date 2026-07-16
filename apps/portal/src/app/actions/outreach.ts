@@ -18,6 +18,9 @@ import {
   wrapEmailHtml,
   isHtmlBody,
 } from "@/lib/email-template";
+import {
+  resolveProspectContact,
+} from "@/lib/outreach-contact";
 import { getServiceSupabase } from "@/lib/supabase";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -224,12 +227,13 @@ export async function getDentalProspectsSeedStats(): Promise<Result<DentalProspe
 }
 
 function mergeFieldsForProspect(p: OutreachProspect): Record<string, string> {
+  const contact = resolveProspectContact(p);
   return {
     practice_name: p.practiceName,
-    contact_name: p.contactName ?? "",
-    name: p.contactName ?? "",
+    contact_name: contact.name,
+    name: contact.name,
     company: p.practiceName,
-    email: p.email ?? "",
+    email: contact.email,
     phone: p.phone ?? "",
     postcode: p.postcode,
     region: p.region,
@@ -429,6 +433,44 @@ export async function updateOutreachProspect(input: {
   return { ok: true, data: mapProspect(data as Record<string, unknown>) };
 }
 
+/** Copy enriched owner name/email into the primary send fields. */
+export async function applyEnrichedOwnerContact(
+  id: string,
+): Promise<Result<OutreachProspect>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const { data: row, error: loadError } = await service
+    .from("wisecall_outreach_prospects")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (loadError || !row) return { ok: false, error: "Prospect not found." };
+
+  const prospect = mapProspect(row as Record<string, unknown>);
+  const resolved = resolveProspectContact(prospect);
+  if (!resolved.usedEnrichedOwner) {
+    return { ok: false, error: "Stored contact already matches the enriched owner." };
+  }
+
+  const { data, error } = await service
+    .from("wisecall_outreach_prospects")
+    .update({
+      contact_name: resolved.name || null,
+      email: resolved.email || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/outreach");
+  return { ok: true, data: mapProspect(data as Record<string, unknown>) };
+}
+
 export async function listOutreachTemplates(): Promise<Result<OutreachTemplate[]>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -618,6 +660,7 @@ async function scheduleFollowUps(
     .eq("status", "scheduled");
 
   const fields = mergeFieldsForProspect(prospect);
+  const sendContact = resolveProspectContact(prospect);
   const rows = templates.map((t) => {
     const step = t.sequence_step as string;
     const days = followUpDaysForStep(step) ?? 0;
@@ -631,7 +674,7 @@ async function scheduleFollowUps(
       subject: renderOutreachTemplate(t.subject_template as string, fields),
       body: textBody || (innerHtml ? htmlToText(innerHtml) : ""),
       body_html: innerHtml,
-      to_email: prospect.email,
+      to_email: sendContact.email || prospect.email,
       status: "scheduled",
       scheduled_for: addDays(sentAt, days),
       created_by: userId,
@@ -684,7 +727,9 @@ export async function sendOutreachEmail(input: {
             : "Unknown PMS prospects are stored for qualification — email disabled until PMS confirmed.",
     };
   }
-  if (!prospect.email) return { ok: false, error: "Add a recipient email before sending." };
+
+  const sendContact = resolveProspectContact(prospect);
+  if (!sendContact.email) return { ok: false, error: "Add a recipient email before sending." };
 
   const { data: templateRow } = await service
     .from("wisecall_outreach_email_templates")
@@ -723,7 +768,7 @@ export async function sendOutreachEmail(input: {
   const textFallback = input.body?.trim() || (innerHtml ? htmlToText(innerHtml) : "");
   const replyTo = gate.user.email ?? undefined;
   const sent = await sendViaResend({
-    to: prospect.email,
+    to: sendContact.email,
     subject: input.subject,
     body: textFallback,
     html: innerHtml ? wrapEmailHtml(innerHtml) : undefined,
@@ -745,7 +790,7 @@ export async function sendOutreachEmail(input: {
       subject: input.subject,
       body: textFallback,
       body_html: innerHtml || null,
-      to_email: prospect.email,
+      to_email: sendContact.email,
       status: sent.ok ? "sent" : "failed",
       sent_at: sent.ok ? now : null,
       resend_id: sent.ok ? sent.id : null,
@@ -762,6 +807,10 @@ export async function sendOutreachEmail(input: {
     last_contacted_at: now,
     updated_at: now,
   };
+  if (sendContact.usedEnrichedOwner) {
+    prospectUpdate.contact_name = sendContact.name || null;
+    prospectUpdate.email = sendContact.email;
+  }
   if (sequenceStep === "initial" && !prospect.firstEmailSentAt) {
     prospectUpdate.first_email_sent_at = now;
   }
@@ -771,7 +820,11 @@ export async function sendOutreachEmail(input: {
   if (input.scheduleFollowUps !== false && sequenceStep === "initial") {
     await scheduleFollowUps(
       service,
-      { ...prospect, email: prospect.email },
+      {
+        ...prospect,
+        contactName: sendContact.name || prospect.contactName,
+        email: sendContact.email,
+      },
       now,
       gate.user.id,
     );
@@ -808,14 +861,21 @@ export async function importDentalProspectsFromSeed(): Promise<
 
   const { data: existingRows, error: existingError } = await service
     .from("wisecall_outreach_prospects")
-    .select("id, practice_name, postcode, region, status");
+    .select("id, practice_name, postcode, region, status, first_email_sent_at");
   if (existingError) return { ok: false, error: existingError.message };
 
-  const existingByKey = new Map<string, { id: string; status: string }>();
+  const existingByKey = new Map<
+    string,
+    { id: string; status: string; firstEmailSentAt: string | null }
+  >();
   for (const row of existingRows ?? []) {
     existingByKey.set(
       prospectKey(row.practice_name as string, (row.postcode as string) ?? "", row.region as string),
-      { id: row.id as string, status: (row.status as string) ?? "new" },
+      {
+        id: row.id as string,
+        status: (row.status as string) ?? "new",
+        firstEmailSentAt: (row.first_email_sent_at as string) ?? null,
+      },
     );
   }
 
@@ -860,12 +920,17 @@ export async function importDentalProspectsFromSeed(): Promise<
     };
 
     if (existing && existing.status !== "new") {
+      const patch: Record<string, unknown> = {
+        ...metadata,
+        phone: p.phone || null,
+      };
+      if (!existing.firstEmailSentAt && ownerEmail) {
+        patch.contact_name = ownerName || null;
+        patch.email = ownerEmail || null;
+      }
       const { error } = await service
         .from("wisecall_outreach_prospects")
-        .update({
-          ...metadata,
-          phone: p.phone || null,
-        })
+        .update(patch)
         .eq("id", existing.id);
       if (error) skipped += 1;
       else updated += 1;
@@ -943,7 +1008,9 @@ export async function processDueOutreachFollowUpsInternal(
       cancelled += 1;
       continue;
     }
-    if (!p.email) {
+    const sendContact = resolveProspectContact(p);
+    const toEmail = ((row.to_email as string) ?? "").trim() || sendContact.email;
+    if (!toEmail) {
       await service
         .from("wisecall_outreach_emails")
         .update({ status: "failed", error_message: "Missing email", updated_at: now })
@@ -958,7 +1025,7 @@ export async function processDueOutreachFollowUpsInternal(
       process.env.RESEND_FROM_EMAIL?.replace(/^.*<([^>]+)>.*$/, "$1") ||
       undefined;
     const result = await sendViaResend({
-      to: p.email,
+      to: toEmail,
       subject: row.subject as string,
       body: row.body as string,
       html: isHtmlBody(storedHtml) ? wrapEmailHtml(storedHtml) : undefined,
