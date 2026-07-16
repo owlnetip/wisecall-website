@@ -43,30 +43,54 @@ def main() -> None:
     for p in prospects:
         if p.get("outreach_segment") != "dentally_active":
             continue
-        email = (p.get("email") or p.get("owner_email") or "").strip()
+        email = (p.get("email") or "").strip()
+        owner_email = (p.get("owner_email") or "").strip()
         website = (p.get("website") or "").strip()
-        if not email or not website:
+        canonical = owner_email or email
+        if not canonical or not website:
             continue
-        if domain_matches(email, website):
+        if email and owner_email and email.lower() != owner_email.lower():
+            bad.append(
+                {
+                    "practice": p.get("practice_name", ""),
+                    "postcode": p.get("postcode", ""),
+                    "region": p.get("region", ""),
+                    "contact": p.get("contact_name") or "",
+                    "email": email,
+                    "owner_email": owner_email,
+                    "website": website,
+                    "kind": "contact_vs_owner",
+                }
+            )
             continue
+        if not domain_matches(canonical, website):
         bad.append(
             {
                 "practice": p.get("practice_name", ""),
                 "postcode": p.get("postcode", ""),
                 "region": p.get("region", ""),
                 "contact": p.get("contact_name") or p.get("owner_name") or "",
-                "email": email,
+                "email": canonical,
+                "owner_email": owner_email,
                 "website": website,
+                "kind": "wrong_domain",
             }
         )
 
     print(f"Scanned {len(prospects)} seed prospects")
     print(f"Dentally active with wrong-domain email in seed: {len(bad)}")
     for row in bad[:40]:
-        print(
-            f"- {row['practice']} ({row['postcode']}, {row['region']}): "
-            f"{row['contact']} <{row['email']}> vs {row['website']}"
-        )
+        kind = row.get("kind", "wrong_domain")
+        if kind == "contact_vs_owner":
+            print(
+                f"- {row['practice']} ({row['postcode']}, {row['region']}): "
+                f"stored {row['email']} vs owner {row['owner_email']}"
+            )
+        else:
+            print(
+                f"- {row['practice']} ({row['postcode']}, {row['region']}): "
+                f"{row['contact']} <{row['email']}> vs {row['website']}"
+            )
     if len(bad) > 40:
         print(f"... and {len(bad) - 40} more")
 
