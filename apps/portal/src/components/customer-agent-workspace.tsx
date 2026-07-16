@@ -96,9 +96,10 @@ import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 import { CALLER_INTAKE_PROMPT } from "@/lib/caller-intake";
 import { ContactsView } from "./contacts-view";
 import { RaiseTicketModal } from "./raise-ticket-modal";
+import { SupportChatPanel } from "./support-chat-panel";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
-import { impersonateUser, stopImpersonating } from "@/app/actions/admin";
+import { impersonateCustomerForm, stopImpersonating } from "@/app/actions/admin";
 import { OutboundManager } from "@/components/outbound-manager";
 import { AgentPreviewModal } from "./agent-preview-modal";
 import { Button } from "@/components/ui/button";
@@ -383,7 +384,7 @@ export const demoAssistants: Assistant[] = [
 // Numbers, Payments etc. back as each one is wired up.
 // A small, lively version of the login-page owl for the "Need setup help?" card.
 // Idle-bobs, blinks on a random cadence, and peeks/wiggles on hover.
-function SupportOwl() {
+export function SupportOwl() {
   const [blinking, setBlinking] = useState(false);
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
@@ -1476,6 +1477,7 @@ export function CustomerAgentWorkspace({
   initialInsights,
   analysisEnabled = false,
   initialFollowUps = [],
+  initialSelectedAgentId,
   loadIssues = [],
 }: {
   initialAssistants?: Assistant[];
@@ -1496,12 +1498,13 @@ export function CustomerAgentWorkspace({
   initialInsights?: DashboardInsights; // server-aggregated AI Insights (default range)
   analysisEnabled?: boolean; // whether the Claude API key is configured
   initialFollowUps?: FollowUp[];
+  initialSelectedAgentId?: string;
   loadIssues?: string[];
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? []);
   // A real customer with no agents yet has an empty list, don't assume [0] exists.
   const [selectedId, setSelectedId] = useState(
-    initialAssistants?.[0]?.id ?? "",
+    initialSelectedAgentId ?? initialAssistants?.[0]?.id ?? "",
   );
   const [view, setView] = useState<View>("insights");
   const [detailTab, setDetailTab] = useState<DetailTab>("behaviour");
@@ -1510,6 +1513,7 @@ export function CustomerAgentWorkspace({
   const [wizardOpen, setWizardOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [ticketOpen, setTicketOpen] = useState(false);
+  const [supportChatOpen, setSupportChatOpen] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const [greetingOpen, setGreetingOpen] = useState(false);
   const [editAbility, setEditAbility] = useState<"knowledge" | "transfer" | null>(null);
@@ -2037,11 +2041,11 @@ export function CustomerAgentWorkspace({
                   type="button"
                   onClick={() => {
                     setMobileNavOpen(false);
-                    setTicketOpen(true);
+                    setSupportChatOpen(true);
                   }}
                   className="mt-3 rounded-lg bg-[#7de8eb] px-4 py-2 text-sm font-bold text-[#0e1b1b] transition hover:bg-[#5de0e5]"
                 >
-                  Raise a ticket
+                  Chat with Ava
                 </button>
               </div>
             </aside>
@@ -2135,10 +2139,10 @@ export function CustomerAgentWorkspace({
             <p className="text-sm font-bold text-white">Need setup help?</p>
             <button
               type="button"
-              onClick={() => setTicketOpen(true)}
+              onClick={() => setSupportChatOpen(true)}
               className="mt-3 rounded-lg bg-[#7de8eb] px-4 py-2 text-sm font-bold text-[#0e1b1b] transition hover:bg-[#5de0e5]"
             >
-              Raise a ticket
+              Chat with Ava
             </button>
           </div>
         </aside>
@@ -2186,7 +2190,7 @@ export function CustomerAgentWorkspace({
                   <span>Channels</span>
                 </>
               )}
-              {view === "detail" && (
+              {view === "detail" && selectedAssistant && (
                 <>
                   <ChevronRight className="h-4 w-4" />
                   <span className="truncate text-ink">{selectedAssistant.name}</span>
@@ -2272,7 +2276,7 @@ export function CustomerAgentWorkspace({
               />
             )}
 
-            {view === "detail" && (
+            {view === "detail" && selectedAssistant && (
               <AssistantDetail
                 assistant={selectedAssistant}
                 tab={detailTab}
@@ -2371,6 +2375,15 @@ export function CustomerAgentWorkspace({
       </nav>
 
       {ticketOpen && <RaiseTicketModal onClose={() => setTicketOpen(false)} />}
+      {supportChatOpen && (
+        <SupportChatPanel
+          onClose={() => setSupportChatOpen(false)}
+          onRaiseTicket={() => {
+            setSupportChatOpen(false);
+            setTicketOpen(true);
+          }}
+        />
+      )}
 
       {wizardOpen && (
         <SetupWizard
@@ -2822,7 +2835,9 @@ function AssistantDetail({
             </button>
           ) : null}
           {adminMode && assistant.ownerId ? (
-            <form action={impersonateUser.bind(null, assistant.ownerId, assistant.id)}>
+            <form action={impersonateCustomerForm}>
+              <input type="hidden" name="ownerId" value={assistant.ownerId} />
+              <input type="hidden" name="profileId" value={assistant.id} />
               <button
                 type="submit"
                 className="press inline-flex h-9 max-w-[11rem] items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-black text-white transition hover:bg-[#263130]"

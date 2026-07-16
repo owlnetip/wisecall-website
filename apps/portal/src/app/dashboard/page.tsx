@@ -51,7 +51,15 @@ export default async function DashboardPage() {
 
   // Billing gate: a real customer must be trialing/active before they can
   // configure an agent. Admins bypass (incl. while viewing as a customer).
-  let billing = await getBillingForUser(effectiveUserId);
+  let billing = null;
+  try {
+    billing = await getBillingForUser(effectiveUserId);
+  } catch (err) {
+    console.error(
+      "dashboard load: Billing failed",
+      err instanceof Error ? err.message : err,
+    );
+  }
   if (!admin && !hasActiveAccess(billing)) {
     // The Stripe webhook may not have synced the new subscription yet (or failed
     // to deliver), which would otherwise strand a paid-up customer on /billing.
@@ -127,16 +135,22 @@ export default async function DashboardPage() {
   let scopedCallLogs = callLogs;
   let scopedContacts = enrichedContacts;
   let scopedFollowUps = followUps;
+  let scopedAgentId: string | undefined;
 
-  if (impersonateAgentId) {
+  const agentScopeActive =
+    Boolean(impersonateAgentId) &&
+    enriched.some((agent) => agent.id === impersonateAgentId);
+
+  if (agentScopeActive && impersonateAgentId) {
+    scopedAgentId = impersonateAgentId;
     scopedAgents = enriched.filter((agent) => agent.id === impersonateAgentId);
     scopedCallLogs = callLogs.filter((log) => log.profileId === impersonateAgentId);
     scopedContacts = enrichedContacts.filter((contact) => contact.profileId === impersonateAgentId);
     scopedFollowUps = followUps.filter((followUp) => followUp.profileId === impersonateAgentId);
   }
 
-  const impersonatingAgentName = impersonateAgentId
-    ? scopedAgents.find((agent) => agent.id === impersonateAgentId)?.name
+  const impersonatingAgentName = scopedAgentId
+    ? scopedAgents.find((agent) => agent.id === scopedAgentId)?.name
     : undefined;
 
   return (
@@ -168,6 +182,7 @@ export default async function DashboardPage() {
       initialInsights={insights}
       analysisEnabled={isAnalysisConfigured()}
       initialFollowUps={scopedFollowUps}
+      initialSelectedAgentId={scopedAgentId}
       loadIssues={orderedLoadIssues}
     />
   );

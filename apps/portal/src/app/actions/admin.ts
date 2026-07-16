@@ -7,13 +7,29 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isAdmin } from "@/lib/admin";
 import { IMPERSONATE_AGENT_COOKIE, IMPERSONATE_COOKIE } from "@/lib/impersonation";
 
-const IMPERSONATE_OPTS = {
-  httpOnly: true,
-  secure: true,
-  sameSite: "lax" as const,
-  path: "/",
-  maxAge: 60 * 60 * 4, // 4 hours
-};
+function impersonateCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 60 * 60 * 4, // 4 hours
+  };
+}
+
+function cleanId(value: FormDataEntryValue | null | undefined): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function setImpersonationCookies(targetUserId: string, profileId?: string) {
+  const store = await cookies();
+  store.set(IMPERSONATE_COOKIE, targetUserId, impersonateCookieOptions());
+  if (profileId) {
+    store.set(IMPERSONATE_AGENT_COOKIE, profileId, impersonateCookieOptions());
+  } else {
+    store.delete(IMPERSONATE_AGENT_COOKIE);
+  }
+}
 
 // Admin "view as customer" / impersonation. The admin stays authenticated as
 // themselves (auditable, reversible); we just store the target user's id in a
@@ -32,25 +48,28 @@ export async function impersonateUser(targetUserId: string, profileId?: string) 
   const scopedProfileId = profileId?.trim() || undefined;
   if (scopedProfileId) {
     const svc = getServiceSupabase();
+    if (!svc) redirect("/admin");
+
     const { data: profile } = await svc
-      ?.from("wisecall_profiles")
+      .from("wisecall_profiles")
       .select("metadata")
       .eq("id", scopedProfileId)
-      .maybeSingle() ?? { data: null };
+      .maybeSingle();
     const ownerId = (profile?.metadata as { owner_id?: string } | null)?.owner_id;
-    if (ownerId !== targetUserId) {
+    if (!ownerId || ownerId.toLowerCase() !== targetUserId.toLowerCase()) {
       redirect("/admin");
     }
   }
 
-  const store = await cookies();
-  store.set(IMPERSONATE_COOKIE, targetUserId, IMPERSONATE_OPTS);
-  if (scopedProfileId) {
-    store.set(IMPERSONATE_AGENT_COOKIE, scopedProfileId, IMPERSONATE_OPTS);
-  } else {
-    store.delete(IMPERSONATE_AGENT_COOKIE);
-  }
+  await setImpersonationCookies(targetUserId, scopedProfileId);
   redirect("/dashboard");
+}
+
+// Form-friendly entry point for the admin "Login as" button (hidden fields, no bind).
+export async function impersonateCustomerForm(formData: FormData) {
+  const targetUserId = cleanId(formData.get("ownerId"));
+  const profileId = cleanId(formData.get("profileId")) || undefined;
+  await impersonateUser(targetUserId, profileId);
 }
 
 export async function stopImpersonating() {
