@@ -21,6 +21,7 @@ import {
   applyEnrichedOwnerContact,
   getOutreachCrmStats,
   importDentalProspectsFromSeed,
+  importEstateProspectsFromSeed,
   listDueFollowUpCount,
   listOutreachProspects,
   listOutreachTemplates,
@@ -32,6 +33,7 @@ import {
   sendOutreachEmail,
   updateOutreachProspect,
   type DentalProspectsSeedStats,
+  type EstateProspectsSeedStats,
   type OutreachCrmStats,
   type OutreachEmail,
   type OutreachProspect,
@@ -40,6 +42,12 @@ import {
 } from "@/app/actions/outreach";
 import { RichEmailEditor, EmailPreview } from "@/components/rich-email-editor";
 import { hasProspectContactMismatch, resolveProspectContact } from "@/lib/outreach-contact";
+import {
+  defaultSegmentForVertical,
+  emailableSegmentForVertical,
+  isEmailableSegment,
+  type OutreachVertical,
+} from "@/lib/outreach-segments";
 
 /** Seed the visual editor from a legacy plain-text body (newlines → paragraphs). */
 function textToHtml(text: string): string {
@@ -51,11 +59,17 @@ function textToHtml(text: string): string {
     .join("");
 }
 
-const SEGMENT_OPTIONS = [
+const DENTAL_SEGMENT_OPTIONS = [
   { value: "dentally_active", label: "Dentally independents", badge: "bg-emerald-100 text-emerald-800" },
   { value: "exact_queued", label: "Exact/SOE (queued)", badge: "bg-violet-100 text-violet-800" },
   { value: "unknown_queued", label: "Unknown PMS (queued)", badge: "bg-slate-100 text-slate-700" },
   { value: "corporate_hold", label: "Corporate (hold)", badge: "bg-amber-100 text-amber-800" },
+] as const;
+
+const PROPERTY_SEGMENT_OPTIONS = [
+  { value: "property_ready", label: "Ready to email", badge: "bg-emerald-100 text-emerald-800" },
+  { value: "property_unknown", label: "Needs email / CRM", badge: "bg-slate-100 text-slate-700" },
+  { value: "property_corporate_hold", label: "Corporate (hold)", badge: "bg-amber-100 text-amber-800" },
 ] as const;
 
 const STATUS_OPTIONS = [
@@ -85,7 +99,7 @@ const SMART_LISTS: Array<{ value: OutreachSmartList; label: string; hint: string
   { value: "never_opened", label: "Never opened", hint: "Sent but no open yet" },
   { value: "follow_up_due", label: "Follow-up due", hint: "Day 3/7/14 ready to send" },
   { value: "replied", label: "Replied / interested", hint: "Needs a human response" },
-  { value: "no_email", label: "Missing email", hint: "Dentally practices still needing an address" },
+  { value: "no_email", label: "Missing email", hint: "Prospects still needing an address" },
 ];
 
 function formatWhen(iso: string | null | undefined): string {
@@ -98,8 +112,15 @@ function formatWhen(iso: string | null | undefined): string {
   });
 }
 
-export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats | null }) {
+export function OutreachCrm({
+  dentalSeedStats,
+  estateSeedStats,
+}: {
+  dentalSeedStats: DentalProspectsSeedStats | null;
+  estateSeedStats: EstateProspectsSeedStats | null;
+}) {
   const [view, setView] = useState<"prospects" | "templates">("prospects");
+  const [vertical, setVertical] = useState<OutreachVertical>("dental");
   const [prospects, setProspects] = useState<OutreachProspect[]>([]);
   const [templates, setTemplates] = useState<OutreachTemplate[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -138,7 +159,9 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     [prospects],
   );
 
-  const canEmail = selected?.outreachSegment === "dentally_active";
+  const segmentOptions = vertical === "property" ? PROPERTY_SEGMENT_OPTIONS : DENTAL_SEGMENT_OPTIONS;
+  const seedStats = vertical === "property" ? estateSeedStats : dentalSeedStats;
+  const canEmail = selected ? isEmailableSegment(selected.outreachSegment) : false;
   const contactMismatch = selected ? hasProspectContactMismatch(selected) : false;
   const resolvedContact = selected ? resolveProspectContact(selected) : null;
   const displayContactName = contactMismatch && resolvedContact
@@ -147,16 +170,32 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   const displayEmail = contactMismatch && resolvedContact
     ? resolvedContact.email
     : (selected?.email ?? "");
-  const dentallyTemplates = useMemo(
-    () =>
-      templates.filter(
+  const verticalTemplates = useMemo(() => {
+    if (vertical === "property") {
+      return templates.filter(
         (t) =>
-          t.templateFamily === "dentally" ||
-          t.slug.startsWith("dental-dentally-") ||
+          t.templateFamily === "property" ||
+          t.category === "property" ||
+          t.slug.startsWith("property-") ||
           t.sequenceStep === "custom",
-      ),
-    [templates],
-  );
+      );
+    }
+    return templates.filter(
+      (t) =>
+        t.templateFamily === "dentally" ||
+        t.slug.startsWith("dental-dentally-") ||
+        t.sequenceStep === "custom",
+    );
+  }, [templates, vertical]);
+
+  const switchVertical = useCallback((next: OutreachVertical) => {
+    setVertical(next);
+    setSegmentFilter(defaultSegmentForVertical(next));
+    setSmartList("all");
+    setSelectedId(null);
+    setTemplateId("");
+    setRegionFilter(next === "property" ? "birmingham" : "");
+  }, []);
 
   const refresh = useCallback(async () => {
     const [p, t, d, s] = await Promise.all([
@@ -164,18 +203,27 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
         region: regionFilter || undefined,
         status: statusFilter || undefined,
         outreachSegment: segmentFilter || undefined,
+        vertical,
         smartList,
       }),
       listOutreachTemplates(),
       listDueFollowUpCount(),
-      getOutreachCrmStats(),
+      getOutreachCrmStats(vertical),
     ]);
     if (p.ok) setProspects(p.data);
     if (t.ok) {
       setTemplates(t.data);
       if (!templateId && t.data.length) {
+        const family = vertical === "property" ? "property" : "dentally";
         const initial =
-          t.data.find((x) => x.sequenceStep === "initial" && (x.templateFamily === "dentally" || x.slug.startsWith("dental-dentally-"))) ??
+          t.data.find(
+            (x) =>
+              x.sequenceStep === "initial" &&
+              (x.templateFamily === family ||
+                (family === "property"
+                  ? x.slug.startsWith("property-")
+                  : x.slug.startsWith("dental-dentally-"))),
+          ) ??
           t.data.find((x) => x.sequenceStep === "initial") ??
           t.data[0];
         setTemplateId(initial.id);
@@ -183,7 +231,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
     }
     if (d.ok) setDueCount(d.data);
     if (s.ok) setStats(s.data);
-  }, [regionFilter, statusFilter, segmentFilter, smartList, templateId]);
+  }, [regionFilter, statusFilter, segmentFilter, smartList, templateId, vertical]);
 
   useEffect(() => {
     void refresh();
@@ -280,6 +328,18 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
   async function onImport() {
     setBusy(true);
     setMsg(null);
+    if (vertical === "property") {
+      const res = await importEstateProspectsFromSeed();
+      setBusy(false);
+      if (!res.ok) return setMsg({ kind: "err", text: res.error });
+      setMsg({
+        kind: "ok",
+        text: `Imported ${res.data.imported} new, updated ${res.data.updated}, skipped ${res.data.skipped}. Seed has ${res.data.seedTotal} estate agents (${res.data.bySegment.property_ready ?? 0} ready, ${res.data.bySegment.property_unknown ?? 0} need email).`,
+      });
+      await refresh();
+      return;
+    }
+
     const res = await importDentalProspectsFromSeed();
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
@@ -386,12 +446,32 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
       <header className="border-b border-[#d8e4e4] bg-white px-6 py-5">
         <div className="mx-auto flex w-full max-w-[2200px] flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-[#0e1b1b]">Dental outreach CRM</h1>
+            <h1 className="text-2xl font-black text-[#0e1b1b]">
+              {vertical === "property" ? "Property outreach CRM" : "Dental outreach CRM"}
+            </h1>
             <p className="mt-1 text-sm text-[#5a7272]">
-              Dentally-first sequences with first-email sent/open tracking. Mark replies so follow-ups stop automatically.
+              {vertical === "property"
+                ? "Birmingham estate agents first — same Resend day 0/3/7/14 sequences as dental. Add emails to promote into ready."
+                : "Dentally-first sequences with first-email sent/open tracking. Mark replies so follow-ups stop automatically."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-lg border border-[#d8e4e4] bg-[#f4f7f7] p-1">
+              <button
+                type="button"
+                onClick={() => switchVertical("dental")}
+                className={`rounded-md px-3 py-1.5 text-sm font-bold ${vertical === "dental" ? "bg-white text-[#0e1b1b] shadow-sm" : "text-[#5a7272]"}`}
+              >
+                Dental
+              </button>
+              <button
+                type="button"
+                onClick={() => switchVertical("property")}
+                className={`rounded-md px-3 py-1.5 text-sm font-bold ${vertical === "property" ? "bg-white text-[#0e1b1b] shadow-sm" : "text-[#5a7272]"}`}
+              >
+                Property
+              </button>
+            </div>
             <div className="flex rounded-lg border border-[#d8e4e4] bg-[#f4f7f7] p-1">
               <button
                 type="button"
@@ -414,14 +494,16 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
             >
               Admin home
             </a>
-            <button
-              type="button"
-              onClick={() => void onRepairAll()}
-              disabled={busy}
-              className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-50"
-            >
-              Fix contact mismatches
-            </button>
+            {vertical === "dental" && (
+              <button
+                type="button"
+                onClick={() => void onRepairAll()}
+                disabled={busy}
+                className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-50"
+              >
+                Fix contact mismatches
+              </button>
+            )}
             <button
               type="button"
               onClick={() => void onImport()}
@@ -429,7 +511,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
               className="inline-flex items-center gap-2 rounded-lg border border-[#d8e4e4] bg-white px-3 py-2 text-sm font-semibold text-[#0e1b1b] hover:bg-[#f4f7f7] disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              Import all contacts
+              {vertical === "property" ? "Import Birmingham estates" : "Import all contacts"}
             </button>
             {dueCount > 0 && (
               <button
@@ -460,22 +542,35 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
             {msg.text}
           </p>
         )}
-        {seedStats && (seedStats.bySegment.dentally_active ?? 0) < 100 && (
+        {vertical === "dental" && seedStats && (seedStats.bySegment.dentally_active ?? 0) < 100 && (
           <p className="mx-auto mt-2 w-full max-w-[2200px] rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
             Deployed seed file only has <strong>{seedStats.bySegment.dentally_active ?? 0} Dentally</strong> contacts
             ({seedStats.total} total). Merge PR #42 / #45 for the full England+UK build (~333 Dentally), redeploy, then
             import again.
           </p>
         )}
-        {seedStats && (seedStats.bySegment.dentally_active ?? 0) >= 100 && (
+        {vertical === "dental" && seedStats && (seedStats.bySegment.dentally_active ?? 0) >= 100 && (
           <p className="mx-auto mt-2 w-full max-w-[2200px] text-sm text-[#5a7272]">
             Seed file: <strong>{seedStats.bySegment.dentally_active ?? 0} Dentally</strong> · {seedStats.total.toLocaleString()} total contacts
+          </p>
+        )}
+        {vertical === "property" && estateSeedStats && (
+          <p className="mx-auto mt-2 w-full max-w-[2200px] text-sm text-[#5a7272]">
+            Birmingham seed: <strong>{estateSeedStats.total}</strong> active estate agents
+            {" · "}
+            {estateSeedStats.bySegment.property_ready ?? 0} ready
+            {" · "}
+            {estateSeedStats.bySegment.property_unknown ?? 0} need email/CRM
+            {estateSeedStats.generatedFrom ? ` · from ${estateSeedStats.generatedFrom}` : ""}
           </p>
         )}
         {stats && (
           <div className="mx-auto mt-4 grid w-full max-w-[2200px] gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             {[
-              { label: "Dentally", value: stats.dentallyActive },
+              {
+                label: vertical === "property" ? "Birmingham pipeline" : "Dentally",
+                value: stats.activeCount ?? stats.dentallyActive,
+              },
               { label: "Owner emails", value: stats.ownerEmailFound },
               { label: "Have email", value: stats.withEmail },
               { label: "Ready to send", value: stats.readyToEmail },
@@ -500,7 +595,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
             <section className="rounded-2xl border border-[#d8e4e4] bg-white p-4 shadow-sm">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Templates</p>
               <ul className="space-y-2">
-                {templates.map((t) => (
+                {verticalTemplates.map((t) => (
                   <li key={t.id}>
                     <button
                       type="button"
@@ -582,7 +677,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
             >
               All segments
             </button>
-            {SEGMENT_OPTIONS.map((s) => (
+            {segmentOptions.map((s) => (
               <button
                 key={s.value}
                 type="button"
@@ -603,7 +698,12 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                 title={list.hint}
                 onClick={() => {
                   setSmartList(list.value);
-                  if (list.value === "owner_email_found") setSegmentFilter("dentally_active");
+                  if (list.value === "owner_email_found" || list.value === "ready_to_email") {
+                    setSegmentFilter(emailableSegmentForVertical(vertical));
+                  }
+                  if (list.value === "no_email" && vertical === "property") {
+                    setSegmentFilter("property_unknown");
+                  }
                 }}
                 className={`rounded-full px-3 py-1 text-xs font-bold ${
                   smartList === list.value
@@ -704,7 +804,9 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
             ))}
             {!prospects.length && (
               <li className="rounded-xl border border-dashed border-[#d8e4e4] p-6 text-center text-sm text-[#5a7272]">
-                No prospects yet. Click <strong>Import all contacts</strong> to load Dentally, Exact-queued and unknown PMS practices.
+                No prospects yet. Click{" "}
+                <strong>{vertical === "property" ? "Import Birmingham estates" : "Import all contacts"}</strong>{" "}
+                to load the {vertical === "property" ? "estate agent" : "dental"} seed.
               </li>
             )}
           </ul>
@@ -713,7 +815,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
         <section className="space-y-6">
           {!selected ? (
             <div className="rounded-2xl border border-dashed border-[#d8e4e4] bg-white p-12 text-center text-[#5a7272]">
-              Select a practice to view details and draft an email (Dentally) or notes for queued contacts.
+              Select a {vertical === "property" ? "agency" : "practice"} to view details and draft an email
+              {vertical === "property" ? " (property templates)" : " (Dentally)"} or notes for queued contacts.
             </div>
           ) : (
             <>
@@ -726,7 +829,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                     </p>
                     <span
                       className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                        SEGMENT_OPTIONS.find((s) => s.value === selected.outreachSegment)?.badge ??
+                        segmentOptions.find((s) => s.value === selected.outreachSegment)?.badge ??
                         "bg-slate-100 text-slate-700"
                       }`}
                     >
@@ -819,7 +922,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                         }
                       }}
                       className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2"
-                      placeholder="Practice manager / owner"
+                      placeholder={vertical === "property" ? "Branch manager / director" : "Practice manager / owner"}
                     />
                   </label>
                   <label className="block text-sm">
@@ -835,7 +938,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                         }
                       }}
                       className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2"
-                      placeholder="owner@practice.co.uk"
+                      placeholder={vertical === "property" ? "name@agency.co.uk" : "owner@practice.co.uk"}
                     />
                   </label>
                   <label className="block text-sm">
@@ -890,7 +993,7 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       onChange={(e) => setTemplateId(e.target.value)}
                       className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2"
                     >
-                      {dentallyTemplates.map((t) => (
+                      {verticalTemplates.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
                         </option>
@@ -926,7 +1029,8 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                       checked={scheduleFollowUps}
                       onChange={(e) => setScheduleFollowUps(e.target.checked)}
                     />
-                    Schedule Dentally follow-ups on day 3, 7 and 14 (stops if marked replied / not interested / paused)
+                    Schedule {vertical === "property" ? "property" : "Dentally"} follow-ups on day 3, 7 and 14
+                    (stops if marked replied / not interested / paused)
                   </label>
                   {selected.firstEmailSentAt && (
                     <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
@@ -952,9 +1056,12 @@ export function OutreachCrm({ seedStats }: { seedStats: DentalProspectsSeedStats
                   <p className="mt-2">
                     {selected.outreachSegment === "exact_queued"
                       ? "This practice is flagged for Exact/SOE. Once WiseCall Exact integration ships, switch them to active outreach and use the Exact templates."
-                      : selected.outreachSegment === "corporate_hold"
-                        ? "ADG corporate group — lower priority. Use phone outbound or revisit manually."
-                        : "Unknown PMS — qualify on a call first, or wait until you know their software. Phone number is saved for outbound blasts."}
+                      : selected.outreachSegment === "corporate_hold" ||
+                          selected.outreachSegment === "property_corporate_hold"
+                        ? "Corporate group — lower priority. Use phone outbound or revisit manually."
+                        : selected.outreachSegment === "property_unknown"
+                          ? "Add a contact email above — that promotes this agency to Ready and unlocks the property sequence."
+                          : "Unknown PMS — qualify on a call first, or wait until you know their software. Phone number is saved for outbound blasts."}
                   </p>
                   {selected.phone && (
                     <p className="mt-2 font-semibold">Phone: {selected.phone}</p>

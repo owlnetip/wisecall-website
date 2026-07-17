@@ -1,0 +1,16 @@
+{
+  "practices": [
+    {
+      "match_names": ["example estate agents"],
+      "match_exact": false,
+      "lock_pms": false,
+      "website": "https://example.com",
+      "phone": "01234 567890",
+      "pms_detected": "Reapit",
+      "pms_confidence": "high",
+      "pms_evidence": "Reapit booking widget found",
+      "blast_segment": "Reapit confirmed",
+      "notes": "Manual override for Example Estate Agents"
+    }
+  ]
+}

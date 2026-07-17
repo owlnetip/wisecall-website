@@ -23,6 +23,13 @@ import {
   buildProspectContactRepair,
   resolveProspectContact,
 } from "@/lib/outreach-contact";
+import {
+  emailableSegmentForVertical,
+  isEmailableSegment,
+  segmentErrorMessage,
+  type OutreachVertical,
+  verticalForSegment,
+} from "@/lib/outreach-segments";
 import { getServiceSupabase } from "@/lib/supabase";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -48,6 +55,7 @@ export type OutreachProspect = {
   status: string;
   sequenceStatus: string;
   outreachSegment: string;
+  vertical: OutreachVertical;
   ownerName: string | null;
   ownerTitle: string | null;
   ownerEmailStatus: string | null;
@@ -107,6 +115,9 @@ export type OutreachSmartList =
   | "no_email";
 
 export type OutreachCrmStats = {
+  /** Count in the emailable segment for the active vertical. */
+  activeCount: number;
+  /** @deprecated Use activeCount — kept for older UI callers. */
   dentallyActive: number;
   ownerEmailFound: number;
   withEmail: number;
@@ -126,7 +137,15 @@ export type DentalProspectsSeedStats = {
   generatedFrom: string | null;
 };
 
+export type EstateProspectsSeedStats = {
+  total: number;
+  bySegment: Record<string, number>;
+  byRegion: Record<string, number>;
+  generatedFrom: string | null;
+};
+
 const SEED_PATH = path.join(process.cwd(), "src", "data", "dental-prospects-seed.json");
+const ESTATE_SEED_PATH = path.join(process.cwd(), "src", "data", "estate-prospects-seed.json");
 const IMPORT_BATCH_SIZE = 500;
 
 async function requireAdmin() {
@@ -141,6 +160,9 @@ async function requireAdmin() {
 
 function mapProspect(row: Record<string, unknown>): OutreachProspect {
   const mergeFields = row.merge_fields as Record<string, unknown> | null;
+  const segment = (row.outreach_segment as string) ?? "unknown_queued";
+  const verticalRaw = (row.vertical as string) || verticalForSegment(segment);
+  const vertical: OutreachVertical = verticalRaw === "property" ? "property" : "dental";
   return {
     id: row.id as string,
     practiceName: (row.practice_name as string) ?? "",
@@ -156,7 +178,8 @@ function mapProspect(row: Record<string, unknown>): OutreachProspect {
     notes: (row.notes as string) ?? null,
     status: (row.status as string) ?? "new",
     sequenceStatus: (row.sequence_status as string) ?? "none",
-    outreachSegment: (row.outreach_segment as string) ?? "unknown_queued",
+    outreachSegment: segment,
+    vertical,
     ownerName: (mergeFields?.owner_name as string) ?? null,
     ownerTitle: (mergeFields?.owner_title as string) ?? null,
     ownerEmailStatus: (mergeFields?.owner_email_status as string) ?? null,
@@ -206,6 +229,22 @@ async function readDentalProspectsSeed(): Promise<{ prospects?: Record<string, s
   }
 }
 
+async function readEstateProspectsSeed(): Promise<{
+  prospects?: Record<string, string>[];
+  generated_from?: string;
+  counts?: { by_segment?: Record<string, number>; by_region?: Record<string, number> };
+} | null> {
+  try {
+    return JSON.parse(await readFile(ESTATE_SEED_PATH, "utf-8")) as {
+      prospects?: Record<string, string>[];
+      generated_from?: string;
+      counts?: { by_segment?: Record<string, number>; by_region?: Record<string, number> };
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getDentalProspectsSeedStats(): Promise<Result<DentalProspectsSeedStats>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -228,10 +267,41 @@ export async function getDentalProspectsSeedStats(): Promise<Result<DentalProspe
   };
 }
 
+export async function getEstateProspectsSeedStats(): Promise<Result<EstateProspectsSeedStats>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const raw = await readEstateProspectsSeed();
+  if (!raw?.prospects) {
+    return {
+      ok: false,
+      error: "Seed file missing. Run: python3 scripts/sync-estate-prospects-seed.py --region birmingham",
+    };
+  }
+  const bySegment: Record<string, number> = {};
+  const byRegion: Record<string, number> = {};
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "property_unknown";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+    const region = p.region || "unknown";
+    byRegion[region] = (byRegion[region] ?? 0) + 1;
+  }
+  return {
+    ok: true,
+    data: {
+      total: raw.prospects.length,
+      bySegment,
+      byRegion,
+      generatedFrom: raw.generated_from ?? null,
+    },
+  };
+}
+
 function mergeFieldsForProspect(p: OutreachProspect): Record<string, string> {
   const contact = resolveProspectContact(p);
+  const crm = (p.pms && p.pms !== "Unknown" ? p.pms : "your agency CRM").trim();
   return {
     practice_name: p.practiceName,
+    company_name: p.practiceName,
     contact_name: contact.name,
     name: contact.name,
     company: p.practiceName,
@@ -239,8 +309,9 @@ function mergeFieldsForProspect(p: OutreachProspect): Record<string, string> {
     phone: p.phone ?? "",
     postcode: p.postcode,
     region: p.region,
-    area: p.area ?? "",
+    area: p.area || p.region || "",
     pms: p.pms ?? "",
+    crm,
     tier: p.tier ?? "",
     website: p.website ?? "",
     owner_name: p.ownerName ?? "",
@@ -280,12 +351,16 @@ export async function listOutreachProspects(filters?: {
   region?: string;
   status?: string;
   outreachSegment?: string;
+  vertical?: OutreachVertical;
   smartList?: OutreachSmartList;
 }): Promise<Result<OutreachProspect[]>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
   const service = getServiceSupabase();
   if (!service) return { ok: false, error: "Server not configured." };
+
+  const vertical = filters?.vertical ?? "dental";
+  const emailable = emailableSegmentForVertical(vertical);
 
   let q = service
     .from("wisecall_outreach_prospects")
@@ -296,26 +371,28 @@ export async function listOutreachProspects(filters?: {
   if (filters?.region) q = q.eq("region", filters.region);
   if (filters?.status) q = q.eq("status", filters.status);
   if (filters?.outreachSegment) q = q.eq("outreach_segment", filters.outreachSegment);
+  // Prefer explicit vertical column; fall back via segment filter when column missing pre-migration.
+  q = q.eq("vertical", vertical);
 
   const smart = filters?.smartList ?? "all";
   const now = new Date().toISOString();
   if (smart === "owner_email_found") {
-    q = q.eq("outreach_segment", "dentally_active");
+    q = q.eq("outreach_segment", emailable);
   } else if (smart === "ready_to_email") {
     q = q
-      .eq("outreach_segment", "dentally_active")
+      .eq("outreach_segment", emailable)
       .eq("status", "new")
       .not("email", "is", null)
       .neq("email", "")
       .is("first_email_sent_at", null);
   } else if (smart === "awaiting_reply") {
     q = q
-      .eq("outreach_segment", "dentally_active")
+      .eq("outreach_segment", emailable)
       .eq("status", "contacted")
       .not("first_email_sent_at", "is", null);
   } else if (smart === "opened_no_reply") {
     q = q
-      .eq("outreach_segment", "dentally_active")
+      .eq("outreach_segment", emailable)
       .eq("status", "contacted")
       .not("first_email_opened_at", "is", null);
   } else if (smart === "replied") {
@@ -327,12 +404,19 @@ export async function listOutreachProspects(filters?: {
       .lte("next_follow_up_at", now);
   } else if (smart === "never_opened") {
     q = q
-      .eq("outreach_segment", "dentally_active")
+      .eq("outreach_segment", emailable)
       .eq("status", "contacted")
       .not("first_email_sent_at", "is", null)
       .is("first_email_opened_at", null);
   } else if (smart === "no_email") {
-    q = q.eq("outreach_segment", "dentally_active").or("email.is.null,email.eq.");
+    if (vertical === "property") {
+      // Birmingham pilot: most leads start without email — show unknown + ready missing email.
+      q = q
+        .in("outreach_segment", ["property_ready", "property_unknown"])
+        .or("email.is.null,email.eq.");
+    } else {
+      q = q.eq("outreach_segment", emailable).or("email.is.null,email.eq.");
+    }
   }
 
   const { data, error } = await q;
@@ -343,22 +427,36 @@ export async function listOutreachProspects(filters?: {
   return { ok: true, data: rows.map(mapProspect) };
 }
 
-export async function getOutreachCrmStats(): Promise<Result<OutreachCrmStats>> {
+export async function getOutreachCrmStats(
+  vertical: OutreachVertical = "dental",
+): Promise<Result<OutreachCrmStats>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
   const service = getServiceSupabase();
   if (!service) return { ok: false, error: "Server not configured." };
 
+  const emailable = emailableSegmentForVertical(vertical);
   const now = new Date().toISOString();
-  const { data: rows, error } = await service
+  let q = service
     .from("wisecall_outreach_prospects")
     .select(
       "outreach_segment, status, email, merge_fields, first_email_sent_at, first_email_opened_at, sequence_status, next_follow_up_at",
     )
-    .eq("outreach_segment", "dentally_active");
+    .eq("vertical", vertical);
+
+  // Stats strip focuses on the emailable cohort; for property also include unknown
+  // so Birmingham's "missing email" work is visible.
+  if (vertical === "property") {
+    q = q.in("outreach_segment", ["property_ready", "property_unknown"]);
+  } else {
+    q = q.eq("outreach_segment", emailable);
+  }
+
+  const { data: rows, error } = await q;
   if (error) return { ok: false, error: error.message };
 
   const list = rows ?? [];
+  const emailableRows = list.filter((r) => (r.outreach_segment as string) === emailable);
   const ownerEmailFound = list.filter((r) => hasOwnerEmail(r as Record<string, unknown>)).length;
   const withEmail = list.filter((r) => !!(r.email as string)?.trim()).length;
   const firstEmailSent = list.filter((r) => !!r.first_email_sent_at).length;
@@ -371,13 +469,14 @@ export async function getOutreachCrmStats(): Promise<Result<OutreachCrmStats>> {
       !!r.next_follow_up_at &&
       (r.next_follow_up_at as string) <= now,
   ).length;
-  const readyToEmail = list.filter(
+  const readyToEmail = emailableRows.filter(
     (r) => r.status === "new" && !!(r.email as string)?.trim() && !r.first_email_sent_at,
   ).length;
 
   return {
     ok: true,
     data: {
+      activeCount: list.length,
       dentallyActive: list.length,
       ownerEmailFound,
       withEmail,
@@ -398,17 +497,38 @@ export async function updateOutreachProspect(input: {
   phone?: string;
   notes?: string;
   status?: string;
+  outreachSegment?: string;
 }): Promise<Result<OutreachProspect>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
   const service = getServiceSupabase();
   if (!service) return { ok: false, error: "Server not configured." };
 
+  const { data: existing, error: loadError } = await service
+    .from("wisecall_outreach_prospects")
+    .select("outreach_segment, vertical")
+    .eq("id", input.id)
+    .maybeSingle();
+  if (loadError || !existing) return { ok: false, error: "Prospect not found." };
+
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (input.contactName !== undefined) patch.contact_name = input.contactName.trim() || null;
   if (input.email !== undefined) patch.email = input.email.trim() || null;
   if (input.phone !== undefined) patch.phone = input.phone.trim() || null;
   if (input.notes !== undefined) patch.notes = input.notes.trim() || null;
+  if (input.outreachSegment !== undefined) patch.outreach_segment = input.outreachSegment;
+
+  // Birmingham property pilot: adding an email promotes unknown → ready.
+  const nextEmail =
+    input.email !== undefined ? input.email.trim() : undefined;
+  if (
+    nextEmail &&
+    (existing.outreach_segment as string) === "property_unknown" &&
+    input.outreachSegment === undefined
+  ) {
+    patch.outreach_segment = "property_ready";
+  }
+
   if (input.status !== undefined) {
     patch.status = input.status;
     if (["interested", "not_interested", "paused", "replied"].includes(input.status)) {
@@ -771,16 +891,8 @@ export async function sendOutreachEmail(input: {
   if (pErr || !prospectRow) return { ok: false, error: "Prospect not found." };
 
   const prospect = mapProspect(prospectRow as Record<string, unknown>);
-  if (prospect.outreachSegment !== "dentally_active") {
-    return {
-      ok: false,
-      error:
-        prospect.outreachSegment === "exact_queued"
-          ? "Exact/SOE prospects are queued — enable outreach once Exact integration ships."
-          : prospect.outreachSegment === "corporate_hold"
-            ? "Corporate (ADG) practice — lower priority, email disabled."
-            : "Unknown PMS prospects are stored for qualification — email disabled until PMS confirmed.",
-    };
+  if (!isEmailableSegment(prospect.outreachSegment)) {
+    return { ok: false, error: segmentErrorMessage(prospect.outreachSegment) };
   }
 
   const sendContact = resolveProspectContact(prospect);
@@ -788,14 +900,27 @@ export async function sendOutreachEmail(input: {
 
   const { data: templateRow } = await service
     .from("wisecall_outreach_email_templates")
-    .select("id, sequence_step, template_family, slug")
+    .select("id, sequence_step, template_family, slug, category")
     .eq("id", input.templateId)
     .maybeSingle();
   if (!templateRow) return { ok: false, error: "Template not found." };
 
   const family = (templateRow.template_family as string) || "general";
-  if (family !== "dentally" && !(templateRow.slug as string)?.startsWith("dental-dentally-")) {
-    return { ok: false, error: "Use a Dentally template for dentally_active prospects." };
+  const expectedFamily = templateFamilyForSegment(prospect.outreachSegment);
+  const slug = (templateRow.slug as string) || "";
+  const category = (templateRow.category as string) || "";
+  const familyOk =
+    family === expectedFamily ||
+    (expectedFamily === "dentally" && slug.startsWith("dental-dentally-")) ||
+    (expectedFamily === "property" && (slug.startsWith("property-") || category === "property"));
+  if (!familyOk) {
+    return {
+      ok: false,
+      error:
+        expectedFamily === "property"
+          ? "Use a property template for property prospects."
+          : "Use a Dentally template for dentally_active prospects.",
+    };
   }
 
   const sequenceStep = (templateRow.sequence_step as string) || "initial";
@@ -829,8 +954,8 @@ export async function sendOutreachEmail(input: {
     html: innerHtml ? wrapEmailHtml(innerHtml) : undefined,
     replyTo,
     tags: [
-      { name: "outreach", value: "dental" },
-      { name: "segment", value: "dentally_active" },
+      { name: "outreach", value: prospect.vertical },
+      { name: "segment", value: prospect.outreachSegment },
       { name: "step", value: sequenceStep },
     ],
   });
@@ -970,6 +1095,7 @@ export async function importDentalProspectsFromSeed(): Promise<
       tier: p.tier || null,
       website: p.website || null,
       outreach_segment: segment,
+      vertical: "dental",
       merge_fields: p,
       updated_at: now,
     };
@@ -996,6 +1122,141 @@ export async function importDentalProspectsFromSeed(): Promise<
       ...metadata,
       contact_name: ownerName || null,
       email: ownerEmail || null,
+      phone: p.phone || null,
+      notes: p.notes || null,
+      status: "new",
+      sequence_status: "none",
+    });
+
+    if (upsertBatch.length >= IMPORT_BATCH_SIZE) {
+      await flushUpsertBatch();
+    }
+  }
+
+  await flushUpsertBatch();
+
+  revalidatePath("/admin/outreach");
+  return {
+    ok: true,
+    data: { imported, updated, skipped, seedTotal: raw.prospects.length, bySegment },
+  };
+}
+
+export async function importEstateProspectsFromSeed(): Promise<
+  Result<{
+    imported: number;
+    updated: number;
+    skipped: number;
+    seedTotal: number;
+    bySegment: Record<string, number>;
+  }>
+> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const raw = await readEstateProspectsSeed();
+  if (!raw?.prospects?.length) {
+    return {
+      ok: false,
+      error: "Seed file missing. Run: python3 scripts/sync-estate-prospects-seed.py --region birmingham",
+    };
+  }
+
+  const bySegment: Record<string, number> = {};
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "property_unknown";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+  }
+
+  const { data: existingRows, error: existingError } = await service
+    .from("wisecall_outreach_prospects")
+    .select("id, practice_name, postcode, region, status, first_email_sent_at, vertical")
+    .eq("vertical", "property");
+  if (existingError) return { ok: false, error: existingError.message };
+
+  const existingByKey = new Map<
+    string,
+    { id: string; status: string; firstEmailSentAt: string | null }
+  >();
+  for (const row of existingRows ?? []) {
+    existingByKey.set(
+      prospectKey(row.practice_name as string, (row.postcode as string) ?? "", row.region as string),
+      {
+        id: row.id as string,
+        status: (row.status as string) ?? "new",
+        firstEmailSentAt: (row.first_email_sent_at as string) ?? null,
+      },
+    );
+  }
+
+  let imported = 0;
+  let updated = 0;
+  let skipped = 0;
+  const upsertBatch: Record<string, unknown>[] = [];
+  const now = new Date().toISOString();
+
+  async function flushUpsertBatch() {
+    if (!upsertBatch.length) return;
+    const { error } = await service!.from("wisecall_outreach_prospects").upsert(upsertBatch, {
+      onConflict: "practice_name,postcode,region",
+    });
+    if (error) {
+      skipped += upsertBatch.length;
+    } else {
+      imported += upsertBatch.length;
+    }
+    upsertBatch.length = 0;
+  }
+
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "property_unknown";
+    const key = prospectKey(p.practice_name ?? "", p.postcode ?? "", p.region ?? "");
+    const existing = existingByKey.get(key);
+
+    const contactName = (p.contact_name || p.owner_name || "").trim();
+    const email = (p.email || p.owner_email || "").trim();
+
+    const metadata = {
+      practice_name: p.practice_name,
+      postcode: (p.postcode || "").toUpperCase(),
+      region: p.region,
+      area: p.area || null,
+      pms: p.pms || p.crm || "Unknown",
+      tier: p.tier || null,
+      website: p.website || null,
+      outreach_segment: segment,
+      vertical: "property",
+      merge_fields: p,
+      updated_at: now,
+    };
+
+    if (existing && existing.status !== "new") {
+      const patch: Record<string, unknown> = {
+        ...metadata,
+        phone: p.phone || null,
+      };
+      if (!existing.firstEmailSentAt && email) {
+        patch.contact_name = contactName || null;
+        patch.email = email || null;
+        if (segment === "property_unknown" && email) {
+          patch.outreach_segment = "property_ready";
+        }
+      }
+      const { error } = await service
+        .from("wisecall_outreach_prospects")
+        .update(patch)
+        .eq("id", existing.id);
+      if (error) skipped += 1;
+      else updated += 1;
+      continue;
+    }
+
+    upsertBatch.push({
+      ...metadata,
+      contact_name: contactName || null,
+      email: email || null,
       phone: p.phone || null,
       notes: p.notes || null,
       status: "new",
@@ -1047,7 +1308,7 @@ export async function processDueOutreachFollowUpsInternal(
   for (const row of due ?? []) {
     const prospect = row.wisecall_outreach_prospects as Record<string, unknown>;
     const p = mapProspect(prospect);
-    if (p.outreachSegment !== "dentally_active") {
+    if (!isEmailableSegment(p.outreachSegment)) {
       await service
         .from("wisecall_outreach_emails")
         .update({ status: "cancelled", updated_at: now })
@@ -1083,8 +1344,8 @@ export async function processDueOutreachFollowUpsInternal(
       html: isHtmlBody(storedHtml) ? wrapEmailHtml(storedHtml) : undefined,
       replyTo,
       tags: [
-        { name: "outreach", value: "dental" },
-        { name: "segment", value: "dentally_active" },
+        { name: "outreach", value: p.vertical },
+        { name: "segment", value: p.outreachSegment },
         { name: "step", value: (row.sequence_step as string) || "follow_up" },
       ],
     });

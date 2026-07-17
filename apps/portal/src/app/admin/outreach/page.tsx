@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { getDentalProspectsSeedStats } from "@/app/actions/outreach";
+import {
+  getDentalProspectsSeedStats,
+  getEstateProspectsSeedStats,
+} from "@/app/actions/outreach";
 import { OutreachCrm } from "@/components/outreach-crm";
 import { isAdmin } from "@/lib/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -16,7 +19,15 @@ export default async function AdminOutreachPage() {
   if (!user) redirect("/?redirect=/admin/outreach");
   if (!isAdmin(user)) redirect("/dashboard");
 
-  const seedStats = await getDentalProspectsSeedStats();
+  const [dentalSeed, estateSeed] = await Promise.all([
+    getDentalProspectsSeedStats(),
+    getEstateProspectsSeedStats(),
+  ]);
 
-  return <OutreachCrm seedStats={seedStats.ok ? seedStats.data : null} />;
+  return (
+    <OutreachCrm
+      dentalSeedStats={dentalSeed.ok ? dentalSeed.data : null}
+      estateSeedStats={estateSeed.ok ? estateSeed.data : null}
+    />
+  );
 }
