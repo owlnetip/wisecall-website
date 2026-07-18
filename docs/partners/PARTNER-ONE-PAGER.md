@@ -37,6 +37,8 @@ The UK AI front desk for SMEs — answers in the business name across **voice, W
 
 VoIP wholesalers · 3CX/Yeastar dealers · MSPs · dental/property IT · AI automation agencies
 
+**Priority partners (easiest sell):** marketing & SEO agencies · accountants & bookkeepers · HR/payroll advisors · sector coaches · job software partners — they do **not** sell comms, so WiseCall is net-new revenue for them.
+
 **End customers:** trades, dental, legal, estate agents, care — any SME where missed calls = lost work
 
 ---
