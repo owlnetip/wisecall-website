@@ -144,8 +144,16 @@ export type EstateProspectsSeedStats = {
   generatedFrom: string | null;
 };
 
+export type LawProspectsSeedStats = {
+  total: number;
+  bySegment: Record<string, number>;
+  byRegion: Record<string, number>;
+  generatedFrom: string | null;
+};
+
 const SEED_PATH = path.join(process.cwd(), "src", "data", "dental-prospects-seed.json");
 const ESTATE_SEED_PATH = path.join(process.cwd(), "src", "data", "estate-prospects-seed.json");
+const LAW_SEED_PATH = path.join(process.cwd(), "src", "data", "law-prospects-seed.json");
 const IMPORT_BATCH_SIZE = 500;
 
 async function requireAdmin() {
@@ -162,7 +170,8 @@ function mapProspect(row: Record<string, unknown>): OutreachProspect {
   const mergeFields = row.merge_fields as Record<string, unknown> | null;
   const segment = (row.outreach_segment as string) ?? "unknown_queued";
   const verticalRaw = (row.vertical as string) || verticalForSegment(segment);
-  const vertical: OutreachVertical = verticalRaw === "property" ? "property" : "dental";
+  const vertical: OutreachVertical =
+    verticalRaw === "property" || verticalRaw === "law" ? verticalRaw : "dental";
   return {
     id: row.id as string,
     practiceName: (row.practice_name as string) ?? "",
@@ -245,6 +254,22 @@ async function readEstateProspectsSeed(): Promise<{
   }
 }
 
+async function readLawProspectsSeed(): Promise<{
+  prospects?: Record<string, string>[];
+  generated_from?: string;
+  counts?: { by_segment?: Record<string, number>; by_region?: Record<string, number> };
+} | null> {
+  try {
+    return JSON.parse(await readFile(LAW_SEED_PATH, "utf-8")) as {
+      prospects?: Record<string, string>[];
+      generated_from?: string;
+      counts?: { by_segment?: Record<string, number>; by_region?: Record<string, number> };
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getDentalProspectsSeedStats(): Promise<Result<DentalProspectsSeedStats>> {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
@@ -281,6 +306,35 @@ export async function getEstateProspectsSeedStats(): Promise<Result<EstateProspe
   const byRegion: Record<string, number> = {};
   for (const p of raw.prospects) {
     const segment = p.outreach_segment || "property_unknown";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+    const region = p.region || "unknown";
+    byRegion[region] = (byRegion[region] ?? 0) + 1;
+  }
+  return {
+    ok: true,
+    data: {
+      total: raw.prospects.length,
+      bySegment,
+      byRegion,
+      generatedFrom: raw.generated_from ?? null,
+    },
+  };
+}
+
+export async function getLawProspectsSeedStats(): Promise<Result<LawProspectsSeedStats>> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const raw = await readLawProspectsSeed();
+  if (!raw?.prospects) {
+    return {
+      ok: false,
+      error: "Seed file missing. Run: python3 scripts/sync-law-prospects-seed.py",
+    };
+  }
+  const bySegment: Record<string, number> = {};
+  const byRegion: Record<string, number> = {};
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "law_unknown";
     bySegment[segment] = (bySegment[segment] ?? 0) + 1;
     const region = p.region || "unknown";
     byRegion[region] = (byRegion[region] ?? 0) + 1;
@@ -414,6 +468,10 @@ export async function listOutreachProspects(filters?: {
       q = q
         .in("outreach_segment", ["property_ready", "property_unknown"])
         .or("email.is.null,email.eq.");
+    } else if (vertical === "law") {
+      q = q
+        .in("outreach_segment", ["law_ready", "law_unknown"])
+        .or("email.is.null,email.eq.");
     } else {
       q = q.eq("outreach_segment", emailable).or("email.is.null,email.eq.");
     }
@@ -444,10 +502,12 @@ export async function getOutreachCrmStats(
     )
     .eq("vertical", vertical);
 
-  // Stats strip focuses on the emailable cohort; for property also include unknown
-  // so Birmingham's "missing email" work is visible.
+  // Stats strip focuses on the emailable cohort; for property/law also include
+  // unknown so "missing email" work is visible.
   if (vertical === "property") {
     q = q.in("outreach_segment", ["property_ready", "property_unknown"]);
+  } else if (vertical === "law") {
+    q = q.in("outreach_segment", ["law_ready", "law_unknown"]);
   } else {
     q = q.eq("outreach_segment", emailable);
   }
@@ -1242,6 +1302,141 @@ export async function importEstateProspectsFromSeed(): Promise<
         patch.email = email || null;
         if (segment === "property_unknown" && email) {
           patch.outreach_segment = "property_ready";
+        }
+      }
+      const { error } = await service
+        .from("wisecall_outreach_prospects")
+        .update(patch)
+        .eq("id", existing.id);
+      if (error) skipped += 1;
+      else updated += 1;
+      continue;
+    }
+
+    upsertBatch.push({
+      ...metadata,
+      contact_name: contactName || null,
+      email: email || null,
+      phone: p.phone || null,
+      notes: p.notes || null,
+      status: "new",
+      sequence_status: "none",
+    });
+
+    if (upsertBatch.length >= IMPORT_BATCH_SIZE) {
+      await flushUpsertBatch();
+    }
+  }
+
+  await flushUpsertBatch();
+
+  revalidatePath("/admin/outreach");
+  return {
+    ok: true,
+    data: { imported, updated, skipped, seedTotal: raw.prospects.length, bySegment },
+  };
+}
+
+export async function importLawProspectsFromSeed(): Promise<
+  Result<{
+    imported: number;
+    updated: number;
+    skipped: number;
+    seedTotal: number;
+    bySegment: Record<string, number>;
+  }>
+> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const raw = await readLawProspectsSeed();
+  if (!raw?.prospects?.length) {
+    return {
+      ok: false,
+      error: "Seed file missing. Run: python3 scripts/sync-law-prospects-seed.py",
+    };
+  }
+
+  const bySegment: Record<string, number> = {};
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "law_unknown";
+    bySegment[segment] = (bySegment[segment] ?? 0) + 1;
+  }
+
+  const { data: existingRows, error: existingError } = await service
+    .from("wisecall_outreach_prospects")
+    .select("id, practice_name, postcode, region, status, first_email_sent_at, vertical")
+    .eq("vertical", "law");
+  if (existingError) return { ok: false, error: existingError.message };
+
+  const existingByKey = new Map<
+    string,
+    { id: string; status: string; firstEmailSentAt: string | null }
+  >();
+  for (const row of existingRows ?? []) {
+    existingByKey.set(
+      prospectKey(row.practice_name as string, (row.postcode as string) ?? "", row.region as string),
+      {
+        id: row.id as string,
+        status: (row.status as string) ?? "new",
+        firstEmailSentAt: (row.first_email_sent_at as string) ?? null,
+      },
+    );
+  }
+
+  let imported = 0;
+  let updated = 0;
+  let skipped = 0;
+  const upsertBatch: Record<string, unknown>[] = [];
+  const now = new Date().toISOString();
+
+  async function flushUpsertBatch() {
+    if (!upsertBatch.length) return;
+    const { error } = await service!.from("wisecall_outreach_prospects").upsert(upsertBatch, {
+      onConflict: "practice_name,postcode,region",
+    });
+    if (error) {
+      skipped += upsertBatch.length;
+    } else {
+      imported += upsertBatch.length;
+    }
+    upsertBatch.length = 0;
+  }
+
+  for (const p of raw.prospects) {
+    const segment = p.outreach_segment || "law_unknown";
+    const key = prospectKey(p.practice_name ?? "", p.postcode ?? "", p.region ?? "");
+    const existing = existingByKey.get(key);
+
+    const contactName = (p.contact_name || "").trim();
+    const email = (p.email || "").trim();
+
+    const metadata = {
+      practice_name: p.practice_name,
+      postcode: (p.postcode || "").toUpperCase(),
+      region: p.region,
+      area: p.area || null,
+      pms: p.pms || p.crm || "Unknown",
+      tier: p.tier || null,
+      website: p.website || null,
+      outreach_segment: segment,
+      vertical: "law",
+      merge_fields: p,
+      updated_at: now,
+    };
+
+    if (existing && existing.status !== "new") {
+      const patch: Record<string, unknown> = {
+        ...metadata,
+        phone: p.phone || null,
+      };
+      if (!existing.firstEmailSentAt && email) {
+        patch.contact_name = contactName || null;
+        patch.email = email || null;
+        if (segment === "law_unknown" && email) {
+          patch.outreach_segment = "law_ready";
         }
       }
       const { error } = await service
