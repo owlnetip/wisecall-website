@@ -22,6 +22,7 @@ import {
   getOutreachCrmStats,
   importDentalProspectsFromSeed,
   importEstateProspectsFromSeed,
+  importLawProspectsFromSeed,
   listDueFollowUpCount,
   listOutreachProspects,
   listOutreachTemplates,
@@ -34,6 +35,7 @@ import {
   updateOutreachProspect,
   type DentalProspectsSeedStats,
   type EstateProspectsSeedStats,
+  type LawProspectsSeedStats,
   type OutreachCrmStats,
   type OutreachEmail,
   type OutreachProspect,
@@ -70,6 +72,12 @@ const PROPERTY_SEGMENT_OPTIONS = [
   { value: "property_ready", label: "Ready to email", badge: "bg-emerald-100 text-emerald-800" },
   { value: "property_unknown", label: "Needs email / CRM", badge: "bg-slate-100 text-slate-700" },
   { value: "property_corporate_hold", label: "Corporate (hold)", badge: "bg-amber-100 text-amber-800" },
+] as const;
+
+const LAW_SEGMENT_OPTIONS = [
+  { value: "law_ready", label: "Ready to email", badge: "bg-emerald-100 text-emerald-800" },
+  { value: "law_unknown", label: "Needs email", badge: "bg-slate-100 text-slate-700" },
+  { value: "law_corporate_hold", label: "Corporate (hold)", badge: "bg-amber-100 text-amber-800" },
 ] as const;
 
 const STATUS_OPTIONS = [
@@ -115,9 +123,11 @@ function formatWhen(iso: string | null | undefined): string {
 export function OutreachCrm({
   dentalSeedStats,
   estateSeedStats,
+  lawSeedStats,
 }: {
   dentalSeedStats: DentalProspectsSeedStats | null;
   estateSeedStats: EstateProspectsSeedStats | null;
+  lawSeedStats: LawProspectsSeedStats | null;
 }) {
   const [view, setView] = useState<"prospects" | "templates">("prospects");
   const [vertical, setVertical] = useState<OutreachVertical>("dental");
@@ -159,8 +169,13 @@ export function OutreachCrm({
     [prospects],
   );
 
-  const segmentOptions = vertical === "property" ? PROPERTY_SEGMENT_OPTIONS : DENTAL_SEGMENT_OPTIONS;
-  const seedStats = vertical === "property" ? estateSeedStats : dentalSeedStats;
+  const segmentOptions =
+    vertical === "property"
+      ? PROPERTY_SEGMENT_OPTIONS
+      : vertical === "law"
+        ? LAW_SEGMENT_OPTIONS
+        : DENTAL_SEGMENT_OPTIONS;
+  const seedStats = vertical === "property" ? estateSeedStats : vertical === "law" ? lawSeedStats : dentalSeedStats;
   const canEmail = selected ? isEmailableSegment(selected.outreachSegment) : false;
   const contactMismatch = selected ? hasProspectContactMismatch(selected) : false;
   const resolvedContact = selected ? resolveProspectContact(selected) : null;
@@ -180,6 +195,15 @@ export function OutreachCrm({
           t.sequenceStep === "custom",
       );
     }
+    if (vertical === "law") {
+      return templates.filter(
+        (t) =>
+          t.templateFamily === "law" ||
+          t.category === "law" ||
+          t.slug.startsWith("law-") ||
+          t.sequenceStep === "custom",
+      );
+    }
     return templates.filter(
       (t) =>
         t.templateFamily === "dentally" ||
@@ -194,7 +218,7 @@ export function OutreachCrm({
     setSmartList("all");
     setSelectedId(null);
     setTemplateId("");
-    setRegionFilter(next === "property" ? "birmingham" : "");
+    setRegionFilter(next === "property" ? "birmingham" : next === "law" ? "manchester" : "");
   }, []);
 
   const refresh = useCallback(async () => {
@@ -214,15 +238,14 @@ export function OutreachCrm({
     if (t.ok) {
       setTemplates(t.data);
       if (!templateId && t.data.length) {
-        const family = vertical === "property" ? "property" : "dentally";
+        const family = vertical === "property" ? "property" : vertical === "law" ? "law" : "dentally";
+        const slugPrefix =
+          family === "property" ? "property-" : family === "law" ? "law-" : "dental-dentally-";
         const initial =
           t.data.find(
             (x) =>
               x.sequenceStep === "initial" &&
-              (x.templateFamily === family ||
-                (family === "property"
-                  ? x.slug.startsWith("property-")
-                  : x.slug.startsWith("dental-dentally-"))),
+              (x.templateFamily === family || x.slug.startsWith(slugPrefix)),
           ) ??
           t.data.find((x) => x.sequenceStep === "initial") ??
           t.data[0];
@@ -340,6 +363,18 @@ export function OutreachCrm({
       return;
     }
 
+    if (vertical === "law") {
+      const res = await importLawProspectsFromSeed();
+      setBusy(false);
+      if (!res.ok) return setMsg({ kind: "err", text: res.error });
+      setMsg({
+        kind: "ok",
+        text: `Imported ${res.data.imported} new, updated ${res.data.updated}, skipped ${res.data.skipped}. Seed has ${res.data.seedTotal} law firms (${res.data.bySegment.law_ready ?? 0} ready, ${res.data.bySegment.law_unknown ?? 0} need email).`,
+      });
+      await refresh();
+      return;
+    }
+
     const res = await importDentalProspectsFromSeed();
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
@@ -447,12 +482,18 @@ export function OutreachCrm({
         <div className="mx-auto flex w-full max-w-[2200px] flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-[#0e1b1b]">
-              {vertical === "property" ? "Property outreach CRM" : "Dental outreach CRM"}
+              {vertical === "property"
+                ? "Property outreach CRM"
+                : vertical === "law"
+                  ? "Law outreach CRM"
+                  : "Dental outreach CRM"}
             </h1>
             <p className="mt-1 text-sm text-[#5a7272]">
               {vertical === "property"
                 ? "Birmingham estate agents first — same Resend day 0/3/7/14 sequences as dental. Add emails to promote into ready."
-                : "Dentally-first sequences with first-email sent/open tracking. Mark replies so follow-ups stop automatically."}
+                : vertical === "law"
+                  ? "Manchester conveyancing pilot first — same Resend day 0/3/7/14 sequences. All 18 pilot firms already have an email."
+                  : "Dentally-first sequences with first-email sent/open tracking. Mark replies so follow-ups stop automatically."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -470,6 +511,13 @@ export function OutreachCrm({
                 className={`rounded-md px-3 py-1.5 text-sm font-bold ${vertical === "property" ? "bg-white text-[#0e1b1b] shadow-sm" : "text-[#5a7272]"}`}
               >
                 Property
+              </button>
+              <button
+                type="button"
+                onClick={() => switchVertical("law")}
+                className={`rounded-md px-3 py-1.5 text-sm font-bold ${vertical === "law" ? "bg-white text-[#0e1b1b] shadow-sm" : "text-[#5a7272]"}`}
+              >
+                Law
               </button>
             </div>
             <div className="flex rounded-lg border border-[#d8e4e4] bg-[#f4f7f7] p-1">
@@ -511,7 +559,11 @@ export function OutreachCrm({
               className="inline-flex items-center gap-2 rounded-lg border border-[#d8e4e4] bg-white px-3 py-2 text-sm font-semibold text-[#0e1b1b] hover:bg-[#f4f7f7] disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {vertical === "property" ? "Import Birmingham estates" : "Import all contacts"}
+              {vertical === "property"
+                ? "Import Birmingham estates"
+                : vertical === "law"
+                  ? "Import Manchester law firms"
+                  : "Import all contacts"}
             </button>
             {dueCount > 0 && (
               <button
@@ -564,11 +616,26 @@ export function OutreachCrm({
             {estateSeedStats.generatedFrom ? ` · from ${estateSeedStats.generatedFrom}` : ""}
           </p>
         )}
+        {vertical === "law" && lawSeedStats && (
+          <p className="mx-auto mt-2 w-full max-w-[2200px] text-sm text-[#5a7272]">
+            Manchester seed: <strong>{lawSeedStats.total}</strong> conveyancing firms
+            {" · "}
+            {lawSeedStats.bySegment.law_ready ?? 0} ready
+            {" · "}
+            {lawSeedStats.bySegment.law_unknown ?? 0} need email
+            {lawSeedStats.generatedFrom ? ` · from ${lawSeedStats.generatedFrom}` : ""}
+          </p>
+        )}
         {stats && (
           <div className="mx-auto mt-4 grid w-full max-w-[2200px] gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             {[
               {
-                label: vertical === "property" ? "Birmingham pipeline" : "Dentally",
+                label:
+                  vertical === "property"
+                    ? "Birmingham pipeline"
+                    : vertical === "law"
+                      ? "Manchester pipeline"
+                      : "Dentally",
                 value: stats.activeCount ?? stats.dentallyActive,
               },
               { label: "Owner emails", value: stats.ownerEmailFound },
@@ -704,6 +771,9 @@ export function OutreachCrm({
                   if (list.value === "no_email" && vertical === "property") {
                     setSegmentFilter("property_unknown");
                   }
+                  if (list.value === "no_email" && vertical === "law") {
+                    setSegmentFilter("law_unknown");
+                  }
                 }}
                 className={`rounded-full px-3 py-1 text-xs font-bold ${
                   smartList === list.value
@@ -805,8 +875,14 @@ export function OutreachCrm({
             {!prospects.length && (
               <li className="rounded-xl border border-dashed border-[#d8e4e4] p-6 text-center text-sm text-[#5a7272]">
                 No prospects yet. Click{" "}
-                <strong>{vertical === "property" ? "Import Birmingham estates" : "Import all contacts"}</strong>{" "}
-                to load the {vertical === "property" ? "estate agent" : "dental"} seed.
+                <strong>
+                  {vertical === "property"
+                    ? "Import Birmingham estates"
+                    : vertical === "law"
+                      ? "Import Manchester law firms"
+                      : "Import all contacts"}
+                </strong>{" "}
+                to load the {vertical === "property" ? "estate agent" : vertical === "law" ? "law firm" : "dental"} seed.
               </li>
             )}
           </ul>
@@ -815,8 +891,8 @@ export function OutreachCrm({
         <section className="space-y-6">
           {!selected ? (
             <div className="rounded-2xl border border-dashed border-[#d8e4e4] bg-white p-12 text-center text-[#5a7272]">
-              Select a {vertical === "property" ? "agency" : "practice"} to view details and draft an email
-              {vertical === "property" ? " (property templates)" : " (Dentally)"} or notes for queued contacts.
+              Select a {vertical === "property" ? "agency" : vertical === "law" ? "firm" : "practice"} to view details and draft an email
+              {vertical === "property" ? " (property templates)" : vertical === "law" ? " (law templates)" : " (Dentally)"} or notes for queued contacts.
             </div>
           ) : (
             <>
@@ -922,7 +998,13 @@ export function OutreachCrm({
                         }
                       }}
                       className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2"
-                      placeholder={vertical === "property" ? "Branch manager / director" : "Practice manager / owner"}
+                      placeholder={
+                        vertical === "property"
+                          ? "Branch manager / director"
+                          : vertical === "law"
+                            ? "Fee earner / partner"
+                            : "Practice manager / owner"
+                      }
                     />
                   </label>
                   <label className="block text-sm">
@@ -938,7 +1020,13 @@ export function OutreachCrm({
                         }
                       }}
                       className="w-full rounded-lg border border-[#d8e4e4] px-3 py-2"
-                      placeholder={vertical === "property" ? "name@agency.co.uk" : "owner@practice.co.uk"}
+                      placeholder={
+                        vertical === "property"
+                          ? "name@agency.co.uk"
+                          : vertical === "law"
+                            ? "name@firm.co.uk"
+                            : "owner@practice.co.uk"
+                      }
                     />
                   </label>
                   <label className="block text-sm">
@@ -1029,7 +1117,7 @@ export function OutreachCrm({
                       checked={scheduleFollowUps}
                       onChange={(e) => setScheduleFollowUps(e.target.checked)}
                     />
-                    Schedule {vertical === "property" ? "property" : "Dentally"} follow-ups on day 3, 7 and 14
+                    Schedule {vertical === "property" ? "property" : vertical === "law" ? "law" : "Dentally"} follow-ups on day 3, 7 and 14
                     (stops if marked replied / not interested / paused)
                   </label>
                   {selected.firstEmailSentAt && (

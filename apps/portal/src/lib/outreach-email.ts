@@ -16,7 +16,7 @@ export function addDays(iso: string | Date, days: number): string {
   return d.toISOString();
 }
 
-/** Template family for Dentally / Exact / property sequence isolation. */
+/** Template family for Dentally / Exact / property / law sequence isolation. */
 export function templateFamilyForSegment(segment: string): string {
   if (segment === "dentally_active") return "dentally";
   if (segment === "exact_queued") return "exact";
@@ -26,6 +26,13 @@ export function templateFamilyForSegment(segment: string): string {
     segment === "property_corporate_hold"
   ) {
     return "property";
+  }
+  if (
+    segment === "law_ready" ||
+    segment === "law_unknown" ||
+    segment === "law_corporate_hold"
+  ) {
+    return "law";
   }
   return "general";
 }
