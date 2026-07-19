@@ -730,6 +730,11 @@ export async function saveOutreachTemplate(input: {
       .update({ ...patch, sequence_step: resolvedStep })
       .eq("id", input.id);
     if (error) return { ok: false, error: error.message };
+    await refreshPendingScheduledEmailsForTemplate(service, input.id, {
+      subject_template: subject,
+      body_template: body,
+      body_html: bodyHtml || null,
+    });
     revalidatePath("/admin/outreach");
     return { ok: true, data: { id: input.id } };
   }
@@ -830,6 +835,98 @@ export async function previewOutreachEmail(input: {
   return { ok: true, data: { subject, body, bodyHtml } };
 }
 
+const FOLLOW_UP_STEPS = ["follow_up_3", "follow_up_7", "follow_up_14"] as const;
+
+type TemplateContentRow = {
+  subject_template: string;
+  body_template: string;
+  body_html?: string | null;
+};
+
+/** Render a stored template row for a specific prospect (merge fields applied). */
+function renderProspectEmailFromTemplate(
+  template: TemplateContentRow,
+  prospect: OutreachProspect,
+): { subject: string; body: string; bodyHtml: string | null } {
+  const fields = mergeFieldsForProspect(prospect);
+  const tmplHtml = (template.body_html as string) ?? "";
+  const innerHtml = isHtmlBody(tmplHtml) ? renderOutreachTemplate(tmplHtml, fields) : null;
+  const textBody = renderOutreachTemplate(template.body_template as string, fields);
+  return {
+    subject: renderOutreachTemplate(template.subject_template as string, fields),
+    body: textBody || (innerHtml ? htmlToText(innerHtml) : ""),
+    bodyHtml: innerHtml,
+  };
+}
+
+async function resolveTemplateForScheduledEmail(
+  service: NonNullable<ReturnType<typeof getServiceSupabase>>,
+  row: Record<string, unknown>,
+  prospect: OutreachProspect,
+): Promise<{ id: string; row: TemplateContentRow } | null> {
+  const templateId = (row.template_id as string) || null;
+  if (templateId) {
+    const { data } = await service
+      .from("wisecall_outreach_email_templates")
+      .select("id, subject_template, body_template, body_html")
+      .eq("id", templateId)
+      .maybeSingle();
+    if (data) return { id: data.id as string, row: data as TemplateContentRow };
+  }
+
+  const step = (row.sequence_step as string) || "";
+  if (!FOLLOW_UP_STEPS.includes(step as (typeof FOLLOW_UP_STEPS)[number])) return null;
+
+  const family = templateFamilyForSegment(prospect.outreachSegment);
+  const { data } = await service
+    .from("wisecall_outreach_email_templates")
+    .select("id, subject_template, body_template, body_html")
+    .eq("template_family", family)
+    .eq("sequence_step", step)
+    .maybeSingle();
+  if (!data) return null;
+  return { id: data.id as string, row: data as TemplateContentRow };
+}
+
+/** Re-render queued follow-ups from the latest template content (not the snapshot from schedule time). */
+async function refreshPendingScheduledEmailsForTemplate(
+  service: NonNullable<ReturnType<typeof getServiceSupabase>>,
+  templateId: string,
+  templateRow: TemplateContentRow,
+) {
+  const { data: scheduled } = await service
+    .from("wisecall_outreach_emails")
+    .select("id, prospect_id")
+    .eq("template_id", templateId)
+    .eq("status", "scheduled");
+  if (!scheduled?.length) return;
+
+  const prospectIds = [...new Set(scheduled.map((r) => r.prospect_id as string))];
+  const { data: prospects } = await service
+    .from("wisecall_outreach_prospects")
+    .select("*")
+    .in("id", prospectIds);
+  const prospectById = new Map(
+    (prospects ?? []).map((r) => [r.id as string, mapProspect(r as Record<string, unknown>)]),
+  );
+
+  const now = new Date().toISOString();
+  for (const email of scheduled) {
+    const prospect = prospectById.get(email.prospect_id as string);
+    if (!prospect) continue;
+    const rendered = renderProspectEmailFromTemplate(templateRow, prospect);
+    await service
+      .from("wisecall_outreach_emails")
+      .update({
+        subject: rendered.subject,
+        body: rendered.body,
+        body_html: rendered.bodyHtml,
+        updated_at: now,
+      })
+      .eq("id", email.id);
+  }
+}
+
 async function scheduleFollowUps(
   service: NonNullable<ReturnType<typeof getServiceSupabase>>,
   prospect: OutreachProspect,
@@ -856,16 +953,14 @@ async function scheduleFollowUps(
   const rows = templates.map((t) => {
     const step = t.sequence_step as string;
     const days = followUpDaysForStep(step) ?? 0;
-    const tmplHtml = (t.body_html as string) ?? "";
-    const innerHtml = isHtmlBody(tmplHtml) ? renderOutreachTemplate(tmplHtml, fields) : null;
-    const textBody = renderOutreachTemplate(t.body_template as string, fields);
+    const rendered = renderProspectEmailFromTemplate(t as TemplateContentRow, prospect);
     return {
       prospect_id: prospect.id,
       template_id: t.id,
       sequence_step: step,
-      subject: renderOutreachTemplate(t.subject_template as string, fields),
-      body: textBody || (innerHtml ? htmlToText(innerHtml) : ""),
-      body_html: innerHtml,
+      subject: rendered.subject,
+      body: rendered.body,
+      body_html: rendered.bodyHtml,
       to_email: sendContact.email || prospect.email,
       status: "scheduled",
       scheduled_for: scheduleFollowUpAt(sentAt, days),
@@ -888,8 +983,6 @@ async function scheduleFollowUps(
     })
     .eq("id", prospect.id);
 }
-
-const FOLLOW_UP_STEPS = ["follow_up_3", "follow_up_7", "follow_up_14"] as const;
 
 /** Calendar-day start (UTC) for comparing scheduled_for against "today". */
 function utcDayStart(iso: string | Date): number {
@@ -969,21 +1062,18 @@ async function repairMissingFollowUpSchedules(
 
     const missing = templates.filter((t) => !covered.has(t.sequence_step as string));
     if (missing.length) {
-      const fields = mergeFieldsForProspect(prospect);
       const sendContact = resolveProspectContact(prospect);
       const rows = missing.map((t) => {
         const step = t.sequence_step as string;
         const days = followUpDaysForStep(step) ?? 0;
-        const tmplHtml = (t.body_html as string) ?? "";
-        const innerHtml = isHtmlBody(tmplHtml) ? renderOutreachTemplate(tmplHtml, fields) : null;
-        const textBody = renderOutreachTemplate(t.body_template as string, fields);
+        const rendered = renderProspectEmailFromTemplate(t as TemplateContentRow, prospect);
         return {
           prospect_id: prospect.id,
           template_id: t.id,
           sequence_step: step,
-          subject: renderOutreachTemplate(t.subject_template as string, fields),
-          body: textBody || (innerHtml ? htmlToText(innerHtml) : ""),
-          body_html: innerHtml,
+          subject: rendered.subject,
+          body: rendered.body,
+          body_html: rendered.bodyHtml,
           to_email: sendContact.email || prospect.email,
           status: "scheduled",
           scheduled_for: scheduleFollowUpAt(sentAt, days),
@@ -1483,12 +1573,34 @@ export async function processDueOutreachFollowUpsInternal(
     }
 
     const storedHtml = (row.body_html as string) ?? "";
+    let subject = row.subject as string;
+    let body = row.body as string;
+    let htmlToSend = storedHtml;
+
+    const resolvedTemplate = await resolveTemplateForScheduledEmail(service, row, p);
+    if (resolvedTemplate) {
+      const rendered = renderProspectEmailFromTemplate(resolvedTemplate.row, p);
+      subject = rendered.subject;
+      body = rendered.body;
+      htmlToSend = rendered.bodyHtml ?? "";
+      await service
+        .from("wisecall_outreach_emails")
+        .update({
+          template_id: resolvedTemplate.id,
+          subject: rendered.subject,
+          body: rendered.body,
+          body_html: rendered.bodyHtml,
+          updated_at: now,
+        })
+        .eq("id", row.id);
+    }
+
     const replyTo = outreachReplyTo();
     const result = await sendViaResend({
       to: toEmail,
-      subject: row.subject as string,
-      body: row.body as string,
-      html: isHtmlBody(storedHtml) ? wrapEmailHtml(storedHtml) : undefined,
+      subject,
+      body,
+      html: isHtmlBody(htmlToSend) ? wrapEmailHtml(htmlToSend) : undefined,
       replyTo,
       tags: [
         { name: "outreach", value: p.vertical },
