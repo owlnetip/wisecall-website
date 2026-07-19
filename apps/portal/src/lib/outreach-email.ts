@@ -16,6 +16,29 @@ export function addDays(iso: string | Date, days: number): string {
   return d.toISOString();
 }
 
+/** UTC hour follow-ups are scheduled for (matches the 09:00 UTC cron). */
+export const FOLLOW_UP_SEND_HOUR_UTC = 9;
+
+/**
+ * Schedule a follow-up on calendar day N after the initial send, at 09:00 UTC.
+ * Day 3 means "the third calendar day after send", not exactly 72 hours later,
+ * so a send on the 16th is due on the morning of the 19th.
+ */
+export function scheduleFollowUpAt(sentAt: string | Date, days: number): string {
+  const base = new Date(sentAt);
+  return new Date(
+    Date.UTC(
+      base.getUTCFullYear(),
+      base.getUTCMonth(),
+      base.getUTCDate() + days,
+      FOLLOW_UP_SEND_HOUR_UTC,
+      0,
+      0,
+      0,
+    ),
+  ).toISOString();
+}
+
 /** Template family for Dentally / Exact / property sequence isolation. */
 export function templateFamilyForSegment(segment: string): string {
   if (segment === "dentally_active") return "dentally";

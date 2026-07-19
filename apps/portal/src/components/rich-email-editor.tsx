@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
   Bold,
   Italic,
@@ -45,6 +45,10 @@ const TEXT_COLORS: { label: string; value: string }[] = [
   { label: "Black", value: "#000000" },
 ];
 
+export type RichEmailEditorHandle = {
+  getHtml: () => string;
+};
+
 /**
  * Lightweight WYSIWYG editor for outreach emails. Dependency-free
  * (contentEditable + execCommand) — enough for formatting, images, CTA
@@ -52,44 +56,52 @@ const TEXT_COLORS: { label: string; value: string }[] = [
  *
  * Uncontrolled: seeded once from `initialHtml`; the parent remounts it via a
  * React `key` to load a different template. Every edit is pushed up through
- * `onChange` so the parent can preview/save/send.
+ * `onChange` so the parent can preview/save/send. Call `getHtml()` via ref
+ * before save/send to capture the latest contentEditable value.
  */
-export function RichEmailEditor({
-  initialHtml,
-  onChange,
-  onError,
-}: {
-  initialHtml: string;
-  onChange: (html: string) => void;
-  onError?: (message: string) => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
+export const RichEmailEditor = forwardRef<
+  RichEmailEditorHandle,
+  {
+    initialHtml: string;
+    onChange: (html: string) => void;
+    onError?: (message: string) => void;
+  }
+>(function RichEmailEditor({ initialHtml, onChange, onError }, ref) {
+  const editorRef = useRef<HTMLDivElement>(null);
   const savedRange = useRef<Range | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [menu, setMenu] = useState<"none" | "merge" | "image" | "color">("none");
 
   useEffect(() => {
-    if (ref.current && ref.current.innerHTML !== initialHtml) {
-      ref.current.innerHTML = initialHtml;
+    if (editorRef.current && editorRef.current.innerHTML !== initialHtml) {
+      editorRef.current.innerHTML = initialHtml;
     }
     // Seed once on mount; parent remounts (via key) to change templates.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const emit = useCallback(() => {
-    if (ref.current) onChange(ref.current.innerHTML);
+    if (editorRef.current) onChange(editorRef.current.innerHTML);
   }, [onChange]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getHtml: () => editorRef.current?.innerHTML ?? "",
+    }),
+    [],
+  );
 
   const saveSelection = useCallback(() => {
     const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0 && ref.current?.contains(sel.anchorNode)) {
+    if (sel && sel.rangeCount > 0 && editorRef.current?.contains(sel.anchorNode)) {
       savedRange.current = sel.getRangeAt(0).cloneRange();
     }
   }, []);
 
   const restoreSelection = useCallback(() => {
-    ref.current?.focus();
+    editorRef.current?.focus();
     const sel = window.getSelection();
     if (sel && savedRange.current) {
       sel.removeAllRanges();
@@ -310,7 +322,7 @@ export function RichEmailEditor({
       </div>
 
       <div
-        ref={ref}
+        ref={editorRef}
         contentEditable
         suppressContentEditableWarning
         onInput={emit}
@@ -333,4 +345,4 @@ export function RichEmailEditor({
       />
     </div>
   );
-}
+});
