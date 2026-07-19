@@ -40,7 +40,7 @@ import {
   type OutreachSmartList,
   type OutreachTemplate,
 } from "@/app/actions/outreach";
-import { RichEmailEditor, EmailPreview } from "@/components/rich-email-editor";
+import { RichEmailEditor, EmailPreview, type RichEmailEditorHandle } from "@/components/rich-email-editor";
 import { hasProspectContactMismatch, resolveProspectContact } from "@/lib/outreach-contact";
 import {
   defaultSegmentForVertical,
@@ -148,6 +148,8 @@ export function OutreachCrm({
   const [editTemplateHtml, setEditTemplateHtml] = useState("");
   const [editTemplateSequenceStep, setEditTemplateSequenceStep] = useState("custom");
   const [editNonce, setEditNonce] = useState(0);
+  const templateEditorRef = useRef<RichEmailEditorHandle>(null);
+  const composeEditorRef = useRef<RichEmailEditorHandle>(null);
 
   const selected = useMemo(
     () => prospects.find((p) => p.id === selectedId) ?? null,
@@ -382,18 +384,21 @@ export function OutreachCrm({
   async function onSaveTemplate() {
     setBusy(true);
     setMsg(null);
+    const latestHtml = templateEditorRef.current?.getHtml() ?? editTemplateHtml;
     const res = await saveOutreachTemplate({
       id: editingTemplateId ?? undefined,
       name: editTemplateName,
       subjectTemplate: editTemplateSubject,
       bodyTemplate: "",
-      bodyHtml: editTemplateHtml,
+      bodyHtml: latestHtml,
       sequenceStep: editTemplateSequenceStep,
     });
     setBusy(false);
     if (!res.ok) return setMsg({ kind: "err", text: res.error });
     setMsg({ kind: "ok", text: "Template saved." });
     setEditingTemplateId(res.data.id);
+    setEditTemplateHtml(latestHtml);
+    setEditNonce((n) => n + 1);
     await refresh();
     // The compose panel's preview effect only re-fires when selectedId/templateId
     // change; if this template is already selected there, force a reload so the
@@ -407,12 +412,13 @@ export function OutreachCrm({
     if (!toEmail) return setMsg({ kind: "err", text: "Add an email address first." });
     setBusy(true);
     setMsg(null);
+    const latestHtml = composeEditorRef.current?.getHtml() ?? bodyHtml;
     const res = await sendOutreachEmail({
       prospectId: selected.id,
       templateId,
       subject,
       body: "",
-      bodyHtml,
+      bodyHtml: latestHtml,
       scheduleFollowUps,
     });
     setBusy(false);
@@ -623,6 +629,12 @@ export function OutreachCrm({
               <p className="mt-1 text-sm text-[#5a7272]">
                 Format text, drop in images and use <strong>Personalise</strong> to insert fields like the practice name.
               </p>
+              {editTemplateSequenceStep !== "custom" && (
+                <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  Sequence step: <strong>{editTemplateSequenceStep.replace(/_/g, " ")}</strong> — this stays linked to
+                  the day 0/3/7/14 automation when you save.
+                </p>
+              )}
               <div className="mt-4 grid gap-3">
                 <input
                   value={editTemplateName}
@@ -640,6 +652,7 @@ export function OutreachCrm({
                   <div>
                     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#5a7272]">Compose</p>
                     <RichEmailEditor
+                      ref={templateEditorRef}
                       key={`tmpl-${editingTemplateId ?? "new"}-${editNonce}`}
                       initialHtml={editTemplateHtml}
                       onChange={setEditTemplateHtml}
@@ -796,7 +809,7 @@ export function OutreachCrm({
                   </div>
                   {p.sequenceStatus === "active" && p.nextFollowUpAt && (
                     <p className="mt-1 text-[11px] text-amber-700">
-                      Next follow-up: {new Date(p.nextFollowUpAt).toLocaleDateString()}
+                      Next follow-up: {formatWhen(p.nextFollowUpAt)}
                     </p>
                   )}
                 </button>
@@ -1012,6 +1025,7 @@ export function OutreachCrm({
                     <div>
                       <p className="mb-1 text-sm font-semibold">Body</p>
                       <RichEmailEditor
+                        ref={composeEditorRef}
                         key={`draft-${selected.id}-${draftNonce}`}
                         initialHtml={bodyHtml}
                         onChange={setBodyHtml}

@@ -7,8 +7,8 @@ import { isAdmin } from "@/lib/admin";
 import {
   renderOutreachTemplate,
   sendViaResend,
-  addDays,
   followUpDaysForStep,
+  scheduleFollowUpAt,
   templateFamilyForSegment,
   outreachReplyTo,
 } from "@/lib/outreach-email";
@@ -693,7 +693,8 @@ export async function saveOutreachTemplate(input: {
   // For HTML templates the plain-text body_template is the auto text fallback;
   // for legacy text templates it's the body itself.
   const body = bodyHtml ? htmlToText(bodyHtml) : input.bodyTemplate.trim();
-  if (!name || subject.length < 5 || body.length < 20) {
+  const hasEnoughBody = body.length >= 20 || bodyHtml.length >= 40;
+  if (!name || subject.length < 5 || !hasEnoughBody) {
     return { ok: false, error: "Template needs a name, subject and a bit of body content." };
   }
 
@@ -708,9 +709,25 @@ export async function saveOutreachTemplate(input: {
   };
 
   if (input.id) {
+    const { data: existing, error: loadErr } = await service
+      .from("wisecall_outreach_email_templates")
+      .select("sequence_step, template_family, category, slug, is_system")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (loadErr) return { ok: false, error: loadErr.message };
+    if (!existing) return { ok: false, error: "Template not found." };
+
+    // Never demote a sequence template to "custom" by accident — that breaks
+    // day 3/7/14 scheduling and the duplicate-initial-send guard.
+    const existingStep = (existing.sequence_step as string) || "custom";
+    const resolvedStep =
+      existingStep !== "custom" && patch.sequence_step === "custom"
+        ? existingStep
+        : patch.sequence_step;
+
     const { error } = await service
       .from("wisecall_outreach_email_templates")
-      .update(patch)
+      .update({ ...patch, sequence_step: resolvedStep })
       .eq("id", input.id);
     if (error) return { ok: false, error: error.message };
     revalidatePath("/admin/outreach");
@@ -851,13 +868,17 @@ async function scheduleFollowUps(
       body_html: innerHtml,
       to_email: sendContact.email || prospect.email,
       status: "scheduled",
-      scheduled_for: addDays(sentAt, days),
+      scheduled_for: scheduleFollowUpAt(sentAt, days),
       created_by: userId,
     };
   });
 
   await service.from("wisecall_outreach_emails").insert(rows);
-  const nextAt = addDays(sentAt, 3);
+  const nextAt = rows.reduce<string | null>((earliest, row) => {
+    const when = row.scheduled_for as string;
+    if (!earliest || when < earliest) return when;
+    return earliest;
+  }, null);
   await service
     .from("wisecall_outreach_prospects")
     .update({
@@ -866,6 +887,129 @@ async function scheduleFollowUps(
       updated_at: new Date().toISOString(),
     })
     .eq("id", prospect.id);
+}
+
+const FOLLOW_UP_STEPS = ["follow_up_3", "follow_up_7", "follow_up_14"] as const;
+
+/** Calendar-day start (UTC) for comparing scheduled_for against "today". */
+function utcDayStart(iso: string | Date): number {
+  const d = new Date(iso);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+/**
+ * Legacy schedules pinned follow-ups to the exact initial-send timestamp + N days.
+ * Once the target calendar day arrives, treat them as due even if the clock time
+ * hasn't passed yet (e.g. initial sent late on the 16th, day 3 blocked until 20:00 on the 19th).
+ */
+async function advanceCalendarDueSchedules(
+  service: NonNullable<ReturnType<typeof getServiceSupabase>>,
+  now: string,
+) {
+  const todayStart = utcDayStart(now);
+  const { data: pending } = await service
+    .from("wisecall_outreach_emails")
+    .select("id, scheduled_for")
+    .eq("status", "scheduled")
+    .gt("scheduled_for", now);
+
+  for (const row of pending ?? []) {
+    const scheduledFor = row.scheduled_for as string;
+    if (utcDayStart(scheduledFor) <= todayStart) {
+      await service
+        .from("wisecall_outreach_emails")
+        .update({ scheduled_for: now, updated_at: now })
+        .eq("id", row.id);
+    }
+  }
+}
+
+/**
+ * Backfill missing scheduled follow-ups (e.g. after a sequence template was
+ * accidentally saved as "custom") and realign next_follow_up_at with the queue.
+ */
+async function repairMissingFollowUpSchedules(
+  service: NonNullable<ReturnType<typeof getServiceSupabase>>,
+  now: string,
+  actorId?: string,
+) {
+  const { data: activeProspects } = await service
+    .from("wisecall_outreach_prospects")
+    .select("*")
+    .eq("sequence_status", "active")
+    .not("first_email_sent_at", "is", null);
+
+  for (const row of activeProspects ?? []) {
+    const prospect = mapProspect(row as Record<string, unknown>);
+    if (!isEmailableSegment(prospect.outreachSegment)) continue;
+    if (["not_interested", "paused"].includes(prospect.status)) continue;
+
+    const sentAt = prospect.firstEmailSentAt;
+    if (!sentAt) continue;
+
+    const family = templateFamilyForSegment(prospect.outreachSegment);
+    const { data: templates } = await service
+      .from("wisecall_outreach_email_templates")
+      .select("*")
+      .eq("template_family", family)
+      .in("sequence_step", [...FOLLOW_UP_STEPS]);
+    if (!templates?.length) continue;
+
+    const { data: existing } = await service
+      .from("wisecall_outreach_emails")
+      .select("sequence_step, status")
+      .eq("prospect_id", prospect.id)
+      .in("sequence_step", [...FOLLOW_UP_STEPS]);
+
+    const covered = new Set(
+      (existing ?? [])
+        .filter((e) => e.status === "sent" || e.status === "scheduled")
+        .map((e) => e.sequence_step as string),
+    );
+
+    const missing = templates.filter((t) => !covered.has(t.sequence_step as string));
+    if (missing.length) {
+      const fields = mergeFieldsForProspect(prospect);
+      const sendContact = resolveProspectContact(prospect);
+      const rows = missing.map((t) => {
+        const step = t.sequence_step as string;
+        const days = followUpDaysForStep(step) ?? 0;
+        const tmplHtml = (t.body_html as string) ?? "";
+        const innerHtml = isHtmlBody(tmplHtml) ? renderOutreachTemplate(tmplHtml, fields) : null;
+        const textBody = renderOutreachTemplate(t.body_template as string, fields);
+        return {
+          prospect_id: prospect.id,
+          template_id: t.id,
+          sequence_step: step,
+          subject: renderOutreachTemplate(t.subject_template as string, fields),
+          body: textBody || (innerHtml ? htmlToText(innerHtml) : ""),
+          body_html: innerHtml,
+          to_email: sendContact.email || prospect.email,
+          status: "scheduled",
+          scheduled_for: scheduleFollowUpAt(sentAt, days),
+          created_by: actorId ?? null,
+        };
+      });
+      await service.from("wisecall_outreach_emails").insert(rows);
+    }
+
+    const { data: nextScheduled } = await service
+      .from("wisecall_outreach_emails")
+      .select("scheduled_for")
+      .eq("prospect_id", prospect.id)
+      .eq("status", "scheduled")
+      .order("scheduled_for", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    const nextAt = (nextScheduled?.scheduled_for as string) ?? null;
+    if (nextAt !== prospect.nextFollowUpAt) {
+      await service
+        .from("wisecall_outreach_prospects")
+        .update({ next_follow_up_at: nextAt, updated_at: now })
+        .eq("id", prospect.id);
+    }
+  }
 }
 
 export async function sendOutreachEmail(input: {
@@ -1293,6 +1437,9 @@ export async function processDueOutreachFollowUpsInternal(
   if (!service) return { ok: false, error: "Server not configured." };
 
   const now = new Date().toISOString();
+  await repairMissingFollowUpSchedules(service, now, actorId);
+  await advanceCalendarDueSchedules(service, now);
+
   const { data: due, error } = await service
     .from("wisecall_outreach_emails")
     .select("*, wisecall_outreach_prospects!inner(*)")
@@ -1398,6 +1545,9 @@ export async function listDueFollowUpCount(): Promise<Result<number>> {
   if (!service) return { ok: false, error: "Server not configured." };
 
   const now = new Date().toISOString();
+  await repairMissingFollowUpSchedules(service, now);
+  await advanceCalendarDueSchedules(service, now);
+
   const { count, error } = await service
     .from("wisecall_outreach_emails")
     .select("*", { count: "exact", head: true })
