@@ -125,13 +125,18 @@ function stripQuotedReply(body: string): string {
   const gmail = text.search(/\n\s*On\s[\s\S]{0,200}?\bwrote:/i);
   if (gmail !== -1) text = text.slice(0, gmail);
 
-  // Line-anchored markers for Outlook / forwards / signatures.
+  // Line-anchored markers for Outlook / forwards / signatures. A sign-off line
+  // ("Kind regards,") is included because everything after it is reliably the
+  // signature block + any legal disclaimer, and both of those pollute the
+  // knowledge-base search query if left in (a corporate footer's own place
+  // names / boilerplate outweigh the actual one-line question).
   const lines = text.split(/\r?\n/);
   const cutMarkers = [
     /^-{2,}\s*Original Message\s*-{2,}/i,
     /^_{5,}/,
     /^From:\s.+/i,
     /^Sent from my /i,
+    /^(kind\s+regards|best\s+regards|warm\s+regards|kindest\s+regards|many\s+thanks|thanks\s+again|thank\s+you|regards|cheers|best\s+wishes|yours\s+sincerely|yours\s+faithfully|best)\s*,?\s*$/i,
   ];
   let cut = lines.length;
   for (let i = 0; i < lines.length; i++) {
@@ -147,6 +152,184 @@ function stripQuotedReply(body: string): string {
   }
   const result = kept.join("\n").trim();
   return result || body.trim();
+}
+
+function normalizeSubject(subject: string): string {
+  return String(subject || "")
+    .replace(/^email:\s*/i, "")
+    .replace(/^(?:(?:re|fw|fwd)\s*:\s*)+/i, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeMessageId(value: string): string {
+  return String(value || "")
+    .trim()
+    .replace(/^<|>$/g, "")
+    .toLowerCase();
+}
+
+function parseMessageIds(value: string): string[] {
+  const raw = String(value || "");
+  const angle = raw.match(/<[^>]+>/g)?.map((id) => normalizeMessageId(id)) || [];
+  if (angle.length) return [...new Set(angle.filter(Boolean))];
+  return [...new Set(raw.split(/\s+/).map(normalizeMessageId).filter(Boolean))];
+}
+
+function firstUsefulEmailLine(text: string): string {
+  const lines = String(text || "")
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  for (const line of lines) {
+    if (
+      /^(hi|hello|dear|thanks|thank you|kind regards|regards|cheers|sent from|best)\b/i.test(
+        line,
+      )
+    ) {
+      continue;
+    }
+    if (/^(from|to|subject|date):/i.test(line)) continue;
+    if (line.includes("@") && line.length < 80) continue;
+    if (line.length < 12) continue;
+    return line.replace(/\s+/g, " ").trim();
+  }
+  return "";
+}
+
+function buildEmailSummary(opts: {
+  fromName?: string;
+  subject: string;
+  incoming: string;
+  replyText: string;
+  priorSummary?: string | null;
+}): string {
+  const ask =
+    firstUsefulEmailLine(opts.incoming) ||
+    normalizeSubject(opts.subject).replace(/\b\w/g, (c) => c.toUpperCase()) ||
+    "an enquiry";
+  const shortAsk = ask.length > 110 ? `${ask.slice(0, 107).trim()}...` : ask;
+  const firstName = String(opts.fromName || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)[0];
+  const who = firstName ? `${firstName} emailed` : "Customer emailed";
+  const prices = opts.replyText.match(/£\s*[\d.]+/g)?.slice(0, 4) || [];
+  const priceNote = prices.length ? ` Quoted ${prices.join(", ")}.` : "";
+
+  if (opts.priorSummary && !/^email:\s*/i.test(opts.priorSummary)) {
+    const follow = firstUsefulEmailLine(opts.incoming);
+    if (follow) {
+      const shortFollow = follow.length > 90 ? `${follow.slice(0, 87).trim()}...` : follow;
+      return `${who} a follow-up: ${shortFollow}.${priceNote}`.trim();
+    }
+  }
+
+  return `${who} about ${shortAsk}.${priceNote}`.trim();
+}
+
+function formatExchangeBlock(opts: {
+  fromEmail: string;
+  subject: string;
+  incoming: string;
+  replyText: string;
+  at?: string;
+}): string {
+  const when = new Date(opts.at || Date.now()).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return [
+    `--- Exchange · ${when} ---`,
+    `FROM: ${opts.fromEmail}`,
+    `SUBJECT: ${opts.subject}`,
+    "",
+    "--- Their message ---",
+    opts.incoming,
+    "",
+    "--- WiseCall reply ---",
+    opts.replyText,
+  ].join("\n");
+}
+
+type EmailThreadRow = {
+  id: string;
+  call_id: string;
+  transcript: string | null;
+  summary: string | null;
+  metadata: Record<string, unknown> | null;
+  started_at: string;
+};
+
+async function findEmailThread(
+  supabase: ReturnType<typeof createClient>,
+  profileId: string,
+  fromEmail: string,
+  email: { subject: string; messageId: string; inReplyTo: string; references: string },
+): Promise<EmailThreadRow | null> {
+  const { data, error } = await supabase
+    .from("wisecall_call_logs")
+    .select("id, call_id, transcript, summary, metadata, started_at")
+    .eq("profile_id", profileId)
+    .eq("caller_id", fromEmail)
+    .order("started_at", { ascending: false })
+    .limit(30);
+
+  if (error || !data?.length) return null;
+
+  const emailRows = (data as EmailThreadRow[]).filter((row) => {
+    const meta = (row.metadata || {}) as Record<string, unknown>;
+    return String(meta.channel || "").toLowerCase() === "email";
+  });
+  if (!emailRows.length) return null;
+
+  const relatedIds = new Set(
+    [
+      ...parseMessageIds(email.inReplyTo),
+      ...parseMessageIds(email.references),
+      normalizeMessageId(email.messageId),
+    ].filter(Boolean),
+  );
+
+  for (const row of emailRows) {
+    const meta = (row.metadata || {}) as Record<string, unknown>;
+    const known = new Set<string>();
+    const pushId = (value: unknown) => {
+      if (!value) return;
+      if (Array.isArray(value)) {
+        for (const item of value) known.add(normalizeMessageId(String(item)));
+        return;
+      }
+      known.add(normalizeMessageId(String(value)));
+    };
+    pushId(meta.message_id);
+    pushId(meta.last_message_id);
+    pushId(meta.outbound_message_id);
+    pushId(meta.message_ids);
+    const selfId = normalizeMessageId(email.messageId);
+    for (const id of relatedIds) {
+      if (id && id !== selfId && known.has(id)) return row;
+    }
+  }
+
+  const subjectKey = normalizeSubject(email.subject);
+  if (!subjectKey) return null;
+  const maxAgeMs = 30 * 24 * 60 * 60 * 1000;
+  for (const row of emailRows) {
+    const meta = (row.metadata || {}) as Record<string, unknown>;
+    const rowSubject = normalizeSubject(
+      String(meta.subject || meta.thread_subject || row.summary || ""),
+    );
+    if (!rowSubject || rowSubject !== subjectKey) continue;
+    const age = Date.now() - new Date(row.started_at).getTime();
+    if (age <= maxAgeMs) return row;
+  }
+
+  return null;
 }
 
 async function callClaude(systemPrompt: string, userMessage: string): Promise<string> {
@@ -182,9 +365,8 @@ async function callClaude(systemPrompt: string, userMessage: string): Promise<st
 const KB_MIN_SIMILARITY = 0.35;
 
 // Relevance-gated knowledge-base lookup for the inbound email, via the
-// wisecall-kb-search function (scoped to this agent's profile id). Returns a
-// context block built from sufficiently-similar chunks, or null. Best-effort:
-// never throws, so a KB hiccup can't block the email reply.
+// wisecall-kb-search function (scoped to this agent's profile id). Prefers
+// verified price answers from keyword/price-line extraction when present.
 async function fetchKbContext(profileId: string, query: string): Promise<string | null> {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -197,6 +379,16 @@ async function fetchKbContext(profileId: string, query: string): Promise<string 
     });
     if (!res.ok) return null;
     const data = await res.json();
+    if (typeof data?.context === "string" && data.context.trim()) {
+      return data.context.trim();
+    }
+    if (data?.answer) {
+      return [
+        "[KNOWLEDGE BASE]",
+        "VERIFIED PRICE ANSWER (quote these figures in your reply; do not say prices are unavailable):",
+        String(data.answer),
+      ].join("\n");
+    }
     const chunks = Array.isArray(data?.chunks) ? data.chunks : [];
     const relevant = chunks
       .filter((c: { content?: string; similarity?: number }) =>
@@ -370,11 +562,18 @@ Deno.serve(async (req) => {
   const rawBody = email.text || email.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const incoming = stripQuotedReply(rawBody);
 
+  // Continue an existing inbox thread when this is a reply in the same conversation.
+  const existingThread = await findEmailThread(supabase, profile.id, email.from.email, email);
+
   // Relevance-gated knowledge-base lookup using the email's subject + body.
   const kbContext = await fetchKbContext(
     profile.id,
     `${email.subject || ""}\n${incoming}`.trim(),
   );
+
+  const priorThreadBlock = existingThread?.transcript
+    ? `\n[PRIOR EMAIL THREAD — continue this conversation; do not restart from scratch]\n${String(existingThread.transcript).slice(-3500)}`
+    : "";
 
   const systemPrompt = [
     profile.system_prompt || `You are a helpful, professional UK English receptionist for ${businessName}.`,
@@ -385,16 +584,19 @@ Deno.serve(async (req) => {
     "- Use UK English. Be warm, concise and professional.",
     `- Sign off as the ${businessName} team.`,
     "- Do not invent availability, prices, or confirmations you cannot verify.",
-    "- If you need information only a human or a booking system can provide, say you'll pass it to the team and they'll follow up, and capture what you can.",
+    "- If a [KNOWLEDGE BASE] block includes a VERIFIED PRICE ANSWER or Direct price matches, quote those £ figures clearly in the reply. Do not say prices must be confirmed by the team when those figures are present.",
+    "- If you need information only a human or a booking system can provide, and the knowledge base does not cover it, say you'll pass it to the team and they'll follow up, and capture what you can.",
     "- Never mention that you are an AI unless asked directly.",
     "",
     "Using knowledge:",
     "- If a [KNOWLEDGE BASE] block is provided below, treat it as the authoritative source and answer from it.",
+    "- Prefer VERIFIED PRICE ANSWER / Direct price matches over raw excerpts when both are present.",
     "- If it does not cover the question, you may use general knowledge to help, BUT never invent business-specific details (prices, timescales, account or system specifics). For those, say the team will confirm and follow up.",
     "- If you are unsure, be honest and offer to have the team follow up rather than guessing.",
     profile.business_context ? `\nBusiness knowledge:\n${profile.business_context}` : "",
     kbContext ? `\n${kbContext}` : "",
     memoryBlock ? `\n${memoryBlock}` : "",
+    priorThreadBlock,
     "\nReturn ONLY the body of the email reply, no subject line, no email headers.",
   ]
     .filter(Boolean)
@@ -413,8 +615,9 @@ Deno.serve(async (req) => {
 
   // Send the threaded reply from the agent's address.
   const replySubject = /^re:/i.test(email.subject) ? email.subject : `Re: ${email.subject}`;
+  let outboundId = "";
   try {
-    await sendReply({
+    const sent = await sendReply({
       fromAddress,
       fromName: businessName,
       to: email.from.email,
@@ -423,6 +626,7 @@ Deno.serve(async (req) => {
       inReplyTo: email.messageId,
       references: email.references,
     });
+    outboundId = String((sent as { id?: string })?.id || "");
   } catch (e) {
     console.error("[wisecall-email-inbound] send error:", (e as Error).message);
     return json({ error: "Send failed" }, 502);
@@ -465,28 +669,96 @@ Deno.serve(async (req) => {
     console.error("[wisecall-email-inbound] contact upsert:", (e as Error).message);
   }
 
-  // Log the interaction to the call-logs table (channel = email).
+  const exchange = formatExchangeBlock({
+    fromEmail: email.from.email,
+    subject: email.subject,
+    incoming,
+    replyText,
+    at: now,
+  });
+  const summary = buildEmailSummary({
+    fromName: email.from.name,
+    subject: email.subject,
+    incoming,
+    replyText,
+    priorSummary: existingThread?.summary,
+  });
+
+  // Log the interaction to the call-logs table (channel = email), appending to
+  // an existing thread when this is a follow-up in the same conversation.
   let callLogId: string | null = null;
   try {
-    const { data: logRow } = await supabase.from("wisecall_call_logs").insert({
-      call_id: `email-${email.messageId || crypto.randomUUID()}`,
-      profile_id: profile.id,
-      profile_name: profile.profile_name || businessName,
-      caller_id: email.from.email,
-      contact_id: contactId,
-      summary: `Email: ${email.subject}`,
-      outcome: "Email replied",
-      transcript: `FROM: ${email.from.email}\nSUBJECT: ${email.subject}\n\n--- Their message ---\n${incoming}\n\n--- WiseCall reply ---\n${replyText}`,
-      started_at: now,
-      finished_at: now,
-      metadata: { channel: "email", message_id: email.messageId },
-    }).select("id").single();
-    callLogId = logRow?.id ?? null;
+    if (existingThread) {
+      const prevMeta = (existingThread.metadata || {}) as Record<string, unknown>;
+      const prevIds = Array.isArray(prevMeta.message_ids)
+        ? prevMeta.message_ids.map((id) => String(id))
+        : [String(prevMeta.message_id || "")].filter(Boolean);
+      const messageIds = [
+        ...new Set(
+          [...prevIds, email.messageId, outboundId].map((id) => String(id || "").trim()).filter(Boolean),
+        ),
+      ];
+      const transcript = [existingThread.transcript || "", exchange].filter(Boolean).join("\n\n");
+      const { data: logRow } = await supabase
+        .from("wisecall_call_logs")
+        .update({
+          summary,
+          outcome: "Email replied",
+          transcript,
+          finished_at: now,
+          contact_id: contactId || undefined,
+          metadata: {
+            ...prevMeta,
+            channel: "email",
+            subject: email.subject,
+            thread_subject: normalizeSubject(email.subject),
+            message_id: email.messageId || prevMeta.message_id,
+            last_message_id: email.messageId,
+            outbound_message_id: outboundId || prevMeta.outbound_message_id,
+            message_ids: messageIds,
+            exchange_count: Number(prevMeta.exchange_count || 1) + 1,
+          },
+        })
+        .eq("id", existingThread.id)
+        .select("id")
+        .single();
+      callLogId = logRow?.id ?? existingThread.id;
+    } else {
+      const { data: logRow } = await supabase.from("wisecall_call_logs").insert({
+        call_id: `email-thread-${crypto.randomUUID()}`,
+        profile_id: profile.id,
+        profile_name: profile.profile_name || businessName,
+        caller_id: email.from.email,
+        contact_id: contactId,
+        summary,
+        outcome: "Email replied",
+        transcript: exchange,
+        started_at: now,
+        finished_at: now,
+        metadata: {
+          channel: "email",
+          subject: email.subject,
+          thread_subject: normalizeSubject(email.subject),
+          message_id: email.messageId,
+          last_message_id: email.messageId,
+          outbound_message_id: outboundId || null,
+          message_ids: [email.messageId, outboundId].filter(Boolean),
+          exchange_count: 1,
+        },
+      }).select("id").single();
+      callLogId = logRow?.id ?? null;
+    }
   } catch (e) {
-    console.error("[wisecall-email-inbound] log insert:", (e as Error).message);
+    console.error("[wisecall-email-inbound] log upsert:", (e as Error).message);
   }
 
   if (callLogId) void triggerPortalAnalysis(callLogId);
 
-  return json({ ok: true, agent: profile.id, replied_to: email.from.email });
+  return json({
+    ok: true,
+    agent: profile.id,
+    replied_to: email.from.email,
+    threaded: Boolean(existingThread),
+    call_log_id: callLogId,
+  });
 });
