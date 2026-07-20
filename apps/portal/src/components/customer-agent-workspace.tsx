@@ -81,7 +81,13 @@ import type { CallLog, CallChannel } from "@/lib/agents";
 import { friendlyOutcome } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
 import type { FollowUp } from "@/lib/follow-ups";
+import { getActionableFollowUps } from "@/lib/follow-ups";
+import {
+  categoryLabel,
+  priorityLabel,
+} from "@/lib/follow-up-priority";
 import { updateFollowUpStatus } from "@/app/actions/follow-ups";
+import { OpsStatusPanel } from "@/components/ops-status-panel";
 import type {
   AttentionItem,
   CallReference,
@@ -241,6 +247,18 @@ export type Assistant = {
   emailAddress?: string; // forwarding address for the email channel
   emailChannelEnabled?: boolean;
   integrationWebhooks?: IntegrationWebhook[];
+  opsDigest?: {
+    enabled: boolean;
+    morning: boolean;
+    afternoon: boolean;
+    morningHour: number;
+    afternoonHour: number;
+  };
+  statusCheck?: {
+    enabled: boolean;
+    webhookUrl: string;
+    webhookSecret: string;
+  };
   ownerEmail?: string; // admin view only, which customer owns this agent
   ownerId?: string; // admin view only, owner's auth user id (for "log in as")
 };
@@ -1558,6 +1576,10 @@ export function CustomerAgentWorkspace({
               ? {
                   ...item,
                   status,
+                  snoozedUntil:
+                    status === "snoozed"
+                      ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                      : null,
                   completedAt: status === "done" ? new Date().toISOString() : null,
                 }
               : item,
@@ -3157,6 +3179,7 @@ function AssistantDetail({
       ) : (
         <div key="technical" className="anim-fade">
           <PbxExtensionCard agentId={assistant.id} />
+          <AgentOpsCard assistant={assistant} />
           <IntegrationWebhooksCard
             agentId={assistant.id}
             initial={assistant.integrationWebhooks ?? []}
@@ -4026,6 +4049,32 @@ function CollapsibleSection({
   );
 }
 
+function AgentOpsCard({ assistant }: { assistant: Assistant }) {
+  const digest = assistant.opsDigest ?? {
+    enabled: true,
+    morning: true,
+    afternoon: true,
+    morningHour: 8,
+    afternoonHour: 15,
+  };
+  const statusCheck = assistant.statusCheck ?? {
+    enabled: false,
+    webhookUrl: "",
+    webhookSecret: "",
+  };
+
+  return (
+    <div className="mb-5">
+      <OpsStatusPanel
+        profileId={assistant.id}
+        digest={digest}
+        statusCheck={statusCheck}
+        defaultEmail={assistant.defaultEmail}
+      />
+    </div>
+  );
+}
+
 function FollowUpsSection({
   followUps,
   onFollowUpStatus,
@@ -4035,7 +4084,7 @@ function FollowUpsSection({
   onFollowUpStatus: (id: string, status: FollowUp["status"]) => void;
   onOpenCall: (callId: string) => void;
 }) {
-  const open = followUps.filter((item) => item.status === "open");
+  const open = getActionableFollowUps(followUps);
   if (open.length === 0) return null;
 
   return (
@@ -4045,15 +4094,39 @@ function FollowUpsSection({
       accent="#0e6b6e"
       count={open.length}
       defaultOpen
-      subtitle="Tasks extracted from conversations — mark done when handled"
+      subtitle="Prioritised tasks — leads, sales and complaints stay on top"
     >
       <ul className="divide-y divide-line">
         {open.map((item) => (
           <li key={item.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                    item.priority === "critical"
+                      ? "bg-red-100 text-red-800"
+                      : item.priority === "high"
+                        ? "bg-amber-100 text-amber-900"
+                        : item.priority === "low"
+                          ? "bg-slate-100 text-slate-600"
+                          : "bg-teal-50 text-teal-800"
+                  }`}
+                >
+                  {priorityLabel(item.priority)}
+                </span>
+                <span className="rounded-md bg-line/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-soft">
+                  {categoryLabel(item.category)}
+                </span>
+              </div>
               <p className="font-bold text-ink">{item.title}</p>
               <p className="mt-0.5 text-xs text-ink-soft">
                 {item.caller} · {item.agentName}
+                {item.dueAt
+                  ? ` · due ${new Date(item.dueAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                    })}`
+                  : ""}
               </p>
               {item.description ? (
                 <p className="mt-1 text-sm text-ink-soft">{item.description}</p>
@@ -4074,7 +4147,7 @@ function FollowUpsSection({
                 onClick={() => onFollowUpStatus(item.id, "snoozed")}
                 className="press inline-flex h-8 items-center rounded-lg border border-line px-3 text-xs font-bold text-ink-soft hover:border-line-strong hover:text-ink"
               >
-                Snooze
+                Snooze 24h
               </button>
               <button
                 type="button"

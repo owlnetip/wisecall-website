@@ -235,6 +235,21 @@ function ContactDetail({
           ))}
         </div>
 
+        {contact.openCaseSummary ? (
+          <div>
+            <p className="mb-1.5 text-sm font-bold text-ink">Open case / last subject</p>
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
+              {contact.openCaseSummary}
+            </p>
+            {contact.relationshipStatus ? (
+              <p className="mt-1 text-xs text-ink-soft">
+                Relationship: {contact.relationshipStatus}
+                {contact.lastOutcome ? ` · last outcome ${contact.lastOutcome}` : ""}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         {contact.aiSummary && (
           <div>
             <p className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-ink">

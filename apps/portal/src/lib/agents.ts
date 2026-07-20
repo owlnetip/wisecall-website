@@ -8,6 +8,8 @@ import type {
   RoutingStatus,
 } from "@/components/customer-agent-workspace";
 import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
+import { readOpsDigestSettings } from "@/lib/ops-digest";
+import { readStatusCheckSettings } from "@/lib/status-flags";
 
 // The subdomain the email channel listens on. Must match the edge function's
 // WISECALL_EMAIL_INBOUND_DOMAIN (wisecall-email-inbound).
@@ -214,6 +216,15 @@ function mapProfile(row: ProfileRow): Assistant {
     emailAddress: agentEmailAddress(row),
     emailChannelEnabled: row.metadata?.email_channel_enabled === true,
     integrationWebhooks: readIntegrationWebhooks(row.metadata),
+    opsDigest: readOpsDigestSettings(row.metadata),
+    statusCheck: (() => {
+      const s = readStatusCheckSettings(row.metadata);
+      return {
+        enabled: s.enabled,
+        webhookUrl: s.webhookUrl,
+        webhookSecret: s.webhookSecret,
+      };
+    })(),
   };
 }
 

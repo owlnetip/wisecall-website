@@ -15,6 +15,11 @@ export type Contact = {
   emailCount: number;
   aiSummary: string;
   notes: string;
+  relationshipStatus: string;
+  openCaseSummary: string;
+  keyFacts: string[];
+  lastOutcome: string;
+  priorityScore: number;
 };
 
 type ContactRow = {
@@ -30,6 +35,11 @@ type ContactRow = {
   ai_summary: string | null;
   notes: string | null;
   metadata: Record<string, unknown> | null;
+  relationship_status?: string | null;
+  open_case_summary?: string | null;
+  key_facts?: unknown;
+  last_outcome?: string | null;
+  priority_score?: number | null;
 };
 
 function readMetaString(metadata: Record<string, unknown> | null, key: string): string {
@@ -38,6 +48,9 @@ function readMetaString(metadata: Record<string, unknown> | null, key: string): 
 }
 
 function mapContact(row: ContactRow, agentName: string): Contact {
+  const keyFacts = Array.isArray(row.key_facts)
+    ? row.key_facts.filter((v): v is string => typeof v === "string")
+    : [];
   return {
     id: row.id,
     profileId: row.profile_id,
@@ -53,6 +66,11 @@ function mapContact(row: ContactRow, agentName: string): Contact {
     emailCount: row.email_count,
     aiSummary: row.ai_summary ?? "",
     notes: row.notes ?? "",
+    relationshipStatus: row.relationship_status ?? "",
+    openCaseSummary: row.open_case_summary ?? "",
+    keyFacts,
+    lastOutcome: row.last_outcome ?? "",
+    priorityScore: typeof row.priority_score === "number" ? row.priority_score : 0,
   };
 }
 
@@ -78,14 +96,26 @@ export async function getContactsForUser(userId: string): Promise<Contact[]> {
       ((p.business_name || p.clinic_name || p.receptionist_name || "Agent") as string);
   }
 
-  const { data, error } = await supabase
+  const fullSelect =
+    "id, profile_id, phone, email, name, first_seen, last_seen, call_count, email_count, ai_summary, notes, metadata, relationship_status, open_case_summary, key_facts, last_outcome, priority_score";
+  const legacySelect =
+    "id, profile_id, phone, email, name, first_seen, last_seen, call_count, email_count, ai_summary, notes, metadata";
+
+  let { data, error } = await supabase
     .from("wisecall_contacts")
-    .select(
-      "id, profile_id, phone, email, name, first_seen, last_seen, call_count, email_count, ai_summary, notes, metadata",
-    )
+    .select(fullSelect)
     .in("profile_id", profileIds)
     .order("last_seen", { ascending: false })
     .limit(500);
+
+  if (error && /relationship_status|open_case_summary|key_facts|last_outcome|priority_score/i.test(error.message)) {
+    ({ data, error } = await supabase
+      .from("wisecall_contacts")
+      .select(legacySelect)
+      .in("profile_id", profileIds)
+      .order("last_seen", { ascending: false })
+      .limit(500));
+  }
 
   if (error) {
     console.error("getContactsForUser failed:", error.message);

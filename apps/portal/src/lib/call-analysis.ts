@@ -343,18 +343,19 @@ async function persistAnalysis(
   await syncContactFromAnalysis(row, analysis);
 
   if (row.profile_id) {
-    const actionItems = await syncFollowUpsFromAnalysis(
+    const synced = await syncFollowUpsFromAnalysis(
       callId,
       row.profile_id,
       row.contact_id,
       analysis,
     );
-    if (actionItems.length) {
+    if (synced.length) {
       void sendActionItemsEmail({
         callLogId: callId,
         profileId: row.profile_id,
         callerId: row.caller_id ?? "Unknown",
-        actionItems,
+        actionItems: synced.map((item) => item.title),
+        priorities: synced.map((item) => item.priority),
         managerSummary: analysis.short_manager_summary,
       });
     }

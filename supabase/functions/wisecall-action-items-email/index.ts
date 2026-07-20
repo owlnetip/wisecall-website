@@ -97,13 +97,14 @@ serve(async (req) => {
     .map((item) => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`)
     .join("");
 
+  const criticalOnly = body.critical_only === true;
   const html = `
     <div style="font-family:system-ui,sans-serif;color:#172929;max-width:560px;">
-      <h2 style="margin:0 0 12px;font-size:18px;">Action items from ${escapeHtml(callerId)}</h2>
-      <p style="margin:0 0 16px;color:#4a5c5b;">${escapeHtml(businessName)} · follow-up tasks extracted after a conversation.</p>
+      <h2 style="margin:0 0 12px;font-size:18px;">${criticalOnly ? "Critical action needed" : "Action items"} from ${escapeHtml(callerId)}</h2>
+      <p style="margin:0 0 16px;color:#4a5c5b;">${escapeHtml(businessName)} · ${criticalOnly ? "complaint or critical follow-up after a conversation." : "follow-up tasks extracted after a conversation."}</p>
       ${managerSummary ? `<p style="margin:0 0 16px;padding:12px;background:#f0faf9;border-radius:8px;"><strong>Summary:</strong> ${escapeHtml(managerSummary)}</p>` : ""}
       <ul style="padding-left:20px;margin:0;">${listHtml}</ul>
-      <p style="margin:24px 0 0;font-size:12px;color:#7a8a89;">Track and mark these done in your WiseCall portal.</p>
+      <p style="margin:24px 0 0;font-size:12px;color:#7a8a89;">Track and mark these done in your WiseCall portal. Other open work is summarised in your morning/afternoon ops email.</p>
     </div>`;
 
   const res = await fetch("https://api.resend.com/emails", {
@@ -115,7 +116,7 @@ serve(async (req) => {
     body: JSON.stringify({
       from,
       to,
-      subject: `Action items · ${callerId} · ${businessName}`,
+      subject: `${criticalOnly ? "Critical" : "Action items"} · ${callerId} · ${businessName}`,
       html,
     }),
   });
