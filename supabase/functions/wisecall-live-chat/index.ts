@@ -286,6 +286,10 @@ async function fetchKbContext(profileId: string, query: string): Promise<string 
     });
     if (!res.ok) return null;
     const data = await res.json();
+    if (typeof data?.context === "string" && data.context.trim()) return data.context.trim();
+    if (data?.answer) {
+      return `[KNOWLEDGE BASE]\nVERIFIED PRICE ANSWER:\n${String(data.answer)}`;
+    }
     const chunks = Array.isArray(data?.chunks) ? data.chunks : [];
     const relevant = chunks
       .filter((c: { content?: string; similarity?: number }) =>
@@ -521,15 +525,15 @@ serve(async (req) => {
     let chatLog = await getOrCreateChatLog(supabase, profile, body, extracted);
     const collected = { ...(chatLog.metadata?.collected || {}), ...extracted };
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
-    // Build a richer KB search query from the last few user messages so the KB
-    // can match based on full conversation context, not just the single latest
-    // message (which is often vague without the prior turns).
-    const recentUserTurns = history
-      .filter((m) => m.role === "user")
-      .slice(-3)
+    // Build the KB search query from recent turns of BOTH roles: a follow-up like
+    // "yes give me details" only carries meaning through the assistant turn that
+    // named the thing ("that property"), so user-only context misses the referent.
+    const recentTurns = history
+      .slice(-6)
       .map((m) => m.content)
-      .join(" ");
-    const kbContext = await fetchKbContext(profile.id, recentUserTurns || message);
+      .join(" ")
+      .slice(-1500);
+    const kbContext = await fetchKbContext(profile.id, recentTurns || message);
     const contactContext = await loadContactContext(supabase, profile.id, {
       phone: collected.contact_phone as string | undefined,
       email: collected.contact_email as string | undefined,
