@@ -2,11 +2,12 @@
 
 const { buildCallerIntakeSection } = require("./lib/callerIntake");
 
-function buildSystemPrompt(profile, { contactBlock, integrationBlock, callerId } = {}) {
+function buildSystemPrompt(profile, { contactBlock, statusBlock, integrationBlock, callerId } = {}) {
   const parts = [];
   const metadata = profile.metadata || {};
 
   if (integrationBlock) parts.push(integrationBlock);
+  if (statusBlock) parts.push(statusBlock);
   if (contactBlock) parts.push(contactBlock);
 
   const intake = buildCallerIntakeSection({ callerId, metadata });

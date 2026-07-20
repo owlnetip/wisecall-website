@@ -80,12 +80,20 @@ async function fetchRecentInteractions(
 async function fetchOpenFollowUps(supabase: any, contactId: string) {
   const { data } = await supabase
     .from("wisecall_follow_ups")
-    .select("id, title, description, created_at")
+    .select("id, title, description, created_at, priority, category, due_at, status, snoozed_until")
     .eq("contact_id", contactId)
-    .eq("status", "open")
+    .in("status", ["open", "snoozed"])
     .order("created_at", { ascending: false })
-    .limit(5);
-  return data ?? [];
+    .limit(8);
+
+  const now = Date.now();
+  return (data ?? [])
+    .filter((item: Record<string, unknown>) => {
+      if (item.status === "open") return true;
+      if (item.status !== "snoozed" || !item.snoozed_until) return false;
+      return new Date(String(item.snoozed_until)).getTime() <= now;
+    })
+    .slice(0, 5);
 }
 
 export async function resolveContact(
@@ -102,7 +110,9 @@ export async function resolveContact(
   if (phone) {
     const { data } = await supabase
       .from("wisecall_contacts")
-      .select("id, name, phone, email, call_count, email_count, last_seen, ai_summary, notes, metadata")
+      .select(
+        "id, name, phone, email, call_count, email_count, last_seen, ai_summary, notes, metadata, relationship_status, open_case_summary, key_facts, last_outcome, priority_score",
+      )
       .eq("profile_id", profileId)
       .eq("phone", phone)
       .maybeSingle();
@@ -112,7 +122,9 @@ export async function resolveContact(
   if (email) {
     const { data } = await supabase
       .from("wisecall_contacts")
-      .select("id, name, phone, email, call_count, email_count, last_seen, ai_summary, notes, metadata")
+      .select(
+        "id, name, phone, email, call_count, email_count, last_seen, ai_summary, notes, metadata, relationship_status, open_case_summary, key_facts, last_outcome, priority_score",
+      )
       .eq("profile_id", profileId)
       .eq("email", email)
       .maybeSingle();
@@ -181,16 +193,35 @@ export function buildMemoryBlock(context: {
 
   const meta = (contact?.metadata as Record<string, unknown> | null) ?? {};
   const lines: string[] = ["[CONTACT MEMORY: you have dealt with this person before]"];
+  const openCase =
+    typeof contact?.open_case_summary === "string"
+      ? String(contact.open_case_summary).trim()
+      : "";
 
   if (contact?.name) lines.push(`Name: ${contact.name}`);
   if (contact?.phone) lines.push(`Phone: ${contact.phone}`);
   if (contact?.email) lines.push(`Email: ${contact.email}`);
   if (meta.company) lines.push(`Company: ${meta.company}`);
+  if (contact?.relationship_status) {
+    lines.push(`Relationship: ${String(contact.relationship_status)}`);
+  }
 
   if (contact) {
     lines.push(
       `Previous interactions: ${contact.call_count ?? 0} call(s), ${contact.email_count ?? 0} email(s)`,
     );
+  }
+
+  if (openCase) {
+    lines.push("", `Open case / last subject: ${openCase}`);
+  }
+
+  const keyFacts = Array.isArray(contact?.key_facts) ? contact.key_facts : [];
+  if (keyFacts.length) {
+    lines.push("", "Key facts:");
+    for (const fact of keyFacts.slice(0, 6)) {
+      if (typeof fact === "string" && fact.trim()) lines.push(`- ${fact.trim()}`);
+    }
   }
 
   const recentLogs = context.recentLogs ?? [];
@@ -205,21 +236,31 @@ export function buildMemoryBlock(context: {
   if (openFollowUps.length) {
     lines.push("", "Open follow-ups from prior interactions:");
     for (const item of openFollowUps) {
+      const pri = item.priority ? ` [${item.priority}]` : "";
       lines.push(
-        `- ${item.title}${item.description ? `: ${String(item.description).slice(0, 120)}` : ""}`,
+        `- ${item.title}${pri}${item.description ? `: ${String(item.description).slice(0, 120)}` : ""}`,
       );
     }
   }
 
   if (contact?.notes) lines.push("", `Staff notes: ${contact.notes}`);
 
-  lines.push(
-    "",
-    "Guidance:",
-    "- Reference prior conversations naturally when the topic may relate.",
-    "- If this sounds like a prior issue, ask briefly whether it's the same matter or something new.",
-    "- Do not re-ask for details already captured above.",
-  );
+  lines.push("", "Guidance:");
+  if (contact?.name) {
+    lines.push(`- Greet them by name (${String(contact.name)}).`);
+  }
+  if (openCase) {
+    lines.push(
+      `- Early on, ask once whether they are contacting about the open case ("${openCase.slice(0, 120)}") or something new.`,
+    );
+    lines.push("- If same matter: continue that thread without re-asking known details.");
+    lines.push("- If new matter: take fresh intake and leave the old case on file.");
+  } else {
+    lines.push(
+      "- If this sounds like a prior issue, ask briefly whether it's the same matter or something new.",
+    );
+  }
+  lines.push("- Do not re-ask for details already captured above.");
 
   return lines.join("\n");
 }

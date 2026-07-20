@@ -3,6 +3,7 @@
 
 const { getSupabase } = require("./supabase");
 const { loadContactContext, buildContextBlock, upsertContact } = require("./contactMemory");
+const { resolveCallerStatusFlags } = require("./statusFlags");
 const {
   runBeforeCallWebhooks,
   buildDuringCallTools,
@@ -72,8 +73,12 @@ async function prepareCallSession(profile, { callId, callerId }) {
   ]);
 
   const contactBlock = buildContextBlock(contactContext);
+  const status = await resolveCallerStatusFlags(getSupabase(), profile, contactContext, {
+    phone: callerId,
+  });
   const systemPrompt = buildSystemPrompt(profile, {
     contactBlock,
+    statusBlock: status.block,
     integrationBlock: pre.contextBlock,
     callerId,
   });
@@ -88,6 +93,8 @@ async function prepareCallSession(profile, { callId, callerId }) {
     context,
     systemPrompt,
     contactBlock,
+    statusBlock: status.block,
+    statusFlags: status.flags,
     integrationBlock: pre.contextBlock,
     preCallResults: pre.results,
     integrationTools,

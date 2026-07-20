@@ -81,12 +81,18 @@ async function fetchOpenFollowUps(sb, contactId) {
   if (!sb || !contactId) return [];
   const { data } = await sb
     .from("wisecall_follow_ups")
-    .select("id, title, description, created_at")
+    .select("id, title, description, created_at, priority, category, due_at, status, snoozed_until")
     .eq("contact_id", contactId)
-    .eq("status", "open")
+    .in("status", ["open", "snoozed"])
     .order("created_at", { ascending: false })
-    .limit(5);
-  return data ?? [];
+    .limit(8);
+
+  const now = Date.now();
+  return (data ?? []).filter((item) => {
+    if (item.status === "open") return true;
+    if (item.status !== "snoozed" || !item.snoozed_until) return false;
+    return new Date(item.snoozed_until).getTime() <= now;
+  }).slice(0, 5);
 }
 
 async function resolveContact(sb, profileId, { phone: rawPhone, email: rawEmail }) {
@@ -99,7 +105,9 @@ async function resolveContact(sb, profileId, { phone: rawPhone, email: rawEmail 
   if (phone) {
     const { data } = await sb
       .from("wisecall_contacts")
-      .select("id, name, phone, email, call_count, email_count, last_seen, ai_summary, notes, metadata")
+      .select(
+        "id, name, phone, email, call_count, email_count, last_seen, ai_summary, notes, metadata, relationship_status, open_case_summary, key_facts, last_outcome, priority_score",
+      )
       .eq("profile_id", profileId)
       .eq("phone", phone)
       .maybeSingle();
@@ -109,7 +117,9 @@ async function resolveContact(sb, profileId, { phone: rawPhone, email: rawEmail 
   if (email) {
     const { data } = await sb
       .from("wisecall_contacts")
-      .select("id, name, phone, email, call_count, email_count, last_seen, ai_summary, notes, metadata")
+      .select(
+        "id, name, phone, email, call_count, email_count, last_seen, ai_summary, notes, metadata, relationship_status, open_case_summary, key_facts, last_outcome, priority_score",
+      )
       .eq("profile_id", profileId)
       .eq("email", email)
       .maybeSingle();
@@ -182,12 +192,18 @@ function buildContextBlock(context) {
 
   const meta = contact?.metadata && typeof contact.metadata === "object" ? contact.metadata : {};
   const lines = ["[CALLER MEMORY]"];
+  const openCase =
+    typeof contact?.open_case_summary === "string" ? contact.open_case_summary.trim() : "";
 
   if (contact?.name) lines.push(`Name: ${contact.name}`);
   if (contact?.phone) lines.push(`Phone: ${contact.phone}`);
   if (contact?.email) lines.push(`Email: ${contact.email}`);
   if (meta.company) lines.push(`Company: ${meta.company}`);
   if (meta.callback_phone) lines.push(`Confirmed callback number: ${meta.callback_phone}`);
+  if (contact?.relationship_status) {
+    lines.push(`Relationship: ${contact.relationship_status}`);
+  }
+  if (contact?.last_outcome) lines.push(`Last outcome: ${contact.last_outcome}`);
 
   if (contact?.call_count != null || contact?.email_count != null) {
     lines.push(
@@ -202,6 +218,18 @@ function buildContextBlock(context) {
     );
   }
 
+  if (openCase) {
+    lines.push("", `Open case / last subject: ${openCase}`);
+  }
+
+  const keyFacts = Array.isArray(contact?.key_facts) ? contact.key_facts : [];
+  if (keyFacts.length) {
+    lines.push("", "Key facts:");
+    for (const fact of keyFacts.slice(0, 6)) {
+      if (typeof fact === "string" && fact.trim()) lines.push(`- ${fact.trim()}`);
+    }
+  }
+
   const recentLogs = context?.recentLogs ?? [];
   if (recentLogs.length) {
     lines.push("", "Recent conversations (newest first, all channels):");
@@ -214,20 +242,36 @@ function buildContextBlock(context) {
   if (openFollowUps.length) {
     lines.push("", "Open follow-ups from prior interactions:");
     for (const item of openFollowUps) {
-      lines.push(`- ${item.title}${item.description ? `: ${item.description.slice(0, 120)}` : ""}`);
+      const pri = item.priority ? ` [${item.priority}]` : "";
+      lines.push(
+        `- ${item.title}${pri}${item.description ? `: ${item.description.slice(0, 120)}` : ""}`,
+      );
     }
   }
 
   if (contact?.notes) lines.push("", `Staff notes: ${contact.notes}`);
 
-  lines.push(
-    "",
-    "Guidance:",
-    "- Greet by name if known. Reference prior conversations naturally when the topic may relate.",
-    "- If the caller's issue sounds similar to a recent thread above, ask briefly whether it's the same matter or something new.",
-    "- Do not re-ask for details already captured in notes or recent conversations.",
-    "- Do not read this block verbatim to the caller.",
-  );
+  lines.push("", "Guidance:");
+  if (contact?.name) {
+    lines.push(`- Greet them by name (${contact.name}).`);
+  } else {
+    lines.push("- Greet by name if known.");
+  }
+  if (openCase) {
+    lines.push(
+      `- Early in the call, ask once whether they are calling about the open case ("${openCase.slice(0, 120)}") or something new.`,
+    );
+    lines.push(
+      "- If same matter: continue that thread, do not re-ask details already known, and keep the open follow-ups in mind.",
+    );
+    lines.push("- If new matter: take fresh intake and leave the old case on file.");
+  } else {
+    lines.push(
+      "- If the caller's issue sounds similar to a recent thread above, ask briefly whether it's the same matter or something new.",
+    );
+  }
+  lines.push("- Do not re-ask for details already captured in notes or recent conversations.");
+  lines.push("- Do not read this block verbatim to the caller.");
 
   return lines.join("\n");
 }

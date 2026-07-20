@@ -105,10 +105,12 @@ test("buildSystemPrompt prepends integration and contact blocks", () => {
     { system_prompt: "You are the receptionist." },
     {
       contactBlock: "[CALLER MEMORY]\nName: Sam",
+      statusBlock: "[CALLER STATUS FLAGS]\nFlag: Overdue",
       integrationBlock: "[INTEGRATION CONTEXT]\nlookup: found",
     },
   );
   assert.match(prompt, /^\[INTEGRATION CONTEXT\]/);
+  assert.match(prompt, /\[CALLER STATUS FLAGS\]/);
   assert.match(prompt, /\[CALLER MEMORY\]/);
   assert.match(prompt, /You are the receptionist\./);
 });

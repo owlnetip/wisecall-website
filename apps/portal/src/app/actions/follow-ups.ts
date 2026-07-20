@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
+import { defaultSnoozeUntil } from "@/lib/follow-up-priority";
 import type { FollowUpStatus } from "@/lib/follow-ups";
 
 async function assertOwnsFollowUp(followUpId: string, userId: string): Promise<boolean> {
@@ -33,6 +34,7 @@ async function assertOwnsFollowUp(followUpId: string, userId: string): Promise<b
 export async function updateFollowUpStatus(
   followUpId: string,
   status: FollowUpStatus,
+  options?: { snoozedUntil?: string | null },
 ): Promise<{ ok: boolean; error?: string }> {
   const supabaseAuth = await createSupabaseServerClient();
   const {
@@ -51,6 +53,12 @@ export async function updateFollowUpStatus(
     updated_at: new Date().toISOString(),
     completed_at: status === "done" ? new Date().toISOString() : null,
   };
+
+  if (status === "snoozed") {
+    patch.snoozed_until = options?.snoozedUntil || defaultSnoozeUntil(24);
+  } else {
+    patch.snoozed_until = null;
+  }
 
   const { error } = await supabase.from("wisecall_follow_ups").update(patch).eq("id", followUpId);
   if (error) return { ok: false, error: error.message };
