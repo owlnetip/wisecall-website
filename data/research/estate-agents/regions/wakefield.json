@@ -1,0 +1,37 @@
+{
+  "id": "wakefield",
+  "name": "Wakefield",
+  "postcode_regex": "^WF[0-9]",
+  "area_column": "area",
+  "file_prefix": "wakefield-wf-estate",
+  "overrides_file": "wakefield-estate-manual-overrides.json",
+  "core_outward_codes": [
+    "WF1", "WF2", "WF3", "WF4", "WF5", "WF6", "WF7", "WF8", "WF9", "WF10", "WF11", "WF12", "WF13", "WF14", "WF15", "WF16", "WF17"
+  ],
+  "core_segment_prefix": "wakefield-core",
+  "area_labels": {
+    "WF1": "Wakefield Central",
+    "WF2": "Wakefield East",
+    "WF3": "Ossett",
+    "WF4": "Horbury",
+    "WF5": "Normanton",
+    "WF6": "Featherstone",
+    "WF7": "Castleford",
+    "WF8": "Pontefract",
+    "WF9": "Pontefract",
+    "WF10": "Knottingley",
+    "WF11": "Normanton",
+    "WF12": "Dewsbury",
+    "WF13": "Dewsbury",
+    "WF14": "Mirfield",
+    "WF15": "Batley",
+    "WF16": "Batley",
+    "WF17": "Batley"
+  },
+  "data_source": "companies_house",
+  "country": "england",
+  "search_city": "Wakefield",
+  "postcode_prefixes": [
+    "WF1", "WF2", "WF3", "WF4", "WF5", "WF6", "WF7", "WF8", "WF9", "WF10", "WF11", "WF12", "WF13", "WF14", "WF15", "WF16", "WF17"
+  ]
+}

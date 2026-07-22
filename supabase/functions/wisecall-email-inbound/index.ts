@@ -36,6 +36,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { buildMemoryBlock, loadContactContext, triggerPortalAnalysis } from "../_shared/contact-memory.ts";
+import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 
 const INBOUND_DOMAIN = Deno.env.get("WISECALL_EMAIL_INBOUND_DOMAIN") || "in.wisecall.io";
 const CLAUDE_MODEL = "claude-opus-4-8";
@@ -369,33 +370,7 @@ const KB_MIN_SIMILARITY = 0.35;
 // verified price answers from keyword/price-line extraction when present.
 async function fetchKbContext(profileId: string, query: string): Promise<string | null> {
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !svcKey || !profileId || !query) return null;
-    const res = await fetch(`${supabaseUrl}/functions/v1/wisecall-kb-search`, {
-      method: "POST",
-      headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ profile_id: profileId, query, match_count: 4 }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (typeof data?.context === "string" && data.context.trim()) {
-      return data.context.trim();
-    }
-    if (data?.answer) {
-      return [
-        "[KNOWLEDGE BASE]",
-        "VERIFIED PRICE ANSWER (quote these figures in your reply; do not say prices are unavailable):",
-        String(data.answer),
-      ].join("\n");
-    }
-    const chunks = Array.isArray(data?.chunks) ? data.chunks : [];
-    const relevant = chunks
-      .filter((c: { content?: string; similarity?: number }) =>
-        c?.content && typeof c.similarity === "number" && c.similarity >= KB_MIN_SIMILARITY)
-      .map((c: { content: string }) => c.content);
-    if (!relevant.length) return null;
-    return "[KNOWLEDGE BASE]\n" + relevant.join("\n---\n");
+    return await fetchMergedKbContext(profileId, query);
   } catch (e) {
     console.error("[wisecall-email-inbound] kb context:", (e as Error).message);
     return null;
@@ -586,6 +561,8 @@ Deno.serve(async (req) => {
     `- Sign off as the ${businessName} team.`,
     "- Do not invent availability, prices, or confirmations you cannot verify.",
     "- If a [KNOWLEDGE BASE] block includes a VERIFIED PRICE ANSWER or Direct price matches, quote those £ figures clearly in the reply. Do not say prices must be confirmed by the team when those figures are present.",
+    "- If a [PROPERTY BUDGET SEARCH] block is provided, use it as the authoritative list for budget/property questions.",
+    PROPERTY_BUDGET_PROMPT_RULES,
     "- If you need information only a human or a booking system can provide, and the knowledge base does not cover it, say you'll pass it to the team and they'll follow up, and capture what you can.",
     "- Never mention that you are an AI unless asked directly.",
     "",

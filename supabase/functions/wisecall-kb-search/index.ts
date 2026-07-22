@@ -11,6 +11,8 @@
 // rather than a bespoke shared secret; KB content is low-sensitivity business info).
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, JINA_API_KEY.
 
+import { fetchPropertyBudgetContext } from "../_shared/kb-property-budget-lookup.ts";
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-wisecall-secret",
@@ -172,12 +174,17 @@ Deno.serve(async (req: Request) => {
     title: r.title,
     similarity: r.similarity,
   }));
-  // A single context block the agent can drop into its prompt.
-  const context = chunks.length
+
+  const budgetContext = await fetchPropertyBudgetContext(supabaseUrl, svcKey, profileId, query);
+  const semanticContext = chunks.length
     ? "[KNOWLEDGE BASE]\n" +
       chunks.map((c: { content: string }) => c.content).join("\n---\n") +
       "\nUse this to answer accurately; don't read it out verbatim."
     : null;
+  const context =
+    budgetContext && semanticContext
+      ? `${budgetContext}\n\n${semanticContext}`
+      : budgetContext || semanticContext;
 
-  return json({ ok: true, chunks, context });
+  return json({ ok: true, chunks, context, budget_context: budgetContext || null });
 });

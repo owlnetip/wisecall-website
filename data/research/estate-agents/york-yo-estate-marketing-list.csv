@@ -1,0 +1,3 @@
+company_name,company_number,registered_office_address,postcode,phone,website,sic_codes,company_status,date_of_creation,director_names,director_roles,officer_count,crm_detected,crm_confidence,crm_evidence,blast_segment,wisecall_tier,corporate_group,corporate_group_name,area,source,notes
+INDIGO GREENS ESTATE AGENTS LTD,10960680,"Raylor Centre, James Street, York, YO10 3DW, England",YO10 3DW,,,68310,active,2017-09-13,,,0,,,,Unknown CRM - manual check,Tier 3 - Unknown CRM (qualify on call),No,,Fulford,Companies House API,
+CPH ESTATE AGENTS LTD,09426471,"19 St. Thomas Street, Scarborough, North Yorkshire, YO11 1DY, England",YO11 1DY,,,68310,active,2015-02-06,,,0,,,,Unknown CRM - manual check,Tier 3 - Unknown CRM (qualify on call),No,,YO11,Companies House API,

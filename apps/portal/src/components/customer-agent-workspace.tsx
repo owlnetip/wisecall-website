@@ -77,6 +77,7 @@ import {
   type KnowledgeSearchChunk,
 } from "@/app/actions/knowledge-base";
 import { DEMO_KB_TITLE_PREFIX } from "@/lib/demo-knowledge-base";
+import { DEFAULT_VOICE_ID, voiceOptions, type VoiceOption } from "@/lib/voices";
 import type { CallLog, CallChannel } from "@/lib/agents";
 import { friendlyOutcome } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
@@ -98,10 +99,6 @@ import { ContactsView } from "./contacts-view";
 import { ViewingsView } from "./viewings-view";
 import { CalendarBookingCard } from "./calendar-booking-card";
 import { RaiseTicketModal } from "./raise-ticket-modal";
-import {
-  FEATURED_CARTESIA_VOICES,
-  type CartesiaVoiceOption,
-} from "@/lib/cartesia-voices";
 import {
   buildEstateAgentGreeting,
   buildEstateAgentPrompt,
@@ -261,10 +258,6 @@ export type Assistant = {
 // Keys are mon,tue,wed,thu,fri,sat,sun. The runtime reads metadata.office_hours
 // to switch the agent into after-hours message-taking mode when closed.
 export type OfficeHours = Record<string, { open: string; close: string }>;
-
-// Featured voices (always shown). Full en-GB library loads server-side when
-// CARTESIA_API_KEY is set — see listCartesiaVoices().
-export const cartesiaVoices: CartesiaVoiceOption[] = FEATURED_CARTESIA_VOICES;
 
 export const demoAssistants: Assistant[] = [
   {
@@ -1495,7 +1488,6 @@ export function CustomerAgentWorkspace({
   initialFollowUps = [],
   initialSelectedAgentId,
   loadIssues = [],
-  availableVoices = FEATURED_CARTESIA_VOICES,
 }: {
   initialAssistants?: Assistant[];
   callLogs?: CallLog[];
@@ -1517,8 +1509,6 @@ export function CustomerAgentWorkspace({
   initialFollowUps?: FollowUp[];
   initialSelectedAgentId?: string;
   loadIssues?: string[];
-  /** Featured + Cartesia en-GB voices (from dashboard server load). */
-  availableVoices?: CartesiaVoiceOption[];
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? []);
   // A real customer with no agents yet has an empty list, don't assume [0] exists.
@@ -1685,7 +1675,7 @@ export function CustomerAgentWorkspace({
     const receptionist = `${business} assistant`;
     const prompt = template.buildPrompt(business, receptionist);
     const greeting = template.buildGreeting(business, receptionist);
-    const voice = availableVoices[0]?.id || cartesiaVoices[0].id;
+    const voice = DEFAULT_VOICE_ID;
     const knowledgeFields = template.defaultKnowledgeFields ?? {};
     const knowledge = composeKnowledge(knowledgeFields);
     const contacts = template.defaultContacts?.() ?? [];
@@ -1746,7 +1736,7 @@ export function CustomerAgentWorkspace({
   // AI setup wizard finish: create the drafted agent, then apply the fields
   // createAgent doesn't take (website + office hours), and open it for review.
   async function createFromDraft(draft: AgentDraft): Promise<WizardResult> {
-    const voice = draft.voice || availableVoices[0]?.id || cartesiaVoices[0].id;
+    const voice = draft.voice || DEFAULT_VOICE_ID;
     const contacts = draft.contacts ?? [];
     const defaultEmail = (draft.defaultEmail ?? "").trim();
     const result = await createAgent({
@@ -2344,7 +2334,7 @@ export function CustomerAgentWorkspace({
                 whatsappNumber={
                   whatsappNumbers?.find((n) => n.profileId === selectedAssistant.id)?.whatsappNumber
                 }
-                voices={availableVoices}
+                voices={voiceOptions}
               />
             )}
 
@@ -2427,7 +2417,7 @@ export function CustomerAgentWorkspace({
             setWizardOpen(false);
             setCreateOpen(true);
           }}
-          voices={availableVoices}
+          voices={voiceOptions}
           templates={agentTemplates}
           accountEmail={userEmail ?? ""}
         />
@@ -2722,7 +2712,7 @@ function AssistantDetail({
   adminMode = false,
   smsNumber,
   whatsappNumber,
-  voices = FEATURED_CARTESIA_VOICES,
+  voices = voiceOptions,
 }: {
   assistant: Assistant;
   tab: DetailTab;
@@ -2748,7 +2738,7 @@ function AssistantDetail({
   adminMode?: boolean;
   smsNumber?: string;
   whatsappNumber?: string;
-  voices?: CartesiaVoiceOption[];
+  voices?: VoiceOption[];
 }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
@@ -5669,9 +5659,9 @@ function PromptModal({
   );
 }
 
-// Lets the customer pick a Cartesia voice and hear a sample. The sample reads
-// the agent's own greeting, so they preview exactly what callers will hear. All
-// synthesis happens server-side (testVoice); we just play the returned mp3.
+// Lets the customer pick a voice and hear a sample. The sample reads the agent's
+// own greeting, so they preview exactly what callers will hear. All synthesis
+// happens server-side (testVoice); we just play the returned mp3.
 function VoicePicker({
   selected,
   greeting,
@@ -5680,7 +5670,7 @@ function VoicePicker({
 }: {
   selected: string;
   greeting: string;
-  voices: CartesiaVoiceOption[];
+  voices: VoiceOption[];
   onSelect: (voice: string) => void;
 }) {
   const [loadingVoice, setLoadingVoice] = useState<string | null>(null);

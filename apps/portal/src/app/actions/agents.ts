@@ -21,12 +21,13 @@ import {
 } from "@/lib/integration-webhooks";
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
 import { buildEstateViewingWebhook } from "@/lib/estate-agent-template";
+import { getVoiceOption } from "@/lib/voices";
 import {
-  cartesiaVoiceEnvMap,
-  loadCartesiaVoiceOptions,
-  resolveCartesiaVoiceUuid,
-  type CartesiaVoiceOption,
-} from "@/lib/cartesia-voices";
+  getCartesiaVoiceId,
+  getElevenLabsPreviewSpeed,
+  getVoiceRuntimeConfig,
+  resolveVoiceRuntime,
+} from "@/lib/voice-runtime";
 
 export type AgentPatch = {
   name?: string;
@@ -113,22 +114,6 @@ function morProvisionHeaders(serviceRoleKey: string): Record<string, string> {
   return headers;
 }
 
-function resolveCartesiaVoiceId(voice: string | null | undefined): string | null {
-  return resolveCartesiaVoiceUuid(voice, cartesiaVoiceEnvMap());
-}
-
-/** Voices for the setup wizard and agent editor (featured + Cartesia en-GB library). */
-export async function listCartesiaVoices(): Promise<
-  { ok: true; voices: CartesiaVoiceOption[] } | { ok: false; error: string }
-> {
-  try {
-    const voices = await loadCartesiaVoiceOptions();
-    return { ok: true, voices };
-  } catch (e) {
-    return { ok: false, error: (e as Error).message };
-  }
-}
-
 // Creates a brand-new agent owned by the signed-in user. The first real DDI for
 // an owner is included and goes live when assignment succeeds. Extra numbered
 // agents stay in setup until an additional number is provisioned/charged.
@@ -163,6 +148,9 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
   const base = slugify(`${input.name}-${input.businessName}`) || "agent";
   const slug = `${base}-${crypto.randomUUID().slice(0, 8)}`;
 
+  const voiceName = input.voice ?? "Gemma";
+  const { ttsProvider, voiceId } = resolveVoiceRuntime(voiceName);
+
   const metadata: Record<string, unknown> = {
     owner_id: user.id,
     industry: input.industry,
@@ -172,7 +160,9 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     // opt-in individually.
     learning_enabled: true,
     greeting: input.greeting ?? "",
-    voice: input.voice ?? "Gemma",
+    voice: voiceName,
+    tts_provider: ttsProvider,
+    tts_voice_id: voiceId,
     knowledge: input.knowledge ?? "",
     knowledge_fields: input.knowledgeFields ?? {},
     default_routing_email: "",
@@ -215,9 +205,9 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
       business_context: input.knowledge ?? "",
       timezone: input.timezone ?? "Europe/London",
       is_active: false,
-      // Column the live runtime reads for the Cartesia voice. Without this the
-      // chosen voice (metadata.voice) is ignored and the agent uses the default.
-      cartesia_voice_id: resolveCartesiaVoiceId(input.voice ?? "Gemma"),
+      // Column the live runtime reads for the TTS voice UUID. metadata.tts_provider
+      // tells the runtime which engine (cartesia vs elevenlabs) to use.
+      cartesia_voice_id: voiceId,
       metadata,
     })
     .select("id")
@@ -455,7 +445,12 @@ export async function updateAgent(
   if (patch.fallbackEmail !== undefined) nextMetadata.fallback_email = patch.fallbackEmail;
   if (patch.transferNumber !== undefined) nextMetadata.transfer_number = patch.transferNumber;
   if (patch.greeting !== undefined) nextMetadata.greeting = patch.greeting;
-  if (patch.voice !== undefined) nextMetadata.voice = patch.voice;
+  if (patch.voice !== undefined) {
+    nextMetadata.voice = patch.voice;
+    const { ttsProvider, voiceId } = resolveVoiceRuntime(patch.voice);
+    nextMetadata.tts_provider = ttsProvider;
+    nextMetadata.tts_voice_id = voiceId;
+  }
   if (patch.knowledge !== undefined) nextMetadata.knowledge = patch.knowledge;
   if (patch.knowledgeFields !== undefined) nextMetadata.knowledge_fields = patch.knowledgeFields;
   if (patch.defaultEmail !== undefined) {
@@ -499,9 +494,11 @@ export async function updateAgent(
   // metadata copies above stay mirrored for backward compatibility.
   if (patch.greeting !== undefined) update.greeting = patch.greeting;
   if (patch.knowledge !== undefined) update.business_context = patch.knowledge;
-  // Voice: write the cartesia_voice_id column the live runtime reads (the
-  // metadata.voice mirror above is not what the phone agent uses).
-  if (patch.voice !== undefined) update.cartesia_voice_id = resolveCartesiaVoiceId(patch.voice);
+  // Voice: write the cartesia_voice_id column the live runtime reads plus
+  // metadata.tts_provider so the phone agent picks the right TTS engine.
+  if (patch.voice !== undefined) {
+    update.cartesia_voice_id = resolveVoiceRuntime(patch.voice).voiceId;
+  }
   // After-hours message is a column the live runtime reads (settings.js greeting,
   // prompt.js after-hours section). Write it so edits reach the phone agent.
   if (patch.outOfHoursMessage !== undefined) update.after_hours_message = patch.outOfHoursMessage;
@@ -600,30 +597,65 @@ export type TestVoiceResult = {
 // live call pipeline, both default to Sonic 3.5. Override with CARTESIA_MODEL.
 const CARTESIA_MODEL = process.env.CARTESIA_MODEL || "sonic-3.5";
 
-// Synthesises a short sample with the chosen Cartesia voice and returns it as
-// base64 mp3 for in-browser playback. The API key stays server-side. Used by the
-// "Test voice" button in the agent editor.
-export async function testVoice(voice: string, text?: string): Promise<TestVoiceResult> {
-  const auth = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await auth.auth.getUser();
-  if (!user) return { ok: false, error: "Not signed in." };
+// ElevenLabs model for in-portal voice preview. Override with ELEVENLABS_MODEL.
+const ELEVENLABS_MODEL = process.env.ELEVENLABS_MODEL || "eleven_turbo_v2_5";
 
+async function synthesizeElevenLabsPreview(
+  voiceName: string,
+  voiceId: string,
+  sample: string,
+): Promise<TestVoiceResult> {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) return { ok: false, error: "Voice preview isn't switched on yet." };
+
+  try {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: "POST",
+      headers: {
+        "xi-api-key": apiKey,
+        "Content-Type": "application/json",
+        Accept: "audio/mpeg",
+      },
+      body: JSON.stringify({
+        text: sample.slice(0, 300),
+        model_id: ELEVENLABS_MODEL,
+        voice_settings: {
+          stability: 0.45,
+          similarity_boost: 0.75,
+          speed: getElevenLabsPreviewSpeed(voiceName),
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      return {
+        ok: false,
+        error: `Voice preview failed (${res.status}). ${detail.slice(0, 140)}`.trim(),
+      };
+    }
+
+    const buf = Buffer.from(await res.arrayBuffer());
+    return { ok: true, audio: buf.toString("base64"), mime: "audio/mpeg" };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Voice preview failed.",
+    };
+  }
+}
+
+async function synthesizeCartesiaPreview(
+  voiceName: string,
+  sample: string,
+): Promise<TestVoiceResult> {
   const apiKey = process.env.CARTESIA_API_KEY;
   if (!apiKey) return { ok: false, error: "Voice preview isn't switched on yet." };
 
-  const voiceId = resolveCartesiaVoiceId(voice);
+  const voiceId = getCartesiaVoiceId(voiceName);
   if (!voiceId) {
-    return {
-      ok: false,
-      error: `No voice id is configured for ${voice} yet.`,
-    };
+    return { ok: false, error: `No voice id is configured for ${voiceName} yet.` };
   }
-
-  const sample =
-    (text || "").trim() ||
-    "Hi there, thanks for calling. How can I help you today?";
 
   try {
     const res = await fetch("https://api.cartesia.ai/tts/bytes", {
@@ -662,6 +694,34 @@ export async function testVoice(voice: string, text?: string): Promise<TestVoice
       error: err instanceof Error ? err.message : "Voice preview failed.",
     };
   }
+}
+
+// Synthesises a short sample with the chosen voice and returns it as base64 mp3
+// for in-browser playback. The API key stays server-side. Used by the "Test
+// voice" button in the agent editor.
+export async function testVoice(voice: string, text?: string): Promise<TestVoiceResult> {
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const selected = getVoiceRuntimeConfig(voice);
+  if (!selected) return { ok: false, error: "Unknown voice." };
+
+  const sample =
+    (text || "").trim() ||
+    "Hi there, thanks for calling. How can I help you today?";
+
+  if (selected.provider === "elevenlabs") {
+    if (!selected.voiceId) {
+      const label = getVoiceOption(voice)?.label ?? voice;
+      return { ok: false, error: `No voice id is configured for ${label} yet.` };
+    }
+    return synthesizeElevenLabsPreview(selected.id, selected.voiceId, sample);
+  }
+
+  return synthesizeCartesiaPreview(selected.id, sample);
 }
 
 export type ProvisionResult = { ok: boolean; routing?: AgentRouting; error?: string };

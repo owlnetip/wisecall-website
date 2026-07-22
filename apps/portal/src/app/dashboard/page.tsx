@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
-import { listCartesiaVoices } from "@/app/actions/agents";
 import { getAgentsForUser, getCallLogsForUser, getSmsNumbersForUser, getWhatsappNumbersForUser } from "@/lib/agents";
 import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, getCallUsage, getWhatsappUsage, getLivechatUsage, getSmsUsage, reconcileBillingFromStripe } from "@/lib/billing";
 import { getContactsForUser } from "@/lib/contacts";
@@ -154,9 +153,6 @@ export default async function DashboardPage() {
     ? scopedAgents.find((agent) => agent.id === scopedAgentId)?.name
     : undefined;
 
-  const voiceList = await listCartesiaVoices();
-  const availableVoices = voiceList.ok ? voiceList.voices : undefined;
-
   return (
     <CustomerAgentWorkspace
       initialAssistants={scopedAgents}
@@ -188,7 +184,6 @@ export default async function DashboardPage() {
       initialFollowUps={scopedFollowUps}
       initialSelectedAgentId={scopedAgentId}
       loadIssues={orderedLoadIssues}
-      availableVoices={availableVoices}
     />
   );
 }

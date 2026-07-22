@@ -28,6 +28,18 @@ const PREVIEW_VOICE: Record<string, string> = {
   Julia: "marin",
   Archie: "cedar",
   Benedict: "cedar",
+  Hamish: "cedar",
+  Fiona: "marin",
+  Isla: "cedar",
+  Callum: "marin",
+  Jane: "marin",
+  Asher: "cedar",
+  Verity: "marin",
+  Lucy: "marin",
+  John: "cedar",
+  Ollie: "cedar",
+  Hugh: "cedar",
+  Leanne: "marin",
 };
 
 function composePreviewInstructions(profile: {

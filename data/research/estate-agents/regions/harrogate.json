@@ -1,0 +1,25 @@
+{
+  "id": "harrogate",
+  "name": "Harrogate",
+  "postcode_regex": "^HG[0-9]",
+  "area_column": "area",
+  "file_prefix": "harrogate-hg-estate",
+  "overrides_file": "harrogate-estate-manual-overrides.json",
+  "core_outward_codes": [
+    "HG1", "HG2", "HG3", "HG4", "HG5"
+  ],
+  "core_segment_prefix": "harrogate-core",
+  "area_labels": {
+    "HG1": "Harrogate Central",
+    "HG2": "Harrogate South",
+    "HG3": "Harrogate West",
+    "HG4": "Ripon",
+    "HG5": "Knaresborough"
+  },
+  "data_source": "companies_house",
+  "country": "england",
+  "search_city": "Harrogate",
+  "postcode_prefixes": [
+    "HG1", "HG2", "HG3", "HG4", "HG5"
+  ]
+}

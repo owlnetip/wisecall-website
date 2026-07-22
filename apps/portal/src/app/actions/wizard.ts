@@ -29,7 +29,7 @@ export type AgentDraft = {
   // Guided-setup extras the wizard fills in after the scan. Defaulted here so a
   // freshly scanned draft is already valid; the user reviews/changes each one.
   templateId: string; // matched agent template (receptionist / dentally …)
-  voice: string; // chosen Cartesia voice id ("" → wizard uses the default)
+  voice: string; // chosen voice id ("" → wizard uses the default)
   defaultEmail: string; // where call messages + transcripts are sent
   contacts: RoutingContact[]; // staff/colleagues for transfers + notifications
 };
