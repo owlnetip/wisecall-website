@@ -20,6 +20,7 @@ import {
   validateIntegrationWebhooks,
 } from "@/lib/integration-webhooks";
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
+import { buildEstateViewingWebhook } from "@/lib/estate-agent-template";
 
 export type AgentPatch = {
   name?: string;
@@ -74,6 +75,9 @@ export type NewAgent = {
   knowledgeFields?: KnowledgeFields;
   contacts?: RoutingContact[];
   timezone?: string;
+  /** Matched portal template id (receptionist / dentally / estate_agent …). */
+  templateId?: string;
+  integrationWebhooks?: IntegrationWebhook[];
 };
 
 export type CreateResult = {
@@ -170,6 +174,28 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     routing_contacts: input.contacts ?? [],
     transfer_routes: toTransferRoutes(input.contacts ?? []),
   };
+  if (input.templateId) metadata.template_id = input.templateId;
+
+  let webhooks = input.integrationWebhooks ?? [];
+  // Estate agents always get the owner-confirm viewing tool wired in.
+  if (input.templateId === "estate_agent" && !webhooks.some((w) => w.name === "request_viewing")) {
+    const supabaseUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+    if (supabaseUrl) {
+      webhooks = [
+        ...webhooks,
+        buildEstateViewingWebhook({
+          supabaseUrl,
+          smsSecret: process.env.WISECALL_SMS_WEBHOOK_SECRET,
+        }),
+      ];
+    }
+  }
+  if (webhooks.length) {
+    const validationError = validateIntegrationWebhooks(webhooks);
+    if (validationError) return { ok: false, error: validationError };
+    metadata.integration_webhooks = serializeIntegrationWebhooks(webhooks);
+  }
 
   const { data, error } = await service
     .from("wisecall_profiles")

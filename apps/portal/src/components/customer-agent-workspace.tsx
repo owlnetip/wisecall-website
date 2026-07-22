@@ -96,7 +96,14 @@ import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 import { CALLER_INTAKE_PROMPT } from "@/lib/caller-intake";
 import { ContactsView } from "./contacts-view";
 import { ViewingsView } from "./viewings-view";
+import { CalendarBookingCard } from "./calendar-booking-card";
 import { RaiseTicketModal } from "./raise-ticket-modal";
+import {
+  buildEstateAgentGreeting,
+  buildEstateAgentPrompt,
+  estateAgentDefaultContacts,
+  estateAgentKnowledgeFields,
+} from "@/lib/estate-agent-template";
 import { SupportChatPanel } from "./support-chat-panel";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
@@ -1321,9 +1328,8 @@ const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "channels", label: "Channels", icon: Layers },
 ];
 
-// Agent templates. For now there's one, a general Receptionist. Future
-// templates (Dental, Property, Legal, integration-specific) slot in here and
-// the create flow picks them up automatically.
+// Agent templates. Receptionist + specialised verticals (Dental, Estate).
+// The create / wizard flows pick these up automatically.
 export type AgentTemplate = {
   id: string;
   label: string;
@@ -1457,6 +1463,18 @@ export const agentTemplates: AgentTemplate[] = [
         useDefaultEmail: false,
       },
     ],
+  },
+  {
+    id: "estate_agent",
+    label: "Estate / lettings agent",
+    description:
+      "Property receptionist for sales and lettings: valuations, owner-confirmed viewings (WhatsApp/SMS), maintenance triage and branch routing.",
+    industry: "Property",
+    available: true,
+    buildPrompt: buildEstateAgentPrompt,
+    buildGreeting: buildEstateAgentGreeting,
+    defaultKnowledgeFields: estateAgentKnowledgeFields(),
+    defaultContacts: estateAgentDefaultContacts,
   },
 ];
 
@@ -1684,6 +1702,7 @@ export function CustomerAgentWorkspace({
         knowledge,
         knowledgeFields,
         contacts,
+        templateId: template.id,
       });
       if (!result.ok || !result.id) {
         setCreateError(result.error ?? "Could not create the assistant.");
@@ -1741,6 +1760,7 @@ export function CustomerAgentWorkspace({
       knowledge: draft.knowledge,
       knowledgeFields: draft.knowledgeFields,
       contacts,
+      templateId: draft.templateId || "receptionist",
     });
     if (!result.ok || !result.id) {
       return { ok: false, error: result.error ?? "Could not create the assistant." };
@@ -3170,6 +3190,7 @@ function AssistantDetail({
         </div>
       ) : (
         <div key="technical" className="anim-fade">
+          <CalendarBookingCard agentId={assistant.id} />
           <PbxExtensionCard agentId={assistant.id} />
           <IntegrationWebhooksCard
             agentId={assistant.id}

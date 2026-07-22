@@ -35,9 +35,18 @@ export type AgentDraft = {
 };
 
 // Maps the AI-detected industry to one of our agent templates so the wizard can
-// pre-select it. Specialised templates (e.g. dental booking) only match on a
-// clear signal; everything else falls back to the general receptionist.
-function matchTemplateId(_industry: string, _context: string): string {
+// pre-select it. Specialised templates (dental / estate) only match on a clear
+// signal; everything else falls back to the general receptionist.
+function matchTemplateId(industry: string, context: string): string {
+  const hay = `${industry} ${context}`.toLowerCase();
+  if (/\b(dental|dentist|dentistry|dentally|hygienist)\b/.test(hay)) return "dentally";
+  if (
+    /\b(estate\s*agent|lettings?|letting\s*agent|property\s*(sales|management|agency)|real\s*estate|realtor|housing\s*association)\b/.test(
+      hay,
+    )
+  ) {
+    return "estate_agent";
+  }
   return "receptionist";
 }
 
