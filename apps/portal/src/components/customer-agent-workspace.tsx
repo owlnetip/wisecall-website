@@ -77,6 +77,7 @@ import {
   type KnowledgeSearchChunk,
 } from "@/app/actions/knowledge-base";
 import { DEMO_KB_TITLE_PREFIX } from "@/lib/demo-knowledge-base";
+import { DEFAULT_VOICE_ID, voiceOptions } from "@/lib/voices";
 import type { CallLog, CallChannel } from "@/lib/agents";
 import { friendlyOutcome } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
@@ -249,18 +250,6 @@ export type Assistant = {
 // Keys are mon,tue,wed,thu,fri,sat,sun. The runtime reads metadata.office_hours
 // to switch the agent into after-hours message-taking mode when closed.
 export type OfficeHours = Record<string, { open: string; close: string }>;
-
-// The voices we offer today, Cartesia's latest model. Labels are what the
-// customer sees; the real Cartesia voice ids are mapped server-side (env) so
-// they never reach the browser.
-export const cartesiaVoices: { id: string; label: string; blurb: string }[] = [
-  { id: "Gemma", label: "Gemma", blurb: "Warm British female" },
-  { id: "Hugo", label: "Hugo", blurb: "Friendly British male" },
-  { id: "Archie", label: "Archie", blurb: "Bright, upbeat male" },
-  { id: "Victoria", label: "Victoria", blurb: "Polished, professional female" },
-  { id: "Benedict", label: "Benedict", blurb: "Calm, reassuring male" },
-  { id: "Julia", label: "Julia", blurb: "Clear, approachable female" },
-];
 
 export const demoAssistants: Assistant[] = [
   {
@@ -1666,7 +1655,7 @@ export function CustomerAgentWorkspace({
     const receptionist = `${business} assistant`;
     const prompt = template.buildPrompt(business, receptionist);
     const greeting = template.buildGreeting(business, receptionist);
-    const voice = cartesiaVoices[0].id;
+    const voice = DEFAULT_VOICE_ID;
     const knowledgeFields = template.defaultKnowledgeFields ?? {};
     const knowledge = composeKnowledge(knowledgeFields);
     const contacts = template.defaultContacts?.() ?? [];
@@ -1726,7 +1715,7 @@ export function CustomerAgentWorkspace({
   // AI setup wizard finish: create the drafted agent, then apply the fields
   // createAgent doesn't take (website + office hours), and open it for review.
   async function createFromDraft(draft: AgentDraft): Promise<WizardResult> {
-    const voice = draft.voice || cartesiaVoices[0].id;
+    const voice = draft.voice || DEFAULT_VOICE_ID;
     const contacts = draft.contacts ?? [];
     const defaultEmail = (draft.defaultEmail ?? "").trim();
     const result = await createAgent({
@@ -2393,7 +2382,7 @@ export function CustomerAgentWorkspace({
             setWizardOpen(false);
             setCreateOpen(true);
           }}
-          voices={cartesiaVoices}
+          voices={voiceOptions}
           templates={agentTemplates}
           accountEmail={userEmail ?? ""}
         />
@@ -5631,9 +5620,9 @@ function PromptModal({
   );
 }
 
-// Lets the customer pick a Cartesia voice and hear a sample. The sample reads
-// the agent's own greeting, so they preview exactly what callers will hear. All
-// synthesis happens server-side (testVoice); we just play the returned mp3.
+// Lets the customer pick a voice and hear a sample. The sample reads the agent's
+// own greeting, so they preview exactly what callers will hear. All synthesis
+// happens server-side (testVoice); we just play the returned mp3.
 function VoicePicker({
   selected,
   greeting,
@@ -5688,7 +5677,7 @@ function VoicePicker({
   return (
     <div>
       <div className="stagger grid gap-3 sm:grid-cols-2">
-        {cartesiaVoices.map((voice) => {
+        {voiceOptions.map((voice) => {
           const isSelected = voice.id === selected;
           const isLoading = loadingVoice === voice.id;
           const isPlaying = playingVoice === voice.id;
