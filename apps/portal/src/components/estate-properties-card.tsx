@@ -7,6 +7,7 @@ import {
   listPropertiesForProfile,
   listViewingsForProfile,
 } from "@/app/actions/viewings";
+import { PropertyCrmCard } from "@/components/property-crm-card";
 import {
   guessAddressColumn,
   guessListingRefColumn,
@@ -133,9 +134,11 @@ export function EstatePropertiesCard({ agentId }: { agentId: string }) {
         </div>
       )}
 
+      <PropertyCrmCard agentId={agentId} onSynced={() => load()} />
+
       <div className="mb-5 rounded-lg border border-dashed border-line bg-card-tint/50 p-4">
         <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
-          Import from CSV / spreadsheet
+          Or import from CSV / spreadsheet
         </p>
         <p className="mb-3 text-xs text-ink-soft">
           Expected columns: <strong>address</strong>, <strong>owner mobile</strong>. Optional:
