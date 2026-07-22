@@ -1376,6 +1376,18 @@ export const agentTemplates: AgentTemplate[] = [
     },
   },
   {
+    id: "estate_agent",
+    label: "Estate agent",
+    description:
+      "Sales & lettings receptionist: valuations, owner-confirmed viewings (WhatsApp/SMS to landlords), maintenance triage and branch routing.",
+    industry: "Property",
+    available: true,
+    buildPrompt: buildEstateAgentPrompt,
+    buildGreeting: buildEstateAgentGreeting,
+    defaultKnowledgeFields: estateAgentKnowledgeFields(),
+    defaultContacts: estateAgentDefaultContacts,
+  },
+  {
     id: "dentally",
     label: "Dental practice (Dentally)",
     description:
@@ -1463,18 +1475,6 @@ export const agentTemplates: AgentTemplate[] = [
         useDefaultEmail: false,
       },
     ],
-  },
-  {
-    id: "estate_agent",
-    label: "Estate / lettings agent",
-    description:
-      "Property receptionist for sales and lettings: valuations, owner-confirmed viewings (WhatsApp/SMS), maintenance triage and branch routing.",
-    industry: "Property",
-    available: true,
-    buildPrompt: buildEstateAgentPrompt,
-    buildGreeting: buildEstateAgentGreeting,
-    defaultKnowledgeFields: estateAgentKnowledgeFields(),
-    defaultContacts: estateAgentDefaultContacts,
   },
 ];
 
