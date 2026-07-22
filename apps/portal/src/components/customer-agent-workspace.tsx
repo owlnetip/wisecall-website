@@ -95,6 +95,7 @@ import { PbxExtensionCard } from "./pbx-extension-card";
 import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 import { CALLER_INTAKE_PROMPT } from "@/lib/caller-intake";
 import { ContactsView } from "./contacts-view";
+import { ViewingsView } from "./viewings-view";
 import { RaiseTicketModal } from "./raise-ticket-modal";
 import { SupportChatPanel } from "./support-chat-panel";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
@@ -113,7 +114,7 @@ import {
   type AgentOperationalState,
 } from "@/lib/agent-operational-state";
 
-type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
+type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "viewings" | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -1315,6 +1316,7 @@ const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "insights", label: "Home", icon: Sparkles },
   { view: "calls", label: "Inbox", icon: Inbox },
   { view: "contacts", label: "Contacts", icon: Users },
+  { view: "viewings", label: "Viewings", icon: CalendarCheck },
   { view: "assistants", label: "Agents", icon: Bot },
   { view: "channels", label: "Channels", icon: Layers },
 ];
@@ -2184,6 +2186,12 @@ export function CustomerAgentWorkspace({
                   <span>Contacts</span>
                 </>
               )}
+              {view === "viewings" && (
+                <>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>Viewings</span>
+                </>
+              )}
               {view === "channels" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -2332,6 +2340,12 @@ export function CustomerAgentWorkspace({
 
             {view === "contacts" && (
               <ContactsView contacts={scopedContacts} callLogs={scopedCallLogs} followUps={scopedFollowUps} />
+            )}
+
+            {view === "viewings" && (
+              <ViewingsView
+                agents={assistants.map((a) => ({ id: a.id, name: a.name || "Agent" }))}
+              />
             )}
 
             {view === "channels" && (
