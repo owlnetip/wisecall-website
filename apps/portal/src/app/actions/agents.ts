@@ -21,6 +21,12 @@ import {
 } from "@/lib/integration-webhooks";
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
 import { buildEstateViewingWebhook } from "@/lib/estate-agent-template";
+import {
+  cartesiaVoiceEnvMap,
+  loadCartesiaVoiceOptions,
+  resolveCartesiaVoiceUuid,
+  type CartesiaVoiceOption,
+} from "@/lib/cartesia-voices";
 
 export type AgentPatch = {
   name?: string;
@@ -107,21 +113,20 @@ function morProvisionHeaders(serviceRoleKey: string): Record<string, string> {
   return headers;
 }
 
-// Cartesia voice catalogue: each selectable voice name → its Cartesia voice
-// UUID (kept in env, CARTESIA_VOICE_<NAME>). Persisted to the cartesia_voice_id
-// column so the live call runtime uses the owner's chosen voice — the runtime
-// reads that column, not metadata.voice.
-const CARTESIA_VOICES: Record<string, string | undefined> = {
-  Gemma: process.env.CARTESIA_VOICE_GEMMA,
-  Hugo: process.env.CARTESIA_VOICE_HUGO,
-  Archie: process.env.CARTESIA_VOICE_ARCHIE,
-  Victoria: process.env.CARTESIA_VOICE_VICTORIA,
-  Benedict: process.env.CARTESIA_VOICE_BENEDICT,
-  Julia: process.env.CARTESIA_VOICE_JULIA,
-};
-
 function resolveCartesiaVoiceId(voice: string | null | undefined): string | null {
-  return (voice && CARTESIA_VOICES[voice]) || null;
+  return resolveCartesiaVoiceUuid(voice, cartesiaVoiceEnvMap());
+}
+
+/** Voices for the setup wizard and agent editor (featured + Cartesia en-GB library). */
+export async function listCartesiaVoices(): Promise<
+  { ok: true; voices: CartesiaVoiceOption[] } | { ok: false; error: string }
+> {
+  try {
+    const voices = await loadCartesiaVoiceOptions();
+    return { ok: true, voices };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
 }
 
 // Creates a brand-new agent owned by the signed-in user. The first real DDI for
@@ -608,9 +613,12 @@ export async function testVoice(voice: string, text?: string): Promise<TestVoice
   const apiKey = process.env.CARTESIA_API_KEY;
   if (!apiKey) return { ok: false, error: "Voice preview isn't switched on yet." };
 
-  const voiceId = CARTESIA_VOICES[voice];
+  const voiceId = resolveCartesiaVoiceId(voice);
   if (!voiceId) {
-    return { ok: false, error: `No voice id is configured for ${voice} yet.` };
+    return {
+      ok: false,
+      error: `No voice id is configured for ${voice} yet.`,
+    };
   }
 
   const sample =

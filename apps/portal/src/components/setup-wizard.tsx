@@ -684,9 +684,14 @@ export function SetupWizard({
                   <p className="mt-2 text-ink-soft">
                     Tap play to hear each voice. This is how your assistant sounds to callers,
                     and you can change it any time.
+                    {voices.length > 6 && (
+                      <span className="mt-1 block text-xs">
+                        {voices.length} British English voices — the top six are our featured picks.
+                      </span>
+                    )}
                   </p>
                 </div>
-                <div className="stagger grid gap-2 sm:grid-cols-2">
+                <div className="stagger grid max-h-[min(420px,50vh)] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                   {voices.map((v) => {
                     const active = selectedVoiceId === v.id;
                     const isPlaying = playingVoice === v.id;

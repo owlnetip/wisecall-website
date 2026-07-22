@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { CustomerAgentWorkspace } from "@/components/customer-agent-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAllAgents, getAllCallLogs, getSmsNumbersForProfiles, getWhatsappNumbersForProfiles } from "@/lib/agents";
+import { listCartesiaVoices } from "@/app/actions/agents";
 import { isAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,9 @@ export default async function AdminPage() {
     calls: counts[agent.id] ?? agent.calls,
   }));
 
+  const voiceList = await listCartesiaVoices();
+  const availableVoices = voiceList.ok ? voiceList.voices : undefined;
+
   return (
     <CustomerAgentWorkspace
       initialAssistants={enriched ?? undefined}
@@ -42,6 +46,7 @@ export default async function AdminPage() {
       userEmail={user.email}
       isAdmin
       adminMode
+      availableVoices={availableVoices}
     />
   );
 }
