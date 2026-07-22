@@ -1,6 +1,6 @@
 // wisecall-viewing-request — create a property viewing request, check agent
-// availability when a calendar connector exists, then ask the owner via
-// WhatsApp (prefer) or SMS whether the proposed slot is ok.
+// availability when a calendar connector exists, email the agent, then ask the
+// owner via SMS whether the proposed slot is ok.
 //
 // Called as a during_call integration webhook or from the portal (service role
 // / shared SMS secret). Mirrors the safety model of wisecall-listing-sms.
@@ -10,7 +10,7 @@
 //
 // Body:
 //   profile_id | profileId (required)
-//   property_id | propertyId  OR  address + owner_phone
+//   property_id | propertyId  OR  address / listing_ref (looked up in register)
 //   starts_at | startsAt (ISO)
 //   ends_at | endsAt (ISO, optional — defaults +30 mins)
 //   viewer_name, viewer_phone / callerId, viewer_email
@@ -78,6 +78,103 @@ function authorised(req: Request): boolean {
   return false;
 }
 
+function asEmailList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
+  return [];
+}
+
+function uniqueEmails(values: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of values) {
+    const email = value.trim();
+    const key = email.toLowerCase();
+    if (!email || seen.has(key)) continue;
+    seen.add(key);
+    out.push(email);
+  }
+  return out;
+}
+
+function agentRecipients(metadata: Record<string, unknown>): string[] {
+  const configured = uniqueEmails([
+    ...asEmailList(metadata.default_routing_email),
+    ...asEmailList(metadata.notification_emails),
+  ]);
+  if (configured.length) return configured;
+  return asEmailList(Deno.env.get("WISECALL_EMAIL_TO") || "info@owlnet.io");
+}
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+async function sendAgentViewingEmail(opts: {
+  businessName: string;
+  metadata: Record<string, unknown>;
+  viewing: Record<string, unknown>;
+  availability: { checked: boolean; available: boolean | null; note: string | null };
+}): Promise<{ ok: boolean; skipped?: string; error?: string }> {
+  const resendKey = Deno.env.get("RESEND_API_KEY");
+  const from = Deno.env.get("RESEND_FROM_EMAIL") ?? "WiseCall <hello@wisecall.io>";
+  if (!resendKey) return { ok: false, skipped: "missing_resend" };
+
+  const to = agentRecipients(opts.metadata);
+  if (!to.length) return { ok: false, skipped: "no_recipients" };
+
+  const slot = new Date(String(opts.viewing.proposed_starts_at)).toLocaleString("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const address = String(opts.viewing.property_address || "Property");
+  const viewerName = String(opts.viewing.viewer_name || "Unknown caller");
+  const viewerPhone = String(opts.viewing.viewer_phone || "—");
+  const ownerName = String(opts.viewing.owner_name || "Owner");
+  const ownerPhone = String(opts.viewing.owner_phone || "—");
+  const availabilityNote = opts.availability.note
+    ? `<p style="margin:0 0 12px;padding:12px;background:#f0faf9;border-radius:8px;">${escapeHtml(opts.availability.note)}</p>`
+    : "";
+
+  const html = `
+    <div style="font-family:system-ui,sans-serif;color:#172929;max-width:560px;">
+      <h2 style="margin:0 0 12px;font-size:18px;">New viewing request</h2>
+      <p style="margin:0 0 16px;color:#4a5c5b;">${escapeHtml(opts.businessName)} · ${escapeHtml(slot)}</p>
+      ${availabilityNote}
+      <p style="margin:0 0 8px;"><strong>Property:</strong> ${escapeHtml(address)}</p>
+      <p style="margin:0 0 8px;"><strong>Viewer:</strong> ${escapeHtml(viewerName)} · ${escapeHtml(viewerPhone)}</p>
+      <p style="margin:0 0 16px;"><strong>Owner:</strong> ${escapeHtml(ownerName)} · ${escapeHtml(ownerPhone)}</p>
+      <p style="margin:0;font-size:12px;color:#7a8a89;">The owner has been texted to confirm. You'll get another update when they reply.</p>
+    </div>`;
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to,
+      subject: `Viewing request · ${address} · ${opts.businessName}`,
+      html,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    return { ok: false, error: `Resend ${res.status}: ${text.slice(0, 200)}` };
+  }
+  return { ok: true };
+}
+
 async function sendSmsViaHelper(opts: {
   phone: string;
   message: string;
@@ -113,33 +210,50 @@ async function sendSmsViaHelper(opts: {
   return { ok: true };
 }
 
-async function sendWhatsapp(opts: {
-  from: string;
-  to: string;
-  body: string;
-}): Promise<{ ok: boolean; error?: string }> {
-  const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-  const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-  if (!accountSid || !authToken) return { ok: false, error: "Twilio not configured" };
-
-  const to = opts.to.startsWith("whatsapp:") ? opts.to : `whatsapp:${opts.to}`;
-  const from = opts.from.startsWith("whatsapp:") ? opts.from : `whatsapp:${opts.from}`;
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ From: from, To: to, Body: opts.body }),
-    },
-  );
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    return { ok: false, error: `Twilio ${res.status}: ${text.slice(0, 200)}` };
-  }
   return { ok: true };
+}
+
+async function lookupProperty(
+  supabase: ReturnType<typeof createClient>,
+  profileId: string,
+  opts: { listingRef?: string | null; address?: string },
+): Promise<Record<string, unknown> | null> {
+  const listingRef = String(opts.listingRef || "").trim();
+  const address = String(opts.address || "").trim();
+
+  if (listingRef) {
+    const { data } = await supabase
+      .from("wisecall_properties")
+      .select("*")
+      .eq("profile_id", profileId)
+      .eq("is_active", true)
+      .ilike("listing_ref", listingRef)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  if (address) {
+    const { data: exact } = await supabase
+      .from("wisecall_properties")
+      .select("*")
+      .eq("profile_id", profileId)
+      .eq("is_active", true)
+      .ilike("address", address)
+      .maybeSingle();
+    if (exact) return exact;
+
+    const { data: fuzzy } = await supabase
+      .from("wisecall_properties")
+      .select("*")
+      .eq("profile_id", profileId)
+      .eq("is_active", true)
+      .ilike("address", `%${address}%`)
+      .limit(1)
+      .maybeSingle();
+    if (fuzzy) return fuzzy;
+  }
+
+  return null;
 }
 
 async function checkAgentAvailability(
@@ -295,31 +409,42 @@ Deno.serve(async (req) => {
     listingRef = prop.listing_ref || listingRef;
     preferredChannel = prop.owner_preferred_channel || preferredChannel;
   } else {
-    if (!address) return json({ success: false, error: "address or property_id required" }, 400);
-    if (!ownerPhone) {
-      return json({ success: false, error: "owner_phone required when property_id is omitted" }, 400);
+    const found = await lookupProperty(supabase, profileId, { listingRef, address });
+    if (found) {
+      propertyId = String(found.id);
+      address = String(found.address || address);
+      ownerPhone = normalisePhone(String(found.owner_phone || "")) || ownerPhone;
+      ownerName = (found.owner_name as string | null) || ownerName;
+      ownerEmail = (found.owner_email as string | null) || ownerEmail;
+      listingRef = (found.listing_ref as string | null) || listingRef;
+      preferredChannel = String(found.owner_preferred_channel || preferredChannel);
+    } else if (address && ownerPhone) {
+      const { data: created, error: propErr } = await supabase
+        .from("wisecall_properties")
+        .insert({
+          profile_id: profileId,
+          address,
+          postcode: String(body.postcode || "").trim() || null,
+          listing_ref: listingRef,
+          listing_url: String(body.listing_url || "").trim() || null,
+          owner_name: ownerName,
+          owner_phone: ownerPhone,
+          owner_email: ownerEmail,
+          owner_preferred_channel: "sms",
+        })
+        .select("id")
+        .single();
+      if (propErr || !created) {
+        return json({ success: false, error: propErr?.message || "failed to create property" }, 500);
+      }
+      propertyId = created.id;
+    } else {
+      return json({
+        success: false,
+        error:
+          "Property not found — import it on the agent (CSV) or provide property_id, listing_ref, or address with owner_phone",
+      }, 400);
     }
-    const { data: created, error: propErr } = await supabase
-      .from("wisecall_properties")
-      .insert({
-        profile_id: profileId,
-        address,
-        postcode: String(body.postcode || "").trim() || null,
-        listing_ref: listingRef,
-        listing_url: String(body.listing_url || "").trim() || null,
-        owner_name: ownerName,
-        owner_phone: ownerPhone,
-        owner_email: ownerEmail,
-        owner_preferred_channel: ["auto", "whatsapp", "sms", "email"].includes(preferredChannel)
-          ? preferredChannel
-          : "auto",
-      })
-      .select("id")
-      .single();
-    if (propErr || !created) {
-      return json({ success: false, error: propErr?.message || "failed to create property" }, 500);
-    }
-    propertyId = created.id;
   }
 
   if (!ownerPhone) {
@@ -359,32 +484,43 @@ Deno.serve(async (req) => {
     return json({ success: false, error: viewErr?.message || "failed to create viewing request" }, 500);
   }
 
+  const profileMetadata = (profile.metadata as Record<string, unknown>) ?? {};
+  const agentEmail = await sendAgentViewingEmail({
+    businessName,
+    metadata: profileMetadata,
+    viewing,
+    availability,
+  });
+  if (agentEmail.ok) {
+    const emailedAt = new Date().toISOString();
+    await supabase
+      .from("wisecall_viewing_requests")
+      .update({
+        confirmation_sent_to_agent_at: emailedAt,
+        updated_at: emailedAt,
+      })
+      .eq("id", viewing.id);
+    await supabase.from("wisecall_viewing_messages").insert({
+      viewing_request_id: viewing.id,
+      profile_id: profileId,
+      direction: "outbound",
+      channel: "email",
+      party: "agent",
+      body: `New viewing request for ${address} at ${startsAt.toISOString()}`,
+      purpose: "confirm_agent",
+    });
+  }
+
   if (body.skip_owner_notify) {
     return json({
       success: true,
       viewing_request_id: viewing.id,
       status: viewing.status,
       agent_availability: availability,
+      agent_email: agentEmail.ok ? "sent" : agentEmail.skipped || agentEmail.error || "failed",
       note: "Created without notifying the owner.",
     });
   }
-
-  // Choose channel: WhatsApp if preferred/auto and agent has an active WA number.
-  const { data: waRow } = await supabase
-    .from("wisecall_whatsapp_numbers")
-    .select("whatsapp_number, status")
-    .eq("profile_id", profileId)
-    .eq("status", "active")
-    .maybeSingle();
-
-  let channel: "whatsapp" | "sms" = "sms";
-  if (
-    (preferredChannel === "whatsapp" || preferredChannel === "auto") &&
-    waRow?.whatsapp_number
-  ) {
-    channel = "whatsapp";
-  }
-  if (preferredChannel === "sms") channel = "sms";
 
   const ask = ownerAskMessage({
     businessName,
@@ -393,50 +529,32 @@ Deno.serve(async (req) => {
     startsAt: startsAt.toISOString(),
   });
 
-  let notifyOk = false;
-  let notifyError: string | undefined;
-
-  if (channel === "whatsapp" && waRow?.whatsapp_number) {
-    const wa = await sendWhatsapp({
-      from: waRow.whatsapp_number,
-      to: ownerPhone,
-      body: ask,
-    });
-    notifyOk = wa.ok;
-    notifyError = wa.error;
-    if (!wa.ok && preferredChannel === "auto") {
-      // Fall back to SMS when WhatsApp fails
-      channel = "sms";
-    }
-  }
-
-  if (channel === "sms") {
-    if (profile.sms_enabled === false) {
-      return json({
-        success: false,
-        error: "SMS is disabled for this agent and WhatsApp notify failed or was unavailable",
-        viewing_request_id: viewing.id,
-        agent_availability: availability,
-      }, 403);
-    }
-    const sms = await sendSmsViaHelper({
-      phone: ownerPhone,
-      message: ask,
-      profileId: profile.id,
-      profileSlug: profile.slug || null,
-      callId,
-      linkType: `viewing-ask-${viewing.id.slice(0, 8)}`,
-    });
-    notifyOk = sms.ok;
-    notifyError = sms.error;
-  }
-
-  if (!notifyOk) {
+  if (profile.sms_enabled === false) {
     return json({
       success: false,
-      error: notifyError || "failed to notify owner",
+      error: "SMS is disabled for this agent — cannot text the owner for confirmation",
       viewing_request_id: viewing.id,
       agent_availability: availability,
+      agent_email: agentEmail.ok ? "sent" : agentEmail.skipped || agentEmail.error || "failed",
+    }, 403);
+  }
+
+  const sms = await sendSmsViaHelper({
+    phone: ownerPhone,
+    message: ask,
+    profileId: profile.id,
+    profileSlug: profile.slug || null,
+    callId,
+    linkType: `viewing-ask-${viewing.id.slice(0, 8)}`,
+  });
+
+  if (!sms.ok) {
+    return json({
+      success: false,
+      error: sms.error || "failed to notify owner",
+      viewing_request_id: viewing.id,
+      agent_availability: availability,
+      agent_email: agentEmail.ok ? "sent" : agentEmail.skipped || agentEmail.error || "failed",
     }, 502);
   }
 
@@ -445,7 +563,7 @@ Deno.serve(async (req) => {
     .from("wisecall_viewing_requests")
     .update({
       status: "pending_owner",
-      owner_channel: channel,
+      owner_channel: "sms",
       owner_asked_at: now,
       updated_at: now,
     })
@@ -455,7 +573,7 @@ Deno.serve(async (req) => {
     viewing_request_id: viewing.id,
     profile_id: profileId,
     direction: "outbound",
-    channel,
+    channel: "sms",
     party: "owner",
     to_address: ownerPhone,
     body: ask,
@@ -466,9 +584,10 @@ Deno.serve(async (req) => {
     success: true,
     viewing_request_id: viewing.id,
     status: "pending_owner",
-    owner_channel: channel,
+    owner_channel: "sms",
     agent_availability: availability,
+    agent_email: agentEmail.ok ? "sent" : agentEmail.skipped || agentEmail.error || "failed",
     note:
-      "Owner asked to confirm. Tell the caller you'll confirm once the owner replies YES.",
+      "Owner asked to confirm by SMS. Tell the caller you'll confirm once the owner replies YES.",
   });
 });
