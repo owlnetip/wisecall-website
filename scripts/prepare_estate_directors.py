@@ -10,9 +10,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ESTATE_DIR = ROOT / "data" / "research" / "estate-agents"
-INPUT_CSV = ESTATE_DIR / "london-estate-marketing-list.csv"
-OUTPUT_CSV = ESTATE_DIR / "estate-director-candidates.csv"
-OUTPUT_JSON = ESTATE_DIR / "estate-director-candidates.json"
+DEFAULT_REGION = "essex"
+
+
+def marketing_csv_for_region(region_id: str) -> Path:
+    configs_dir = ESTATE_DIR / "regions"
+    cfg_path = configs_dir / f"{region_id}.json"
+    if cfg_path.exists():
+        data = json.loads(cfg_path.read_text(encoding="utf-8"))
+        prefix = data.get("file_prefix") or f"{region_id}-estate"
+        return ESTATE_DIR / f"{prefix}-marketing-list.csv"
+    return ESTATE_DIR / f"{region_id}-estate-marketing-list.csv"
 
 
 def norm_key(text: str) -> str:
@@ -39,11 +47,18 @@ def split_directors(director_str: str) -> list[dict[str, str]]:
 
 
 def main() -> None:
-    if not INPUT_CSV.exists():
-        raise SystemExit(f"Input not found: {INPUT_CSV}. Run build_estate_agents.py first.")
+    import sys
+
+    region_id = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_REGION
+    input_csv = marketing_csv_for_region(region_id)
+    output_csv = ESTATE_DIR / f"{region_id}-director-candidates.csv"
+    output_json = ESTATE_DIR / f"{region_id}-director-candidates.json"
+
+    if not input_csv.exists():
+        raise SystemExit(f"Input not found: {input_csv}. Run build script first.")
 
     rows: list[dict] = []
-    with INPUT_CSV.open(newline="", encoding="utf-8-sig") as f:
+    with input_csv.open(newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         for row in reader:
             company_name = row.get("company_name", "").strip()
@@ -99,16 +114,16 @@ def main() -> None:
         "corporate_group_name",
         "source",
     ]
-    with OUTPUT_CSV.open("w", newline="", encoding="utf-8") as f:
+    with output_csv.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
 
     # Write JSON
-    OUTPUT_JSON.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    output_json.write_text(json.dumps(rows, indent=2), encoding="utf-8")
 
-    print(f"Extracted {len(rows)} director candidates from {INPUT_CSV}")
-    print(f"Wrote {OUTPUT_CSV} and {OUTPUT_JSON}")
+    print(f"Extracted {len(rows)} director candidates from {input_csv}")
+    print(f"Wrote {output_csv} and {output_json}")
 
 
 if __name__ == "__main__":
