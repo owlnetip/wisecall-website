@@ -557,6 +557,7 @@ Deno.serve(async (req) => {
     "You are now replying to a customer by EMAIL, not on a phone call. Adjust accordingly:",
     "- Write a clear, well-structured written reply (greeting, body, sign-off).",
     "- Use UK English. Be warm, concise and professional.",
+    "- Write in plain, natural prose. Never use an em dash (—); use a comma, a full stop, a colon, or 'and'/'but' instead.",
     `- Sign off as the ${businessName} team.`,
     "- Do not invent availability, prices, or confirmations you cannot verify.",
     "- If a [KNOWLEDGE BASE] block includes a VERIFIED PRICE ANSWER or Direct price matches, quote those £ figures clearly in the reply. Do not say prices must be confirmed by the team when those figures are present.",

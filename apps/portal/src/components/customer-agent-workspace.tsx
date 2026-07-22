@@ -77,7 +77,7 @@ import {
   type KnowledgeSearchChunk,
 } from "@/app/actions/knowledge-base";
 import { DEMO_KB_TITLE_PREFIX } from "@/lib/demo-knowledge-base";
-import { DEFAULT_VOICE_ID, voiceOptions } from "@/lib/voices";
+import { DEFAULT_VOICE_ID, voiceOptions, type VoiceOption } from "@/lib/voices";
 import type { CallLog, CallChannel } from "@/lib/agents";
 import { friendlyOutcome } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
@@ -96,7 +96,15 @@ import { PbxExtensionCard } from "./pbx-extension-card";
 import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 import { CALLER_INTAKE_PROMPT } from "@/lib/caller-intake";
 import { ContactsView } from "./contacts-view";
+import { ViewingsView } from "./viewings-view";
+import { CalendarBookingCard } from "./calendar-booking-card";
 import { RaiseTicketModal } from "./raise-ticket-modal";
+import {
+  buildEstateAgentGreeting,
+  buildEstateAgentPrompt,
+  estateAgentDefaultContacts,
+  estateAgentKnowledgeFields,
+} from "@/lib/estate-agent-template";
 import { SupportChatPanel } from "./support-chat-panel";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
@@ -114,7 +122,7 @@ import {
   type AgentOperationalState,
 } from "@/lib/agent-operational-state";
 
-type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
+type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "viewings" | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -1304,13 +1312,13 @@ const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "insights", label: "Home", icon: Sparkles },
   { view: "calls", label: "Inbox", icon: Inbox },
   { view: "contacts", label: "Contacts", icon: Users },
+  { view: "viewings", label: "Viewings", icon: CalendarCheck },
   { view: "assistants", label: "Agents", icon: Bot },
   { view: "channels", label: "Channels", icon: Layers },
 ];
 
-// Agent templates. For now there's one, a general Receptionist. Future
-// templates (Dental, Property, Legal, integration-specific) slot in here and
-// the create flow picks them up automatically.
+// Agent templates. Receptionist + specialised verticals (Dental, Estate).
+// The create / wizard flows pick these up automatically.
 export type AgentTemplate = {
   id: string;
   label: string;
@@ -1355,6 +1363,18 @@ export const agentTemplates: AgentTemplate[] = [
       const biz = business || "the business";
       return `Hi, thanks for calling ${biz}, you're through to ${who}. How can I help you today?`;
     },
+  },
+  {
+    id: "estate_agent",
+    label: "Estate agent",
+    description:
+      "Sales & lettings receptionist: valuations, owner-confirmed viewings (WhatsApp/SMS to landlords), maintenance triage and branch routing.",
+    industry: "Property",
+    available: true,
+    buildPrompt: buildEstateAgentPrompt,
+    buildGreeting: buildEstateAgentGreeting,
+    defaultKnowledgeFields: estateAgentKnowledgeFields(),
+    defaultContacts: estateAgentDefaultContacts,
   },
   {
     id: "dentally",
@@ -1671,6 +1691,7 @@ export function CustomerAgentWorkspace({
         knowledge,
         knowledgeFields,
         contacts,
+        templateId: template.id,
       });
       if (!result.ok || !result.id) {
         setCreateError(result.error ?? "Could not create the assistant.");
@@ -1728,6 +1749,7 @@ export function CustomerAgentWorkspace({
       knowledge: draft.knowledge,
       knowledgeFields: draft.knowledgeFields,
       contacts,
+      templateId: draft.templateId || "receptionist",
     });
     if (!result.ok || !result.id) {
       return { ok: false, error: result.error ?? "Could not create the assistant." };
@@ -2173,6 +2195,12 @@ export function CustomerAgentWorkspace({
                   <span>Contacts</span>
                 </>
               )}
+              {view === "viewings" && (
+                <>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>Viewings</span>
+                </>
+              )}
               {view === "channels" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -2306,6 +2334,7 @@ export function CustomerAgentWorkspace({
                 whatsappNumber={
                   whatsappNumbers?.find((n) => n.profileId === selectedAssistant.id)?.whatsappNumber
                 }
+                voices={voiceOptions}
               />
             )}
 
@@ -2321,6 +2350,12 @@ export function CustomerAgentWorkspace({
 
             {view === "contacts" && (
               <ContactsView contacts={scopedContacts} callLogs={scopedCallLogs} followUps={scopedFollowUps} />
+            )}
+
+            {view === "viewings" && (
+              <ViewingsView
+                agents={assistants.map((a) => ({ id: a.id, name: a.name || "Agent" }))}
+              />
             )}
 
             {view === "channels" && (
@@ -2677,6 +2712,7 @@ function AssistantDetail({
   adminMode = false,
   smsNumber,
   whatsappNumber,
+  voices = voiceOptions,
 }: {
   assistant: Assistant;
   tab: DetailTab;
@@ -2702,6 +2738,7 @@ function AssistantDetail({
   adminMode?: boolean;
   smsNumber?: string;
   whatsappNumber?: string;
+  voices?: VoiceOption[];
 }) {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
@@ -3055,6 +3092,7 @@ function AssistantDetail({
             <VoicePicker
               selected={assistant.voice}
               greeting={assistant.greeting}
+              voices={voices}
               onSelect={(voice) => onChange({ voice })}
             />
           </div>
@@ -3145,6 +3183,7 @@ function AssistantDetail({
         </div>
       ) : (
         <div key="technical" className="anim-fade">
+          <CalendarBookingCard agentId={assistant.id} />
           <PbxExtensionCard agentId={assistant.id} />
           <IntegrationWebhooksCard
             agentId={assistant.id}
@@ -5626,10 +5665,12 @@ function PromptModal({
 function VoicePicker({
   selected,
   greeting,
+  voices,
   onSelect,
 }: {
   selected: string;
   greeting: string;
+  voices: VoiceOption[];
   onSelect: (voice: string) => void;
 }) {
   const [loadingVoice, setLoadingVoice] = useState<string | null>(null);
@@ -5676,8 +5717,8 @@ function VoicePicker({
 
   return (
     <div>
-      <div className="stagger grid gap-3 sm:grid-cols-2">
-        {voiceOptions.map((voice) => {
+      <div className="stagger grid max-h-[min(420px,50vh)] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
+        {voices.map((voice) => {
           const isSelected = voice.id === selected;
           const isLoading = loadingVoice === voice.id;
           const isPlaying = playingVoice === voice.id;

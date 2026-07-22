@@ -15,6 +15,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { buildMemoryBlock, loadContactContext, triggerPortalAnalysis } from "../_shared/contact-memory.ts";
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
+import { tryHandleViewingReply } from "../_shared/viewing-confirm.ts";
 
 const CLAUDE_MODEL = "claude-opus-4-8";
 
@@ -177,6 +178,43 @@ Deno.serve(async (req) => {
 
     const businessName =
       profile.business_name || profile.clinic_name || profile.profile_name || "the business";
+
+    // Owner / viewer YES·NO·CHANGE replies for property viewings take priority
+    // over the normal AI receptionist path.
+    try {
+      const viewing = await tryHandleViewingReply({
+        supabase,
+        profileId: profile.id,
+        fromPhone: fromNumber,
+        body,
+        channel: "sms",
+        businessName: String(businessName).slice(0, 40),
+        sendTo: async (to, text) => {
+          await sendSms(toNumber, to, text);
+        },
+      });
+      if (viewing.handled) {
+        try {
+          await sendSms(toNumber, fromNumber, viewing.replyText);
+        } catch (e) {
+          console.error("[wisecall-sms-inbound] viewing reply send:", (e as Error).message);
+        }
+        try {
+          await supabase.rpc("wisecall_record_sms_message", { p_profile_id: profile.id });
+        } catch (e) {
+          console.error("[wisecall-sms-inbound] usage:", (e as Error).message);
+        }
+        console.log(
+          "[wisecall-sms-inbound] viewing reply handled",
+          viewing.viewingId,
+          viewing.intent,
+          viewing.status,
+        );
+        return ok();
+      }
+    } catch (e) {
+      console.error("[wisecall-sms-inbound] viewing handler:", (e as Error).message);
+    }
 
     const contactContext = await loadContactContext(supabase, profile.id, { phone: fromNumber });
     const memoryBlock = buildMemoryBlock(contactContext);

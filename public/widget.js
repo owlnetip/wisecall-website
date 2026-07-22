@@ -95,6 +95,7 @@
       ":auto;background:transparent;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:22px;line-height:1}" +
       ".body{flex:1;overflow-y:auto;padding:16px;background:#f6f8f8;display:flex;flex-direction:column;gap:10px}" +
       ".msg{max-width:84%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}" +
+      ".msg a{color:inherit;text-decoration:underline;word-break:break-all}" +
       ".msg.bot{align-self:flex-start;background:#fff;color:#111716;border:1px solid rgba(0,0,0,.06);border-bottom-left-radius:4px}" +
       ".msg.me{align-self:flex-end;background:" +
       accent +
@@ -151,11 +152,33 @@
     });
   }
 
+  // Render message text with bare http(s) URLs as safe, clickable anchors.
+  // Built with DOM nodes (never innerHTML) so message content stays inert.
+  function renderContent(el, text) {
+    var s = String(text == null ? "" : text);
+    var re = /https?:\/\/[^\s<>"']+/g;
+    var last = 0;
+    var m;
+    while ((m = re.exec(s))) {
+      var url = m[0].replace(/[.,;:!?)\]]+$/, "");
+      if (m.index > last) el.appendChild(document.createTextNode(s.slice(last, m.index)));
+      var a = document.createElement("a");
+      a.href = url;
+      a.textContent = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      el.appendChild(a);
+      last = m.index + url.length;
+      re.lastIndex = last;
+    }
+    if (last < s.length) el.appendChild(document.createTextNode(s.slice(last)));
+  }
+
   function bubble(role, content) {
     var b = root.querySelector(".body");
     var d = document.createElement("div");
     d.className = "msg " + (role === "user" ? "me" : "bot");
-    d.textContent = content;
+    renderContent(d, content);
     b.appendChild(d);
     b.scrollTop = b.scrollHeight;
   }

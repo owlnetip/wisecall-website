@@ -37,3 +37,12 @@ verify_jwt = false
 
 [functions.wisecall-action-items-email]
 verify_jwt = false
+
+# Property viewing owner-confirm loop — called from voice webhooks / portal
+# with a shared secret or service-role key.
+[functions.wisecall-viewing-request]
+verify_jwt = false
+
+# Day-before / day-of viewing reminders — cron-triggered with a shared secret.
+[functions.wisecall-viewing-reminders]
+verify_jwt = false

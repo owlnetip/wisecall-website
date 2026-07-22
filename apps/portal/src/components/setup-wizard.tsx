@@ -18,6 +18,7 @@ import {
   Bot,
   Stethoscope,
   ShieldCheck,
+  Home,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { draftAgentFromWebsite, draftAgentFromInputs, type AgentDraft, type BusinessInputs } from "@/app/actions/wizard";
@@ -67,6 +68,16 @@ const TEMPLATE_META: Record<string, { icon: LucideIcon; chips: string[]; note?: 
     ],
     note: "Connects to your Dentally diary — real appointments, booked live on the call.",
   },
+  estate_agent: {
+    icon: Home,
+    chips: [
+      "Valuation capture",
+      "Owner-confirm viewings",
+      "WhatsApp / SMS to owners",
+      "Maintenance triage",
+    ],
+    note: "Viewings text the owner for YES/NO, then confirm the viewer. Optional Cal.com diary check for negotiator availability.",
+  },
 };
 
 // Re-applies a template's prompt/greeting (and seeds its starter contacts +
@@ -99,6 +110,7 @@ function applyTemplate(
   return {
     ...draft,
     templateId: template.id,
+    industry: template.industry || draft.industry,
     prompt: template.buildPrompt(draft.businessName, draft.receptionistName),
     greeting: template.buildGreeting(draft.businessName, draft.receptionistName),
     knowledgeFields: { ...(template.defaultKnowledgeFields ?? {}), ...draft.knowledgeFields },
@@ -672,9 +684,14 @@ export function SetupWizard({
                   <p className="mt-2 text-ink-soft">
                     Tap play to hear each voice. This is how your assistant sounds to callers,
                     and you can change it any time.
+                    {voices.length > 6 && (
+                      <span className="mt-1 block text-xs">
+                        {voices.length} British English voices — the top six are our featured picks.
+                      </span>
+                    )}
                   </p>
                 </div>
-                <div className="stagger grid gap-2 sm:grid-cols-2">
+                <div className="stagger grid max-h-[min(420px,50vh)] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                   {voices.map((v) => {
                     const active = selectedVoiceId === v.id;
                     const isPlaying = playingVoice === v.id;
