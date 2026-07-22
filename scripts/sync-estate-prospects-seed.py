@@ -24,7 +24,6 @@ ROOT = Path(__file__).resolve().parents[1]
 RESEARCH = ROOT / "data" / "research" / "estate-agents"
 REGIONS_DIR = RESEARCH / "regions"
 OUT = ROOT / "apps/portal" / "src" / "data" / "estate-prospects-seed.json"
-BIRMINGHAM_ENRICHMENT = RESEARCH / "birmingham-estate-enrichment.csv"
 
 ACTIVE_STATUSES = {"active"}
 CRM_READY = {
@@ -122,16 +121,34 @@ def classify_segment(row: dict[str, str]) -> str | None:
     return "property_unknown"
 
 
-def load_birmingham_enrichment() -> dict[str, dict[str, str]]:
-    if not BIRMINGHAM_ENRICHMENT.exists():
+def enrichment_path(region_id: str) -> Path:
+    return RESEARCH / f"{region_id}-estate-enrichment.csv"
+
+
+def load_region_enrichment(region_id: str) -> dict[str, dict[str, str]]:
+    path = enrichment_path(region_id)
+    if not path.exists():
         return {}
     out: dict[str, dict[str, str]] = {}
-    with BIRMINGHAM_ENRICHMENT.open(newline="", encoding="utf-8") as f:
+    with path.open(newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
+            branch_id = (row.get("branch_id") or "").strip()
             number = (row.get("company_number") or "").strip()
+            if branch_id:
+                out[f"branch:{branch_id}"] = row
             if number:
-                out[number] = row
+                out[f"number:{number}"] = row
     return out
+
+
+def find_enrichment(row: dict[str, str], region: str, enrichment: dict[str, dict[str, str]]) -> dict[str, str] | None:
+    branch_id = (row.get("branch_id") or "").strip()
+    number = (row.get("company_number") or "").strip()
+    if branch_id and f"branch:{branch_id}" in enrichment:
+        return enrichment[f"branch:{branch_id}"]
+    if number and f"number:{number}" in enrichment:
+        return enrichment[f"number:{number}"]
+    return None
 
 
 def apply_enrichment(row: dict[str, str], enrichment: dict[str, str] | None) -> dict[str, str]:
@@ -199,7 +216,10 @@ def prospect_from_row(row: dict[str, str], region: str) -> dict[str, str]:
 
 def load_prospects(regions: set[str] | None) -> list[dict[str, str]]:
     region_configs = load_region_configs()
-    enrichment = load_birmingham_enrichment()
+    enrichment_by_region = {
+        rid: load_region_enrichment(rid)
+        for rid in (regions if regions is not None else {cfg.get("id") for cfg in region_configs.values() if cfg.get("id")})
+    }
     prospects: list[dict[str, str]] = []
     seen: set[str] = set()
 
@@ -209,12 +229,13 @@ def load_prospects(regions: set[str] | None) -> list[dict[str, str]]:
         if regions is not None and region not in regions:
             continue
         region_cfg = region_configs.get(region) or region_configs.get(stem)
+        enrichment = enrichment_by_region.get(region) or load_region_enrichment(region)
 
         with path.open(newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                number = (row.get("company_number") or "").strip()
-                if region == "birmingham" and number in enrichment:
-                    row = apply_enrichment(row, enrichment[number])
+                enr = find_enrichment(row, region, enrichment)
+                if enr:
+                    row = apply_enrichment(row, enr)
                 segment = classify_segment(row)
                 if not segment:
                     continue

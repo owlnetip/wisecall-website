@@ -73,6 +73,7 @@ class RegionConfig:
     country: str = "england"
     postcode_prefixes: tuple[str, ...] = ()
     search_city: str = ""
+    search_cities: tuple[str, ...] = ()
 
     @property
     def overrides_path(self) -> Path:
@@ -141,6 +142,8 @@ def load_region(region_id: str) -> RegionConfig:
         data_source=data.get("data_source", "companies_house"),
         country=data.get("country", "england"),
         postcode_prefixes=tuple(data.get("postcode_prefixes", [])),
+        search_city=str(data.get("search_city") or "").strip(),
+        search_cities=tuple(data.get("search_cities") or []),
     )
 
 
@@ -352,11 +355,101 @@ def match_corporate_group(company: dict[str, str]) -> tuple[bool, str]:
     return False, ""
 
 
+PUBLIC_CH = "https://find-and-update.company-information.service.gov.uk"
+PUBLIC_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+
+
 def ensure_ch_api_key() -> str:
     key = os.environ.get("COMPANIES_HOUSE_API_KEY", "").strip()
     if not key:
         raise SystemExit("Set COMPANIES_HOUSE_API_KEY environment variable")
     return key
+
+
+def public_http_get(url: str, timeout: int = 25) -> str:
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": PUBLIC_UA, "Accept": "text/html"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout, context=CTX) as resp:
+        return resp.read().decode("utf-8", "ignore")
+
+
+def search_companies_public(query: str, page: int = 1) -> list[str]:
+    params = urllib.parse.urlencode({"q": query, "page": str(page)})
+    html = public_http_get(f"{PUBLIC_CH}/search/companies?{params}")
+    numbers = re.findall(r"/company/([0-9]{8})", html)
+    seen: set[str] = set()
+    out: list[str] = []
+    for number in numbers:
+        if number in seen:
+            continue
+        seen.add(number)
+        out.append(number)
+    return out
+
+
+def parse_public_company_profile(page_html: str) -> dict[str, str | list[str]]:
+    status_match = re.search(
+        r"Company status[\s\S]*?<dd[^>]*>\s*([^<]+)",
+        page_html,
+        flags=re.I,
+    )
+    address_match = re.search(
+        r"Registered office address[\s\S]*?<dd[^>]*>([\s\S]*?)</dd>",
+        page_html,
+        flags=re.I,
+    )
+    address_html = address_match.group(1) if address_match else ""
+    address_text = re.sub(r"<[^>]+>", " ", html.unescape(address_html))
+    address_text = re.sub(r"\s+", " ", address_text).strip()
+    postcode_match = re.search(r"\b([A-Z]{1,2}\d[\dA-Z]?\s*\d[A-Z]{2})\b", address_text.upper())
+    postcode = postcode_match.group(1).strip() if postcode_match else ""
+    sic_codes = re.findall(r"id=\"sic\d+\">\s*(\d{5})\s*-", page_html)
+    title_match = re.search(r"<title>([^<-]+)", page_html)
+    name = title_match.group(1).strip() if title_match else ""
+    return {
+        "company_name": name,
+        "company_status": (status_match.group(1).strip() if status_match else ""),
+        "registered_office_address": address_text,
+        "postcode": postcode,
+        "sic_codes": sic_codes,
+    }
+
+
+def get_company_profile_public(company_number: str) -> dict:
+    page_html = public_http_get(f"{PUBLIC_CH}/company/{company_number}")
+    profile = parse_public_company_profile(page_html)
+    profile["company_number"] = company_number
+    return profile
+
+
+def get_company_officers_public(company_number: str) -> list[dict]:
+    page_html = public_http_get(f"{PUBLIC_CH}/company/{company_number}/officers")
+    names = re.findall(r'href="/officers/[^"]+"[^>]*>\s*([^<]+)', page_html)
+    officers: list[dict] = []
+    seen: set[str] = set()
+    for raw in names:
+        name = html.unescape(raw).strip()
+        key = re.sub(r"[^a-z]", "", name.lower())
+        if len(key) < 4 or key in seen:
+            continue
+        if name.lower() in {"view cookies", "sign in / register", "companies", "officers"}:
+            continue
+        seen.add(key)
+        officers.append({"name": name, "officer_role": "director", "resigned_on": None})
+    return officers
+
+
+def region_search_cities(region: RegionConfig) -> list[str]:
+    if region.search_cities:
+        return list(region.search_cities)
+    if region.search_city:
+        return [region.search_city]
+    return [region.name.split()[0]]
 
 
 def ch_request(path: str, params: dict | None = None) -> dict:
