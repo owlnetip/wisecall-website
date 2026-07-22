@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract director candidates from estate agents marketing list for FullEnrich enrichment."""
+"""Extract director candidates from all estate agents marketing lists for FullEnrich enrichment."""
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ESTATE_DIR = ROOT / "data" / "research" / "estate-agents"
-INPUT_CSV = ESTATE_DIR / "london-estate-marketing-list.csv"
 OUTPUT_CSV = ESTATE_DIR / "estate-director-candidates.csv"
 OUTPUT_JSON = ESTATE_DIR / "estate-director-candidates.json"
 
@@ -39,48 +38,50 @@ def split_directors(director_str: str) -> list[dict[str, str]]:
 
 
 def main() -> None:
-    if not INPUT_CSV.exists():
-        raise SystemExit(f"Input not found: {INPUT_CSV}. Run build_estate_agents.py first.")
+    marketing_files = sorted(ESTATE_DIR.glob("*estate-marketing-list.csv"))
+    if not marketing_files:
+        raise SystemExit(f"No marketing lists found in {ESTATE_DIR}. Run build_estate_agents.py first.")
 
     rows: list[dict] = []
-    with INPUT_CSV.open(newline="", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            company_name = row.get("company_name", "").strip()
-            postcode = row.get("postcode", "").strip()
-            website = row.get("website", "").strip()
-            director_names = row.get("director_names", "").strip()
-            company_number = row.get("company_number", "").strip()
-            blast_segment = row.get("blast_segment", "").strip()
-            wisecall_tier = row.get("wisecall_tier", "").strip()
-            corporate_group = row.get("corporate_group", "").strip()
-            corporate_group_name = row.get("corporate_group_name", "").strip()
-            area = row.get("area", "").strip()
+    for input_csv in marketing_files:
+        print(f"Reading {input_csv.name}...")
+        with input_csv.open(newline="", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                company_name = row.get("company_name", "").strip()
+                postcode = row.get("postcode", "").strip()
+                website = row.get("website", "").strip()
+                director_names = row.get("director_names", "").strip()
+                company_number = row.get("company_number", "").strip()
+                blast_segment = row.get("blast_segment", "").strip()
+                wisecall_tier = row.get("wisecall_tier", "").strip()
+                corporate_group = row.get("corporate_group", "").strip()
+                corporate_group_name = row.get("corporate_group_name", "").strip()
+                area = row.get("area", "").strip()
 
-            if not director_names:
-                continue
-
-            directors = split_directors(director_names)
-            for i, d in enumerate(directors):
-                # Only include directors (not secretaries)
-                if "director" not in d["role"].lower():
+                if not director_names:
                     continue
-                rows.append({
-                    "id": f"{norm_key(company_name)}-{postcode.replace(' ', '')}-{i}",
-                    "company_name": company_name,
-                    "company_number": company_number,
-                    "postcode": postcode,
-                    "area": area,
-                    "website": website,
-                    "director_name": d["name"],
-                    "director_role": d["role"],
-                    "director_names": director_names,
-                    "blast_segment": blast_segment,
-                    "wisecall_tier": wisecall_tier,
-                    "corporate_group": corporate_group,
-                    "corporate_group_name": corporate_group_name,
-                    "source": "Companies House + CRM scan",
-                })
+
+                directors = split_directors(director_names)
+                for i, d in enumerate(directors):
+                    if "director" not in d["role"].lower():
+                        continue
+                    rows.append({
+                        "id": f"{norm_key(company_name)}-{postcode.replace(' ', '')}-{i}",
+                        "company_name": company_name,
+                        "company_number": company_number,
+                        "postcode": postcode,
+                        "area": area,
+                        "website": website,
+                        "director_name": d["name"],
+                        "director_role": d["role"],
+                        "director_names": director_names,
+                        "blast_segment": blast_segment,
+                        "wisecall_tier": wisecall_tier,
+                        "corporate_group": corporate_group,
+                        "corporate_group_name": corporate_group_name,
+                        "source": "Companies House + CRM scan",
+                    })
 
     # Write CSV
     fields = [
@@ -107,7 +108,7 @@ def main() -> None:
     # Write JSON
     OUTPUT_JSON.write_text(json.dumps(rows, indent=2), encoding="utf-8")
 
-    print(f"Extracted {len(rows)} director candidates from {INPUT_CSV}")
+    print(f"Extracted {len(rows)} director candidates from {len(marketing_files)} regions")
     print(f"Wrote {OUTPUT_CSV} and {OUTPUT_JSON}")
 
 

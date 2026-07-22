@@ -83,6 +83,15 @@ def slugify(text, limit=70):
     return slug[:limit] or "property"
 
 
+def parse_price_pounds(price_text):
+    if not price_text:
+        return None
+    digits = re.sub(r"[^\d]", "", str(price_text))
+    if not digits:
+        return None
+    return int(digits)
+
+
 # ── Pull ──────────────────────────────────────────────────────────────────
 
 def parse_listing_page(html_text, instruction):
@@ -234,7 +243,7 @@ def render_article(p):
 
 def render_town_index(town, plist):
     lines = [f"# Ashleigh Stone properties in {town} (current listings)", ""]
-    for p in sorted(plist, key=lambda x: x.get("price") or ""):
+    for p in sorted(plist, key=lambda x: parse_price_pounds(x.get("price")) or 10**12):
         bits = []
         if p.get("street"):
             bits.append(p["street"])
@@ -248,6 +257,73 @@ def render_town_index(town, plist):
     lines += [
         "",
         f"Total: {len(plist)} properties currently listed in {town} with Ashleigh Stone.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def render_budget_index(props):
+    priced = []
+    for p in props:
+        pounds = parse_price_pounds(p.get("price"))
+        if pounds is None:
+            continue
+        title_bits = [p.get("street") or "Property"]
+        if p.get("town"):
+            title_bits.append(p["town"])
+        address = ", ".join(title_bits)
+        beds = f"{p['bedrooms']} bed" if p.get("bedrooms") else "beds n/a"
+        priced.append(
+            {
+                "address": address,
+                "pounds": pounds,
+                "price": p.get("price") or f"£{pounds:,}",
+                "beds": beds,
+                "ref": p["ref"],
+            }
+        )
+    priced.sort(key=lambda x: x["pounds"])
+
+    lines = [
+        "# Ashleigh Stone current sales listings by price (budget search guide)",
+        "",
+        "Use this document when callers or emails ask for properties under, below, up to, or around a budget.",
+        'Treat "under £300k" as up to and including £300,000.',
+        "If nothing is strictly below their budget, suggest the closest listings at or just above it.",
+        "",
+        "## All listings sorted lowest to highest",
+    ]
+    for item in priced:
+        lines.append(
+            f"- {item['address']} — {item['price']} — {item['beds']} — ref {item['ref']}"
+        )
+
+    bands = [
+        ("Up to £200,000", 0, 200_000),
+        ("£200,000 to £250,000", 200_000, 250_000),
+        ("£250,000 to £300,000 (includes at £300k)", 250_000, 300_000),
+        ("Just above £300,000 (£300,001 to £350,000)", 300_000, 350_000),
+        ("£350,000 to £400,000", 350_000, 400_000),
+        ("£400,000 to £500,000", 400_000, 500_000),
+        ("Above £500,000", 500_000, 10**12),
+    ]
+    lines += ["", "## Budget quick reference"]
+    for label, low, high in bands:
+        band_items = [i for i in priced if low < i["pounds"] <= high] if low else [
+            i for i in priced if i["pounds"] <= high
+        ]
+        if low == 500_000:
+            band_items = [i for i in priced if i["pounds"] > low]
+        if not band_items:
+            continue
+        lines += ["", f"### {label}"]
+        for item in band_items:
+            lines.append(
+                f"- {item['address']} — {item['price']} — {item['beds']} — ref {item['ref']}"
+            )
+
+    lines += [
+        "",
+        f"Total: {len(priced)} properties currently for sale with Ashleigh Stone.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -314,6 +390,7 @@ def main():
     for town, plist in towns.items():
         slug = slugify(town)
         docs[f"ashleighstone-town-{slug}.md"] = render_town_index(town, plist)
+    docs["ashleighstone-budget-index.md"] = render_budget_index(props)
     for fn, path in STATIC_ARTICLES.items():
         if os.path.exists(path):
             docs[fn] = open(path).read()

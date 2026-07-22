@@ -1,0 +1,38 @@
+{
+  "id": "york",
+  "name": "York",
+  "postcode_regex": "^YO[0-9]",
+  "area_column": "area",
+  "file_prefix": "york-yo-estate",
+  "overrides_file": "york-estate-manual-overrides.json",
+  "core_outward_codes": [
+    "YO1", "YO10", "YO19", "YO23", "YO24", "YO26", "YO30", "YO31", "YO32", "YO41", "YO42", "YO43", "YO51", "YO60", "YO61", "YO62", "YO7", "YO8"
+  ],
+  "core_segment_prefix": "york-core",
+  "area_labels": {
+    "YO1": "York Central",
+    "YO10": "Fulford",
+    "YO19": "Selby",
+    "YO23": "York North",
+    "YO24": "York West",
+    "YO26": "Easingwold",
+    "YO30": "York North West",
+    "YO31": "York North East",
+    "YO32": "Haxby",
+    "YO41": "Malton",
+    "YO42": "Malton",
+    "YO43": "Pickering",
+    "YO51": "Norton",
+    "YO60": "Scarborough",
+    "YO61": "Filey",
+    "YO62": "Filey",
+    "YO7": "Thirsk",
+    "YO8": "Selby"
+  },
+  "data_source": "companies_house",
+  "country": "england",
+  "search_city": "York",
+  "postcode_prefixes": [
+    "YO1", "YO10", "YO19", "YO23", "YO24", "YO26", "YO30", "YO31", "YO32", "YO41", "YO42", "YO43", "YO51", "YO60", "YO61", "YO62", "YO7", "YO8"
+  ]
+}

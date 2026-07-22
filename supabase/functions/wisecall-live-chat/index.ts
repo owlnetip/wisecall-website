@@ -6,6 +6,7 @@ import {
   resolveContact,
   triggerPortalAnalysis,
 } from "../_shared/contact-memory.ts";
+import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -194,6 +195,8 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "Using knowledge:",
     "- ALWAYS attempt to answer or troubleshoot first. Do NOT jump straight to 'I'll pass this to the team' as your first response.",
     "- If a [KNOWLEDGE BASE] block is provided below, use it as the authoritative source and answer from it.",
+    "- If a [PROPERTY BUDGET SEARCH] block is provided, use it for budget/property questions.",
+    PROPERTY_BUDGET_PROMPT_RULES,
     "- If the question is not covered by the KB, use general knowledge to help, suggest troubleshooting steps, explain the issue, offer practical guidance.",
     "- Only escalate to the support team when: (a) the problem needs account-specific access or system configuration you cannot see, OR (b) the visitor explicitly asks to speak to someone or raise a ticket, OR (c) you have genuinely tried to help and the issue remains unresolved.",
     "- When you do escalate, capture the visitor's name, best phone or email, and a clear description of the unresolved issue.",
@@ -276,23 +279,7 @@ const KB_MIN_SIMILARITY = 0.35;
 // match. Never throws, KB lookup is best-effort and must not break the chat.
 async function fetchKbContext(profileId: string, query: string): Promise<string | null> {
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !svcKey || !profileId || !query) return null;
-    const res = await fetch(`${supabaseUrl}/functions/v1/wisecall-kb-search`, {
-      method: "POST",
-      headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ profile_id: profileId, query, match_count: 4 }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const chunks = Array.isArray(data?.chunks) ? data.chunks : [];
-    const relevant = chunks
-      .filter((c: { content?: string; similarity?: number }) =>
-        c?.content && typeof c.similarity === "number" && c.similarity >= KB_MIN_SIMILARITY)
-      .map((c: { content: string }) => c.content);
-    if (!relevant.length) return null;
-    return "[KNOWLEDGE BASE]\n" + relevant.join("\n---\n");
+    return await fetchMergedKbContext(profileId, query);
   } catch (e) {
     console.error("[wisecall-live-chat] kb context:", (e as Error).message);
     return null;
@@ -521,15 +508,15 @@ serve(async (req) => {
     let chatLog = await getOrCreateChatLog(supabase, profile, body, extracted);
     const collected = { ...(chatLog.metadata?.collected || {}), ...extracted };
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
-    // Build a richer KB search query from the last few user messages so the KB
-    // can match based on full conversation context, not just the single latest
-    // message (which is often vague without the prior turns).
-    const recentUserTurns = history
-      .filter((m) => m.role === "user")
-      .slice(-3)
+    // Build the KB search query from recent turns of BOTH roles: a follow-up like
+    // "yes give me details" only carries meaning through the assistant turn that
+    // named the thing ("that property"), so user-only context misses the referent.
+    const recentTurns = history
+      .slice(-6)
       .map((m) => m.content)
-      .join(" ");
-    const kbContext = await fetchKbContext(profile.id, recentUserTurns || message);
+      .join(" ")
+      .slice(-1500);
+    const kbContext = await fetchKbContext(profile.id, recentTurns || message);
     const contactContext = await loadContactContext(supabase, profile.id, {
       phone: collected.contact_phone as string | undefined,
       email: collected.contact_email as string | undefined,

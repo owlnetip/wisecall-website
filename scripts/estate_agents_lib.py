@@ -750,11 +750,11 @@ def scan_websites(practices: dict[str, dict[str, str]], sleep_s: float = 0.2) ->
         if not practice["website"]:
             continue
         combined = ""
-        body, final_url = fetch(practice["website"])
+        body, final_url = fetch_page(practice["website"])
         combined += body
         if body:
             for link in booking_links(final_url, body):
-                sub, _ = fetch(link)
+                sub, _ = fetch_page(link)
                 combined += "\n" + sub
                 time.sleep(sleep_s / 2)
         if not body:

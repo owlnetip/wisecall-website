@@ -14,9 +14,9 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { buildMemoryBlock, loadContactContext, triggerPortalAnalysis } from "../_shared/contact-memory.ts";
+import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 
 const CLAUDE_MODEL = "claude-opus-4-8";
-const KB_MIN_SIMILARITY = 0.35;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -101,22 +101,7 @@ async function sendSms(from: string, to: string, text: string): Promise<void> {
 
 async function fetchKbContext(profileId: string, query: string): Promise<string | null> {
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !svcKey) return null;
-    const res = await fetch(`${supabaseUrl}/functions/v1/wisecall-kb-search`, {
-      method: "POST",
-      headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ profile_id: profileId, query, match_count: 4 }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const chunks = Array.isArray(data?.chunks) ? data.chunks : [];
-    const relevant = chunks
-      .filter((c: { content?: string; similarity?: number }) =>
-        c?.content && typeof c.similarity === "number" && c.similarity >= KB_MIN_SIMILARITY)
-      .map((c: { content: string }) => c.content);
-    return relevant.length ? "[KNOWLEDGE BASE]\n" + relevant.join("\n---\n") : null;
+    return await fetchMergedKbContext(profileId, query);
   } catch (e) {
     console.error("[wisecall-sms-inbound] kb:", (e as Error).message);
     return null;
@@ -213,6 +198,7 @@ Deno.serve(async (req) => {
       "",
       "Using knowledge:",
       "- If a [KNOWLEDGE BASE] block is provided, treat it as authoritative and answer from it.",
+      PROPERTY_BUDGET_PROMPT_RULES,
       "- If it doesn't cover the question, use general knowledge but never invent business-specific details (prices, timescales, account specifics). For those, say the team will confirm.",
       profile.business_context ? `\nBusiness knowledge:\n${profile.business_context}` : "",
       kbContext ? `\n${kbContext}` : "",
