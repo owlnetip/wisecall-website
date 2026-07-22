@@ -82,6 +82,96 @@ export async function listViewingsForProfile(
   return { ok: true, viewings: (data || []) as ViewingRequestRow[] };
 }
 
+function normaliseUkPhone(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("+")) return trimmed;
+  const digits = trimmed.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("44")) return `+${digits}`;
+  if (digits.startsWith("0")) return `+44${digits.slice(1)}`;
+  return `+${digits}`;
+}
+
+export async function importPropertiesFromCsv(input: {
+  profileId: string;
+  rows: {
+    address: string;
+    ownerPhone: string;
+    ownerName?: string;
+    listingRef?: string;
+    postcode?: string;
+    ownerEmail?: string;
+  }[];
+}): Promise<
+  { ok: true; imported: number; skipped: number } | { ok: false; error: string }
+> {
+  const userId = await effectiveUserId();
+  if (!userId) return { ok: false, error: "Not signed in" };
+  if (!(await assertProfileOwned(input.profileId, userId))) {
+    return { ok: false, error: "Forbidden" };
+  }
+  const svc = getServiceSupabase();
+  if (!svc) return { ok: false, error: "Database unavailable" };
+
+  let imported = 0;
+  let skipped = 0;
+
+  for (const row of input.rows) {
+    const address = row.address.trim();
+    const ownerPhone = normaliseUkPhone(row.ownerPhone);
+    if (!address || !ownerPhone) {
+      skipped++;
+      continue;
+    }
+
+    const listingRef = row.listingRef?.trim() || null;
+    const payload = {
+      profile_id: input.profileId,
+      address,
+      postcode: row.postcode?.trim() || null,
+      listing_ref: listingRef,
+      owner_name: row.ownerName?.trim() || null,
+      owner_phone: ownerPhone,
+      owner_email: row.ownerEmail?.trim() || null,
+      owner_preferred_channel: "sms" as const,
+      is_active: true,
+      updated_at: new Date().toISOString(),
+    };
+
+    let existingId: string | null = null;
+    if (listingRef) {
+      const { data } = await svc
+        .from("wisecall_properties")
+        .select("id")
+        .eq("profile_id", input.profileId)
+        .eq("listing_ref", listingRef)
+        .maybeSingle();
+      existingId = (data?.id as string) || null;
+    }
+    if (!existingId) {
+      const { data } = await svc
+        .from("wisecall_properties")
+        .select("id")
+        .eq("profile_id", input.profileId)
+        .ilike("address", address)
+        .maybeSingle();
+      existingId = (data?.id as string) || null;
+    }
+
+    if (existingId) {
+      const { error } = await svc.from("wisecall_properties").update(payload).eq("id", existingId);
+      if (error) return { ok: false, error: error.message };
+    } else {
+      const { error } = await svc.from("wisecall_properties").insert(payload);
+      if (error) return { ok: false, error: error.message };
+    }
+    imported++;
+  }
+
+  return { ok: true, imported, skipped };
+}
+
 export async function upsertProperty(input: {
   profileId: string;
   address: string;

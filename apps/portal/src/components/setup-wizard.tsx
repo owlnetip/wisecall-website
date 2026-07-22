@@ -73,10 +73,10 @@ const TEMPLATE_META: Record<string, { icon: LucideIcon; chips: string[]; note?: 
     chips: [
       "Valuation capture",
       "Owner-confirm viewings",
-      "WhatsApp / SMS to owners",
-      "Maintenance triage",
+      "CSV property register",
+      "SMS to owners · email to you",
     ],
-    note: "Viewings text the owner for YES/NO, then confirm the viewer. Optional Cal.com diary check for negotiator availability.",
+    note: "Import listings from your CRM/spreadsheet. Viewings text the owner for YES/NO and email the branch. Optional Cal.com diary check.",
   },
 };
 
