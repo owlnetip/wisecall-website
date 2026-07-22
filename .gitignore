@@ -35,3 +35,10 @@ data/research/cqc_directory.zip
 .env.production
 .vercel
 .env*.local
+.env*
+
+# Generated Ashleigh Stone KB sync output
+scripts/ashleighstone-demo/state.json
+scripts/ashleighstone-demo/sync.log
+scripts/ashleighstone-demo/articles/*
+!scripts/ashleighstone-demo/articles/ashleighstone-tenant-maintenance-reporting.md
