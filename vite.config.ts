@@ -4,7 +4,7 @@ import { readdirSync, statSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
 
 function findHtmlFiles(dir: string, root = dir): Record<string, string> {
-  const ignored = new Set(['node_modules', 'dist', 'export', '.git', 'apps'])
+  const ignored = new Set(['node_modules', 'dist', 'export', '.git', 'apps', 'content'])
   const entries: Record<string, string> = {}
 
   for (const entry of readdirSync(dir)) {

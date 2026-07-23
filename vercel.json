@@ -1,5 +1,15 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/jameshare",
+      "destination": "/api/jameshare"
+    },
+    {
+      "source": "/jameshare/",
+      "destination": "/api/jameshare"
+    }
+  ],
   "redirects": [
     {
       "source": "/industries/dental",
