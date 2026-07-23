@@ -8,12 +8,13 @@
     "dev": "vite",
     "generate:seo": "node scripts/generate-seo-pages.mjs",
     "inject:chat-widget": "node scripts/inject-live-chat-widget.mjs",
-    "prebuild": "npm run generate:seo",
+    "prebuild": "npm run generate:seo && npm run build:jameshare",
     "build": "vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
-    "serve": "npx serve ."
+    "serve": "npx serve .",
+    "build:jameshare": "node scripts/build-jameshare.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
