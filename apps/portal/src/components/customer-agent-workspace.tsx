@@ -96,8 +96,8 @@ import { PbxExtensionCard } from "./pbx-extension-card";
 import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 import { CALLER_INTAKE_PROMPT } from "@/lib/caller-intake";
 import { ContactsView } from "./contacts-view";
-import { ViewingsView } from "./viewings-view";
 import { CalendarBookingCard } from "./calendar-booking-card";
+import { EstatePropertiesCard } from "./estate-properties-card";
 import { RaiseTicketModal } from "./raise-ticket-modal";
 import {
   buildEstateAgentGreeting,
@@ -122,7 +122,7 @@ import {
   type AgentOperationalState,
 } from "@/lib/agent-operational-state";
 
-type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "viewings" | "channels";
+type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -1312,7 +1312,6 @@ const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "insights", label: "Home", icon: Sparkles },
   { view: "calls", label: "Inbox", icon: Inbox },
   { view: "contacts", label: "Contacts", icon: Users },
-  { view: "viewings", label: "Viewings", icon: CalendarCheck },
   { view: "assistants", label: "Agents", icon: Bot },
   { view: "channels", label: "Channels", icon: Layers },
 ];
@@ -1368,7 +1367,7 @@ export const agentTemplates: AgentTemplate[] = [
     id: "estate_agent",
     label: "Estate agent",
     description:
-      "Sales & lettings receptionist: valuations, owner-confirmed viewings (WhatsApp/SMS to landlords), maintenance triage and branch routing.",
+      "Sales & lettings receptionist: valuations, owner-confirmed viewings (SMS to landlords, email to you), maintenance triage and branch routing.",
     industry: "Property",
     available: true,
     buildPrompt: buildEstateAgentPrompt,
@@ -2195,12 +2194,6 @@ export function CustomerAgentWorkspace({
                   <span>Contacts</span>
                 </>
               )}
-              {view === "viewings" && (
-                <>
-                  <ChevronRight className="h-4 w-4" />
-                  <span>Viewings</span>
-                </>
-              )}
               {view === "channels" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -2350,12 +2343,6 @@ export function CustomerAgentWorkspace({
 
             {view === "contacts" && (
               <ContactsView contacts={scopedContacts} callLogs={scopedCallLogs} followUps={scopedFollowUps} />
-            )}
-
-            {view === "viewings" && (
-              <ViewingsView
-                agents={assistants.map((a) => ({ id: a.id, name: a.name || "Agent" }))}
-              />
             )}
 
             {view === "channels" && (
@@ -3183,6 +3170,9 @@ function AssistantDetail({
         </div>
       ) : (
         <div key="technical" className="anim-fade">
+          {assistant.industry === "Property" ? (
+            <EstatePropertiesCard agentId={assistant.id} />
+          ) : null}
           <CalendarBookingCard agentId={assistant.id} />
           <PbxExtensionCard agentId={assistant.id} />
           <IntegrationWebhooksCard

@@ -77,6 +77,46 @@ export function guessNameColumn(headers: string[]): string | null {
   return partial?.h ?? null;
 }
 
+function guessColumn(headers: string[], exactKeys: string[], partialRe: RegExp): string | null {
+  const norm = headers.map((h) => ({ h, k: h.toLowerCase().replace(/[^a-z0-9]/g, "") }));
+  const exact = norm.find((x) => exactKeys.includes(x.k));
+  if (exact) return exact.h;
+  const partial = norm.find((x) => partialRe.test(x.k));
+  return partial?.h ?? null;
+}
+
+export function guessAddressColumn(headers: string[]): string | null {
+  return guessColumn(
+    headers,
+    ["address", "propertyaddress", "fulladdress", "streetaddress", "property"],
+    /(address|property|street)/,
+  );
+}
+
+export function guessListingRefColumn(headers: string[]): string | null {
+  return guessColumn(headers, ["listingref", "listingreference", "ref", "propertyref", "listingid"], /(listing|ref|propertyid)/);
+}
+
+export function guessOwnerPhoneColumn(headers: string[]): string | null {
+  return guessColumn(
+    headers,
+    ["ownerphone", "ownermobile", "landlordphone", "landlordmobile", "vendorphone", "vendormobile"],
+    /(owner|landlord|vendor).*(phone|mobile|tel)|^(phone|mobile)$/,
+  ) ?? guessNumberColumn(headers);
+}
+
+export function guessOwnerNameColumn(headers: string[]): string | null {
+  return guessColumn(
+    headers,
+    ["ownername", "landlordname", "vendorname", "owner", "landlord", "vendor"],
+    /(owner|landlord|vendor).*name|^owner$|^landlord$|^vendor$/,
+  );
+}
+
+export function guessPostcodeColumn(headers: string[]): string | null {
+  return guessColumn(headers, ["postcode", "zip", "postalcode"], /post(code)?/);
+}
+
 // Replace {{token}} placeholders (case-insensitive, whitespace-tolerant) with a
 // recipient's merge fields. Unknown tokens collapse to an empty string. Shared
 // by the server (per-recipient render at blast creation) and the client (live

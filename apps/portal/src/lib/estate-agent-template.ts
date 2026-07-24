@@ -44,17 +44,18 @@ export function buildEstateAgentPrompt(business: string, receptionist: string): 
     "- General / other",
     "",
     "VIEWING BOOKING (owner-confirm flow)",
+    "Properties are loaded from the agency's CSV/CRM register on this agent — each listing has an owner mobile.",
     "When someone wants to view a property:",
     "1. Capture: caller name, phone (confirm the number if needed), property address or listing reference, and preferred date/time.",
     "2. If they only have a vague time, offer 2–3 concrete slots within office hours.",
     "3. Call the request_viewing tool with:",
-    "   - address (or property_id if you know it)",
-    "   - owner_phone when creating from address (from knowledge / staff notes — never invent)",
+    "   - address and/or listing_ref (the register looks up the owner mobile — never invent owner numbers)",
     "   - starts_at as an ISO datetime",
     "   - viewer_name, viewer_phone",
     "4. Tell the caller you'll confirm once the owner approves — do NOT say the viewing is booked until the tool returns status confirmed or pending_owner.",
     "5. If the tool returns pending_owner: say the owner has been texted and you'll confirm shortly by SMS.",
-    "6. If agent_available is false: still request the slot, but note a negotiator may need to rearrange.",
+    "6. The branch receives an email when a viewing is requested.",
+    "7. If the property is not in the register, take a message for the negotiator to arrange manually.",
     "",
     "VALUATIONS",
     "- Capture name, phone, property address, sale vs let, and preferred callback/valuation window.",
@@ -68,7 +69,7 @@ export function buildEstateAgentPrompt(business: string, receptionist: string): 
     "RULES",
     "- UK English. Keep answers short — this is a phone call.",
     "- Never invent fees, EPC ratings, offer status or owner availability.",
-    "- Never invent an owner phone number. If missing, take a message for the branch to arrange the viewing.",
+    "- Never invent an owner phone number. If the property is not in the register, take a message.",
     "- Do not give legal or financial advice.",
   ].join("\n");
 }
@@ -88,7 +89,7 @@ export function estateAgentKnowledgeFields(): KnowledgeFields {
     pricing: "Standard sales and lettings fees — confirm current rates with the branch before quoting.",
     payments: "Holding deposits and referencing handled by the lettings team.",
     other:
-      "Viewings are confirmed with the property owner by text/WhatsApp before they are final. Callers receive an SMS once approved.",
+      "Viewings are confirmed with the property owner by SMS before they are final. The branch is emailed on each request; callers receive an SMS once approved.",
   };
 }
 
@@ -150,7 +151,7 @@ export function buildEstateViewingWebhook(opts: {
     name: "request_viewing",
     friendlyName: "Request property viewing",
     description:
-      "Request a property viewing at a date/time. Checks agent availability when Cal.com is connected, texts/WhatsApps the owner for YES/NO, then confirms the viewer by SMS.",
+      "Request a property viewing at a date/time. Looks up the owner from the property register, emails the branch, texts the owner for YES/NO, then confirms the viewer by SMS.",
     condition: "during_call",
     method: "POST",
     url: `${base}/functions/v1/wisecall-viewing-request`,
@@ -163,7 +164,7 @@ export function buildEstateViewingWebhook(opts: {
       { key: "viewer_phone", value: "{{caller_id}}" },
       { key: "viewer_name", value: "" },
       { key: "address", value: "" },
-      { key: "owner_phone", value: "" },
+      { key: "listing_ref", value: "" },
       { key: "property_id", value: "" },
       { key: "starts_at", value: "" },
       { key: "source", value: "phone" },
