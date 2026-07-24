@@ -35,7 +35,7 @@ r = await call({ method: 'POST', headers: {}, body: { password: 'silk-1865-leeds
 const setCookie = String(r.headers['set-cookie'])
 check('correct password serves the document',
   r.statusCode === 200 && r.body.includes('AI across your business'))
-check('document is the full 11 pages', (r.body.match(/class="page/g) || []).length === 11)
+check('document is the full 12 pages', (r.body.match(/class="page/g) || []).length === 12)
 check('cookie is HttpOnly, Secure, scoped', /HttpOnly/.test(setCookie) &&
   /Secure/.test(setCookie) && /Path=\/jameshare/.test(setCookie))
 check('cookie does not contain the password', !setCookie.includes('silk-1865-leeds'))
