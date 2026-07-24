@@ -1,0 +1,7 @@
+completed_at=2026-07-24T07:36:44Z
+total_rows=713
+with_email=383
+with_directors=232
+log=/workspace/data/research/estate-agents/essex-enrichment-run.log
+enrichment_csv=/workspace/data/research/estate-agents/essex-estate-enrichment.csv
+marketing_csv=/workspace/data/research/estate-agents/essex-estate-marketing-list.csv
