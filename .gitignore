@@ -37,6 +37,9 @@ data/research/cqc_directory.zip
 .env*.local
 .env*
 
+# Written at the repo root by `deno test` / `deno check` on the edge functions
+deno.lock
+
 # Generated Ashleigh Stone KB sync output
 scripts/ashleighstone-demo/state.json
 scripts/ashleighstone-demo/sync.log

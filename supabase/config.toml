@@ -46,3 +46,8 @@ verify_jwt = false
 # Day-before / day-of viewing reminders — cron-triggered with a shared secret.
 [functions.wisecall-viewing-reminders]
 verify_jwt = false
+
+# Diary booking tools (availability / book / reschedule / cancel) — called from
+# voice webhooks with a shared secret, or the portal with the service-role key.
+[functions.wisecall-calendar-booking]
+verify_jwt = false
