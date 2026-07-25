@@ -16,15 +16,38 @@ import {
   Play,
   Square,
   Bot,
+  BedDouble,
+  Briefcase,
+  Calculator,
+  CalendarCheck,
+  Car,
+  Dumbbell,
+  GraduationCap,
+  Headset,
+  HeartHandshake,
+  HeartPulse,
+  MoonStar,
+  PawPrint,
+  Scale,
+  Scissors,
   Stethoscope,
   ShieldCheck,
+  Target,
+  UtensilsCrossed,
+  Wrench,
   Home,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { draftAgentFromWebsite, draftAgentFromInputs, type AgentDraft, type BusinessInputs } from "@/app/actions/wizard";
 import { testVoice } from "@/app/actions/agents";
+import { verifyCalComApiKey } from "@/app/actions/calendar";
 import { OfficeHoursGrid } from "./office-hours-card";
-import type { AgentTemplate, RoutingContact } from "./customer-agent-workspace";
+import type { RoutingContact } from "./customer-agent-workspace";
+import {
+  agentTemplateCategories,
+  type AgentTemplate,
+  type TemplateIconName,
+} from "@/lib/agent-templates";
 
 type Step =
   | "website"
@@ -32,6 +55,7 @@ type Step =
   | "template"
   | "review"
   | "hours"
+  | "diary"
   | "voice"
   | "handoff";
 
@@ -45,39 +69,36 @@ const STEP_TITLES: Record<Step, string> = {
   template: "Assistant type",
   review: "Review the draft",
   hours: "Opening hours",
+  diary: "Your diary",
   voice: "Voice & greeting",
   handoff: "Messages & team",
 };
 
-// Presentation metadata per template: an icon and the plain-English list of
-// what the assistant will actually do. The dental template reads like a
-// workflow, not a prompt: patients are looked up, booked, rescheduled and
-// triaged without the practice lifting a finger.
-const TEMPLATE_META: Record<string, { icon: LucideIcon; chips: string[]; note?: string }> = {
-  receptionist: {
-    icon: Bot,
-    chips: ["Answers FAQs", "Takes messages", "Routes urgent calls"],
-  },
-  dentally: {
-    icon: Stethoscope,
-    chips: [
-      "Looks up patients",
-      "Books, reschedules & cancels",
-      "Registers new patients",
-      "Emergency triage",
-    ],
-    note: "Connects to your Dentally diary — real appointments, booked live on the call.",
-  },
-  estate_agent: {
-    icon: Home,
-    chips: [
-      "Valuation capture",
-      "Owner-confirm viewings",
-      "WhatsApp / SMS to owners",
-      "Maintenance triage",
-    ],
-    note: "Viewings text the owner for YES/NO, then confirm the viewer. Optional Cal.com diary check for negotiator availability.",
-  },
+// Templates name their icon; the mapping lives here so the library stays free of
+// component imports. Typed against TemplateIconName so adding an icon there
+// without adding it here is a build error rather than a blank card.
+const TEMPLATE_ICONS: Record<TemplateIconName, LucideIcon> = {
+  BedDouble,
+  Bot,
+  Briefcase,
+  Calculator,
+  CalendarCheck,
+  Car,
+  Dumbbell,
+  GraduationCap,
+  Headset,
+  HeartHandshake,
+  HeartPulse,
+  Home,
+  MoonStar,
+  PawPrint,
+  Scale,
+  Scissors,
+  ShieldCheck,
+  Stethoscope,
+  Target,
+  UtensilsCrossed,
+  Wrench,
 };
 
 // Re-applies a template's prompt/greeting (and seeds its starter contacts +
@@ -154,7 +175,7 @@ export function SetupWizard({
   templates: AgentTemplate[];
   accountEmail?: string;
 }) {
-  const [step, setStep] = useState<Step>("website");
+  const [requestedStep, setStep] = useState<Step>("website");
   const [manualMode, setManualMode] = useState(false);
   const [website, setWebsite] = useState("");
   const [draft, setDraft] = useState<AgentDraft | null>(null);
@@ -165,6 +186,9 @@ export function SetupWizard({
   const [loadingPhase, setLoadingPhase] = useState(0);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [calcomKey, setCalcomKey] = useState("");
+  const [calcom, setCalcom] = useState<{ ok: boolean; message: string } | null>(null);
+  const [verifying, startVerify] = useTransition();
   const [manualInputs, setManualInputs] = useState<BusinessInputs>({
     businessName: "",
     industry: "",
@@ -199,9 +223,24 @@ export function SetupWizard({
     return () => timers.forEach(clearTimeout);
   }, [generating]);
 
-  const flow: Step[] = manualMode
-    ? ["basics", "template", "review", "hours", "voice", "handoff"]
-    : ["website", "template", "review", "hours", "voice", "handoff"];
+  // Booking templates gain a diary step: without a connected Cal.com account the
+  // agent can offer to take a message but not actually book anything.
+  const selectedTemplate = availableTemplates.find((t) => t.id === draft?.templateId);
+  const needsDiary = Boolean(selectedTemplate?.usesCalendarBooking);
+
+  // Switching to a non-booking template while sitting on the diary step would
+  // otherwise leave the user on a page that is no longer part of the flow.
+  const step = requestedStep === "diary" && !needsDiary ? "voice" : requestedStep;
+
+  const flow: Step[] = [
+    manualMode ? "basics" : "website",
+    "template",
+    "review",
+    "hours",
+    ...(needsDiary ? (["diary"] as Step[]) : []),
+    "voice",
+    "handoff",
+  ];
   const stepIndex = Math.max(0, flow.indexOf(step));
   const totalSteps = flow.length;
 
@@ -251,6 +290,29 @@ export function SetupWizard({
 
   function selectTemplate(t: AgentTemplate) {
     setDraft((d) => (d ? applyTemplate(d, t, aiRef.current) : d));
+  }
+
+  // The agent doesn't exist yet, so the key is validated against Cal.com now and
+  // attached to the draft; the parent connects it once the agent has an id.
+  function connectDiary() {
+    const key = calcomKey.trim();
+    if (!key) return;
+    setCalcom(null);
+    startVerify(async () => {
+      const res = await verifyCalComApiKey(key);
+      if (!res.ok) {
+        setCalcom({ ok: false, message: res.error });
+        return;
+      }
+      patchDraft({ calcomApiKey: key });
+      const names = res.eventTypes.map((e) => e.title).slice(0, 4);
+      setCalcom({
+        ok: true,
+        message: names.length
+          ? `Found ${res.eventTypes.length} bookable event type${res.eventTypes.length === 1 ? "" : "s"}: ${names.join(", ")}${res.eventTypes.length > names.length ? "…" : ""}.`
+          : "Connected, but there are no event types in this Cal.com account yet — add one and your assistant can start booking it.",
+      });
+    });
   }
 
   function finish() {
@@ -561,71 +623,32 @@ export function SetupWizard({
                     do on a call — you can fine-tune everything next.
                   </p>
                 </div>
-                <div className="stagger grid gap-3">
-                  {availableTemplates.map((t) => {
-                    const active = draft.templateId === t.id;
-                    const meta = TEMPLATE_META[t.id] ?? TEMPLATE_META.receptionist;
-                    const MetaIcon = meta.icon;
-                    const suggested =
-                      t.id !== "receptionist" &&
-                      `${draft.industry}`.toLowerCase().includes(t.industry.toLowerCase());
+                <div className="space-y-6">
+                  {agentTemplateCategories.map((category) => {
+                    const inCategory = availableTemplates.filter((t) => t.category === category.id);
+                    if (!inCategory.length) return null;
                     return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => selectTemplate(t)}
-                        className={`press rounded-2xl border p-5 text-left transition ${
-                          active
-                            ? "border-teal bg-teal-wash ring-1 ring-teal"
-                            : "border-line bg-card shadow-card hover:border-teal/50"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <span
-                            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
-                              active ? "bg-teal text-white" : "bg-card-tint text-teal"
-                            }`}
-                          >
-                            <MetaIcon className="h-5 w-5" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="font-black text-ink">{t.label}</span>
-                              <span className="flex items-center gap-2">
-                                {suggested && (
-                                  <span className="rounded-full bg-good-wash px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-good">
-                                    Suggested for you
-                                  </span>
-                                )}
-                                {active && (
-                                  <span className="anim-pop flex h-5 w-5 items-center justify-center rounded-full bg-teal text-white">
-                                    <Check className="h-3 w-3" />
-                                  </span>
-                                )}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-sm text-ink-soft">{t.description}</p>
-                            <div className="mt-3 flex flex-wrap gap-1.5">
-                              {meta.chips.map((chip) => (
-                                <span
-                                  key={chip}
-                                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                                    active ? "bg-white text-teal-deep" : "bg-card-tint text-ink-soft"
-                                  }`}
-                                >
-                                  {chip}
-                                </span>
-                              ))}
-                            </div>
-                            {meta.note && (
-                              <p className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-teal-deep">
-                                <Sparkles className="h-3.5 w-3.5" />
-                                {meta.note}
-                              </p>
-                            )}
-                          </div>
+                      <div key={category.id}>
+                        <p className="text-xs font-black uppercase tracking-wide text-ink-faint">
+                          {category.label}
+                        </p>
+                        <p className="mb-2.5 text-xs text-ink-soft">{category.blurb}</p>
+                        <div className="stagger grid gap-3">
+                          {inCategory.map((t) => (
+                            <TemplateCard
+                              key={t.id}
+                              template={t}
+                              active={draft.templateId === t.id}
+                              suggested={
+                                t.id !== "receptionist" &&
+                                Boolean(t.industry) &&
+                                `${draft.industry}`.toLowerCase().includes(t.industry.toLowerCase())
+                              }
+                              onSelect={() => selectTemplate(t)}
+                            />
+                          ))}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -672,6 +695,85 @@ export function SetupWizard({
                   onChange={(officeHours) => patchDraft({ officeHours })}
                 />
                 {error && <p className="mt-3 text-sm font-medium text-danger">{error}</p>}
+                <WizardFooter
+                  onBack={goBack}
+                  onNext={goNext}
+                  nextLabel={needsDiary ? "Connect your diary" : "Pick a voice"}
+                />
+              </div>
+            )}
+
+            {/* STEP: diary — booking templates only. Connecting Cal.com is what
+                turns "I'll pass that on" into a booking made on the call. */}
+            {step === "diary" && draft && (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-2xl font-black text-ink sm:text-3xl">
+                    Let it book straight into your diary
+                  </h2>
+                  <p className="mt-2 text-ink-soft">
+                    Connect Cal.com and your assistant reads your real availability, offers only
+                    slots that are genuinely free, and books them while the caller is still on the
+                    phone. It can reschedule and cancel too.
+                  </p>
+                </div>
+
+                {calcom?.ok ? (
+                  <div className="rounded-xl border border-good/30 bg-good-wash px-4 py-3">
+                    <p className="flex items-center gap-2 text-sm font-bold text-good">
+                      <Check className="h-4 w-4" />
+                      Cal.com connected
+                    </p>
+                    <p className="mt-1 text-sm text-[#1f5f60]">{calcom.message}</p>
+                  </div>
+                ) : (
+                  <>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
+                        Cal.com API key
+                      </span>
+                      <input
+                        type="password"
+                        value={calcomKey}
+                        onChange={(e) => setCalcomKey(e.target.value)}
+                        placeholder="cal_live_…"
+                        autoComplete="off"
+                        className="h-11 w-full rounded-xl border border-line-strong bg-card px-3 text-ink outline-none transition focus:border-teal"
+                      />
+                    </label>
+                    <p className="text-xs text-ink-soft">
+                      In Cal.com go to Settings → Developer → API keys, create a key and paste it
+                      here. We use it only to read your free slots and make bookings you&apos;ve
+                      agreed to on a call.
+                    </p>
+                    {calcom && !calcom.ok && (
+                      <p className="text-sm font-medium text-danger">{calcom.message}</p>
+                    )}
+                    <button
+                      type="button"
+                      disabled={verifying || !calcomKey.trim()}
+                      onClick={connectDiary}
+                      className="press inline-flex h-11 items-center gap-2 rounded-xl bg-ink px-5 font-black text-white transition hover:bg-[#263130] disabled:opacity-60"
+                    >
+                      {verifying ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Checking your diary…
+                        </>
+                      ) : (
+                        <>
+                          <CalendarCheck className="h-4 w-4" /> Connect Cal.com
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
+
+                <p className="rounded-xl bg-card-tint px-4 py-3 text-xs text-ink-soft">
+                  No Cal.com yet? Skip this. Your assistant still answers everything, captures what
+                  the caller wants and emails you the request — you can connect a diary any time
+                  from the agent&apos;s Technical tab.
+                </p>
+
                 <WizardFooter onBack={goBack} onNext={goNext} nextLabel="Pick a voice" />
               </div>
             )}
@@ -831,6 +933,77 @@ export function SetupWizard({
         </div>
       </div>
     </div>
+  );
+}
+
+function TemplateCard({
+  template,
+  active,
+  suggested,
+  onSelect,
+}: {
+  template: AgentTemplate;
+  active: boolean;
+  suggested: boolean;
+  onSelect: () => void;
+}) {
+  const Icon = TEMPLATE_ICONS[template.icon];
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`press rounded-2xl border p-5 text-left transition ${
+        active
+          ? "border-teal bg-teal-wash ring-1 ring-teal"
+          : "border-line bg-card shadow-card hover:border-teal/50"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
+            active ? "bg-teal text-white" : "bg-card-tint text-teal"
+          }`}
+        >
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-black text-ink">{template.label}</span>
+            <span className="flex items-center gap-2">
+              {suggested && (
+                <span className="rounded-full bg-good-wash px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-good">
+                  Suggested for you
+                </span>
+              )}
+              {active && (
+                <span className="anim-pop flex h-5 w-5 items-center justify-center rounded-full bg-teal text-white">
+                  <Check className="h-3 w-3" />
+                </span>
+              )}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-ink-soft">{template.description}</p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {template.chips.map((chip) => (
+              <span
+                key={chip}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  active ? "bg-white text-teal-deep" : "bg-card-tint text-ink-soft"
+                }`}
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+          {template.note && (
+            <p className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-teal-deep">
+              <Sparkles className="h-3.5 w-3.5" />
+              {template.note}
+            </p>
+          )}
+        </div>
+      </div>
+    </button>
   );
 }
 

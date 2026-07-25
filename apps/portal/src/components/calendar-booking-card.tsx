@@ -48,9 +48,10 @@ export function CalendarBookingCard({ agentId }: { agentId: string }) {
         <div className="min-w-0 flex-1">
           <h3 className="font-black text-ink">Diary / Cal.com</h3>
           <p className="mt-1 text-sm text-ink-soft">
-            Connect Cal.com so viewing requests can check negotiator availability before the
-            owner is asked. Without it, viewings still work — the owner confirm loop runs, and
-            availability is left for the branch to double-check.
+            Connect Cal.com and your assistant books into your real diary on the call: it offers
+            only slots that are genuinely free, confirms the appointment, and can reschedule or
+            cancel it later. Estate agents also get an availability check before the owner is
+            asked about a viewing.
           </p>
         </div>
       </div>
@@ -75,6 +76,21 @@ export function CalendarBookingCard({ agentId }: { agentId: string }) {
               ? ` · ${connection.event_types.length} event type${connection.event_types.length === 1 ? "" : "s"}`
               : ""}
           </div>
+
+          {connection.bookingTools.length > 0 && (
+            <div className="rounded-lg border border-line bg-card-tint px-3 py-2.5">
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-soft">
+                Live on calls
+              </p>
+              <p className="mt-1 text-sm text-ink-soft">
+                The agent can now use{" "}
+                <span className="font-semibold text-ink">
+                  {connection.bookingTools.join(", ")}
+                </span>{" "}
+                mid-conversation. These appear as tools below and are removed if you disconnect.
+              </p>
+            </div>
+          )}
 
           {connection.event_types.length > 0 && (
             <div>
@@ -172,8 +188,9 @@ export function CalendarBookingCard({ agentId }: { agentId: string }) {
             />
           </label>
           <p className="text-xs text-ink-soft">
-            Cal.com → Settings → API keys. Create a key, paste it here. We store it on the agent
-            and use it only to read slots / book when a viewing is requested.
+            Cal.com → Settings → Developer → API keys. Create a key and paste it here. We store it
+            on this agent and use it only to read your free slots and make the bookings a caller
+            has agreed to.
           </p>
           <button
             type="button"
