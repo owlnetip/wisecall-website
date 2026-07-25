@@ -23,6 +23,12 @@ import {
   normalisePhone,
   ownerAskMessage,
 } from "../_shared/viewing-confirm.ts";
+import {
+  calcomGetSlots,
+  hasSlotAt,
+  loadCalendarConnection,
+  resolveEventType,
+} from "../_shared/calendar.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +64,8 @@ type Body = {
   notes?: string;
   skip_owner_notify?: boolean;
   duration_mins?: number;
+  /** Cal.com event type to check availability against (defaults to "viewing"). */
+  service?: string;
 };
 
 function json(body: Record<string, unknown>, status = 200) {
@@ -142,20 +150,21 @@ async function sendWhatsapp(opts: {
   return { ok: true };
 }
 
+/**
+ * Best-effort check that a negotiator is actually free. This never blocks the
+ * owner ask — a branch would rather field a clash than lose the viewing — so
+ * every failure path returns a note for the audit trail and lets the flow run.
+ */
 async function checkAgentAvailability(
   supabase: ReturnType<typeof createClient>,
   profileId: string,
   startsAt: Date,
   endsAt: Date,
+  viewingService?: string | null,
 ): Promise<{ checked: boolean; available: boolean | null; note: string | null }> {
-  const { data: conn } = await supabase
-    .from("wisecall_calendar_connections")
-    .select("provider, access_token, config, event_types, status")
-    .eq("profile_id", profileId)
-    .eq("status", "connected")
-    .maybeSingle();
+  const connection = await loadCalendarConnection(supabase, profileId);
 
-  if (!conn?.access_token) {
+  if (!connection) {
     return {
       checked: false,
       available: null,
@@ -163,58 +172,45 @@ async function checkAgentAvailability(
     };
   }
 
-  if (conn.provider === "cal_com") {
-    try {
-      const eventTypes = Array.isArray(conn.event_types) ? conn.event_types : [];
-      const eventTypeId = eventTypes[0]?.id;
-      if (!eventTypeId) {
-        return { checked: false, available: null, note: "Cal.com connected but no event type selected." };
-      }
-      const fromISO = startsAt.toISOString();
-      const toISO = new Date(endsAt.getTime() + 60 * 60 * 1000).toISOString();
-      const qs = new URLSearchParams({
-        eventTypeId: String(eventTypeId),
-        start: fromISO,
-        end: toISO,
-      });
-      const r = await fetch(`https://api.cal.com/v2/slots?${qs}`, {
-        headers: {
-          Authorization: `Bearer ${conn.access_token}`,
-          "cal-api-version": "2024-08-13",
-        },
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!r.ok) {
-        return { checked: true, available: null, note: `Cal.com slots lookup failed (${r.status}).` };
-      }
-      const body = await r.json();
-      const data = body?.data ?? {};
-      const days = data.slots ?? data;
-      const slots: string[] = [];
-      for (const key of Object.keys(days || {})) {
-        for (const s of days[key] || []) {
-          if (s?.start) slots.push(s.start);
-        }
-      }
-      const target = startsAt.getTime();
-      const hit = slots.some((s) => Math.abs(new Date(s).getTime() - target) < 2 * 60 * 1000);
-      return {
-        checked: true,
-        available: hit,
-        note: hit
-          ? "Cal.com has an open slot at the proposed time."
-          : "Cal.com has no open slot at the proposed time — owner ask still sent; negotiator should confirm.",
-      };
-    } catch (e) {
-      return { checked: true, available: null, note: `Cal.com error: ${(e as Error).message}` };
-    }
+  if (connection.provider !== "cal_com") {
+    return {
+      checked: false,
+      available: null,
+      note: `Calendar provider ${connection.provider} connected — availability check not automated yet.`,
+    };
   }
 
-  return {
-    checked: false,
-    available: null,
-    note: `Calendar provider ${conn.provider} connected — availability check not automated yet.`,
-  };
+  // Honours the event types the branch selected in the portal, and matches a
+  // named service ("viewing") when they have more than one.
+  const eventType = resolveEventType(connection, viewingService ?? "viewing");
+  if (!eventType) {
+    return { checked: false, available: null, note: "Cal.com connected but no event type selected." };
+  }
+
+  try {
+    const result = await calcomGetSlots(connection.access_token, {
+      eventTypeId: eventType.id,
+      start: startsAt.toISOString(),
+      end: new Date(endsAt.getTime() + 60 * 60 * 1000).toISOString(),
+    });
+    if (!result.ok) {
+      return {
+        checked: true,
+        available: null,
+        note: `Cal.com slots lookup failed (${result.status}): ${result.error ?? "unknown error"}`,
+      };
+    }
+    const hit = hasSlotAt(result.slots, startsAt);
+    return {
+      checked: true,
+      available: hit,
+      note: hit
+        ? `Cal.com has an open ${eventType.title} slot at the proposed time.`
+        : "Cal.com has no open slot at the proposed time — owner ask still sent; negotiator should confirm.",
+    };
+  } catch (e) {
+    return { checked: true, available: null, note: `Cal.com error: ${(e as Error).message}` };
+  }
 }
 
 Deno.serve(async (req) => {
@@ -326,7 +322,13 @@ Deno.serve(async (req) => {
     return json({ success: false, error: "property has no owner_phone — cannot ask for confirmation" }, 400);
   }
 
-  const availability = await checkAgentAvailability(supabase, profileId, startsAt, endsAt);
+  const availability = await checkAgentAvailability(
+    supabase,
+    profileId,
+    startsAt,
+    endsAt,
+    body.service,
+  );
 
   const allowedSources = new Set(["phone", "whatsapp", "sms", "email", "manual", "web"]);
   const { data: viewing, error: viewErr } = await supabase

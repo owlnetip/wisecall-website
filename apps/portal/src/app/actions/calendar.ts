@@ -5,6 +5,21 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { isAdmin } from "@/lib/admin";
 import { cookies } from "next/headers";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
+import {
+  buildCalendarBookingWebhooks,
+  isCalendarBookingWebhook,
+} from "@/lib/calendar-booking-template";
+import {
+  readIntegrationWebhooks,
+  serializeIntegrationWebhooks,
+  validateIntegrationWebhooks,
+  type IntegrationWebhook,
+} from "@/lib/integration-webhooks";
+import { webhookSupabaseUrl } from "@/lib/template-webhooks";
+
+// Cal.com pins each v2 controller to its own version. event-types only accepts
+// 2024-06-14 and 404s on anything newer, which is easy to mistake for a bad key.
+const CALCOM_VERSION_EVENT_TYPES = "2024-06-14";
 
 export type CalendarEventType = {
   id: string | number;
@@ -21,6 +36,8 @@ export type CalendarConnection = {
   event_types: CalendarEventType[];
   config: Record<string, unknown>;
   connected: boolean;
+  /** Diary tools currently exposed to the agent on a call. */
+  bookingTools: string[];
 };
 
 async function effectiveUserId(): Promise<string | null> {
@@ -52,7 +69,7 @@ async function calcomListEventTypes(apiKey: string): Promise<CalendarEventType[]
   const res = await fetch("https://api.cal.com/v2/event-types", {
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      "cal-api-version": "2024-08-13",
+      "cal-api-version": CALCOM_VERSION_EVENT_TYPES,
     },
     cache: "no-store",
   });
@@ -70,6 +87,74 @@ async function calcomListEventTypes(apiKey: string): Promise<CalendarEventType[]
       duration_mins: e.lengthInMinutes ?? e.length ?? null,
     }),
   );
+}
+
+type ServiceClient = NonNullable<ReturnType<typeof getServiceSupabase>>;
+
+async function readProfileWebhooks(
+  svc: ServiceClient,
+  profileId: string,
+): Promise<{ metadata: Record<string, unknown>; webhooks: IntegrationWebhook[] }> {
+  const { data } = await svc
+    .from("wisecall_profiles")
+    .select("metadata")
+    .eq("id", profileId)
+    .maybeSingle();
+  const metadata = ((data?.metadata as Record<string, unknown> | null) ?? {}) as Record<
+    string,
+    unknown
+  >;
+  return { metadata, webhooks: readIntegrationWebhooks(metadata) };
+}
+
+/**
+ * Connecting a diary is what makes booking real, so the during-call tools follow
+ * the connection rather than the template: connect and the agent can book on the
+ * next call, disconnect and the tools disappear instead of failing mid-sentence.
+ *
+ * A tool-sync problem must never fail the connect itself — the credentials are
+ * saved either way and the customer can re-run this from the Technical tab.
+ */
+async function syncBookingTools(
+  svc: ServiceClient,
+  profileId: string,
+  mode: "add" | "remove",
+): Promise<string[]> {
+  const { metadata, webhooks } = await readProfileWebhooks(svc, profileId);
+
+  let next: IntegrationWebhook[];
+  if (mode === "add") {
+    const supabaseUrl = webhookSupabaseUrl();
+    if (!supabaseUrl) return webhooks.filter(isCalendarBookingWebhook).map((h) => h.name);
+    const taken = new Set(webhooks.map((hook) => hook.name));
+    const additions = buildCalendarBookingWebhooks({
+      supabaseUrl,
+      smsSecret: process.env.WISECALL_SMS_WEBHOOK_SECRET,
+    }).filter((hook) => !taken.has(hook.name));
+    next = additions.length ? [...webhooks, ...additions] : webhooks;
+  } else {
+    next = webhooks.filter((hook) => !isCalendarBookingWebhook(hook));
+  }
+
+  if (next.length !== webhooks.length) {
+    const validationError = validateIntegrationWebhooks(next);
+    if (validationError) {
+      console.error("[calendar] booking tool sync skipped:", validationError);
+      return webhooks.filter(isCalendarBookingWebhook).map((hook) => hook.name);
+    }
+    const { error } = await svc
+      .from("wisecall_profiles")
+      .update({
+        metadata: { ...metadata, integration_webhooks: serializeIntegrationWebhooks(next) },
+      })
+      .eq("id", profileId);
+    if (error) {
+      console.error("[calendar] booking tool sync failed:", error.message);
+      return webhooks.filter(isCalendarBookingWebhook).map((hook) => hook.name);
+    }
+  }
+
+  return next.filter(isCalendarBookingWebhook).map((hook) => hook.name);
 }
 
 export async function getCalendarConnection(
@@ -95,6 +180,8 @@ export async function getCalendarConnection(
     (rows || [])[0];
   if (!data) return { ok: true, connection: null };
 
+  const { webhooks } = await readProfileWebhooks(svc, profileId);
+
   return {
     ok: true,
     connection: {
@@ -105,8 +192,29 @@ export async function getCalendarConnection(
       event_types: Array.isArray(data.event_types) ? (data.event_types as CalendarEventType[]) : [],
       config: (data.config as Record<string, unknown>) || {},
       connected: data.status === "connected",
+      bookingTools: webhooks.filter(isCalendarBookingWebhook).map((hook) => hook.name),
     },
   };
+}
+
+/**
+ * Checks a Cal.com key before the agent exists, so the setup wizard can give
+ * immediate feedback instead of failing after the agent has been created.
+ */
+export async function verifyCalComApiKey(
+  apiKey: string,
+): Promise<{ ok: true; eventTypes: CalendarEventType[] } | { ok: false; error: string }> {
+  const userId = await effectiveUserId();
+  if (!userId) return { ok: false, error: "Not signed in" };
+
+  const key = apiKey.trim();
+  if (!key || key.length < 10) return { ok: false, error: "Paste a valid Cal.com API key" };
+
+  try {
+    return { ok: true, eventTypes: await calcomListEventTypes(key) };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
 }
 
 export async function connectCalCom(
@@ -167,6 +275,8 @@ export async function connectCalCom(
     id = data.id as string;
   }
 
+  const bookingTools = await syncBookingTools(svc, profileId, "add");
+
   return {
     ok: true,
     connection: {
@@ -177,6 +287,7 @@ export async function connectCalCom(
       event_types: eventTypes,
       config: row.config,
       connected: true,
+      bookingTools,
     },
   };
 }
@@ -221,5 +332,9 @@ export async function disconnectCalendar(
     .eq("profile_id", profileId);
 
   if (error) return { ok: false, error: error.message };
+
+  // Leaving the tools in place would have the agent confidently offering slots it
+  // can no longer see.
+  await syncBookingTools(svc, profileId, "remove");
   return { ok: true };
 }

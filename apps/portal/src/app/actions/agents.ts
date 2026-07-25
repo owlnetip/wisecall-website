@@ -20,7 +20,7 @@ import {
   validateIntegrationWebhooks,
 } from "@/lib/integration-webhooks";
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
-import { buildEstateViewingWebhook } from "@/lib/estate-agent-template";
+import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhooks";
 import { getVoiceOption } from "@/lib/voices";
 import {
   getCartesiaVoiceId,
@@ -171,21 +171,13 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
   };
   if (input.templateId) metadata.template_id = input.templateId;
 
-  let webhooks = input.integrationWebhooks ?? [];
-  // Estate agents always get the owner-confirm viewing tool wired in.
-  if (input.templateId === "estate_agent" && !webhooks.some((w) => w.name === "request_viewing")) {
-    const supabaseUrl =
-      process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
-    if (supabaseUrl) {
-      webhooks = [
-        ...webhooks,
-        buildEstateViewingWebhook({
-          supabaseUrl,
-          smsSecret: process.env.WISECALL_SMS_WEBHOOK_SECRET,
-        }),
-      ];
-    }
-  }
+  // Templates bring their own during-call tools: the estate owner-confirm
+  // viewing loop, and the connected-diary booking set for booking templates.
+  const webhooks = withTemplateWebhooks(input.integrationWebhooks ?? [], {
+    templateId: input.templateId,
+    supabaseUrl: webhookSupabaseUrl(),
+    smsSecret: process.env.WISECALL_SMS_WEBHOOK_SECRET,
+  });
   if (webhooks.length) {
     const validationError = validateIntegrationWebhooks(webhooks);
     if (validationError) return { ok: false, error: validationError };

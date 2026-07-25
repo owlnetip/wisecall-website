@@ -15,6 +15,7 @@ import type {
   OfficeHours,
   RoutingContact,
 } from "@/components/customer-agent-workspace";
+import { matchAgentTemplateId } from "@/lib/agent-templates";
 
 export type AgentDraft = {
   businessName: string;
@@ -32,23 +33,11 @@ export type AgentDraft = {
   voice: string; // chosen voice id ("" → wizard uses the default)
   defaultEmail: string; // where call messages + transcripts are sent
   contacts: RoutingContact[]; // staff/colleagues for transfers + notifications
+  // Cal.com API key, only collected for booking templates. The agent doesn't
+  // exist yet at that point in the wizard, so it's connected straight after
+  // creation and never persisted on the draft.
+  calcomApiKey?: string;
 };
-
-// Maps the AI-detected industry to one of our agent templates so the wizard can
-// pre-select it. Specialised templates (dental / estate) only match on a clear
-// signal; everything else falls back to the general receptionist.
-function matchTemplateId(industry: string, context: string): string {
-  const hay = `${industry} ${context}`.toLowerCase();
-  if (/\b(dental|dentist|dentistry|dentally|hygienist)\b/.test(hay)) return "dentally";
-  if (
-    /\b(estate\s*agent|lettings?|letting\s*agent|property\s*(sales|management|agency)|real\s*estate|realtor|housing\s*association)\b/.test(
-      hay,
-    )
-  ) {
-    return "estate_agent";
-  }
-  return "receptionist";
-}
 
 export type DraftResult = { ok: boolean; draft?: AgentDraft; error?: string };
 
@@ -358,7 +347,7 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
         knowledgeFields,
         officeHours,
         website: url,
-        templateId: matchTemplateId(str("industry"), str("businessContext")),
+        templateId: matchAgentTemplateId(str("industry"), str("businessContext")),
         voice: "",
         // Pre-fill the messages inbox with the account holder's email, the most
         // common answer, so most users just confirm it in the wizard.
@@ -418,7 +407,7 @@ function parseDraftOutput(
     knowledgeFields,
     officeHours,
     website: defaults.website ?? "",
-    templateId: matchTemplateId(str("industry"), str("businessContext")),
+    templateId: matchAgentTemplateId(str("industry"), str("businessContext")),
     voice: "",
     defaultEmail: defaults.defaultEmail ?? "",
     contacts: [],
