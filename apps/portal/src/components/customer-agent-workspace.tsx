@@ -64,6 +64,7 @@ import {
   updateAgent,
 } from "@/app/actions/agents";
 import { provisionSmsNumber } from "@/app/actions/sms";
+import { connectCalCom } from "@/app/actions/calendar";
 import type { AgentSmsNumber, AgentWhatsappNumber } from "@/lib/agents";
 import {
   deleteKnowledgeBaseSource,
@@ -94,17 +95,16 @@ import { OfficeHoursCard } from "./office-hours-card";
 import { IntegrationWebhooksCard } from "./integration-webhooks-card";
 import { PbxExtensionCard } from "./pbx-extension-card";
 import type { IntegrationWebhook } from "@/lib/integration-webhooks";
-import { CALLER_INTAKE_PROMPT } from "@/lib/caller-intake";
 import { ContactsView } from "./contacts-view";
 import { ViewingsView } from "./viewings-view";
 import { CalendarBookingCard } from "./calendar-booking-card";
 import { RaiseTicketModal } from "./raise-ticket-modal";
 import {
-  buildEstateAgentGreeting,
-  buildEstateAgentPrompt,
-  estateAgentDefaultContacts,
-  estateAgentKnowledgeFields,
-} from "@/lib/estate-agent-template";
+  agentTemplateCategories,
+  agentTemplates,
+  type AgentTemplate,
+  type AgentTemplateCategory,
+} from "@/lib/agent-templates";
 import { SupportChatPanel } from "./support-chat-panel";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
@@ -1317,155 +1317,11 @@ const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "channels", label: "Channels", icon: Layers },
 ];
 
-// Agent templates. Receptionist + specialised verticals (Dental, Estate).
-// The create / wizard flows pick these up automatically.
-export type AgentTemplate = {
-  id: string;
-  label: string;
-  description: string;
-  industry: string;
-  available: boolean;
-  buildPrompt: (business: string, receptionist: string) => string;
-  buildGreeting: (business: string, receptionist: string) => string;
-  // Optional starter content seeded onto the agent at creation time.
-  defaultKnowledgeFields?: KnowledgeFields;
-  defaultContacts?: () => RoutingContact[];
-};
-
-export const agentTemplates: AgentTemplate[] = [
-  {
-    id: "receptionist",
-    label: "Receptionist",
-    description: "Friendly general receptionist: answers FAQs, takes messages and transfers urgent calls.",
-    industry: "General",
-    available: true,
-    buildPrompt: (business, receptionist) => {
-      const who = receptionist || "the receptionist";
-      const biz = business || "the business";
-      return [
-        `You are ${who}, the friendly virtual receptionist for ${biz}.`,
-        "",
-        "Greet every caller warmly and professionally, and find out how you can help.",
-        "",
-        "You can:",
-        `- Answer common questions about ${biz} (opening hours, location, services and pricing).`,
-        "- Take a message: always capture the caller's name, phone number and the reason for their call.",
-        "- Note appointment or callback requests and pass them to the team.",
-        "- Transfer urgent calls to a team member when needed.",
-        "",
-        CALLER_INTAKE_PROMPT,
-        "",
-        "Always be polite, concise and reassuring. If you don't know an answer, take a message and let the caller know someone will get back to them shortly.",
-      ].join("\n");
-    },
-    buildGreeting: (business, receptionist) => {
-      const who = receptionist || "the receptionist";
-      const biz = business || "the business";
-      return `Hi, thanks for calling ${biz}, you're through to ${who}. How can I help you today?`;
-    },
-  },
-  {
-    id: "estate_agent",
-    label: "Estate agent",
-    description:
-      "Sales & lettings receptionist: valuations, owner-confirmed viewings (WhatsApp/SMS to landlords), maintenance triage and branch routing.",
-    industry: "Property",
-    available: true,
-    buildPrompt: buildEstateAgentPrompt,
-    buildGreeting: buildEstateAgentGreeting,
-    defaultKnowledgeFields: estateAgentKnowledgeFields(),
-    defaultContacts: estateAgentDefaultContacts,
-  },
-  {
-    id: "dentally",
-    label: "Dental practice (Dentally)",
-    description:
-      "Dental receptionist with Dentally booking built in, looks up patients, registers new ones, books, reschedules and cancels appointments, and handles emergencies.",
-    industry: "Dental",
-    available: true,
-    buildPrompt: (business, receptionist) => {
-      const who = receptionist || "the receptionist";
-      const biz = business || "the practice";
-      return [
-        `You are ${who}, a warm, professional AI receptionist for ${biz}, a dental practice. Your job is to help patients book, reschedule, or cancel appointments and answer questions about the practice.`,
-        "",
-        "OPENING HOURS: [Add the practice opening hours here]",
-        "PRACTITIONER(S): [Add the dentist / hygienist names here]",
-        "",
-        "CALL FLOW",
-        "",
-        "Step 1 - Identify the caller",
-        "Use the resolve_patient result from the start of the call.",
-        "- If a single patient was found: greet by first name.",
-        "- If disambiguation_required: ask for date of birth, then call resolve_patient again with phone + date_of_birth.",
-        "- If phone + DOB still does not match a single record: ask for first and last name, then call resolve_patient again with phone + firstname + lastname + date_of_birth.",
-        "- If no record is found and the caller confirms they are a new patient: collect firstname, lastname, date_of_birth and title, then call resolve_patient again with create_if_not_found=true.",
-        "",
-        "Step 2 - Understand what they need",
-        '- "book" / "make an appointment" -> booking flow',
-        '- "reschedule" / "change" -> reschedule flow',
-        '- "cancel" -> cancellation flow',
-        "- a question about the practice (hours, location, treatments, pricing, NHS vs private) -> answer it, then ask if they would like to book.",
-        "",
-        "Step 3a - Booking",
-        "1. Call get_appointment_reasons and offer the options.",
-        "2. Ask what date and time suits them.",
-        "3. Call get_availability for that date.",
-        "4. Offer up to 3 slots.",
-        "5. Once the caller confirms a slot you already offered, call create_appointment exactly once using patient_id from resolve_patient and the exact slot details from get_availability (especially start_time, practitioner_id and reason_id).",
-        "6. Only after create_appointment returns success may you say the appointment is booked.",
-        "",
-        "Step 3b - Reschedule",
-        "1. Call get_patient_appointments to find their booking.",
-        "2. Follow the booking flow to find a new slot.",
-        "3. Cancel the old appointment, then create the new one.",
-        "",
-        "Step 3c - Cancellation",
-        "1. Call get_patient_appointments.",
-        "2. Confirm the details and ask them to confirm cancellation.",
-        "3. Call cancel_appointment only after they confirm.",
-        "",
-        "DENTAL EMERGENCIES",
-        "- If the caller describes severe pain, swelling, bleeding, trauma or a knocked-out tooth, treat it as urgent: capture their name and number and follow the practice's emergency process (transfer or take an urgent message).",
-        "",
-        CALLER_INTAKE_PROMPT,
-        "",
-        "RULES",
-        "- Always confirm appointment details before booking or cancelling.",
-        "- Never tell the caller they are booked unless create_appointment succeeds.",
-        "- Never tell the caller they are cancelled unless cancel_appointment succeeds.",
-        "- Do not re-run get_availability after the caller has confirmed an offered slot unless searching a different date or time.",
-        "- Keep responses short because this is a phone call.",
-        "- If there is no availability, apologise and offer the next available day.",
-      ].join("\n");
-    },
-    buildGreeting: (business, receptionist) => {
-      const who = receptionist || "the receptionist";
-      const biz = business || "the practice";
-      return `Hi, thanks for calling ${biz}, you're through to ${who}. Are you calling to book, change or cancel an appointment, or is it something else?`;
-    },
-    defaultContacts: () => [
-      {
-        id: crypto.randomUUID(),
-        name: "Dental emergencies",
-        phone: "",
-        email: "",
-        keywords: [
-          "emergency",
-          "severe pain",
-          "swelling",
-          "bleeding",
-          "knocked out",
-          "trauma",
-          "abscess",
-        ],
-        transfer: true,
-        notify: false,
-        useDefaultEmail: false,
-      },
-    ],
-  },
-];
+// Agent templates live in @/lib/agent-templates so the create flow, the setup
+// wizard and the website-scan matcher all read the same list. Re-exported here
+// for the existing importers.
+export { agentTemplates, agentTemplateCategories };
+export type { AgentTemplate, AgentTemplateCategory };
 
 export function CustomerAgentWorkspace({
   initialAssistants,
@@ -1765,6 +1621,17 @@ export function CustomerAgentWorkspace({
         officeHours: draft.officeHours,
         defaultEmail,
       });
+    }
+
+    // The diary can only be connected once the agent has an id. The key was
+    // already validated in the wizard, so a failure here is worth surfacing but
+    // must not undo an agent that was created successfully.
+    const calcomApiKey = (draft.calcomApiKey ?? "").trim();
+    if (calcomApiKey) {
+      const connected = await connectCalCom(result.id, calcomApiKey);
+      if (!connected.ok) {
+        console.error("Cal.com connect after setup failed:", connected.error);
+      }
     }
 
     const routing = result.routing ?? { provider: null as null, number: "", status: "unprovisioned" as const };
@@ -5515,41 +5382,63 @@ function CreateAssistantModal({
           </button>
         </div>
 
-        <p className="mb-3 text-sm font-bold text-ink-soft">Start from a template</p>
-        <div className="mb-6 space-y-3">
-          {agentTemplates.map((template) => {
-            const selected = template.id === templateId;
+        <p className="mb-1 text-sm font-bold text-ink-soft">Start from a template</p>
+        <p className="mb-3 text-xs text-ink-faint">
+          {agentTemplates.filter((t) => t.available).length} ready-made assistants. Each one comes
+          with the prompt, the knowledge prompts and the call handling for that trade already
+          written.
+        </p>
+        <div className="mb-6 max-h-[46vh] space-y-5 overflow-y-auto pr-1">
+          {agentTemplateCategories.map((category) => {
+            const inCategory = agentTemplates.filter(
+              (t) => t.category === category.id && t.available,
+            );
+            if (!inCategory.length) return null;
             return (
-              <button
-                type="button"
-                key={template.id}
-                disabled={!template.available}
-                onClick={() => onTemplateChange(template.id)}
-                className={`flex w-full items-start gap-3 rounded-xl border px-5 py-4 text-left transition ${
-                  selected
-                    ? "border-teal bg-teal-wash"
-                    : "border-line bg-white hover:bg-card-tint"
-                } ${template.available ? "" : "cursor-not-allowed opacity-50"}`}
-              >
-                <span
-                  className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
-                    selected ? "border-teal bg-teal" : "border-black/20"
-                  }`}
-                >
-                  {selected && <Check className="h-3.5 w-3.5 text-white" />}
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-black">{template.label}</span>
-                  <span className="mt-1 block text-sm text-ink-soft">
-                    {template.description}
-                  </span>
-                </span>
-              </button>
+              <div key={category.id}>
+                <p className="mb-2 px-1 text-[11px] font-black uppercase tracking-wide text-ink-faint">
+                  {category.label}
+                </p>
+                <div className="space-y-2">
+                  {inCategory.map((template) => {
+                    const selected = template.id === templateId;
+                    return (
+                      <button
+                        type="button"
+                        key={template.id}
+                        onClick={() => onTemplateChange(template.id)}
+                        className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                          selected
+                            ? "border-teal bg-teal-wash"
+                            : "border-line bg-white hover:bg-card-tint"
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
+                            selected ? "border-teal bg-teal" : "border-black/20"
+                          }`}
+                        >
+                          {selected && <Check className="h-3.5 w-3.5 text-white" />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block font-black">{template.label}</span>
+                          <span className="mt-1 block text-sm text-ink-soft">
+                            {template.description}
+                          </span>
+                          {template.usesCalendarBooking && (
+                            <span className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-teal-deep">
+                              <CalendarCheck className="h-3.5 w-3.5" />
+                              Books into your Cal.com diary once connected
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
-          <p className="px-1 text-xs text-ink-faint">
-            More industry &amp; integration templates coming soon.
-          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
