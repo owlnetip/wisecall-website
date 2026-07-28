@@ -4,12 +4,41 @@ import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/admin";
 import { DEMO_KB_SOURCES } from "@/lib/demo-knowledge-base";
 import { getSupabaseConfig } from "@/lib/env";
+import { extractPublishedFeeLines, mergePricingField } from "@/lib/fee-extract";
 import { getServiceSupabase } from "@/lib/supabase";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchSupplementaryWebsiteText } from "@/lib/website-fetch";
 import {
   buildWebsiteKnowledgeUrls,
   normalizeKnowledgeSourceUrl,
 } from "@/lib/website-kb-paths";
+
+type KnowledgeFields = {
+  openingHours?: string;
+  address?: string;
+  services?: string;
+  pricing?: string;
+  payments?: string;
+  other?: string;
+};
+
+function composeKnowledgeFields(fields: KnowledgeFields): string {
+  const sections: Array<[keyof KnowledgeFields, string]> = [
+    ["openingHours", "Opening hours"],
+    ["address", "Address & parking"],
+    ["services", "Services & treatments"],
+    ["pricing", "Pricing"],
+    ["payments", "Payments, insurance & registration"],
+    ["other", "Anything else"],
+  ];
+  return sections
+    .map(([key, label]) => {
+      const value = (fields[key] ?? "").trim();
+      return value ? `${label}:\n${value}` : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
 
 const CATEGORIES = [
   "OwlnetPBX",
@@ -308,6 +337,14 @@ export async function ingestWebsiteKnowledgeBase(input: {
     if (result.error) errors.push(`${url}: ${result.error}`);
   }
 
+  // Also copy published £ fees into business_context so the phone agent can
+  // answer price questions immediately without waiting on a KB tool call.
+  try {
+    await syncWebsitePricingIntoAgent(access.row, urls);
+  } catch (error) {
+    console.error("[ingestWebsiteKnowledgeBase] pricing sync:", error);
+  }
+
   if (ingested > 0) revalidatePath("/dashboard");
 
   return {
@@ -318,6 +355,55 @@ export async function ingestWebsiteKnowledgeBase(input: {
     urls,
     errors,
   };
+}
+
+async function syncWebsitePricingIntoAgent(
+  row: ProfileAccessRow,
+  urls: string[],
+): Promise<void> {
+  const feeUrls = urls.filter((url) => /fee|pric|treatment|service/i.test(url)).slice(0, 4);
+  if (!feeUrls.length) return;
+
+  const pages = await fetchSupplementaryWebsiteText(feeUrls, {
+    maxPages: 4,
+    maxLengthPerPage: 12000,
+  });
+  if (!pages.length) return;
+
+  const feeLines = extractPublishedFeeLines(pages.join("\n"));
+  if (!feeLines.length) return;
+
+  const service = getServiceSupabase();
+  if (!service) return;
+
+  const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+  const existingFields =
+    metadata.knowledge_fields && typeof metadata.knowledge_fields === "object"
+      ? ({ ...(metadata.knowledge_fields as KnowledgeFields) } as KnowledgeFields)
+      : ({} as KnowledgeFields);
+
+  const pricing = mergePricingField(existingFields.pricing, feeLines);
+  if (!pricing || pricing === (existingFields.pricing || "").trim()) return;
+
+  const knowledgeFields: KnowledgeFields = { ...existingFields, pricing };
+  const knowledge = composeKnowledgeFields(knowledgeFields);
+  const nextMetadata = {
+    ...metadata,
+    knowledge_fields: knowledgeFields,
+    knowledge,
+  };
+
+  const { error } = await service
+    .from("wisecall_profiles")
+    .update({
+      business_context: knowledge,
+      metadata: nextMetadata,
+    })
+    .eq("id", row.id);
+
+  if (error) {
+    console.error("[syncWebsitePricingIntoAgent]", error.message);
+  }
 }
 
 export async function listKnowledgeBaseSources(agentId: string): Promise<KnowledgeBaseListResult> {

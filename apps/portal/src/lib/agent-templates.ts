@@ -816,6 +816,7 @@ const dentally: AgentTemplate = {
       '- "reschedule" / "change" -> reschedule flow',
       '- "cancel" -> cancellation flow',
       "- a question about the practice (hours, location, treatments, pricing, NHS vs private) -> answer it, then ask if they would like to book.",
+      "- PRICE QUESTIONS (cleaning, polish, hygienist, CBCT, exam, whitening, etc.): answer immediately from BUSINESS KNOWLEDGE / published fees. Quote the £ figure as a guide price. Do not stall, do not ask them to repeat, and do not say you need to check with the team if the price is already in your knowledge. If it is not in knowledge, call lookup_knowledge_base once with the treatment name, then quote what you find.",
       "",
       "Step 3a - Booking",
       "1. Call get_appointment_reasons and offer the options.",

@@ -75,6 +75,24 @@ function normalizePriceListQuery(query: string): string {
   text = text.replace(/\b(pat|padd|pads)\b/gi, "pad");
   text = text.replace(/\bfive\s*thousand\s*(?:and\s*)?one\b/gi, "5001");
   text = text.replace(/\bfive\s*thousand\b/gi, "5000");
+
+  // Dental colloquialisms → fee-table vocabulary (e.g. "teeth cleaned" → hygienist / scale / polish).
+  text = text.replace(
+    /\b(?:teeth|tooth)\s*(?:clean(?:ing|ed)?|polish(?:ed|ing)?)\b/gi,
+    "hygienist scale polish",
+  );
+  text = text.replace(
+    /\b(?:clean(?:ed)?|polish(?:ed|ing)?)\s*(?:my\s+|the\s+)?(?:teeth|tooth)\b/gi,
+    "hygienist scale polish",
+  );
+  text = text.replace(
+    /\b(?:scale\s*(?:and|&)?\s*polish|teeth\s*cleaning|tooth\s*cleaning|cleaning|hygiene|polish)\b/gi,
+    "hygienist scale polish",
+  );
+  text = text.replace(/\b(?:check[\s-]?ups?|examination|exam)\b/gi, "examination exam checkup");
+  text = text.replace(/\b(?:cone\s*beam(?:\s*ct)?|3d\s*scan|cbct\s*scan)\b/gi, "CBCT");
+  text = text.replace(/\b(?:x[\s-]?rays?|radiographs?)\b/gi, "radiograph xray");
+  text = text.replace(/\b(?:whitening|bleach(?:ing)?)\b/gi, "whitening");
   return text;
 }
 
@@ -165,14 +183,14 @@ export function extractFeeLineMatches(query: string, contents: string[]): string
   const tokens = queryTokens(query);
   const codes = qualityCodes(query);
   const acronyms =
-    String(query || "")
+    normalizePriceListQuery(query)
       .match(/\b[A-Za-z]{2,8}\b/g)
       ?.map((token) => token.toLowerCase())
       .filter((token) => token.length >= 2 && !STOP_WORDS.has(token)) || [];
   const matchTokens = [...new Set([...tokens, ...codes.map(String), ...acronyms])];
   if (!matchTokens.length) return [];
 
-  const matches: string[] = [];
+  const ranked: Array<{ line: string; hits: number }> = [];
   const seen = new Set<string>();
   const feeRe = /([A-Za-z][A-Za-z0-9 ()/&.,'-]{1,80}?)\s*£\s*([\d,]+(?:\.\d{2})?)/g;
 
@@ -190,11 +208,14 @@ export function extractFeeLineMatches(query: string, contents: string[]): string
       const key = line.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      matches.push(line);
+      ranked.push({ line, hits });
     }
   }
 
-  return matches.slice(0, 6);
+  return ranked
+    .sort((a, b) => b.hits - a.hits)
+    .slice(0, 6)
+    .map((row) => row.line);
 }
 
 export function buildPriceAnswer(directMatches: string[]): string | null {
@@ -309,6 +330,11 @@ export async function keywordSearchChunks(
   }
   for (const code of codes) {
     attempts.push(`content.ilike.*${code}*`);
+  }
+  // Fall back to single-token OR searches when AND filters miss (common for
+  // colloquial dental queries after synonym expansion).
+  for (const token of tokens.slice(0, 4)) {
+    attempts.push(`content.ilike.*${token}*`);
   }
   if (tokens.length === 1 && !codes.length) {
     attempts.push(`content.ilike.*${tokens[0]}*`);

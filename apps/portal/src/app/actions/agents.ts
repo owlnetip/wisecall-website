@@ -506,11 +506,12 @@ export async function updateAgent(
 
   const nextWebsite =
     patch.website !== undefined && typeof patch.website === "string" ? patch.website.trim() : null;
-  const prevWebsite = typeof metadata.website === "string" ? metadata.website.trim() : "";
-  if (nextWebsite && nextWebsite !== prevWebsite) {
+  if (nextWebsite) {
     const templateId =
       typeof nextMetadata.template_id === "string" ? nextMetadata.template_id : undefined;
     const industry = typeof nextMetadata.industry === "string" ? nextMetadata.industry : undefined;
+    // Always refresh: KB ingest skips already-indexed URLs, and pricing is
+    // re-synced into business_context so the phone agent can quote fees live.
     void ingestWebsiteKnowledgeBase({
       agentId,
       websiteUrl: nextWebsite,
