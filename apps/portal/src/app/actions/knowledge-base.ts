@@ -6,6 +6,10 @@ import { DEMO_KB_SOURCES } from "@/lib/demo-knowledge-base";
 import { getSupabaseConfig } from "@/lib/env";
 import { getServiceSupabase } from "@/lib/supabase";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  buildWebsiteKnowledgeUrls,
+  normalizeKnowledgeSourceUrl,
+} from "@/lib/website-kb-paths";
 
 const CATEGORIES = [
   "OwlnetPBX",
@@ -74,6 +78,15 @@ export type KnowledgeBaseSeedResult = {
   skipped: number;
   totalChunks: number;
   error?: string;
+};
+
+export type WebsiteKnowledgeIngestResult = {
+  ok: boolean;
+  ingested: number;
+  skipped: number;
+  failed: number;
+  urls: string[];
+  errors: string[];
 };
 
 type ProfileAccessRow = {
@@ -174,6 +187,137 @@ async function ensureBotForProfile(row: ProfileAccessRow): Promise<string | null
   );
 
   return error?.message ?? null;
+}
+
+async function listExistingKnowledgeSources(agentId: string): Promise<Set<string>> {
+  const service = getServiceSupabase();
+  if (!service) return new Set();
+
+  const { data, error } = await service
+    .from("knowledge_base_sources_summary")
+    .select("source")
+    .contains("bot_ids", [agentId]);
+
+  if (error) {
+    console.error("[knowledge-base] list sources:", error.message);
+    return new Set();
+  }
+
+  return new Set(
+    ((data ?? []) as Array<{ source?: string | null }>)
+      .map((row) => (row.source ? normalizeKnowledgeSourceUrl(row.source) : ""))
+      .filter(Boolean),
+  );
+}
+
+async function ingestKnowledgeBaseUrlForProfile(
+  row: ProfileAccessRow,
+  sourceUrl: string,
+  category: KnowledgeBaseCategory = "General",
+): Promise<KnowledgeBaseMutationResult> {
+  const botError = await ensureBotForProfile(row);
+  if (botError) return { ok: false, error: botError };
+
+  const config = getSupabaseConfig();
+  if (!config) return { ok: false, error: "Server not configured." };
+
+  const res = await fetch(`${config.url}/functions/v1/kb-ingest`, {
+    method: "POST",
+    headers: {
+      apikey: config.serviceRoleKey,
+      Authorization: `Bearer ${config.serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      source_type: "url",
+      source_url: sourceUrl,
+      category,
+      bot_ids: [row.id],
+      started_by: (await readUser())?.id,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.success !== true) {
+    return {
+      ok: false,
+      error: typeof data.error === "string" ? data.error : `Ingest failed (${res.status}).`,
+    };
+  }
+
+  return {
+    ok: true,
+    jobId: typeof data.job_id === "string" ? data.job_id : undefined,
+    chunksAdded: typeof data.chunks_added === "number" ? data.chunks_added : undefined,
+  };
+}
+
+export async function ingestWebsiteKnowledgeBase(input: {
+  agentId: string;
+  websiteUrl: string;
+  templateId?: string | null;
+  industry?: string | null;
+}): Promise<WebsiteKnowledgeIngestResult> {
+  const access = await getAccessibleProfile(input.agentId);
+  if (!access.ok) {
+    return {
+      ok: false,
+      ingested: 0,
+      skipped: 0,
+      failed: 0,
+      urls: [],
+      errors: [access.error],
+    };
+  }
+
+  const urls = buildWebsiteKnowledgeUrls(input.websiteUrl, {
+    templateId: input.templateId,
+    industry: input.industry,
+  });
+  if (!urls.length) {
+    return {
+      ok: false,
+      ingested: 0,
+      skipped: 0,
+      failed: 0,
+      urls: [],
+      errors: ["That doesn't look like a valid website address."],
+    };
+  }
+
+  const existing = await listExistingKnowledgeSources(input.agentId);
+  let ingested = 0;
+  let skipped = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const url of urls) {
+    if (existing.has(normalizeKnowledgeSourceUrl(url))) {
+      skipped += 1;
+      continue;
+    }
+
+    const result = await ingestKnowledgeBaseUrlForProfile(access.row, url);
+    if (result.ok) {
+      ingested += 1;
+      existing.add(normalizeKnowledgeSourceUrl(url));
+      continue;
+    }
+
+    failed += 1;
+    if (result.error) errors.push(`${url}: ${result.error}`);
+  }
+
+  if (ingested > 0) revalidatePath("/dashboard");
+
+  return {
+    ok: ingested > 0 || (failed === 0 && skipped > 0),
+    ingested,
+    skipped,
+    failed,
+    urls,
+    errors,
+  };
 }
 
 export async function listKnowledgeBaseSources(agentId: string): Promise<KnowledgeBaseListResult> {

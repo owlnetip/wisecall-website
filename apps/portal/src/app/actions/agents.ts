@@ -20,6 +20,7 @@ import {
   validateIntegrationWebhooks,
 } from "@/lib/integration-webhooks";
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
+import { ingestWebsiteKnowledgeBase } from "@/app/actions/knowledge-base";
 import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhooks";
 import { getVoiceOption } from "@/lib/voices";
 import {
@@ -502,6 +503,23 @@ export async function updateAgent(
   const { error: writeError } = await writeQuery;
 
   if (writeError) return { ok: false, error: writeError.message };
+
+  const nextWebsite =
+    patch.website !== undefined && typeof patch.website === "string" ? patch.website.trim() : null;
+  const prevWebsite = typeof metadata.website === "string" ? metadata.website.trim() : "";
+  if (nextWebsite && nextWebsite !== prevWebsite) {
+    const templateId =
+      typeof nextMetadata.template_id === "string" ? nextMetadata.template_id : undefined;
+    const industry = typeof nextMetadata.industry === "string" ? nextMetadata.industry : undefined;
+    void ingestWebsiteKnowledgeBase({
+      agentId,
+      websiteUrl: nextWebsite,
+      templateId,
+      industry,
+    }).catch((error) => {
+      console.error("[updateAgent] website KB ingest:", error);
+    });
+  }
 
   revalidatePath("/dashboard");
   return { ok: true };
