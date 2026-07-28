@@ -7,8 +7,6 @@ import { isAdmin } from "@/lib/admin";
 import {
   PublicUrlError,
   assertPublicHttpUrl,
-  fetchPublicHttpUrl,
-  readResponseText,
 } from "@/lib/public-url";
 import type {
   KnowledgeFields,
@@ -16,6 +14,8 @@ import type {
   RoutingContact,
 } from "@/components/customer-agent-workspace";
 import { matchAgentTemplateId } from "@/lib/agent-templates";
+import { buildWebsiteKnowledgeUrls } from "@/lib/website-kb-paths";
+import { fetchSiteText, fetchSupplementaryWebsiteText } from "@/lib/website-fetch";
 
 export type AgentDraft = {
   businessName: string;
@@ -67,98 +67,6 @@ function normaliseUrl(input: string): string | null {
 }
 
 // Strips a fetched HTML page down to readable text so we don't blow the context
-// window (or feed the model markup). Drops script/style/nav noise, collapses
-// whitespace, and caps the length.
-function htmlToText(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&#39;|&rsquo;|&lsquo;/g, "'")
-    .replace(/&quot;|&ldquo;|&rdquo;/g, '"')
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 14000);
-}
-
-const FETCH_UA =
-  "Mozilla/5.0 (compatible; WiseCall/1.0; +https://wisecall.io) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-
-async function fetchSiteTextDirect(url: string): Promise<string> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
-  try {
-    const res = await fetchPublicHttpUrl(url, {
-      signal: controller.signal,
-      headers: {
-        "user-agent": FETCH_UA,
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "accept-language": "en-GB,en;q=0.9",
-      },
-    });
-    if (!res.ok) throw new Error(`Site returned ${res.status}`);
-    const contentType = res.headers.get("content-type")?.toLowerCase() ?? "";
-    if (
-      contentType &&
-      !contentType.includes("text/html") &&
-      !contentType.includes("application/xhtml+xml") &&
-      !contentType.includes("text/plain")
-    ) {
-      throw new PublicUrlError("That address does not point to a readable webpage.");
-    }
-    const html = await readResponseText(res);
-    return htmlToText(html);
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// Fallback for Cloudflare-protected or bot-blocked sites. Uses the same Jina
-// stack as kb-search embeddings, get a free key at https://jina.ai/?sui=apikey.
-async function fetchSiteTextViaJina(url: string): Promise<string> {
-  const apiKey = process.env.JINA_API_KEY;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25000);
-  try {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "X-Retain-Images": "none",
-    };
-    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
-
-    const res = await fetch("https://r.jina.ai/", {
-      method: "POST",
-      signal: controller.signal,
-      headers,
-      body: JSON.stringify({ url }),
-    });
-    if (!res.ok) throw new Error(`Reader returned ${res.status}`);
-    const data = (await res.json()) as { data?: { content?: string } };
-    const text = data.data?.content?.trim() ?? "";
-    if (!text) throw new Error("Reader returned no content");
-    return text.slice(0, 14000);
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function fetchSiteText(url: string): Promise<string> {
-  try {
-    const direct = await fetchSiteTextDirect(url);
-    if (direct.length >= 80) return direct;
-  } catch (error) {
-    if (error instanceof PublicUrlError) throw error;
-    // Direct fetch often fails on Cloudflare/WAF-protected sites, try Reader.
-  }
-  return fetchSiteTextViaJina(url);
-}
-
-// AI-assisted onboarding: fetch the customer's website and have Claude draft a
 // ready-to-review agent (business context, prompt, greeting, opening hours).
 // New-agent only; the user reviews/edits everything before it's created.
 export async function draftAgentFromWebsite(websiteInput: string): Promise<DraftResult> {
@@ -215,6 +123,10 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
       error: "There wasn't enough readable text on that page. Try the homepage URL, or set up manually.",
     };
   }
+
+  const supplementaryUrls = buildWebsiteKnowledgeUrls(url).slice(1, 5);
+  const supplementaryText = await fetchSupplementaryWebsiteText(supplementaryUrls);
+  const combinedSiteText = [siteText, ...supplementaryText].join("\n\n").slice(0, 28000);
 
   const anthropic = new Anthropic({ apiKey });
 
@@ -287,7 +199,7 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
       messages: [
         {
           role: "user",
-          content: `You are setting up an AI phone receptionist for a UK business. Below is the text scraped from their website (${url}). Draft a complete, ready-to-review configuration. Be specific to THIS business: use its real name, services and tone. If something isn't on the site, make a sensible professional default rather than inventing facts. Only fill opening hours if they are actually stated.\n\n--- WEBSITE TEXT ---\n${siteText}`,
+          content: `You are setting up an AI phone receptionist for a UK business. Below is text scraped from their website (${url}) plus common pages such as fees/pricing when available. Draft a complete, ready-to-review configuration. Be specific to THIS business: use its real name, services and tone. If something isn't on the site, make a sensible professional default rather than inventing facts. Only fill opening hours if they are actually stated. When fee tables are present, copy exact published prices into the pricing field.\n\n--- WEBSITE TEXT ---\n${combinedSiteText}`,
         },
       ],
     });

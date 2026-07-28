@@ -12,6 +12,11 @@
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, JINA_API_KEY.
 
 import { fetchPropertyBudgetContext } from "../_shared/kb-property-budget-lookup.ts";
+import {
+  buildKbContextBlock,
+  isPriceLikeQuery,
+  lookupPriceFromKnowledgeBase,
+} from "../_shared/kb-price-lookup.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -169,22 +174,57 @@ Deno.serve(async (req: Request) => {
     ? data
     : await fallbackMatchKnowledgeBase(supabaseUrl, svcKey, embedding, profileId, matchCount);
 
-  const chunks = (matches ?? []).map((r) => ({
+  let chunks = (matches ?? []).map((r) => ({
     content: r.content,
     title: r.title,
     similarity: r.similarity,
   }));
 
-  const budgetContext = await fetchPropertyBudgetContext(supabaseUrl, svcKey, profileId, query);
-  const semanticContext = chunks.length
-    ? "[KNOWLEDGE BASE]\n" +
-      chunks.map((c: { content: string }) => c.content).join("\n---\n") +
-      "\nUse this to answer accurately; don't read it out verbatim."
-    : null;
-  const context =
-    budgetContext && semanticContext
-      ? `${budgetContext}\n\n${semanticContext}`
-      : budgetContext || semanticContext;
+  let answer: string | null = null;
+  let directMatches: string[] = [];
+  const shouldTryPriceLookup = !chunks.length || isPriceLikeQuery(query);
+  if (shouldTryPriceLookup) {
+    const priceLookup = await lookupPriceFromKnowledgeBase(
+      supabaseUrl,
+      svcKey,
+      profileId,
+      query,
+      chunks.map((chunk) => chunk.content),
+    );
+    answer = priceLookup.answer;
+    directMatches = priceLookup.directMatches;
 
-  return json({ ok: true, chunks, context, budget_context: budgetContext || null });
+    const seenContent = new Set(chunks.map((chunk) => chunk.content));
+    for (const keywordChunk of priceLookup.keywordChunks) {
+      if (seenContent.has(keywordChunk.content)) continue;
+      seenContent.add(keywordChunk.content);
+      chunks.push({
+        content: keywordChunk.content,
+        title: keywordChunk.title,
+        similarity: keywordChunk.similarity,
+      });
+    }
+  }
+
+  const budgetContext = await fetchPropertyBudgetContext(supabaseUrl, svcKey, profileId, query);
+  const kbContext = buildKbContextBlock({ answer, directMatches, chunks }) ||
+    (chunks.length
+      ? "[KNOWLEDGE BASE]\n" +
+        chunks.map((c: { content: string }) => c.content).join("\n---\n") +
+        "\nUse this to answer accurately; don't read it out verbatim."
+      : null);
+  const context =
+    budgetContext && kbContext
+      ? `${budgetContext}\n\n${kbContext}`
+      : budgetContext || kbContext;
+
+  return json({
+    ok: true,
+    found: Boolean(answer || chunks.length),
+    answer,
+    direct_matches: directMatches,
+    chunks,
+    context,
+    budget_context: budgetContext || null,
+  });
 });
