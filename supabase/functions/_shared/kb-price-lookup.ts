@@ -161,7 +161,52 @@ export function extractDirectMatches(query: string, contents: string[]): string[
   return matches.slice(0, 6);
 }
 
+export function extractFeeLineMatches(query: string, contents: string[]): string[] {
+  const tokens = queryTokens(query);
+  const codes = qualityCodes(query);
+  const acronyms =
+    String(query || "")
+      .match(/\b[A-Za-z]{2,8}\b/g)
+      ?.map((token) => token.toLowerCase())
+      .filter((token) => token.length >= 2 && !STOP_WORDS.has(token)) || [];
+  const matchTokens = [...new Set([...tokens, ...codes.map(String), ...acronyms])];
+  if (!matchTokens.length) return [];
+
+  const matches: string[] = [];
+  const seen = new Set<string>();
+  const feeRe = /([A-Za-z][A-Za-z0-9 ()/&.,'-]{1,80}?)\s*£\s*([\d,]+(?:\.\d{2})?)/g;
+
+  for (const content of contents) {
+    const flat = flattenText(content);
+    let match: RegExpExecArray | null;
+    feeRe.lastIndex = 0;
+    while ((match = feeRe.exec(flat)) !== null) {
+      const label = match[1].trim().replace(/\s+/g, " ");
+      const amount = match[2].replace(/,/g, "");
+      const hay = label.toLowerCase();
+      const hits = matchTokens.filter((token) => hay.includes(token.toLowerCase())).length;
+      if (!hits) continue;
+      const line = `${label}: £${amount}`;
+      const key = line.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      matches.push(line);
+    }
+  }
+
+  return matches.slice(0, 6);
+}
+
 export function buildPriceAnswer(directMatches: string[]): string | null {
+  const dental = directMatches.filter(
+    (line) => /:\s*£[\d.]+/.test(line) && !/quality\s+\d+/i.test(line) && !/trade £/i.test(line),
+  );
+  if (dental.length) {
+    const use = dental.slice(0, 3).map((line) => line.replace(/\s+/g, " ").trim());
+    if (use.length === 1) return use[0];
+    return use.join(" Also: ");
+  }
+
   const structured = directMatches.filter(
     (line) =>
       /quality\s+\d+/i.test(line) &&
@@ -187,6 +232,32 @@ export function buildPriceAnswer(directMatches: string[]): string | null {
   if (!fallback.length) return null;
   if (fallback.length === 1) return fallback[0].replace(/\s+/g, " ").trim();
   return fallback.map((line) => line.replace(/\s+/g, " ").trim()).join(" Also: ");
+}
+
+export function isPriceLikeQuery(query: string): boolean {
+  return (
+    /\b(price|prices|pricing|cost|costs|fee|fees|how much|charge|charges|£)\b/i.test(query) ||
+    queryTokens(query).length <= 2
+  );
+}
+
+export async function lookupPriceFromKnowledgeBase(
+  supabaseUrl: string,
+  svcKey: string,
+  profileId: string,
+  query: string,
+  existingContents: string[] = [],
+): Promise<{ answer: string | null; directMatches: string[]; keywordChunks: KbChunk[] }> {
+  const keywordChunks = await keywordSearchChunks(supabaseUrl, svcKey, profileId, query);
+  const contents = [...existingContents, ...keywordChunks.map((chunk) => chunk.content)];
+  const directMatches = [
+    ...new Set([...extractFeeLineMatches(query, contents), ...extractDirectMatches(query, contents)]),
+  ];
+  return {
+    answer: buildPriceAnswer(directMatches),
+    directMatches,
+    keywordChunks,
+  };
 }
 
 async function keywordFetch(
