@@ -2256,6 +2256,11 @@ export function CustomerAgentWorkspace({
                   name: a.name || "Agent",
                   templateId: a.templateId,
                 }))}
+                onTrainRules={(agentId) => {
+                  setSelectedId(agentId);
+                  setDetailTab("behaviour");
+                  setView("detail");
+                }}
               />
             )}
 
@@ -3053,7 +3058,9 @@ function AssistantDetail({
             />
           </div>
 
+          {/* Show for estate template, property industries, or legacy agents with no template. */}
           {(assistant.templateId === "estate_agent" ||
+            !assistant.templateId ||
             /\b(property|estate|lettings?)\b/i.test(assistant.industry)) && (
             <div className="pt-4">
               <p className="mb-3 px-1 text-xs font-black uppercase tracking-wide text-ink-faint">
