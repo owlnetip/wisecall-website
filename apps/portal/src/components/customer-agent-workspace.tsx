@@ -16,6 +16,7 @@ import {
   FileText,
   Grid2X2,
   Hand,
+  Handshake,
   HelpCircle,
   History,
   Inbox,
@@ -97,6 +98,9 @@ import { PbxExtensionCard } from "./pbx-extension-card";
 import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 import { ContactsView } from "./contacts-view";
 import { ViewingsView } from "./viewings-view";
+import { DigitalNegotiatorView } from "./digital-negotiator-view";
+import { NegotiatorRulesCard } from "./negotiator-rules-card";
+import type { NegotiatorRules } from "@/lib/digital-negotiator";
 import { CalendarBookingCard } from "./calendar-booking-card";
 import { RaiseTicketModal } from "./raise-ticket-modal";
 import {
@@ -122,7 +126,15 @@ import {
   type AgentOperationalState,
 } from "@/lib/agent-operational-state";
 
-type View = "insights" | "assistants" | "detail" | "calls" | "contacts" | "viewings" | "channels";
+type View =
+  | "insights"
+  | "assistants"
+  | "detail"
+  | "calls"
+  | "contacts"
+  | "viewings"
+  | "negotiator"
+  | "channels";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -250,6 +262,10 @@ export type Assistant = {
   emailAddress?: string; // forwarding address for the email channel
   emailChannelEnabled?: boolean;
   integrationWebhooks?: IntegrationWebhook[];
+  /** Matched portal template id (estate_agent, dentally, …). */
+  templateId?: string;
+  /** Estate Digital Negotiator trainable rules (metadata.negotiator_rules). */
+  negotiatorRules?: NegotiatorRules;
   ownerEmail?: string; // admin view only, which customer owns this agent
   ownerId?: string; // admin view only, owner's auth user id (for "log in as")
 };
@@ -1312,6 +1328,7 @@ const navItems: { view: View; label: string; icon: LucideIcon }[] = [
   { view: "insights", label: "Home", icon: Sparkles },
   { view: "calls", label: "Inbox", icon: Inbox },
   { view: "contacts", label: "Contacts", icon: Users },
+  { view: "negotiator", label: "Negotiator", icon: Handshake },
   { view: "viewings", label: "Viewings", icon: CalendarCheck },
   { view: "assistants", label: "Agents", icon: Bot },
   { view: "channels", label: "Channels", icon: Layers },
@@ -1691,6 +1708,7 @@ export function CustomerAgentWorkspace({
         transferNumber: assistantToSave.transferNumber,
         officeHours: assistantToSave.officeHours,
         outOfHoursMessage: assistantToSave.outOfHoursMessage,
+        negotiatorRules: assistantToSave.negotiatorRules,
         ...(isAdmin
           ? {
               phoneNumber: assistantToSave.phoneNumber,
@@ -2062,6 +2080,12 @@ export function CustomerAgentWorkspace({
                   <span>Contacts</span>
                 </>
               )}
+              {view === "negotiator" && (
+                <>
+                  <ChevronRight className="h-4 w-4" />
+                  <span>Negotiator</span>
+                </>
+              )}
               {view === "viewings" && (
                 <>
                   <ChevronRight className="h-4 w-4" />
@@ -2222,6 +2246,16 @@ export function CustomerAgentWorkspace({
             {view === "viewings" && (
               <ViewingsView
                 agents={assistants.map((a) => ({ id: a.id, name: a.name || "Agent" }))}
+              />
+            )}
+
+            {view === "negotiator" && (
+              <DigitalNegotiatorView
+                agents={assistants.map((a) => ({
+                  id: a.id,
+                  name: a.name || "Agent",
+                  templateId: a.templateId,
+                }))}
               />
             )}
 
@@ -3018,6 +3052,20 @@ function AssistantDetail({
               onChange={onChange}
             />
           </div>
+
+          {(assistant.templateId === "estate_agent" ||
+            /\b(property|estate|lettings?)\b/i.test(assistant.industry)) && (
+            <div className="pt-4">
+              <p className="mb-3 px-1 text-xs font-black uppercase tracking-wide text-ink-faint">
+                Digital Negotiator
+              </p>
+              <NegotiatorRulesCard
+                key={assistant.id}
+                rules={assistant.negotiatorRules}
+                onChange={onChange}
+              />
+            </div>
+          )}
         </div>
       ) : tab === "knowledge" ? (
         <div key="knowledge" className="anim-fade">

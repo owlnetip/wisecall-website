@@ -74,7 +74,7 @@ export const agentTemplateCategories: {
   {
     id: "property",
     label: "Property",
-    blurb: "Viewings, valuations and tenant issues for sales and lettings branches.",
+    blurb: "Digital Negotiator: qualify buyers, book viewings, capture valuations out of hours.",
   },
   {
     id: "trades",
@@ -868,18 +868,18 @@ const estateAgent: AgentTemplate = {
   id: "estate_agent",
   label: "Estate agent",
   description:
-    "Sales & lettings receptionist: valuations, owner-confirmed viewings (WhatsApp/SMS to landlords), maintenance triage and branch routing.",
+    "Digital Negotiator for sales & lettings: qualify buyers 24/7, owner-confirmed viewings, valuation capture, and a Monday morning results board.",
   industry: "Property",
   category: "property",
   icon: "Home",
   available: true,
   chips: [
-    "Valuation capture",
+    "Buyer qualification",
     "Owner-confirm viewings",
-    "WhatsApp / SMS to owners",
-    "Maintenance triage",
+    "Weekend results digest",
+    "Trainable tone & rules",
   ],
-  note: "Viewings text the owner for YES/NO, then confirm the viewer. Optional Cal.com diary check for negotiator availability.",
+  note: "Qualifies buyers, books viewings (owner YES/NO by WhatsApp/SMS), logs enquiries for the weekend digest. Optional Cal.com diary check for negotiator availability.",
   match:
     /\b(estate\s*agent|lettings?|letting\s*agent|property\s*(sales|management|agency)|real\s*estate|realtor|housing\s*association)\b/,
   matchPriority: 95,

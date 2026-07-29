@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getServiceSupabase } from "@/lib/supabase";
 import { sendActionItemsEmail, syncFollowUpsFromAnalysis } from "@/lib/follow-ups-sync";
+import { syncEnquiryFromAnalysis } from "@/lib/enquiries-sync";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WiseCall after-call AI analysis
@@ -358,6 +359,13 @@ async function persistAnalysis(
         managerSummary: analysis.short_manager_summary,
       });
     }
+    await syncEnquiryFromAnalysis(
+      callId,
+      row.profile_id,
+      row.contact_id,
+      row.caller_id,
+      analysis,
+    );
   }
 }
 

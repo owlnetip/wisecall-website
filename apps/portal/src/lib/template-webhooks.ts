@@ -11,7 +11,10 @@
 
 import { templateUsesCalendarBooking } from "@/lib/agent-templates";
 import { buildCalendarBookingWebhooks } from "@/lib/calendar-booking-template";
-import { buildEstateViewingWebhook } from "@/lib/estate-agent-template";
+import {
+  buildEstateViewingWebhook,
+  buildQualifyEnquiryWebhook,
+} from "@/lib/estate-agent-template";
 import type { IntegrationWebhook } from "@/lib/integration-webhooks";
 
 export type TemplateWebhookOpts = {
@@ -28,6 +31,7 @@ export function templateWebhooks(opts: TemplateWebhookOpts): IntegrationWebhook[
   const hooks: IntegrationWebhook[] = [];
   if (templateId === "estate_agent") {
     hooks.push(buildEstateViewingWebhook({ supabaseUrl, smsSecret }));
+    hooks.push(buildQualifyEnquiryWebhook({ supabaseUrl, smsSecret }));
   }
   if (templateUsesCalendarBooking(templateId)) {
     hooks.push(...buildCalendarBookingWebhooks({ supabaseUrl, smsSecret }));

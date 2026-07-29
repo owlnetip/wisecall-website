@@ -43,6 +43,10 @@ verify_jwt = false
 [functions.wisecall-viewing-request]
 verify_jwt = false
 
+# Digital Negotiator enquiry logger — during-call qualification upsert.
+[functions.wisecall-qualify-enquiry]
+verify_jwt = false
+
 # Day-before / day-of viewing reminders — cron-triggered with a shared secret.
 [functions.wisecall-viewing-reminders]
 verify_jwt = false
