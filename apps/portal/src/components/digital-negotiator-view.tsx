@@ -57,8 +57,11 @@ function formatWhen(iso: string): string {
 
 export function DigitalNegotiatorView({
   agents,
+  onTrainRules,
 }: {
   agents: { id: string; name: string; templateId?: string }[];
+  /** Open the selected agent’s Setup tab (Digital Negotiator rules live there). */
+  onTrainRules?: (agentId: string) => void;
 }) {
   const estateAgents = agents.filter(
     (a) => !a.templateId || a.templateId === "estate_agent",
@@ -69,6 +72,7 @@ export function DigitalNegotiatorView({
   const [enquiries, setEnquiries] = useState<EnquiryRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const selectedName = list.find((a) => a.id === profileId)?.name || "this agent";
 
   function refresh(pid = profileId) {
     if (!pid) return;
@@ -138,8 +142,10 @@ export function DigitalNegotiatorView({
         <div>
           <h1 className="text-2xl font-black text-ink">Digital Negotiator</h1>
           <p className="mt-1 max-w-2xl text-sm text-ink-soft">
-            Out-of-hours qualification, viewing bookings, and the Monday morning results board —
-            train the rules on each estate agent under Behaviour.
+            Out-of-hours qualification, viewing bookings, and the Monday morning results board.
+            Tone and qualification rules live on each agent under{" "}
+            <span className="font-semibold text-ink">Agents → Setup</span> (scroll to Digital
+            Negotiator).
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -154,6 +160,16 @@ export function DigitalNegotiatorView({
               </option>
             ))}
           </select>
+          {onTrainRules && profileId ? (
+            <button
+              type="button"
+              onClick={() => onTrainRules(profileId)}
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-ink px-3 text-sm font-bold text-white"
+            >
+              <Handshake className="h-4 w-4" />
+              Train rules
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => refresh()}
@@ -164,6 +180,21 @@ export function DigitalNegotiatorView({
           </button>
         </div>
       </div>
+
+      {onTrainRules && profileId ? (
+        <div className="rounded-xl border border-line bg-card-tint px-4 py-3 text-sm text-ink-soft">
+          Editing <span className="font-semibold text-ink">{selectedName}</span> — open{" "}
+          <button
+            type="button"
+            onClick={() => onTrainRules(profileId)}
+            className="font-bold text-teal underline-offset-2 hover:underline"
+          >
+            Agents → Setup
+          </button>{" "}
+          and scroll to <span className="font-semibold text-ink">Digital Negotiator</span> to set
+          tone, qualification fields, and handoff rules. Remember to Save on the agent.
+        </div>
+      ) : null}
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
