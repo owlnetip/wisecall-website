@@ -4,6 +4,7 @@ import {
   buildEstateAgentGreeting,
   buildEstateAgentPrompt,
   buildEstateViewingWebhook,
+  buildQualifyEnquiryWebhook,
   estateAgentDefaultContacts,
 } from "./estate-agent-template";
 
@@ -12,6 +13,9 @@ test("estate prompt covers viewing owner-confirm flow", () => {
   assert.match(prompt, /request_viewing/);
   assert.match(prompt, /owner/i);
   assert.match(prompt, /pending_owner/);
+  assert.match(prompt, /log_enquiry/);
+  assert.match(prompt, /DIGITAL NEGOTIATOR/);
+  assert.match(prompt, /QUALIFICATION/);
 });
 
 test("estate greeting asks viewing vs valuation", () => {
@@ -37,4 +41,15 @@ test("viewing webhook points at edge function with caller tokens", () => {
   assert.match(hook.url, /wisecall-viewing-request/);
   assert.ok(hook.headers.some((h) => h.key === "X-WiseCall-SMS-Secret"));
   assert.ok(hook.parameters.some((p) => p.key === "profile_id" && p.value === "{{profile_id}}"));
+});
+
+test("qualify enquiry webhook points at edge function", () => {
+  const hook = buildQualifyEnquiryWebhook({
+    supabaseUrl: "https://example.supabase.co",
+    smsSecret: "secret",
+  });
+  assert.equal(hook.name, "log_enquiry");
+  assert.equal(hook.condition, "during_call");
+  assert.match(hook.url, /wisecall-qualify-enquiry/);
+  assert.ok(hook.parameters.some((p) => p.key === "party_role"));
 });

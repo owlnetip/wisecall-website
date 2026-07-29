@@ -29,6 +29,11 @@ import {
   getVoiceRuntimeConfig,
   resolveVoiceRuntime,
 } from "@/lib/voice-runtime";
+import {
+  defaultNegotiatorRules,
+  normaliseNegotiatorRules,
+  type NegotiatorRules,
+} from "@/lib/digital-negotiator";
 
 export type AgentPatch = {
   name?: string;
@@ -52,6 +57,7 @@ export type AgentPatch = {
   chatBackgroundColor?: string;
   status?: "Live" | "Setup" | "Review";
   integrationWebhooks?: IntegrationWebhook[];
+  negotiatorRules?: NegotiatorRules;
 };
 
 // Builds the legacy transfer_routes object (keyed route → { label, phone,
@@ -171,9 +177,12 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     transfer_routes: toTransferRoutes(input.contacts ?? []),
   };
   if (input.templateId) metadata.template_id = input.templateId;
+  if (input.templateId === "estate_agent") {
+    metadata.negotiator_rules = defaultNegotiatorRules();
+  }
 
   // Templates bring their own during-call tools: the estate owner-confirm
-  // viewing loop, and the connected-diary booking set for booking templates.
+  // viewing loop, enquiry logger, and the connected-diary booking set.
   const webhooks = withTemplateWebhooks(input.integrationWebhooks ?? [], {
     templateId: input.templateId,
     supabaseUrl: webhookSupabaseUrl(),
@@ -465,6 +474,10 @@ export async function updateAgent(
     // column write below is what actually reaches the phone agent.
     nextMetadata.out_of_hours_message = patch.outOfHoursMessage;
   }
+  if (patch.negotiatorRules !== undefined) {
+    // Estate Digital Negotiator trainable rules (prompt.js injects at call time).
+    nextMetadata.negotiator_rules = normaliseNegotiatorRules(patch.negotiatorRules);
+  }
   // Website chat widget theming, wisecall-live-chat reads these metadata keys.
   if (patch.chatAccentColor !== undefined) nextMetadata.chat_accent_color = patch.chatAccentColor;
   if (patch.chatBackgroundColor !== undefined) nextMetadata.chat_background_color = patch.chatBackgroundColor;
@@ -474,6 +487,29 @@ export async function updateAgent(
     nextMetadata.integration_webhooks = serializeIntegrationWebhooks(
       mergeStoredWebhookTestEvidence(patch.integrationWebhooks, storedWebhooks),
     );
+  }
+
+  // Keep estate agents on the latest template tools (viewing + log_enquiry)
+  // without clobbering customer-edited hooks of the same name.
+  const templateId =
+    typeof nextMetadata.template_id === "string"
+      ? nextMetadata.template_id
+      : typeof metadata.template_id === "string"
+        ? metadata.template_id
+        : null;
+  if (templateId === "estate_agent" || patch.negotiatorRules !== undefined) {
+    const merged = withTemplateWebhooks(readIntegrationWebhooks(nextMetadata), {
+      templateId: templateId || "estate_agent",
+      supabaseUrl: webhookSupabaseUrl(),
+      smsSecret: process.env.WISECALL_SMS_WEBHOOK_SECRET,
+    });
+    nextMetadata.integration_webhooks = serializeIntegrationWebhooks(merged);
+    if (patch.negotiatorRules !== undefined && !nextMetadata.negotiator_rules) {
+      nextMetadata.negotiator_rules = normaliseNegotiatorRules(patch.negotiatorRules);
+    }
+    if (templateId === "estate_agent" && !nextMetadata.negotiator_rules) {
+      nextMetadata.negotiator_rules = defaultNegotiatorRules();
+    }
   }
 
   const update: Record<string, unknown> = { metadata: nextMetadata };

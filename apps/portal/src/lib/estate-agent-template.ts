@@ -1,8 +1,14 @@
 /**
  * Estate / lettings agent template helpers: prompt, knowledge seeds, contacts,
- * and the during-call viewing-request webhook (owner-confirm loop).
+ * Digital Negotiator rules, viewing-request + enquiry-log webhooks.
  */
 
+import {
+  defaultNegotiatorRules,
+  formatNegotiatorRulesForPrompt,
+  normaliseNegotiatorRules,
+  type NegotiatorRules,
+} from "@/lib/digital-negotiator";
 import {
   newIntegrationWebhook,
   type IntegrationWebhook,
@@ -29,12 +35,17 @@ type RoutingContact = {
   useDefaultEmail: boolean;
 };
 
-export function buildEstateAgentPrompt(business: string, receptionist: string): string {
+export function buildEstateAgentPrompt(
+  business: string,
+  receptionist: string,
+  rules?: NegotiatorRules | null,
+): string {
   const who = receptionist || "the receptionist";
   const biz = business || "the agency";
+  const negotiatorRules = normaliseNegotiatorRules(rules ?? defaultNegotiatorRules());
   return [
-    `You are ${who}, a warm, professional AI receptionist for ${biz}, a UK estate and lettings agency.`,
-    "Your job is to help callers with valuations, viewings, sales, lettings and property management enquiries.",
+    `You are ${who}, a warm, professional AI Digital Negotiator for ${biz}, a UK estate and lettings agency.`,
+    "Your job is to help callers with valuations, viewings, sales, lettings and property management enquiries — especially out of hours.",
     "",
     "CALLER TYPES — identify early:",
     "- Buyer / tenant looking to view a property",
@@ -43,8 +54,20 @@ export function buildEstateAgentPrompt(business: string, receptionist: string): 
     "- Existing landlord (management, tenancy update)",
     "- General / other",
     "",
+    "QUALIFICATION (buyers / tenants)",
+    "Before booking a viewing, capture and confirm:",
+    "1. Full name and best mobile number",
+    "2. Budget (or rent budget) — rough band is fine",
+    "3. Preferred areas / postcodes",
+    "4. Minimum bedrooms",
+    "5. Move timeline (e.g. ASAP, 1–3 months)",
+    "6. Financing: mortgage agreed / cash / needs advice — do not give advice",
+    "7. Whether they have a property to sell (valuation opportunity)",
+    "Then call log_enquiry with party_role buyer or tenant and the fields you captured.",
+    "If qualification is incomplete but they insist on a slot, still log_enquiry with status qualifying and needs_human true.",
+    "",
     "VIEWING BOOKING (owner-confirm flow)",
-    "When someone wants to view a property:",
+    "When someone wants to view a property and (per rules) is ready to book:",
     "1. Capture: caller name, phone (confirm the number if needed), property address or listing reference, and preferred date/time.",
     "2. If they only have a vague time, offer 2–3 concrete slots within office hours.",
     "3. Call the request_viewing tool with:",
@@ -55,9 +78,11 @@ export function buildEstateAgentPrompt(business: string, receptionist: string): 
     "4. Tell the caller you'll confirm once the owner approves — do NOT say the viewing is booked until the tool returns status confirmed or pending_owner.",
     "5. If the tool returns pending_owner: say the owner has been texted and you'll confirm shortly by SMS.",
     "6. If agent_available is false: still request the slot, but note a negotiator may need to rearrange.",
+    "7. After requesting a viewing, call log_enquiry with status viewing_requested and the same qualification fields.",
     "",
     "VALUATIONS",
     "- Capture name, phone, property address, sale vs let, and preferred callback/valuation window.",
+    "- Call log_enquiry with party_role vendor or landlord.",
     "- Book a valuation callback into the team's workflow (message / follow-up) unless a booking tool is available.",
     "",
     "MAINTENANCE / TENANT ISSUES",
@@ -70,6 +95,9 @@ export function buildEstateAgentPrompt(business: string, receptionist: string): 
     "- Never invent fees, EPC ratings, offer status or owner availability.",
     "- Never invent an owner phone number. If missing, take a message for the branch to arrange the viewing.",
     "- Do not give legal or financial advice.",
+    "- You qualify and book — you do NOT negotiate price, terms, or offers. Hand those to a human negotiator.",
+    "",
+    formatNegotiatorRulesForPrompt(negotiatorRules),
   ].join("\n");
 }
 
@@ -88,7 +116,7 @@ export function estateAgentKnowledgeFields(): KnowledgeFields {
     pricing: "Standard sales and lettings fees — confirm current rates with the branch before quoting.",
     payments: "Holding deposits and referencing handled by the lettings team.",
     other:
-      "Viewings are confirmed with the property owner by text/WhatsApp before they are final. Callers receive an SMS once approved.",
+      "Viewings are confirmed with the property owner by text/WhatsApp before they are final. Callers receive an SMS once approved. Out-of-hours enquiries are qualified and booked by the Digital Negotiator.",
   };
 }
 
@@ -166,6 +194,52 @@ export function buildEstateViewingWebhook(opts: {
       { key: "owner_phone", value: "" },
       { key: "property_id", value: "" },
       { key: "starts_at", value: "" },
+      { key: "source", value: "phone" },
+    ],
+  });
+}
+
+/** During-call tool that persists a qualified enquiry for the weekend digest. */
+export function buildQualifyEnquiryWebhook(opts: {
+  supabaseUrl: string;
+  smsSecret?: string | null;
+}): IntegrationWebhook {
+  const base = opts.supabaseUrl.replace(/\/$/, "");
+  const headers: { key: string; value: string }[] = [];
+  if (opts.smsSecret) {
+    headers.push({ key: "X-WiseCall-SMS-Secret", value: opts.smsSecret });
+  }
+
+  return newIntegrationWebhook({
+    name: "log_enquiry",
+    friendlyName: "Log qualified enquiry",
+    description:
+      "Save a buyer, tenant, vendor or landlord enquiry with qualification details (budget, area, beds, timeline) so the branch sees it in the Digital Negotiator weekend results.",
+    condition: "during_call",
+    method: "POST",
+    url: `${base}/functions/v1/wisecall-qualify-enquiry`,
+    enabled: true,
+    headers,
+    parameters: [
+      { key: "profile_id", value: "{{profile_id}}" },
+      { key: "call_id", value: "{{call_id}}" },
+      { key: "callerId", value: "{{caller_id}}" },
+      { key: "contact_phone", value: "{{caller_id}}" },
+      { key: "contact_name", value: "" },
+      { key: "party_role", value: "buyer" },
+      { key: "status", value: "qualified" },
+      { key: "budget_text", value: "" },
+      { key: "budget_max", value: "" },
+      { key: "areas", value: "" },
+      { key: "beds_min", value: "" },
+      { key: "move_timeline", value: "" },
+      { key: "financing", value: "" },
+      { key: "has_property_to_sell", value: "" },
+      { key: "listing_interest", value: "" },
+      { key: "listing_ref", value: "" },
+      { key: "summary", value: "" },
+      { key: "needs_human", value: "" },
+      { key: "human_reason", value: "" },
       { key: "source", value: "phone" },
     ],
   });

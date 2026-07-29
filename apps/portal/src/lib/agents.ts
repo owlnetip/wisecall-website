@@ -8,6 +8,7 @@ import type {
   RoutingStatus,
 } from "@/components/customer-agent-workspace";
 import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
+import { normaliseNegotiatorRules } from "@/lib/digital-negotiator";
 
 // The subdomain the email channel listens on. Must match the edge function's
 // WISECALL_EMAIL_INBOUND_DOMAIN (wisecall-email-inbound).
@@ -214,6 +215,12 @@ function mapProfile(row: ProfileRow): Assistant {
     emailAddress: agentEmailAddress(row),
     emailChannelEnabled: row.metadata?.email_channel_enabled === true,
     integrationWebhooks: readIntegrationWebhooks(row.metadata),
+    templateId: meta(row, "template_id") || undefined,
+    negotiatorRules: row.metadata?.negotiator_rules
+      ? normaliseNegotiatorRules(row.metadata.negotiator_rules)
+      : meta(row, "template_id") === "estate_agent"
+        ? normaliseNegotiatorRules(null)
+        : undefined,
   };
 }
 
