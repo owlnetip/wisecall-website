@@ -11,6 +11,7 @@ import {
   RebootInstancesCommand,
   StartInstancesCommand,
 } from "npm:@aws-sdk/client-ec2@3";
+import { probeEdgeHealth as sharedProbeEdgeHealth } from "../_shared/texml.ts";
 
 const DEFAULT_EDGE_PUBLIC_IP = "13.40.127.21";
 
@@ -29,28 +30,11 @@ function json(body: unknown, status = 200) {
 
 async function probeEdge(baseUrl: string) {
   const healthUrl = new URL("/health", baseUrl.replace(/\/+$/, ""));
-  const started = Date.now();
-  try {
-    const response = await fetch(healthUrl.toString(), {
-      signal: AbortSignal.timeout(8000),
-    });
-    const text = await response.text().catch(() => "");
-    return {
-      ok: response.ok,
-      status: response.status,
-      latency_ms: Date.now() - started,
-      body: text.slice(0, 200),
-      url: healthUrl.toString(),
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      status: 0,
-      latency_ms: Date.now() - started,
-      error: error instanceof Error ? error.message : String(error),
-      url: healthUrl.toString(),
-    };
-  }
+  const result = await sharedProbeEdgeHealth(baseUrl);
+  return {
+    ...result,
+    url: healthUrl.toString(),
+  };
 }
 
 async function listElasticIps() {
@@ -224,7 +208,15 @@ Deno.serve(async (req) => {
     message: healthy
       ? "Telnyx edge is responding."
       : recovery
-      ? "Recovery action queued; wait ~60s and re-check /health."
-      : "Telnyx edge is not responding. POST with {\"recover\": true} to reboot/start the EC2 host.",
+      ? "Recovery action queued; wait ~60s and re-check /health. If /health stays 404, run wisecall-telnyx-app-sync to route Telnyx via MOR SIP fallback."
+      : "Telnyx edge is not responding. POST wisecall-telnyx-app-sync to route calls via MOR SIP, or POST here with {\"recover\": true} to reboot/start the EC2 host.",
+    remediation: healthy
+      ? null
+      : {
+          app_sync:
+            "POST /functions/v1/wisecall-telnyx-app-sync with x-trigger-secret to point Telnyx voice_url at wisecall-telnyx-inbound (MOR fallback when edge is down).",
+          edge_recover:
+            "POST /functions/v1/wisecall-telnyx-edge-health with {\"recover\": true} to start/reboot EC2.",
+        },
   }, healthy ? 200 : 503);
 });

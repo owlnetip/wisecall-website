@@ -42,60 +42,11 @@ function requiredEnv(name: string) {
   return value;
 }
 
-function buildWebhookUrl(edgeBaseUrl: string, profileSlug: string) {
-  const url = new URL("/telnyx/texml-status", edgeBaseUrl.replace(/\/+$/, ""));
-  url.searchParams.set("profile_slug", profileSlug);
-  return url.toString();
-}
-
-function escapeXmlAttribute(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function buildStreamTexml(
-  edgeBaseUrl: string,
-  profileSlug: string,
-  callerId: string,
-  calledNumber: string,
-  streamCodec: string,
-) {
-  const streamUrl = new URL("/media", edgeBaseUrl.replace(/\/+$/, ""));
-  streamUrl.protocol = streamUrl.protocol === "https:" ? "wss:" : "ws:";
-  streamUrl.searchParams.set("provider", "telnyx");
-  streamUrl.searchParams.set("media_source", "texml");
-  streamUrl.searchParams.set("profile_slug", profileSlug);
-  streamUrl.searchParams.set("caller_id", callerId);
-  streamUrl.searchParams.set("called_number", calledNumber);
-
-  const statusCallbackUrl = buildWebhookUrl(edgeBaseUrl, profileSlug);
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Connect>
-    <Stream
-      url="${escapeXmlAttribute(streamUrl.toString())}"
-      track="both_tracks"
-      codec="${escapeXmlAttribute(streamCodec)}"
-      bidirectionalMode="rtp"
-      bidirectionalCodec="${escapeXmlAttribute(streamCodec)}"
-      bidirectionalSamplingRate="8000"
-      statusCallback="${escapeXmlAttribute(statusCallbackUrl)}"
-      statusCallbackMethod="POST"
-    />
-  </Connect>
-</Response>`;
-}
-
-function getStreamCodec() {
-  const value = (Deno.env.get("WISECALL_DEMO_STREAM_CODEC") || "PCMA")
-    .trim()
-    .toUpperCase();
-  return value === "PCMA" ? "PCMA" : "PCMU";
-}
+import {
+  buildStreamTexml,
+  buildWebhookUrl,
+  getStreamCodec,
+} from "../_shared/texml.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

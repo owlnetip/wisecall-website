@@ -61,3 +61,11 @@ verify_jwt = false
 
 [functions.wisecall-telnyx-edge-health]
 verify_jwt = false
+
+# Telnyx TeXML voice_url webhook — Telnyx posts call params, no Supabase JWT.
+[functions.wisecall-telnyx-inbound]
+verify_jwt = false
+
+# Internal Telnyx app voice_url sync + optional demo MOR provisioning.
+[functions.wisecall-telnyx-app-sync]
+verify_jwt = false
