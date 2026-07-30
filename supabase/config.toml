@@ -55,3 +55,9 @@ verify_jwt = false
 # voice webhooks with a shared secret, or the portal with the service-role key.
 [functions.wisecall-calendar-booking]
 verify_jwt = false
+
+[functions.wisecall-demo-callback]
+verify_jwt = false
+
+[functions.wisecall-telnyx-edge-health]
+verify_jwt = false

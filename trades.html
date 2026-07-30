@@ -680,7 +680,7 @@
         cbStatus.textContent = 'Connecting…';
         cbStatus.classList.remove('hidden');
         try {
-          const r = await fetch('https://portal.owlnet.io/functions/v1/wisecall-demo-callback', {
+          const r = await fetch('https://zgzzpwaqqftmugzpccpm.supabase.co/functions/v1/wisecall-demo-callback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone })
