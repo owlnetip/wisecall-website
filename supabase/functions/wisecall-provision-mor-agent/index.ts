@@ -87,6 +87,15 @@ function morSipDomain(morApiUrl: string): string {
   }
 }
 
+// MOR rejects SIP REGISTER with 403 when the bridge uses sip.owlnet.io even
+// though it resolves to the same host; the bare IP is required for registration.
+function normalizeMorSipHost(host: string): string {
+  const trimmed = host.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.toLowerCase() === "sip.owlnet.io") return "54.38.148.116";
+  return trimmed;
+}
+
 function morLoginUsername(username: string): string {
   return username.trim().replace(/ /g, "_");
 }
@@ -283,8 +292,9 @@ serve(async (req) => {
     const MOR_API_SECRET = Deno.env.get("MOR_API_SECRET");
     const MOR_UNIQUE_HASH = Deno.env.get("MOR_UNIQUE_HASH");
     const MOR_ADMIN_PASSWORD = Deno.env.get("MOR_API_PASSWORD") || "";
-    const MOR_SIP_HOST = Deno.env.get("MOR_SIP_DOMAIN") ||
-      (MOR_API_URL ? morSipDomain(MOR_API_URL) : "");
+    const MOR_SIP_HOST = normalizeMorSipHost(
+      Deno.env.get("MOR_SIP_DOMAIN") || (MOR_API_URL ? morSipDomain(MOR_API_URL) : ""),
+    );
     // Owlnet reseller that owns the pooled DIDs (reseller_credentials.reseller_id).
     const MOR_RESELLER_ID = Deno.env.get("MOR_WISECALL_RESELLER_ID") || "7171";
     const MOR_RESELLER_USERNAME = Deno.env.get("MOR_WISECALL_RESELLER_USERNAME") || "";
