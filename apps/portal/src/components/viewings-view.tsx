@@ -85,7 +85,7 @@ export function ViewingsView({
   if (!agents.length) {
     return (
       <div className="rounded-xl border border-line bg-card p-6 text-sm text-ink-soft">
-        Create an agent first, then add properties and request viewings here.
+        Create an estate agent using the estate agent template, then add properties and request viewings here.
       </div>
     );
   }

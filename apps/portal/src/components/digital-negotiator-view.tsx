@@ -21,6 +21,7 @@ import {
   type EnquiryStatus,
   type NegotiatorDigest,
 } from "@/lib/digital-negotiator";
+import { isEstateAgentTemplate } from "@/lib/estate-agent-template";
 
 function statusTone(status: string): string {
   switch (status) {
@@ -63,16 +64,13 @@ export function DigitalNegotiatorView({
   /** Open the selected agent’s Setup tab (Digital Negotiator rules live there). */
   onTrainRules?: (agentId: string) => void;
 }) {
-  const estateAgents = agents.filter(
-    (a) => !a.templateId || a.templateId === "estate_agent",
-  );
-  const list = estateAgents.length ? estateAgents : agents;
-  const [profileId, setProfileId] = useState(list[0]?.id || "");
+  const estateAgents = agents.filter((a) => isEstateAgentTemplate(a.templateId));
+  const [profileId, setProfileId] = useState(estateAgents[0]?.id || "");
   const [digest, setDigest] = useState<NegotiatorDigest | null>(null);
   const [enquiries, setEnquiries] = useState<EnquiryRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const selectedName = list.find((a) => a.id === profileId)?.name || "this agent";
+  const selectedName = estateAgents.find((a) => a.id === profileId)?.name || "this agent";
 
   function refresh(pid = profileId) {
     if (!pid) return;
@@ -100,10 +98,10 @@ export function DigitalNegotiatorView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId]);
 
-  if (!list.length) {
+  if (!estateAgents.length) {
     return (
       <div className="rounded-xl border border-line bg-card p-6 text-sm text-ink-soft">
-        Create an estate agent first to see qualified enquiries and weekend results.
+        Create an estate agent to see qualified enquiries and weekend results.
       </div>
     );
   }
@@ -154,7 +152,7 @@ export function DigitalNegotiatorView({
             onChange={(e) => setProfileId(e.target.value)}
             className="h-10 rounded-lg border border-line bg-white px-3 text-sm"
           >
-            {list.map((a) => (
+            {estateAgents.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
               </option>
