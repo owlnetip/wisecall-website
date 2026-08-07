@@ -101,6 +101,7 @@ import { ViewingsView } from "./viewings-view";
 import { DigitalNegotiatorView } from "./digital-negotiator-view";
 import { NegotiatorRulesCard } from "./negotiator-rules-card";
 import type { NegotiatorRules } from "@/lib/digital-negotiator";
+import { isEstateAgentTemplate } from "@/lib/estate-agent-template";
 import { CalendarBookingCard } from "./calendar-booking-card";
 import { RaiseTicketModal } from "./raise-ticket-modal";
 import {
@@ -1494,6 +1495,30 @@ export function CustomerAgentWorkspace({
     return followUps.filter((item) => item.profileId === selectedAssistant.id);
   }, [adminMode, selectedAssistant, followUps]);
 
+  const hasEstateAgent = useMemo(
+    () => assistants.some((assistant) => isEstateAgentTemplate(assistant.templateId)),
+    [assistants],
+  );
+
+  const estateAgents = useMemo(
+    () => assistants.filter((assistant) => isEstateAgentTemplate(assistant.templateId)),
+    [assistants],
+  );
+
+  const visibleNavItems = useMemo(
+    () =>
+      hasEstateAgent
+        ? navItems
+        : navItems.filter((item) => item.view !== "negotiator" && item.view !== "viewings"),
+    [hasEstateAgent],
+  );
+
+  useEffect(() => {
+    if ((view === "negotiator" || view === "viewings") && !hasEstateAgent) {
+      setView("insights");
+    }
+  }, [view, hasEstateAgent]);
+
   const filteredAssistants = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     if (!query) return assistants;
@@ -1871,7 +1896,7 @@ export function CustomerAgentWorkspace({
                 </button>
               </div>
               <nav className="flex-1 space-y-1 px-4 py-4">
-                {navItems.map((item) => {
+                {visibleNavItems.map((item) => {
                   const active = isNavActive(item);
                   return (
                     <button
@@ -1959,7 +1984,7 @@ export function CustomerAgentWorkspace({
           </div>
 
           <nav className="flex-1 space-y-1 px-4 py-4">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const active = isNavActive(item);
               return (
                 <button
@@ -2243,15 +2268,15 @@ export function CustomerAgentWorkspace({
               <ContactsView contacts={scopedContacts} callLogs={scopedCallLogs} followUps={scopedFollowUps} />
             )}
 
-            {view === "viewings" && (
+            {view === "viewings" && hasEstateAgent && (
               <ViewingsView
-                agents={assistants.map((a) => ({ id: a.id, name: a.name || "Agent" }))}
+                agents={estateAgents.map((a) => ({ id: a.id, name: a.name || "Agent" }))}
               />
             )}
 
-            {view === "negotiator" && (
+            {view === "negotiator" && hasEstateAgent && (
               <DigitalNegotiatorView
-                agents={assistants.map((a) => ({
+                agents={estateAgents.map((a) => ({
                   id: a.id,
                   name: a.name || "Agent",
                   templateId: a.templateId,
@@ -2285,7 +2310,7 @@ export function CustomerAgentWorkspace({
           tap away. Secondary items (billing, admin, support) stay in the drawer. */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-md items-stretch justify-around">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const active = isNavActive(item);
             return (
               <button
@@ -3058,10 +3083,7 @@ function AssistantDetail({
             />
           </div>
 
-          {/* Show for estate template, property industries, or legacy agents with no template. */}
-          {(assistant.templateId === "estate_agent" ||
-            !assistant.templateId ||
-            /\b(property|estate|lettings?)\b/i.test(assistant.industry)) && (
+          {assistant.templateId === "estate_agent" && (
             <div className="pt-4">
               <p className="mb-3 px-1 text-xs font-black uppercase tracking-wide text-ink-faint">
                 Digital Negotiator

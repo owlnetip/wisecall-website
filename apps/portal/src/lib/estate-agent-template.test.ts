@@ -6,7 +6,14 @@ import {
   buildEstateViewingWebhook,
   buildQualifyEnquiryWebhook,
   estateAgentDefaultContacts,
+  isEstateAgentTemplate,
 } from "./estate-agent-template";
+
+test("isEstateAgentTemplate only matches estate_agent", () => {
+  assert.equal(isEstateAgentTemplate("estate_agent"), true);
+  assert.equal(isEstateAgentTemplate("dentally"), false);
+  assert.equal(isEstateAgentTemplate(undefined), false);
+});
 
 test("estate prompt covers viewing owner-confirm flow", () => {
   const prompt = buildEstateAgentPrompt("Acme Estates", "Maya");

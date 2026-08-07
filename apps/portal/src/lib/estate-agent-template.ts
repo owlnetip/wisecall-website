@@ -24,6 +24,10 @@ type KnowledgeFields = {
   other?: string;
 };
 
+export function isEstateAgentTemplate(templateId?: string | null): boolean {
+  return templateId === "estate_agent";
+}
+
 type RoutingContact = {
   id: string;
   name: string;
