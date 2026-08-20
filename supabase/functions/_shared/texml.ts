@@ -71,6 +71,26 @@ export function buildMorSipDialTexml(input: {
 </Response>`;
 }
 
+/** Bridge the answered Telnyx call onto a live MOR DDI. This is how customer agents already answer. */
+export function buildPstnDialTexml(input: { number: string; callerId: string }) {
+  const number = normalizeE164(input.number);
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial callerId="${escapeXmlAttribute(input.callerId)}" timeout="45">
+    <Number>${escapeXmlAttribute(number)}</Number>
+  </Dial>
+</Response>`;
+}
+
+export function morDidFromMetadata(metadata: unknown): string {
+  if (!metadata || typeof metadata !== "object") return "";
+  const routing = (metadata as { routing?: Record<string, unknown> }).routing;
+  const raw = String(routing?.morDid || "").trim();
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("44") && digits.length >= 11) return `+${digits}`;
+  return "";
+}
+
 export function buildUnavailableTexml(message: string) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -97,8 +117,12 @@ export async function probeEdgeHealth(baseUrl: string) {
       signal: AbortSignal.timeout(1500),
     });
     const text = await response.text().catch(() => "");
+    const looksLikeEdge =
+      response.ok &&
+      !/<(html|!doctype)/i.test(text) &&
+      (/"ok"\s*:\s*true/i.test(text) || /healthy/i.test(text) || text.trim().toLowerCase() === "ok");
     return {
-      ok: response.ok,
+      ok: looksLikeEdge,
       status: response.status,
       latency_ms: Date.now() - started,
       body: text.slice(0, 200),

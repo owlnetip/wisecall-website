@@ -6,8 +6,8 @@
 // usage → update contact memory.
 //
 // Vonage validates moHttpUrl with a GET that must return 200 before the webhook
-// is saved, and times out slow handlers. ACK immediately, then process with
-// EdgeRuntime.waitUntil so Claude + send still complete.
+// is saved, and times out slow handlers. Process for up to 8s before ACKing,
+// and also EdgeRuntime.waitUntil so a slower send can still finish.
 //
 // Secrets: VONAGE_API_KEY, VONAGE_API_SECRET, CLAUDE_API_WISECASE,
 // SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
@@ -18,7 +18,6 @@ import { buildMemoryBlock, loadContactContext, triggerPortalAnalysis } from "../
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { tryHandleViewingReply } from "../_shared/viewing-confirm.ts";
 import {
-  canWaitUntil,
   extractInboundSms,
   normaliseE164,
   sendSmsViaVonage,
@@ -26,7 +25,7 @@ import {
   waitUntil,
 } from "../_shared/vonage-sms.ts";
 
-const CLAUDE_MODEL = "claude-opus-4-8";
+const CLAUDE_MODEL = "claude-sonnet-4-6";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -350,11 +349,13 @@ Deno.serve(async (req) => {
     console.error("[wisecall-sms-inbound] error:", (e as Error).message);
   });
 
-  if (canWaitUntil()) {
-    waitUntil(task);
-    return ok();
-  }
-
-  await task;
+  // Keep the isolate alive if the platform supports it, but still wait up to
+  // ~8s so Claude + Vonage send finish before the webhook returns. Returning
+  // immediately with only waitUntil was dropping the reply on this project.
+  waitUntil(task);
+  await Promise.race([
+    task,
+    new Promise((resolve) => setTimeout(resolve, 8_000)),
+  ]);
   return ok();
 });

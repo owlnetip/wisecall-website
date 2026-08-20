@@ -95,10 +95,9 @@ async function buyNumber(msisdn: string): Promise<void> {
 }
 
 function inboundUrl(): string {
-  return inboundWebhookUrl(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-  );
+  // JWT is off for this function. A bare URL avoids Vonage failing the
+  // health-check GET when the anon/publishable key format changes.
+  return inboundWebhookUrl(Deno.env.get("SUPABASE_URL") ?? "");
 }
 
 async function setWebhook(msisdn: string, moHttpUrl: string): Promise<void> {

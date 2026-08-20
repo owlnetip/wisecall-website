@@ -1,11 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   buildMorSipDialTexml,
+  buildPstnDialTexml,
   buildSipUri,
   buildStreamTexml,
   buildUnavailableTexml,
   buildWebhookUrl,
   getStreamCodec,
+  morDidFromMetadata,
   probeEdgeHealth,
 } from "../_shared/texml.ts";
 
@@ -60,34 +62,46 @@ type SipEndpoint = {
   proxy: string;
 };
 
-async function loadSipEndpoint(profileSlug: string): Promise<SipEndpoint | null> {
+type VoiceRoute = {
+  sip: SipEndpoint | null;
+  morDid: string;
+};
+
+async function loadVoiceRoute(profileSlug: string): Promise<VoiceRoute> {
+  const empty: VoiceRoute = { sip: null, morDid: "" };
   const url = Deno.env.get("SUPABASE_URL")?.trim();
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
-  if (!url || !key) return null;
+  if (!url || !key) return empty;
 
   const supabase = createClient(url, key);
   const { data: profile } = await supabase
     .from("wisecall_profiles")
-    .select("id")
+    .select("id, metadata")
     .eq("slug", profileSlug)
     .maybeSingle();
-  if (!profile?.id) return null;
+  if (!profile?.id) return empty;
 
+  const morDid = morDidFromMetadata(profile.metadata);
   const { data } = await supabase
     .from("wisecall_sip_endpoints")
     .select("sip_username, sip_password, sip_domain, sip_proxy, is_enabled")
     .eq("profile_id", profile.id)
     .maybeSingle();
 
-  if (!data?.is_enabled || !data.sip_username || !data.sip_password) return null;
+  if (!data?.is_enabled || !data.sip_username || !data.sip_password) {
+    return { sip: null, morDid };
+  }
   const domain = String(data.sip_domain || "").trim();
-  if (!domain) return null;
+  if (!domain) return { sip: null, morDid };
 
   return {
-    username: String(data.sip_username),
-    password: String(data.sip_password),
-    domain,
-    proxy: String(data.sip_proxy || "").trim(),
+    morDid,
+    sip: {
+      username: String(data.sip_username),
+      password: String(data.sip_password),
+      domain,
+      proxy: String(data.sip_proxy || "").trim(),
+    },
   };
 }
 
@@ -97,6 +111,41 @@ async function buildCallbackTexml(input: {
   phone: string;
   from: string;
 }) {
+  const route = await loadVoiceRoute(input.profileSlug);
+  // Prefer the live MOR DDI. Customer agents already answer on this path, and
+  // Dial SIP with the device credentials can look like a self-call and drop.
+  if (route.morDid) {
+    console.log("WiseCall demo callback routing via MOR DDI", {
+      profile_slug: input.profileSlug,
+      mor_did: route.morDid,
+    });
+    return {
+      texml: buildPstnDialTexml({
+        number: route.morDid,
+        callerId: input.from,
+      }),
+      statusCallbackUrl: "",
+      route: "mor_did" as const,
+    };
+  }
+
+  if (route.sip) {
+    console.log("WiseCall demo callback routing via MOR SIP", {
+      profile_slug: input.profileSlug,
+      sip_domain: route.sip.domain,
+    });
+    return {
+      texml: buildMorSipDialTexml({
+        sipUri: buildSipUri(route.sip),
+        username: route.sip.username,
+        password: route.sip.password,
+        callerId: input.from,
+      }),
+      statusCallbackUrl: "",
+      route: "mor_sip" as const,
+    };
+  }
+
   const streamCodec = getStreamCodec();
   if (input.edgeBaseUrl) {
     const health = await probeEdgeHealth(input.edgeBaseUrl);
@@ -118,24 +167,6 @@ async function buildCallbackTexml(input: {
       };
     }
     console.warn("WiseCall demo callback edge unhealthy", health);
-  }
-
-  const sip = await loadSipEndpoint(input.profileSlug);
-  if (sip) {
-    console.log("WiseCall demo callback routing via MOR SIP", {
-      profile_slug: input.profileSlug,
-      sip_domain: sip.domain,
-    });
-    return {
-      texml: buildMorSipDialTexml({
-        sipUri: buildSipUri(sip),
-        username: sip.username,
-        password: sip.password,
-        callerId: input.from,
-      }),
-      statusCallbackUrl: "",
-      route: "mor_sip" as const,
-    };
   }
 
   console.error("WiseCall demo callback has no healthy edge or SIP fallback", {

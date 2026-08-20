@@ -10,10 +10,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   buildMorSipDialTexml,
+  buildPstnDialTexml,
   buildSipUri,
   buildStreamTexml,
   buildUnavailableTexml,
   getStreamCodec,
+  morDidFromMetadata,
   normalizeE164,
   parseTelnyxRequest,
   probeEdgeHealth,
@@ -46,7 +48,7 @@ async function resolveProfile(
   if (normalized) {
     const { data: byNumber } = await supabase
       .from("wisecall_profiles")
-      .select("id, slug, telnyx_number, is_active")
+      .select("id, slug, telnyx_number, is_active, metadata")
       .eq("telnyx_number", normalized)
       .maybeSingle();
     if (byNumber?.slug) return byNumber;
@@ -56,7 +58,7 @@ async function resolveProfile(
   if (slug) {
     const { data: bySlug } = await supabase
       .from("wisecall_profiles")
-      .select("id, slug, telnyx_number, is_active")
+      .select("id, slug, telnyx_number, is_active, metadata")
       .eq("slug", slug)
       .maybeSingle();
     if (bySlug?.slug) return bySlug;
@@ -127,11 +129,27 @@ Deno.serve(async (req) => {
 
   const edgeBaseUrl = Deno.env.get("WISECALL_EDGE_BASE_URL")?.trim() || "";
   const mode = inboundMode();
+  const morDid = morDidFromMetadata((profile as { metadata?: unknown }).metadata);
+
+  // Live MOR DDI first. A 200 HTML page on the old media host must not count as healthy.
+  if (morDid && mode !== "edge") {
+    const texml = buildPstnDialTexml({
+      number: morDid,
+      callerId: from || to || "+441135222277",
+    });
+    console.log("wisecall-telnyx-inbound: routing via MOR DDI", {
+      profile_slug: profile.slug,
+      to,
+      mor_did: morDid,
+    });
+    return texmlResponse(texml);
+  }
+
   const edgeHealth = edgeBaseUrl && mode !== "mor_sip"
     ? await probeEdgeHealth(edgeBaseUrl)
     : { ok: false, status: 0, latency_ms: 0 };
   const edgeHealthy = Boolean(edgeHealth.ok);
-  const useEdge = mode === "edge" || (mode === "auto" && edgeHealthy);
+  const useEdge = mode === "edge" || (mode === "auto" && edgeHealthy && !morDid);
 
   if (useEdge && edgeBaseUrl) {
     const streamCodec = getStreamCodec();
