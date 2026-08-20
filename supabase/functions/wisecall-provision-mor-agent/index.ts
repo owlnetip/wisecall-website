@@ -285,7 +285,12 @@ serve(async (req) => {
       return json({ ok: false, error: "Forbidden" }, 403);
     }
 
-    const { profile_id } = await req.json();
+    const body = (await req.json()) as {
+      profile_id?: string;
+      preserve_existing_number?: boolean;
+    };
+    const profile_id = body.profile_id;
+    const preserveExistingNumber = body.preserve_existing_number === true;
     if (!profile_id) return json({ ok: false, error: "profile_id required" }, 400);
 
     const MOR_API_URL = Deno.env.get("MOR_API_URL");
@@ -728,25 +733,34 @@ serve(async (req) => {
     // ── 7. Update agent profile: routing + number ─────────────────────────
     const { data: profileRow } = await supabase
       .from("wisecall_profiles")
-      .select("metadata")
+      .select("metadata, telnyx_number")
       .eq("id", profile_id)
       .single();
 
     const metadata = (profileRow?.metadata as Record<string, unknown>) ?? {};
+    const currentVoiceNumber = String(profileRow?.telnyx_number || "").trim();
+    const demoNumber = String(metadata.demo_number || "").trim();
+    // Website demo (and similar Telnyx public numbers) must keep the published
+    // caller-ID / inbound DDI. MOR still gets a pool DID for SIP registration.
+    const keepVoiceNumber =
+      Boolean(currentVoiceNumber) &&
+      (preserveExistingNumber || Boolean(demoNumber));
+    const publicNumber = keepVoiceNumber ? currentVoiceNumber : didNumber;
     const routing = {
       provider: "mor_sip",
-      number: didNumber,
+      number: publicNumber,
       status: "live",
       sipUsername: deviceUsername,
       sipDomain: MOR_SIP_HOST,
       morUserId,
       morDeviceId,
+      ...(keepVoiceNumber ? { morDid: didNumber } : {}),
     };
 
     const { error: profileErr } = await supabase
       .from("wisecall_profiles")
       .update({
-        telnyx_number: didNumber,
+        telnyx_number: publicNumber,
         metadata: { ...metadata, routing },
         is_active: true,
       })

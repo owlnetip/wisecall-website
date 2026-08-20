@@ -94,7 +94,7 @@ export async function probeEdgeHealth(baseUrl: string) {
   const started = Date.now();
   try {
     const response = await fetch(healthUrl.toString(), {
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(1500),
     });
     const text = await response.text().catch(() => "");
     return {
