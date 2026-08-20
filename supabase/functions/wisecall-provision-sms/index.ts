@@ -128,6 +128,28 @@ function msisdnFromStored(smsNumber?: string | null, vonageNumberId?: string | n
   return raw;
 }
 
+async function readNumberWebhook(msisdn: string): Promise<{ msisdn: string; moHttpUrl: string | null } | null> {
+  const { key, secret } = vonageCreds();
+  const params = new URLSearchParams({
+    api_key: key,
+    api_secret: secret,
+    pattern: msisdn,
+  });
+  const res = await fetch(`${VONAGE_REST}/account/numbers?${params}`);
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    numbers?: { msisdn?: string; moHttpUrl?: string }[];
+  };
+  const match =
+    data.numbers?.find((row) => String(row.msisdn || "").replace(/\D/g, "") === msisdn) ??
+    data.numbers?.[0];
+  if (!match?.msisdn) return null;
+  return {
+    msisdn: String(match.msisdn),
+    moHttpUrl: match.moHttpUrl ? String(match.moHttpUrl) : null,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
@@ -158,16 +180,24 @@ Deno.serve(async (req) => {
     .eq("profile_id", profileId)
     .maybeSingle();
   if (existing?.sms_number) {
+    const expectedUrl = inboundUrl();
     try {
       const msisdn = msisdnFromStored(existing.sms_number, existing.vonage_number_id);
-      if (msisdn) await setWebhook(msisdn, inboundUrl());
+      if (msisdn) await setWebhook(msisdn, expectedUrl);
+      const vonage = msisdn ? await readNumberWebhook(msisdn).catch(() => null) : null;
+      return json({
+        ok: true,
+        sms_number: existing.sms_number,
+        webhook_url: expectedUrl,
+        vonage_mo_http_url: vonage?.moHttpUrl ?? null,
+      });
     } catch (err) {
       console.error("[wisecall-provision-sms] repair webhook:", (err as Error).message);
       if (repairOnly) {
         return json({ ok: false, error: (err as Error).message }, 500);
       }
     }
-    return json({ ok: true, sms_number: existing.sms_number });
+    return json({ ok: true, sms_number: existing.sms_number, webhook_url: expectedUrl });
   }
 
   if (repairOnly) {

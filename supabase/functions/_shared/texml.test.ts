@@ -3,6 +3,7 @@ import {
   buildMorSipDialTexml,
   buildPstnDialTexml,
   buildSipUri,
+  buildStreamTexml,
   buildUnavailableTexml,
   morDidFromMetadata,
   normalizeE164,
@@ -38,6 +39,21 @@ Deno.test("PSTN Dial TeXML bridges onto the MOR DDI", () => {
   });
   if (!xml.includes("<Number>+441135515465</Number>")) throw new Error("expected E.164 MOR DDI");
   if (!xml.includes('callerId="+441135221606"')) throw new Error("expected caller id");
+});
+
+Deno.test("stream TeXML connects a bidirectional websocket to /media", () => {
+  const xml = buildStreamTexml(
+    "https://13.40.127.21.sslip.io",
+    "wisecall",
+    "+447700900000",
+    "+441135221606",
+    "PCMA",
+  );
+  if (!xml.includes("<Connect>")) throw new Error("expected Connect");
+  if (!xml.includes("<Stream")) throw new Error("expected Stream");
+  if (!xml.includes("wss://13.40.127.21.sslip.io/media")) throw new Error("expected media websocket");
+  if (!xml.includes("profile_slug=wisecall")) throw new Error("expected profile slug");
+  if (xml.includes("<Dial")) throw new Error("stream path must not Dial");
 });
 
 Deno.test("morDidFromMetadata prefers the pool DID over the public Telnyx number", () => {

@@ -345,6 +345,13 @@ Deno.serve(async (req) => {
     return ok();
   }
 
+  console.log("[wisecall-sms-inbound] accepted", {
+    method: req.method,
+    from: inbound.from,
+    to: inbound.to,
+    text_len: inbound.text.length,
+  });
+
   const task = handleInbound(params).catch((e) => {
     console.error("[wisecall-sms-inbound] error:", (e as Error).message);
   });

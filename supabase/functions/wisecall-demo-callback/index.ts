@@ -159,6 +159,10 @@ Deno.serve(async (req) => {
 
   const texml = buildStreamTexml(edgeBaseUrl, profileSlug, phone, from, streamCodec);
   const statusCallbackUrl = buildWebhookUrl(edgeBaseUrl, profileSlug);
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim().replace(/\/+$/, "") || "";
+  const inboundUrl = supabaseUrl
+    ? `${supabaseUrl}/functions/v1/wisecall-telnyx-inbound?profile_slug=${encodeURIComponent(profileSlug)}`
+    : "";
 
   const telnyxResponse = await fetch(
     `https://api.telnyx.com/v2/texml/Accounts/${accountSid}/Calls`,
@@ -174,6 +178,7 @@ Deno.serve(async (req) => {
         To: phone,
         From: from,
         Texml: texml,
+        ...(inboundUrl ? { Url: inboundUrl } : {}),
         StatusCallback: statusCallbackUrl,
         StatusCallbackMethod: "POST",
       }),
