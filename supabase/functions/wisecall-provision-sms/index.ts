@@ -10,6 +10,7 @@
 // is robust to Supabase service-role key rotations.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { inboundWebhookUrl } from "../_shared/vonage-sms.ts";
 
 const VONAGE_REST = "https://rest.nexmo.com";
 
@@ -93,17 +94,39 @@ async function buyNumber(msisdn: string): Promise<void> {
   }
 }
 
+function inboundUrl(): string {
+  return inboundWebhookUrl(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+  );
+}
+
 async function setWebhook(msisdn: string, moHttpUrl: string): Promise<void> {
   const { key, secret } = vonageCreds();
-  const res = await fetch(`${VONAGE_REST}/number/update`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ api_key: key, api_secret: secret, country: "GB", msisdn, moHttpUrl }),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Vonage webhook set ${res.status}: ${text.slice(0, 200)}`);
+  let lastError = "Vonage webhook set failed";
+  // Vonage GETs the URL and requires 200 before saving it. Cold starts can miss
+  // the first attempt, so retry rather than leaving a number with no inbound hook.
+  const bodies = [
+    { api_key: key, api_secret: secret, country: "GB", msisdn, moHttpUrl, moHttpMethod: "POST" },
+    { api_key: key, api_secret: secret, country: "GB", msisdn, moHttpUrl },
+  ];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const body = bodies[Math.min(attempt, bodies.length - 1)];
+    const res = await fetch(`${VONAGE_REST}/number/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(body),
+    });
+    if (res.ok) return;
+    lastError = `Vonage webhook set ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`;
+    await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
   }
+  throw new Error(lastError);
+}
+
+function msisdnFromStored(smsNumber?: string | null, vonageNumberId?: string | null): string {
+  const raw = (vonageNumberId || smsNumber || "").replace(/\D/g, "");
+  return raw;
 }
 
 Deno.serve(async (req) => {
@@ -127,23 +150,30 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Return existing number if already provisioned.
+  // Return existing number if already provisioned, but re-assert the inbound
+  // webhook. Numbers bought before the webhook health-check/JWT fixes otherwise
+  // stay assigned in the portal while Vonage never delivers texts.
   const { data: existing } = await supabase
     .from("wisecall_sms_numbers")
-    .select("sms_number")
+    .select("sms_number, vonage_number_id")
     .eq("profile_id", profileId)
     .maybeSingle();
-  if (existing) return json({ ok: true, sms_number: existing.sms_number });
+  if (existing?.sms_number) {
+    try {
+      const msisdn = msisdnFromStored(existing.sms_number, existing.vonage_number_id);
+      if (msisdn) await setWebhook(msisdn, inboundUrl());
+    } catch (err) {
+      console.error("[wisecall-provision-sms] repair webhook:", (err as Error).message);
+    }
+    return json({ ok: true, sms_number: existing.sms_number });
+  }
 
   try {
     const msisdn = await searchUkNumber();
     if (!msisdn) return json({ ok: false, error: "No UK SMS numbers available, try again shortly." }, 503);
 
     await buyNumber(msisdn);
-
-    const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/+$/, "");
-    const moHttpUrl = `${supabaseUrl}/functions/v1/wisecall-sms-inbound`;
-    await setWebhook(msisdn, moHttpUrl);
+    await setWebhook(msisdn, inboundUrl());
 
     const e164 = msisdn.startsWith("+") ? msisdn : `+${msisdn}`;
 

@@ -1246,7 +1246,7 @@ function SMSChannel({
       {open ? (
         <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
           <p className="mb-1 text-xs text-ink-soft">
-            Each agent gets its own UK mobile number. Customers text in and the AI replies instantly -
+            Each agent gets its own UK mobile number when you create it. Customers text in and the AI replies instantly -
             every conversation is saved to Contacts alongside calls and emails.
           </p>
           {provisionError ? (
@@ -1430,6 +1430,18 @@ export function CustomerAgentWorkspace({
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirtyAgentIds]);
+
+  // Re-assert Vonage inbound webhooks for numbers that were bought before the
+  // health-check/JWT fixes. Cheap, idempotent, and the only way existing agents
+  // (already showing a number, so no "Get SMS number" button) get repaired.
+  useEffect(() => {
+    if (adminMode) return;
+    for (const row of smsNumbers ?? []) {
+      void provisionSmsNumber(row.profileId);
+    }
+    // Intentionally once on mount: these hooks don't change without a reload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleFollowUpStatus(followUpId: string, status: FollowUp["status"]) {
     startTransition(async () => {
