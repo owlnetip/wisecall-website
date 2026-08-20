@@ -13,6 +13,7 @@ import {
   getStreamCodec,
   normalizeE164,
   parseTelnyxRequest,
+  resolveEdgeBaseUrl,
   texmlResponse,
 } from "../_shared/texml.ts";
 
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
     );
   }
 
-  const edgeBaseUrl = Deno.env.get("WISECALL_EDGE_BASE_URL")?.trim() || "";
+  const edgeBaseUrl = resolveEdgeBaseUrl(Deno.env.get("WISECALL_EDGE_BASE_URL"));
   if (!edgeBaseUrl) {
     console.error("wisecall-telnyx-inbound: WISECALL_EDGE_BASE_URL missing", {
       profile_slug: profile.slug,

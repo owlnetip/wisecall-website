@@ -1,3 +1,15 @@
+/** Live Telnyx media edge. 13.40.127.21 is the old Elastic IP (down). */
+export const LIVE_EDGE_BASE_URL = "https://18.132.149.25.sslip.io";
+const DEAD_EDGE_HOSTS = ["18.171.233.209", "13.40.127.21"];
+
+export function resolveEdgeBaseUrl(configured?: string | null) {
+  const value = String(configured || "").trim().replace(/\/+$/, "");
+  if (!value || DEAD_EDGE_HOSTS.some((host) => value.includes(host))) {
+    return LIVE_EDGE_BASE_URL;
+  }
+  return value;
+}
+
 export function escapeXmlAttribute(value: string) {
   return value
     .replace(/&/g, "&amp;")

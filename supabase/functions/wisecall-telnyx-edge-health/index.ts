@@ -13,6 +13,7 @@ import {
 } from "npm:@aws-sdk/client-ec2@3";
 
 const DEFAULT_EDGE_PUBLIC_IP = "13.40.127.21";
+const LIVE_EDGE_BASE_URL = "https://18.132.149.25.sslip.io";
 const DEFAULT_TEXML_APP_IDS = [
   "2941088157250094723",
   "2980953819380188229",
@@ -119,6 +120,47 @@ async function findEdgeInstance(edgeIp: string) {
   return instances.find((instance) => instance.public_ip === edgeIp) ?? null;
 }
 
+async function retargetTexmlApps(
+  telnyxKey: string,
+  apps: { id: string; voice_url?: string | null }[],
+  healthyBaseUrl: string,
+) {
+  const results = [];
+  const nextVoiceUrl = `${healthyBaseUrl.replace(/\/+$/, "")}/telnyx/texml`;
+  for (const app of apps) {
+    const current = String(app.voice_url || "");
+    if (
+      !current.includes("13.40.127.21") &&
+      !current.includes("18.171.233.209")
+    ) {
+      results.push({ id: app.id, action: "unchanged", voice_url: current || null });
+      continue;
+    }
+    const response = await fetch(`https://api.telnyx.com/v2/texml_applications/${app.id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${telnyxKey}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        voice_url: nextVoiceUrl,
+        voice_method: "POST",
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    const payload = await response.json().catch(() => ({})) as { data?: { voice_url?: string } };
+    results.push({
+      id: app.id,
+      action: response.ok ? "updated" : "failed",
+      http_status: response.status,
+      previous_voice_url: current,
+      voice_url: payload.data?.voice_url ?? nextVoiceUrl,
+    });
+  }
+  return results;
+}
+
 async function inspectTexmlApps() {
   const telnyxKey = Deno.env.get("TELNYX_API_KEY")?.trim();
   if (!telnyxKey) return { error: "TELNYX_API_KEY not set" };
@@ -190,10 +232,18 @@ Deno.serve(async (req) => {
 
   const edgeBaseUrl = Deno.env.get("WISECALL_EDGE_BASE_URL")?.trim() || "";
   const edgeIp = Deno.env.get("WISECALL_EDGE_PUBLIC_IP")?.trim() || DEFAULT_EDGE_PUBLIC_IP;
+  const liveHealth = await probeEdge(LIVE_EDGE_BASE_URL);
   const health = edgeBaseUrl
     ? await probeEdge(edgeBaseUrl)
     : { ok: false, error: "WISECALL_EDGE_BASE_URL not set" };
   const historicalHealth = await probeEdge(`https://${edgeIp}.sslip.io`, 4000);
+  const healthyBaseUrl = liveHealth.ok
+    ? LIVE_EDGE_BASE_URL
+    : historicalHealth.ok
+    ? `https://${edgeIp}.sslip.io`
+    : health.ok
+    ? edgeBaseUrl
+    : "";
 
   let instance: Awaited<ReturnType<typeof findEdgeInstance>> = null;
   let allInstances: Awaited<ReturnType<typeof listInstances>> = [];
@@ -224,66 +274,36 @@ Deno.serve(async (req) => {
   }
 
   if (recover) {
-    const target =
-      instance ??
-      allInstances.find((item) => item.state === "running") ??
-      allInstances.find((item) => item.state === "stopped") ??
-      allInstances.find((item) => /wisecall|telnyx|voice|edge/i.test(item.name ?? ""));
-
-    if (target?.instance_id) {
-      const client = ec2Client();
-      // Always start/reboot the reachable instance. A missing historical
-      // Elastic IP must not skip reboot — that left the media process dead.
-      if (target.state === "stopped") {
-        await client.send(new StartInstancesCommand({ InstanceIds: [target.instance_id] }));
-        recovery = {
-          action: "start",
-          instance_id: target.instance_id,
-          previous_state: target.state,
-          public_ip: target.public_ip,
-        };
-        instance = target;
-        await new Promise((resolve) => setTimeout(resolve, 15000));
-      } else if (target.state === "running") {
-        await client.send(new RebootInstancesCommand({ InstanceIds: [target.instance_id] }));
-        recovery = {
-          action: "reboot",
-          instance_id: target.instance_id,
-          previous_state: target.state,
-          public_ip: target.public_ip,
-        };
-        instance = target;
-      } else {
-        recovery = {
-          action: "none",
-          reason: `Instance state is ${target.state}`,
-          instance_id: target.instance_id,
-        };
-        instance = target;
-      }
-
-      if (target.instance_id) {
-        const eip = await ensureElasticIp(target.instance_id, edgeIp).catch((error) => ({
-          ok: false,
-          reason: error instanceof Error ? error.message : String(error),
-        }));
-        recovery = { ...(recovery ?? {}), elastic_ip: eip };
-      }
+    if (healthyBaseUrl) {
+      const telnyxKey = Deno.env.get("TELNYX_API_KEY")?.trim() || "";
+      const apps = Array.isArray((texmlApps as { apps?: { id: string; voice_url?: string | null }[] }).apps)
+        ? (texmlApps as { apps: { id: string; voice_url?: string | null }[] }).apps
+        : [];
+      const retarget = telnyxKey
+        ? await retargetTexmlApps(telnyxKey, apps, healthyBaseUrl)
+        : { error: "TELNYX_API_KEY not set" };
+      recovery = {
+        action: "retarget_texml",
+        healthy_edge: healthyBaseUrl,
+        skipped_ec2_reboot: true,
+        reason: "Live media edge is healthy; BICOM instance is the PBX, not /media.",
+        texml_retarget: retarget,
+      };
     } else {
-      recovery = { action: "none", reason: "No EC2 instance found to recover" };
+      recovery = { action: "none", reason: "No healthy media edge and no EC2 host to recover" };
     }
   }
 
-  const healthAfterRecovery = recovery
-    ? await probeEdge(edgeBaseUrl || `https://${edgeIp}.sslip.io`)
-    : health;
-  const finalHealth = recovery ? healthAfterRecovery : health;
+  const finalHealth = liveHealth.ok ? liveHealth : health.ok ? health : historicalHealth;
   const healthy = Boolean(finalHealth.ok);
   return json({
     ok: healthy,
     edge_base_url: edgeBaseUrl || null,
+    live_edge_base_url: LIVE_EDGE_BASE_URL,
     edge_ip: edgeIp,
     health: finalHealth,
+    configured_health: health,
+    live_health: liveHealth,
     historical_health: historicalHealth,
     instance,
     all_instances: allInstances.slice(0, 20),

@@ -140,7 +140,12 @@ Deno.serve(async (req) => {
     from =
       Deno.env.get("WISECALL_DEMO_CALLER_ID")?.trim() ||
       "+441135221606";
-    edgeBaseUrl = requiredEnv("WISECALL_EDGE_BASE_URL");
+    const configuredEdge = Deno.env.get("WISECALL_EDGE_BASE_URL")?.trim() || "";
+    edgeBaseUrl = configuredEdge.includes("18.171.233.209") ||
+        configuredEdge.includes("13.40.127.21") ||
+        !configuredEdge
+      ? "https://18.132.149.25.sslip.io"
+      : configuredEdge.replace(/\/+$/, "");
   } catch (error) {
     console.error("WiseCall demo callback config missing", {
       error: error instanceof Error ? error.message : String(error),

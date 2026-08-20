@@ -1,5 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  LIVE_EDGE_BASE_URL,
   buildMorSipDialTexml,
   buildPstnDialTexml,
   buildSipUri,
@@ -7,6 +8,7 @@ import {
   buildUnavailableTexml,
   morDidFromMetadata,
   normalizeE164,
+  resolveEdgeBaseUrl,
 } from "./texml.ts";
 
 Deno.test("normalizeE164 prefixes +", () => {
@@ -39,6 +41,13 @@ Deno.test("PSTN Dial TeXML bridges onto the MOR DDI", () => {
   });
   if (!xml.includes("<Number>+441135515465</Number>")) throw new Error("expected E.164 MOR DDI");
   if (!xml.includes('callerId="+441135221606"')) throw new Error("expected caller id");
+});
+
+Deno.test("resolveEdgeBaseUrl skips the Bicom PBX host", () => {
+  assertEquals(resolveEdgeBaseUrl("https://18.171.233.209.sslip.io"), LIVE_EDGE_BASE_URL);
+  assertEquals(resolveEdgeBaseUrl("https://13.40.127.21.sslip.io"), LIVE_EDGE_BASE_URL);
+  assertEquals(resolveEdgeBaseUrl(""), LIVE_EDGE_BASE_URL);
+  assertEquals(resolveEdgeBaseUrl("https://18.132.149.25.sslip.io/"), LIVE_EDGE_BASE_URL);
 });
 
 Deno.test("stream TeXML connects a bidirectional websocket to /media", () => {
