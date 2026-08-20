@@ -1,15 +1,7 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import {
-  buildMorSipDialTexml,
-  buildPstnDialTexml,
-  buildSipUri,
-  buildStreamTexml,
-  buildUnavailableTexml,
-  buildWebhookUrl,
-  getStreamCodec,
-  morDidFromMetadata,
-  probeEdgeHealth,
-} from "../_shared/texml.ts";
+// Website "Call me" ring-back. This must match inbound to +441135222277:
+// Telnyx answers the mobile, then Connect/Stream to WISECALL_EDGE_BASE_URL/media.
+// Do not health-check that host from Supabase — TLS/404 from this network does
+// not mean Telnyx cannot open the websocket (direct calls already prove it).
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,130 +47,59 @@ function requiredEnv(name: string) {
   return value;
 }
 
-type SipEndpoint = {
-  username: string;
-  password: string;
-  domain: string;
-  proxy: string;
-};
-
-type VoiceRoute = {
-  sip: SipEndpoint | null;
-  morDid: string;
-};
-
-async function loadVoiceRoute(profileSlug: string): Promise<VoiceRoute> {
-  const empty: VoiceRoute = { sip: null, morDid: "" };
-  const url = Deno.env.get("SUPABASE_URL")?.trim();
-  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
-  if (!url || !key) return empty;
-
-  const supabase = createClient(url, key);
-  const { data: profile } = await supabase
-    .from("wisecall_profiles")
-    .select("id, metadata")
-    .eq("slug", profileSlug)
-    .maybeSingle();
-  if (!profile?.id) return empty;
-
-  const morDid = morDidFromMetadata(profile.metadata);
-  const { data } = await supabase
-    .from("wisecall_sip_endpoints")
-    .select("sip_username, sip_password, sip_domain, sip_proxy, is_enabled")
-    .eq("profile_id", profile.id)
-    .maybeSingle();
-
-  if (!data?.is_enabled || !data.sip_username || !data.sip_password) {
-    return { sip: null, morDid };
-  }
-  const domain = String(data.sip_domain || "").trim();
-  if (!domain) return { sip: null, morDid };
-
-  return {
-    morDid,
-    sip: {
-      username: String(data.sip_username),
-      password: String(data.sip_password),
-      domain,
-      proxy: String(data.sip_proxy || "").trim(),
-    },
-  };
+function buildWebhookUrl(edgeBaseUrl: string, profileSlug: string) {
+  const url = new URL("/telnyx/texml-status", edgeBaseUrl.replace(/\/+$/, ""));
+  url.searchParams.set("profile_slug", profileSlug);
+  return url.toString();
 }
 
-async function buildCallbackTexml(input: {
-  edgeBaseUrl: string;
-  profileSlug: string;
-  phone: string;
-  from: string;
-}) {
-  const route = await loadVoiceRoute(input.profileSlug);
-  // Prefer the live MOR DDI. Customer agents already answer on this path, and
-  // Dial SIP with the device credentials can look like a self-call and drop.
-  if (route.morDid) {
-    console.log("WiseCall demo callback routing via MOR DDI", {
-      profile_slug: input.profileSlug,
-      mor_did: route.morDid,
-    });
-    return {
-      texml: buildPstnDialTexml({
-        number: route.morDid,
-        callerId: input.from,
-      }),
-      statusCallbackUrl: "",
-      route: "mor_did" as const,
-    };
-  }
+function escapeXmlAttribute(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
 
-  if (route.sip) {
-    console.log("WiseCall demo callback routing via MOR SIP", {
-      profile_slug: input.profileSlug,
-      sip_domain: route.sip.domain,
-    });
-    return {
-      texml: buildMorSipDialTexml({
-        sipUri: buildSipUri(route.sip),
-        username: route.sip.username,
-        password: route.sip.password,
-        callerId: input.from,
-      }),
-      statusCallbackUrl: "",
-      route: "mor_sip" as const,
-    };
-  }
+function buildStreamTexml(
+  edgeBaseUrl: string,
+  profileSlug: string,
+  callerId: string,
+  calledNumber: string,
+  streamCodec: string,
+) {
+  const streamUrl = new URL("/media", edgeBaseUrl.replace(/\/+$/, ""));
+  streamUrl.protocol = streamUrl.protocol === "https:" ? "wss:" : "ws:";
+  streamUrl.searchParams.set("provider", "telnyx");
+  streamUrl.searchParams.set("media_source", "texml");
+  streamUrl.searchParams.set("profile_slug", profileSlug);
+  streamUrl.searchParams.set("caller_id", callerId);
+  streamUrl.searchParams.set("called_number", calledNumber);
 
-  const streamCodec = getStreamCodec();
-  if (input.edgeBaseUrl) {
-    const health = await probeEdgeHealth(input.edgeBaseUrl);
-    if (health.ok) {
-      console.log("WiseCall demo callback routing via edge", {
-        profile_slug: input.profileSlug,
-        latency_ms: health.latency_ms,
-      });
-      return {
-        texml: buildStreamTexml(
-          input.edgeBaseUrl,
-          input.profileSlug,
-          input.phone,
-          input.from,
-          streamCodec,
-        ),
-        statusCallbackUrl: buildWebhookUrl(input.edgeBaseUrl, input.profileSlug),
-        route: "edge" as const,
-      };
-    }
-    console.warn("WiseCall demo callback edge unhealthy", health);
-  }
+  const statusCallbackUrl = buildWebhookUrl(edgeBaseUrl, profileSlug);
 
-  console.error("WiseCall demo callback has no healthy edge or SIP fallback", {
-    profile_slug: input.profileSlug,
-  });
-  return {
-    texml: buildUnavailableTexml(
-      "Sorry, the WiseCall demo is temporarily unavailable. Please try again shortly.",
-    ),
-    statusCallbackUrl: "",
-    route: "unavailable" as const,
-  };
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Connect>
+    <Stream
+      url="${escapeXmlAttribute(streamUrl.toString())}"
+      track="both_tracks"
+      codec="${escapeXmlAttribute(streamCodec)}"
+      bidirectionalMode="rtp"
+      bidirectionalCodec="${escapeXmlAttribute(streamCodec)}"
+      bidirectionalSamplingRate="8000"
+      statusCallback="${escapeXmlAttribute(statusCallbackUrl)}"
+      statusCallbackMethod="POST"
+    />
+  </Connect>
+</Response>`;
+}
+
+function getStreamCodec() {
+  const value = (Deno.env.get("WISECALL_DEMO_STREAM_CODEC") || "PCMA")
+    .trim()
+    .toUpperCase();
+  return value === "PCMA" ? "PCMA" : "PCMU";
 }
 
 Deno.serve(async (req) => {
@@ -219,7 +140,7 @@ Deno.serve(async (req) => {
     from =
       Deno.env.get("WISECALL_DEMO_CALLER_ID")?.trim() ||
       "+441135221606";
-    edgeBaseUrl = Deno.env.get("WISECALL_EDGE_BASE_URL")?.trim() || "";
+    edgeBaseUrl = requiredEnv("WISECALL_EDGE_BASE_URL");
   } catch (error) {
     console.error("WiseCall demo callback config missing", {
       error: error instanceof Error ? error.message : String(error),
@@ -234,13 +155,10 @@ Deno.serve(async (req) => {
     String(body.profile_slug || Deno.env.get("WISECALL_DEMO_PROFILE_SLUG") || "")
       .trim() || "wisecall";
   const agentName = String(body.agent_name || "WiseCall Website Assistant").trim();
+  const streamCodec = getStreamCodec();
 
-  const routed = await buildCallbackTexml({
-    edgeBaseUrl,
-    profileSlug,
-    phone,
-    from,
-  });
+  const texml = buildStreamTexml(edgeBaseUrl, profileSlug, phone, from, streamCodec);
+  const statusCallbackUrl = buildWebhookUrl(edgeBaseUrl, profileSlug);
 
   const telnyxResponse = await fetch(
     `https://api.telnyx.com/v2/texml/Accounts/${accountSid}/Calls`,
@@ -255,13 +173,9 @@ Deno.serve(async (req) => {
         ApplicationSid: applicationSid,
         To: phone,
         From: from,
-        Texml: routed.texml,
-        ...(routed.statusCallbackUrl
-          ? {
-              StatusCallback: routed.statusCallbackUrl,
-              StatusCallbackMethod: "POST",
-            }
-          : {}),
+        Texml: texml,
+        StatusCallback: statusCallbackUrl,
+        StatusCallbackMethod: "POST",
       }),
     },
   );
@@ -272,7 +186,6 @@ Deno.serve(async (req) => {
     console.error("WiseCall demo callback failed", {
       status: telnyxResponse.status,
       profile_slug: profileSlug,
-      route: routed.route,
       result,
     });
     return jsonResponse(
@@ -283,7 +196,8 @@ Deno.serve(async (req) => {
 
   console.log("WiseCall demo callback started", {
     profile_slug: profileSlug,
-    route: routed.route,
+    stream_codec: streamCodec,
+    edge_base_url: edgeBaseUrl,
     call_sid: result?.sid || result?.data?.sid || null,
   });
 
