@@ -64,7 +64,7 @@ import {
   testVoice,
   updateAgent,
 } from "@/app/actions/agents";
-import { provisionSmsNumber } from "@/app/actions/sms";
+import { provisionSmsNumber, repairSmsInbound } from "@/app/actions/sms";
 import { connectCalCom } from "@/app/actions/calendar";
 import type { AgentSmsNumber, AgentWhatsappNumber } from "@/lib/agents";
 import {
@@ -1430,6 +1430,16 @@ export function CustomerAgentWorkspace({
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirtyAgentIds]);
+
+  // Re-point Vonage inbound webhooks for numbers already bought (for example
+  // +447441571292). This never searches or buys a number.
+  useEffect(() => {
+    if (adminMode) return;
+    for (const row of smsNumbers ?? []) {
+      void repairSmsInbound(row.profileId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleFollowUpStatus(followUpId: string, status: FollowUp["status"]) {
     startTransition(async () => {

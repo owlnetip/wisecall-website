@@ -680,10 +680,15 @@
         cbStatus.textContent = 'Connecting…';
         cbStatus.classList.remove('hidden');
         try {
-          const r = await fetch('https://portal.owlnet.io/functions/v1/wisecall-demo-callback', {
+          const r = await fetch('https://zgzzpwaqqftmugzpccpm.supabase.co/functions/v1/wisecall-demo-callback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
+            body: JSON.stringify({
+              phone,
+              profile_slug: 'wisecall',
+              agent_name: 'WiseCall Website Assistant',
+              source: 'wisecall_trades_demo'
+            })
           });
           cbStatus.textContent = r.ok ? 'WiseCall is calling you now.' : 'Something went wrong, try dialling +44 113 522 2277 directly.';
         } catch {

@@ -55,3 +55,15 @@ verify_jwt = false
 # voice webhooks with a shared secret, or the portal with the service-role key.
 [functions.wisecall-calendar-booking]
 verify_jwt = false
+
+# Public website "Call me" demo. Telnyx posts no JWT.
+[functions.wisecall-demo-callback]
+verify_jwt = false
+
+# Telnyx TeXML voice_url webhook — Telnyx posts call params, no Supabase JWT.
+[functions.wisecall-telnyx-inbound]
+verify_jwt = false
+
+# Internal EC2 recover / health for the Telnyx media edge.
+[functions.wisecall-telnyx-edge-health]
+verify_jwt = false
