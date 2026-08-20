@@ -21,7 +21,6 @@ import {
 } from "@/lib/integration-webhooks";
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
 import { ingestWebsiteKnowledgeBase } from "@/app/actions/knowledge-base";
-import { provisionSmsNumber } from "@/app/actions/sms";
 import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhooks";
 import { getVoiceOption } from "@/lib/voices";
 import {
@@ -291,15 +290,6 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     } catch (poolErr) {
       console.error("pool number assign failed:", (poolErr as Error).message);
     }
-  }
-
-  try {
-    const sms = await provisionSmsNumber(profileId);
-    if (!sms.ok) {
-      console.error("SMS provision failed:", sms.error);
-    }
-  } catch (smsErr) {
-    console.error("SMS provision call failed:", (smsErr as Error).message);
   }
 
   revalidatePath("/dashboard");

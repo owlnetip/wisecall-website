@@ -64,7 +64,7 @@ import {
   testVoice,
   updateAgent,
 } from "@/app/actions/agents";
-import { provisionSmsNumber } from "@/app/actions/sms";
+import { provisionSmsNumber, repairSmsInbound } from "@/app/actions/sms";
 import { connectCalCom } from "@/app/actions/calendar";
 import type { AgentSmsNumber, AgentWhatsappNumber } from "@/lib/agents";
 import {
@@ -1246,7 +1246,7 @@ function SMSChannel({
       {open ? (
         <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
           <p className="mb-1 text-xs text-ink-soft">
-            Each agent gets its own UK mobile number when you create it. Customers text in and the AI replies instantly -
+            Each agent gets its own UK mobile number. Customers text in and the AI replies instantly -
             every conversation is saved to Contacts alongside calls and emails.
           </p>
           {provisionError ? (
@@ -1431,15 +1431,13 @@ export function CustomerAgentWorkspace({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirtyAgentIds]);
 
-  // Re-assert Vonage inbound webhooks for numbers that were bought before the
-  // health-check/JWT fixes. Cheap, idempotent, and the only way existing agents
-  // (already showing a number, so no "Get SMS number" button) get repaired.
+  // Re-point Vonage inbound webhooks for numbers already bought (for example
+  // +447441571292). This never searches or buys a number.
   useEffect(() => {
     if (adminMode) return;
     for (const row of smsNumbers ?? []) {
-      void provisionSmsNumber(row.profileId);
+      void repairSmsInbound(row.profileId);
     }
-    // Intentionally once on mount: these hooks don't change without a reload.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

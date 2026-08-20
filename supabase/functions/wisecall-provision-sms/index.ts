@@ -137,9 +137,11 @@ Deno.serve(async (req) => {
   }
 
   let profileId: string;
+  let repairOnly = false;
   try {
-    const body = (await req.json()) as { profile_id?: string };
+    const body = (await req.json()) as { profile_id?: string; repair_only?: boolean };
     profileId = body.profile_id ?? "";
+    repairOnly = body.repair_only === true;
   } catch {
     return json({ error: "Invalid JSON" }, 400);
   }
@@ -150,9 +152,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Return existing number if already provisioned, but re-assert the inbound
-  // webhook. Numbers bought before the webhook health-check/JWT fixes otherwise
-  // stay assigned in the portal while Vonage never delivers texts.
+  // Existing numbers: re-assert inbound webhook only. Never search or buy.
   const { data: existing } = await supabase
     .from("wisecall_sms_numbers")
     .select("sms_number, vonage_number_id")
@@ -164,8 +164,15 @@ Deno.serve(async (req) => {
       if (msisdn) await setWebhook(msisdn, inboundUrl());
     } catch (err) {
       console.error("[wisecall-provision-sms] repair webhook:", (err as Error).message);
+      if (repairOnly) {
+        return json({ ok: false, error: (err as Error).message }, 500);
+      }
     }
     return json({ ok: true, sms_number: existing.sms_number });
+  }
+
+  if (repairOnly) {
+    return json({ ok: false, error: "No SMS number assigned to this agent." }, 404);
   }
 
   try {
