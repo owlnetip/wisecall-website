@@ -1035,10 +1035,9 @@ function AgentSmsRow({
               type="button"
               disabled={isProvisioning}
               onClick={onProvision}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#7c3aed] px-4 py-2 text-sm font-black text-white transition hover:bg-[#6d28d9] disabled:opacity-60"
+              className="text-sm font-bold text-[#7c3aed] transition hover:text-[#6d28d9] disabled:opacity-60"
             >
-              {isProvisioning ? "Getting number…" : "Add another SMS number"}
-              {!isProvisioning && <ChevronRight className="h-4 w-4" />}
+              {isProvisioning ? "Getting number…" : "Need another number?"}
             </button>
           )}
         </div>
@@ -1223,12 +1222,12 @@ function SMSChannel({
   const [open, setOpen] = useState(false);
   const [provisioningId, setProvisioningId] = useState<string | null>(null);
   const [provisionError, setProvisionError] = useState<string | null>(null);
+  const [confirmExtraFor, setConfirmExtraFor] = useState<string | null>(null);
 
-  async function handleProvision(profileId: string) {
-    const alreadyHasNumber = smsNumbers.some((n) => n.profileId === profileId);
+  async function provision(profileId: string, additional: boolean) {
     setProvisioningId(profileId);
     setProvisionError(null);
-    const result = await provisionSmsNumber(profileId, { additional: alreadyHasNumber });
+    const result = await provisionSmsNumber(profileId, { additional });
     if (result.ok) {
       onSmsNumbersChange(
         smsNumbers.some((n) => n.profileId === profileId && n.smsNumber === result.smsNumber)
@@ -1240,6 +1239,18 @@ function SMSChannel({
     }
     setProvisioningId(null);
   }
+
+  function handleProvisionRequest(profileId: string) {
+    const alreadyHasNumber = smsNumbers.some((n) => n.profileId === profileId);
+    if (alreadyHasNumber) {
+      setConfirmExtraFor(profileId);
+      return;
+    }
+    void provision(profileId, false);
+  }
+
+  const confirmAgentName =
+    assistants.find((a) => a.id === confirmExtraFor)?.name ?? "this agent";
 
   return (
     <div className="rounded-xl border border-line bg-white">
@@ -1279,8 +1290,8 @@ function SMSChannel({
       {open ? (
         <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
           <p className="mb-1 text-xs text-ink-soft">
-            Each agent can have several UK mobile numbers. Customers text any of them and the AI replies instantly -
-            every conversation is saved to Contacts alongside calls and emails.
+            SMS numbers are optional. Add one when you need a text inbox; extra numbers are only
+            bought if you ask for them.
           </p>
           {provisionError ? (
             <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-danger">{provisionError}</p>
@@ -1296,15 +1307,45 @@ function SMSChannel({
                   assistant={a}
                   smsNumbers={assigned}
                   isProvisioning={provisioningId === a.id}
-                  onProvision={() => void handleProvision(a.id)}
+                  onProvision={() => handleProvisionRequest(a.id)}
                 />
               );
             })
           ) : (
-            <p className="text-sm text-ink-soft">Create an agent to get an SMS number.</p>
+            <p className="text-sm text-ink-soft">Create an agent, then add an SMS number if you need one.</p>
           )}
         </div>
       ) : null}
+
+      <Dialog
+        open={Boolean(confirmExtraFor)}
+        onOpenChange={(next) => {
+          if (!next) setConfirmExtraFor(null);
+        }}
+        title="Add another SMS number?"
+        description={
+          <>
+            This buys another UK mobile number and assigns it to {confirmAgentName}. Only do this
+            if you need a separate number — nothing is added automatically.
+          </>
+        }
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmExtraFor(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const profileId = confirmExtraFor;
+                setConfirmExtraFor(null);
+                if (profileId) void provision(profileId, true);
+              }}
+            >
+              Add number
+            </Button>
+          </>
+        }
+      />
     </div>
   );
 }
