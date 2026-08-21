@@ -977,40 +977,70 @@ function ChannelUsageBadge({
   );
 }
 
-function AgentSmsRow({
-  assistant,
-  smsNumber,
-  isProvisioning,
-  onProvision,
-}: {
-  assistant: Assistant;
-  smsNumber?: string;
-  isProvisioning: boolean;
-  onProvision: () => void;
-}) {
+const MAX_SMS_NUMBERS_PER_AGENT = 10;
+
+function SmsNumberCopyRow({ smsNumber }: { smsNumber: string }) {
   const [copied, setCopied] = useState(false);
   function copy() {
-    if (!smsNumber) return;
     navigator.clipboard?.writeText(smsNumber).then(
-      () => { setCopied(true); setTimeout(() => setCopied(false), 1500); },
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      },
       () => {},
     );
   }
   return (
+    <div className="flex flex-wrap items-center gap-2">
+      <code className="min-w-0 flex-1 truncate rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold text-ink">
+        {smsNumber}
+      </code>
+      <button
+        type="button"
+        onClick={copy}
+        className="inline-flex h-9 items-center rounded-lg bg-ink px-4 text-sm font-black text-white transition hover:bg-[#263130]"
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
+  );
+}
+
+function AgentSmsRow({
+  assistant,
+  smsNumbers,
+  isProvisioning,
+  onProvision,
+}: {
+  assistant: Assistant;
+  smsNumbers: string[];
+  isProvisioning: boolean;
+  onProvision: () => void;
+}) {
+  const atCap = smsNumbers.length >= MAX_SMS_NUMBERS_PER_AGENT;
+  return (
     <div className="rounded-xl border border-line bg-card-tint p-3">
       <p className="mb-2 truncate text-sm font-bold text-ink">{assistant.name}</p>
-      {smsNumber ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <code className="flex-1 truncate rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold text-ink">
-            {smsNumber}
-          </code>
-          <button
-            type="button"
-            onClick={copy}
-            className="inline-flex h-9 items-center rounded-lg bg-ink px-4 text-sm font-black text-white transition hover:bg-[#263130]"
-          >
-            {copied ? "Copied" : "Copy"}
-          </button>
+      {smsNumbers.length ? (
+        <div className="space-y-2">
+          {smsNumbers.map((number) => (
+            <SmsNumberCopyRow key={number} smsNumber={number} />
+          ))}
+          {atCap ? (
+            <p className="text-xs text-ink-soft">
+              Maximum of {MAX_SMS_NUMBERS_PER_AGENT} SMS numbers on this agent.
+            </p>
+          ) : (
+            <button
+              type="button"
+              disabled={isProvisioning}
+              onClick={onProvision}
+              className="inline-flex items-center gap-2 rounded-lg border border-[#7c3aed] bg-white px-4 py-2 text-sm font-black text-[#7c3aed] transition hover:bg-[#f5f0ff] disabled:opacity-60"
+            >
+              {isProvisioning ? "Getting number…" : "Add another SMS number"}
+              {!isProvisioning && <ChevronRight className="h-4 w-4" />}
+            </button>
+          )}
         </div>
       ) : (
         <button
@@ -1182,31 +1212,46 @@ function PhoneChannel({
 function SMSChannel({
   assistants,
   usage,
-  initialSmsNumbers,
+  smsNumbers,
+  onSmsNumbersChange,
 }: {
   assistants: Assistant[];
   usage?: ChannelUsage;
-  initialSmsNumbers: AgentSmsNumber[];
+  smsNumbers: AgentSmsNumber[];
+  onSmsNumbersChange: (next: AgentSmsNumber[]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [smsNumbers, setSmsNumbers] = useState(initialSmsNumbers);
   const [provisioningId, setProvisioningId] = useState<string | null>(null);
   const [provisionError, setProvisionError] = useState<string | null>(null);
+  const [confirmExtraFor, setConfirmExtraFor] = useState<string | null>(null);
 
-  async function handleProvision(profileId: string) {
+  async function provision(profileId: string, additional: boolean) {
     setProvisioningId(profileId);
     setProvisionError(null);
-    const result = await provisionSmsNumber(profileId);
+    const result = await provisionSmsNumber(profileId, { additional });
     if (result.ok) {
-      setSmsNumbers((prev) => [
-        ...prev.filter((n) => n.profileId !== profileId),
-        { profileId, smsNumber: result.smsNumber },
-      ]);
+      onSmsNumbersChange(
+        smsNumbers.some((n) => n.profileId === profileId && n.smsNumber === result.smsNumber)
+          ? smsNumbers
+          : [...smsNumbers, { profileId, smsNumber: result.smsNumber }],
+      );
     } else {
       setProvisionError(result.error);
     }
     setProvisioningId(null);
   }
+
+  function handleProvisionRequest(profileId: string) {
+    const alreadyHasNumber = smsNumbers.some((n) => n.profileId === profileId);
+    if (alreadyHasNumber) {
+      setConfirmExtraFor(profileId);
+      return;
+    }
+    void provision(profileId, false);
+  }
+
+  const confirmAgentName =
+    assistants.find((a) => a.id === confirmExtraFor)?.name ?? "this agent";
 
   return (
     <div className="rounded-xl border border-line bg-white">
@@ -1246,30 +1291,62 @@ function SMSChannel({
       {open ? (
         <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
           <p className="mb-1 text-xs text-ink-soft">
-            Each agent gets its own UK mobile number. Customers text in and the AI replies instantly -
-            every conversation is saved to Contacts alongside calls and emails.
+            Give this agent an SMS number when you need a text inbox. To assign another number,
+            use Add another SMS number — it is never added automatically.
           </p>
           {provisionError ? (
             <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-danger">{provisionError}</p>
           ) : null}
           {assistants.length ? (
             assistants.map((a) => {
-              const assigned = smsNumbers.find((n) => n.profileId === a.id);
+              const assigned = smsNumbers
+                .filter((n) => n.profileId === a.id)
+                .map((n) => n.smsNumber);
               return (
                 <AgentSmsRow
                   key={a.id}
                   assistant={a}
-                  smsNumber={assigned?.smsNumber}
+                  smsNumbers={assigned}
                   isProvisioning={provisioningId === a.id}
-                  onProvision={() => handleProvision(a.id)}
+                  onProvision={() => handleProvisionRequest(a.id)}
                 />
               );
             })
           ) : (
-            <p className="text-sm text-ink-soft">Create an agent to get an SMS number.</p>
+            <p className="text-sm text-ink-soft">Create an agent, then add an SMS number if you need one.</p>
           )}
         </div>
       ) : null}
+
+      <Dialog
+        open={Boolean(confirmExtraFor)}
+        onOpenChange={(next) => {
+          if (!next) setConfirmExtraFor(null);
+        }}
+        title="Add another SMS number?"
+        description={
+          <>
+            This buys another UK mobile number and assigns it to {confirmAgentName}. Only do this
+            if you need a separate number — nothing is added automatically.
+          </>
+        }
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmExtraFor(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const profileId = confirmExtraFor;
+                setConfirmExtraFor(null);
+                if (profileId) void provision(profileId, true);
+              }}
+            >
+              Add number
+            </Button>
+          </>
+        }
+      />
     </div>
   );
 }
@@ -1284,6 +1361,7 @@ function ChannelsHub({
   assistants,
   userEmail,
   onRoutingUpdate,
+  onSmsNumbersChange,
 }: {
   emailChannel?: EmailChannelUsage;
   callUsage?: CallUsage;
@@ -1294,6 +1372,7 @@ function ChannelsHub({
   assistants: Assistant[];
   userEmail?: string;
   onRoutingUpdate: (profileId: string, routing: AgentRouting) => void;
+  onSmsNumbersChange: (next: AgentSmsNumber[]) => void;
 }) {
   return (
     <div className="mx-auto max-w-3xl">
@@ -1318,7 +1397,12 @@ function ChannelsHub({
         <WhatsAppChannel assistants={assistants} userEmail={userEmail} usage={whatsappChannel} />
 
         {/* SMS, included in every plan; UK number auto-provisioned via Vonage */}
-        <SMSChannel assistants={assistants} usage={smsChannel} initialSmsNumbers={smsNumbers} />
+        <SMSChannel
+          assistants={assistants}
+          usage={smsChannel}
+          smsNumbers={smsNumbers}
+          onSmsNumbersChange={onSmsNumbersChange}
+        />
 
       </div>
     </div>
@@ -1385,6 +1469,7 @@ export function CustomerAgentWorkspace({
   loadIssues?: string[];
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? []);
+  const [agentSmsNumbers, setAgentSmsNumbers] = useState(smsNumbers ?? []);
   // A real customer with no agents yet has an empty list, don't assume [0] exists.
   const [selectedId, setSelectedId] = useState(
     initialSelectedAgentId ?? initialAssistants?.[0]?.id ?? "",
@@ -2246,7 +2331,9 @@ export function CustomerAgentWorkspace({
                 liveError={liveError}
                 onDelete={isAdmin ? deleteSelected : undefined}
                 adminMode={adminMode}
-                smsNumber={smsNumbers?.find((n) => n.profileId === selectedAssistant.id)?.smsNumber}
+                smsNumbers={agentSmsNumbers
+                  .filter((n) => n.profileId === selectedAssistant.id)
+                  .map((n) => n.smsNumber)}
                 whatsappNumber={
                   whatsappNumbers?.find((n) => n.profileId === selectedAssistant.id)?.whatsappNumber
                 }
@@ -2296,7 +2383,8 @@ export function CustomerAgentWorkspace({
                 whatsappChannel={whatsappChannel}
                 livechatChannel={livechatChannel}
                 smsChannel={smsChannel}
-                smsNumbers={smsNumbers ?? []}
+                smsNumbers={agentSmsNumbers}
+                onSmsNumbersChange={setAgentSmsNumbers}
                 assistants={assistants}
                 userEmail={userEmail}
                 onRoutingUpdate={updateAssistantRouting}
@@ -2641,7 +2729,7 @@ function AssistantDetail({
   liveError,
   onDelete,
   adminMode = false,
-  smsNumber,
+  smsNumbers = [],
   whatsappNumber,
   voices = voiceOptions,
 }: {
@@ -2667,7 +2755,7 @@ function AssistantDetail({
   liveError?: string | null;
   onDelete?: () => void;
   adminMode?: boolean;
-  smsNumber?: string;
+  smsNumbers?: string[];
   whatsappNumber?: string;
   voices?: VoiceOption[];
 }) {
@@ -2921,7 +3009,7 @@ function AssistantDetail({
             {assistant.calls > 0 ? `${assistant.calls} calls handled` : "No calls yet"}
           </span>
         </div>
-        {hasPhoneLine || smsNumber || whatsappNumber ? (
+        {hasPhoneLine || smsNumbers.length > 0 || whatsappNumber ? (
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1 py-2.5">
             {hasPhoneLine ? (
               <AgentNumberSummary
@@ -2931,14 +3019,15 @@ function AssistantDetail({
                 iconClass="text-teal"
               />
             ) : null}
-            {smsNumber ? (
+            {smsNumbers.map((number) => (
               <AgentNumberSummary
+                key={number}
                 icon={MessageSquare}
                 label="SMS"
-                number={smsNumber}
+                number={number}
                 iconClass="text-[#7c3aed]"
               />
-            ) : null}
+            ))}
             {whatsappNumber ? (
               <AgentNumberSummary
                 icon={MessageCircle}

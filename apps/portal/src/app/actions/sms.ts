@@ -8,7 +8,10 @@ export type SmsProvisionResult =
   | { ok: true; smsNumber: string }
   | { ok: false; error: string };
 
-export async function provisionSmsNumber(profileId: string): Promise<SmsProvisionResult> {
+export async function provisionSmsNumber(
+  profileId: string,
+  options?: { additional?: boolean },
+): Promise<SmsProvisionResult> {
   try {
     const auth = await createSupabaseServerClient();
     const { data: { user } } = await auth.auth.getUser();
@@ -33,6 +36,17 @@ export async function provisionSmsNumber(profileId: string): Promise<SmsProvisio
       return { ok: false, error: "You don't have access to this agent." };
     }
 
+    if (options?.additional) {
+      const { count } = await service
+        .from("wisecall_sms_numbers")
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", profileId)
+        .eq("status", "active");
+      if ((count ?? 0) >= 10) {
+        return { ok: false, error: "This agent already has the maximum of 10 SMS numbers." };
+      }
+    }
+
     // Delegate provisioning to the edge function which has Vonage secrets.
     const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "").replace(/\/+$/, "");
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -51,7 +65,10 @@ export async function provisionSmsNumber(profileId: string): Promise<SmsProvisio
     const res = await fetch(`${supabaseUrl}/functions/v1/wisecall-provision-sms`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ profile_id: profileId }),
+      body: JSON.stringify({
+        profile_id: profileId,
+        additional: Boolean(options?.additional),
+      }),
     });
 
     const data = (await res.json()) as { ok: boolean; sms_number?: string; error?: string };
