@@ -1035,9 +1035,10 @@ function AgentSmsRow({
               type="button"
               disabled={isProvisioning}
               onClick={onProvision}
-              className="text-sm font-bold text-[#7c3aed] transition hover:text-[#6d28d9] disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg border border-[#7c3aed] bg-white px-4 py-2 text-sm font-black text-[#7c3aed] transition hover:bg-[#f5f0ff] disabled:opacity-60"
             >
-              {isProvisioning ? "Getting number…" : "Need another number?"}
+              {isProvisioning ? "Getting number…" : "Add another SMS number"}
+              {!isProvisioning && <ChevronRight className="h-4 w-4" />}
             </button>
           )}
         </div>
@@ -1290,8 +1291,8 @@ function SMSChannel({
       {open ? (
         <div className="space-y-2 border-t border-line px-5 pb-5 pt-4">
           <p className="mb-1 text-xs text-ink-soft">
-            SMS numbers are optional. Add one when you need a text inbox; extra numbers are only
-            bought if you ask for them.
+            Give this agent an SMS number when you need a text inbox. To assign another number,
+            use Add another SMS number — it is never added automatically.
           </p>
           {provisionError ? (
             <p className="rounded-xl bg-[#fff0f0] px-4 py-2 text-sm text-danger">{provisionError}</p>
