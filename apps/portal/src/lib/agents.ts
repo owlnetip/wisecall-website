@@ -482,7 +482,8 @@ export async function getSmsNumbersForProfiles(profileIds: string[]): Promise<Ag
     .from("wisecall_sms_numbers")
     .select("profile_id, sms_number")
     .in("profile_id", profileIds)
-    .eq("status", "active");
+    .eq("status", "active")
+    .order("created_at", { ascending: true });
 
   if (error) {
     console.error("getSmsNumbersForProfiles failed:", error.message);

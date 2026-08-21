@@ -1,8 +1,10 @@
 // Provision a Vonage UK SMS number for a WiseCall agent.
 // Called from the Next.js portal server action with service-role auth.
 //
-// POST { profile_id } → search Vonage for a UK mobile-lvn → buy it →
+// POST { profile_id, additional? } → search Vonage for a UK mobile-lvn → buy it →
 // set moHttpUrl webhook → insert into wisecall_sms_numbers → return { sms_number }.
+// An agent may have several SMS numbers. Without additional=true, an existing
+// number is returned so the first provision stays idempotent.
 //
 // Uses VONAGE_API_KEY and VONAGE_API_SECRET from Supabase secrets (already set).
 // Deploy with --no-verify-jwt; the function validates the caller via the shared
@@ -12,6 +14,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const VONAGE_REST = "https://rest.nexmo.com";
+const MAX_SMS_NUMBERS_PER_AGENT = 10;
 
 // SHA-256 of the shared provision secret, baked in so the function authenticates
 // the portal even when WISECALL_PROVISION_SECRET isn't set as a Supabase secret.
@@ -114,9 +117,11 @@ Deno.serve(async (req) => {
   }
 
   let profileId: string;
+  let additional = false;
   try {
-    const body = (await req.json()) as { profile_id?: string };
+    const body = (await req.json()) as { profile_id?: string; additional?: boolean };
     profileId = body.profile_id ?? "";
+    additional = Boolean(body.additional);
   } catch {
     return json({ error: "Invalid JSON" }, 400);
   }
@@ -127,13 +132,22 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Return existing number if already provisioned.
   const { data: existing } = await supabase
     .from("wisecall_sms_numbers")
     .select("sms_number")
     .eq("profile_id", profileId)
-    .maybeSingle();
-  if (existing) return json({ ok: true, sms_number: existing.sms_number });
+    .eq("status", "active");
+  const existingNumbers = existing ?? [];
+
+  if (!additional && existingNumbers.length > 0) {
+    return json({ ok: true, sms_number: existingNumbers[0].sms_number });
+  }
+  if (existingNumbers.length >= MAX_SMS_NUMBERS_PER_AGENT) {
+    return json(
+      { ok: false, error: `This agent already has the maximum of ${MAX_SMS_NUMBERS_PER_AGENT} SMS numbers.` },
+      400,
+    );
+  }
 
   try {
     const msisdn = await searchUkNumber();
