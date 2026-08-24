@@ -35,8 +35,8 @@ export function ManageSubscriptionButton() {
   );
 }
 
-// Single checkout button for any plan. Every plan opens a 7-day free trial in
-// Stripe Checkout. Redirects to Stripe on click.
+// Single checkout button for any plan. Sales-led first checkout opens a 7-day
+// Stripe trial. The no-card 20-call path upgrades to a paid subscription here.
 export function PlanCheckoutButton({
   plan,
   label,

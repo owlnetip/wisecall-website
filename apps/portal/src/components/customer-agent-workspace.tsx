@@ -1947,14 +1947,14 @@ export function CustomerAgentWorkspace({
                 ? `Free trial limit reached, ${trial.used}/${trial.cap} calls used. Add a plan to keep taking calls.`
                 : `Free trial: ${trial.used}/${trial.cap} AI calls used.`}
             </span>
-            {trial.blocked ? (
-              <a
-                href="/billing"
-                className="flex-shrink-0 rounded-lg bg-[#9b1c1c] px-3 py-1.5 text-xs font-bold text-white"
-              >
-                Choose a plan
-              </a>
-            ) : null}
+            <a
+              href="/billing"
+              className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold ${
+                trial.blocked ? "bg-[#9b1c1c] text-white" : "bg-[#0e4b4d] text-white"
+              }`}
+            >
+              {trial.blocked ? "Choose a plan" : "Continue with a plan"}
+            </a>
           </div>
         </div>
       ) : null}

@@ -18,7 +18,7 @@
   "redirects": [
     {
       "source": "/signup",
-      "destination": "/?signup=1&redirect=/billing",
+      "destination": "/?signup=1&trial=calls",
       "permanent": false
     }
   ]

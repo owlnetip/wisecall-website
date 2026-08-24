@@ -5,6 +5,11 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAppBaseUrl } from "@/lib/env";
 import { safeInternalRedirect } from "@/lib/redirects";
+import { startNoCardTrialForUser } from "@/lib/billing";
+import {
+  isNoCardTrialRequest,
+  signupRedirectForTrial,
+} from "@/lib/trial";
 
 export type AuthState = { error?: string; message?: string };
 
@@ -39,6 +44,10 @@ export async function signUpAction(
 ): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const trial = String(formData.get("trial") ?? "");
+  const noCard = isNoCardTrialRequest(trial);
+  const afterSignup = signupRedirectForTrial(trial);
+  const confirmNext = afterSignup;
 
   if (!email || !password) {
     return { error: "Enter your email and password." };
@@ -52,24 +61,39 @@ export async function signUpAction(
   // fall back to the shared project's Site URL (owlnet.io). Requires this URL to
   // be in the Supabase redirect allowlist.
   // Route the confirmation link through /auth/confirm so the PKCE ?code is
-  // exchanged for a session (cookies set) before landing on billing to pick a plan.
+  // exchanged for a session (cookies set) before the no-card trial dashboard
+  // or the sales-led billing page.
+  const confirmParams = new URLSearchParams({ next: confirmNext });
+  if (noCard) confirmParams.set("trial", "calls");
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${getAppBaseUrl()}/auth/confirm?next=/billing` },
+    options: { emailRedirectTo: `${getAppBaseUrl()}/auth/confirm?${confirmParams.toString()}` },
   });
 
   if (error) {
     return { error: error.message };
   }
 
-  // If email confirmation is on, there's no active session yet.
+  // If email confirmation is on, there's no active session yet. The confirm
+  // route starts the no-card trial once they click the email link.
   if (!data.session) {
-    return { message: "Check your inbox to confirm your email, then choose your plan." };
+    return {
+      message: noCard
+        ? "Check your inbox to confirm your email. Your 20 free calls start as soon as you're in — no card needed."
+        : "Check your inbox to confirm your email, then choose your plan.",
+    };
+  }
+
+  if (noCard && data.user) {
+    const started = await startNoCardTrialForUser(data.user.id);
+    if (!started.ok) {
+      return { error: started.error ?? "Could not start the free calls." };
+    }
   }
 
   revalidatePath("/", "layout");
-  redirect("/billing");
+  redirect(afterSignup);
 }
 
 // Sends a password-reset email. The branded Reset Password template links to

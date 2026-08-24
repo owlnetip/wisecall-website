@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { safeInternalRedirect } from "@/lib/redirects";
+import { startNoCardTrialForUser } from "@/lib/billing";
+import { isNoCardTrialRequest } from "@/lib/trial";
 
 // Handles email-link auth (password recovery, email confirmation). Supports both
 // flows so it works whichever the template uses:
@@ -16,19 +18,38 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
   const next = safeInternalRedirect(searchParams.get("next"));
+  const noCard = isNoCardTrialRequest(searchParams.get("trial"));
 
   const supabase = await createSupabaseServerClient();
 
+  async function grantNoCardTrialIfNeeded() {
+    if (!noCard) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const started = await startNoCardTrialForUser(user.id);
+    if (!started.ok) {
+      console.error("auth/confirm no-card trial failed", started.error);
+    }
+  }
+
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
-    if (!error) redirect(next);
+    if (!error) {
+      await grantNoCardTrialIfNeeded();
+      redirect(next);
+    }
     console.error("auth/confirm verifyOtp failed", { type, message: error.message });
     redirect(`/?error=auth&reason=${encodeURIComponent("otp: " + error.message)}`);
   }
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) redirect(next);
+    if (!error) {
+      await grantNoCardTrialIfNeeded();
+      redirect(next);
+    }
     console.error("auth/confirm exchangeCodeForSession failed", { message: error.message });
     redirect(`/?error=auth&reason=${encodeURIComponent("code: " + error.message)}`);
   }
