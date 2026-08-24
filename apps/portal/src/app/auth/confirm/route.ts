@@ -22,31 +22,34 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createSupabaseServerClient();
 
-  async function afterAuth(): Promise<never> {
-    if (noCard) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const started = await startNoCardTrialForUser(user.id);
-        if (!started.ok) {
-          console.error("auth/confirm no-card trial failed", started.error);
-        }
-      }
+  async function grantNoCardTrialIfNeeded() {
+    if (!noCard) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const started = await startNoCardTrialForUser(user.id);
+    if (!started.ok) {
+      console.error("auth/confirm no-card trial failed", started.error);
     }
-    redirect(next);
   }
 
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
-    if (!error) await afterAuth();
+    if (!error) {
+      await grantNoCardTrialIfNeeded();
+      redirect(next);
+    }
     console.error("auth/confirm verifyOtp failed", { type, message: error.message });
     redirect(`/?error=auth&reason=${encodeURIComponent("otp: " + error.message)}`);
   }
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) await afterAuth();
+    if (!error) {
+      await grantNoCardTrialIfNeeded();
+      redirect(next);
+    }
     console.error("auth/confirm exchangeCodeForSession failed", { message: error.message });
     redirect(`/?error=auth&reason=${encodeURIComponent("code: " + error.message)}`);
   }
