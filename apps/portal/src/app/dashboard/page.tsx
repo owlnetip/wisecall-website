@@ -17,8 +17,15 @@ import { IMPERSONATE_AGENT_COOKIE, IMPERSONATE_COOKIE } from "@/lib/impersonatio
 import { getFollowUpsForUser } from "@/lib/follow-ups";
 import { getInsightsForUser, emptyInsights } from "@/lib/insights";
 import { isAnalysisConfigured } from "@/lib/call-analysis";
+import { parseDashboardView } from "@/lib/dashboard-view";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
+  const { view: viewParam } = await searchParams;
+  const initialView = parseDashboardView(viewParam);
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -188,6 +195,7 @@ export default async function DashboardPage() {
       analysisEnabled={isAnalysisConfigured()}
       initialFollowUps={scopedFollowUps}
       initialSelectedAgentId={scopedAgentId}
+      initialView={initialView}
       loadIssues={orderedLoadIssues}
     />
   );

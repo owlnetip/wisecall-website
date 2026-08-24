@@ -126,16 +126,12 @@ import {
   getAgentOperationalState,
   type AgentOperationalState,
 } from "@/lib/agent-operational-state";
+import {
+  DEFAULT_DASHBOARD_VIEW,
+  type DashboardView,
+} from "@/lib/dashboard-view";
 
-type View =
-  | "insights"
-  | "assistants"
-  | "detail"
-  | "calls"
-  | "contacts"
-  | "viewings"
-  | "negotiator"
-  | "channels";
+type View = DashboardView | "detail";
 type DetailTab = "behaviour" | "knowledge" | "routing" | "outbound" | "technical";
 
 // Provider-agnostic call routing. The portal stays the same whichever telco
@@ -1445,6 +1441,7 @@ export function CustomerAgentWorkspace({
   analysisEnabled = false,
   initialFollowUps = [],
   initialSelectedAgentId,
+  initialView,
   loadIssues = [],
 }: {
   initialAssistants?: Assistant[];
@@ -1466,6 +1463,7 @@ export function CustomerAgentWorkspace({
   analysisEnabled?: boolean; // whether the Claude API key is configured
   initialFollowUps?: FollowUp[];
   initialSelectedAgentId?: string;
+  initialView?: DashboardView;
   loadIssues?: string[];
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? []);
@@ -1474,7 +1472,7 @@ export function CustomerAgentWorkspace({
   const [selectedId, setSelectedId] = useState(
     initialSelectedAgentId ?? initialAssistants?.[0]?.id ?? "",
   );
-  const [view, setView] = useState<View>("insights");
+  const [view, setView] = useState<View>(initialView ?? DEFAULT_DASHBOARD_VIEW);
   const [detailTab, setDetailTab] = useState<DetailTab>("behaviour");
   const [searchTerm, setSearchTerm] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
