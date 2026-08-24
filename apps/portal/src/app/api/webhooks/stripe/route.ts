@@ -15,7 +15,7 @@ import {
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
 import { notifyTrialEnding } from "@/lib/notify";
-import { syncEmailChannelProfiles, getBillingForUser, hasActiveAccess } from "@/lib/billing";
+import { syncEmailChannelProfiles, getBillingForUser, hasActiveAccess, clearTrialCapBlock } from "@/lib/billing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -171,6 +171,9 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
 
   // Mirror email-enabled onto the owner's agent profiles (runtime/UI reads metadata).
   await syncEmailChannelProfiles(userId, planActive);
+  if (sub.status === "active") {
+    await clearTrialCapBlock(userId);
+  }
 }
 
 async function upsertEmailChannelSubscription(sub: Stripe.Subscription) {

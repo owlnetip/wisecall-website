@@ -12,12 +12,15 @@ import {
   TRIAL_DAYS,
   TRIAL_CALL_CAP,
 } from "@/lib/stripe";
+import { checkoutIncludesStripeTrial } from "@/lib/trial";
 
 export type CheckoutResult = { ok: boolean; url?: string; error?: string };
 
-// Starts Stripe Checkout for the chosen plan. Every plan includes a 7-day free
-// trial (card required; 20 AI-call cap enforced in-app). Finds-or-creates the
-// Stripe customer and reuses it (so an upgrade attaches to the same customer).
+// Starts Stripe Checkout for the chosen plan. Sales-led first checkout includes
+// a 7-day free trial (card required; 20 AI-call cap enforced in-app). The
+// Facebook / Try-it-now path already granted those 20 calls without a card —
+// checkout then starts a paid subscription. Finds-or-creates the Stripe
+// customer and reuses it (so an upgrade attaches to the same customer).
 // The subscription is recorded by the webhook once checkout completes; the
 // webhook also cancels any prior subscription so an upgrade doesn't double-bill.
 export async function startCheckout(planInput: string): Promise<CheckoutResult> {
@@ -38,7 +41,7 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
   // Reuse an existing Stripe customer if we've made one before.
   const { data: existing } = await service
     .from("wisecall_billing")
-    .select("stripe_customer_id")
+    .select("stripe_customer_id, status, subscription_id")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -61,7 +64,12 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
     );
   }
 
-  const trial = planHasTrial(plan);
+  const stripeTrial =
+    planHasTrial(plan) &&
+    checkoutIncludesStripeTrial({
+      status: (existing?.status as string | null) ?? null,
+      subscriptionId: (existing?.subscription_id as string | null) ?? null,
+    });
   const baseUrl = getAppBaseUrl();
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -72,7 +80,7 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
     billing_address_collection: "required",
     phone_number_collection: { enabled: true }, // captured for the trial-ending SMS
     subscription_data: {
-      ...(trial
+      ...(stripeTrial
         ? {
             trial_period_days: TRIAL_DAYS,
             trial_settings: { end_behavior: { missing_payment_method: "cancel" } },

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe";
+import { isNoCardTrial } from "@/lib/trial";
 import { PlanCheckoutButton, ManageSubscriptionButton } from "./start-trial-button";
 import { getEmailChannelUsage } from "@/lib/billing";
 
@@ -87,10 +88,12 @@ function checkoutLabel(
   currentPlan: string | null,
   status: string | null | undefined,
   hasPlan: boolean,
+  noCardUpgrade: boolean,
 ): string {
   if (currentPlan === planId) {
     return status === "trialing" ? "Current trial" : "Current plan";
   }
+  if (noCardUpgrade) return "Continue with this plan";
   return hasPlan ? "Switch to this plan" : "Start free trial";
 }
 
@@ -104,7 +107,8 @@ export default async function BillingPage() {
 
   // This page doubles as the upgrade screen, so we do NOT redirect active users away.
   const billing = await getBillingForUser(user.id);
-  const hasPlan = hasActiveAccess(billing);
+  const noCardUpgrade = isNoCardTrial(billing);
+  const hasPlan = hasActiveAccess(billing) && !noCardUpgrade;
   const currentPlan = billing?.plan ?? null;
   const emailChannel = getEmailChannelUsage(billing, hasPlan);
 
@@ -139,9 +143,19 @@ export default async function BillingPage() {
             className="mx-auto mt-4 max-w-2xl rounded-xl px-4 py-3 text-xs leading-relaxed"
             style={{ background: "rgba(125,232,235,0.08)", color: "rgba(125,232,235,0.9)", border: "1px solid rgba(125,232,235,0.2)" }}
           >
-            <strong>7-day free trial on every plan</strong>. Try the full product with up to{" "}
-            <strong>{TRIAL_CALL_CAP} AI calls</strong>. Card required; billing starts after{" "}
-            {TRIAL_DAYS} days unless you cancel.
+            {noCardUpgrade ? (
+              <>
+                <strong>{TRIAL_CALL_CAP} free inbound AI calls</strong> are already running on
+                your account, with no card on file. Choose a plan to keep taking calls after
+                those {TRIAL_CALL_CAP} — card is collected here, not before.
+              </>
+            ) : (
+              <>
+                <strong>7-day free trial on every plan</strong>. Try the full product with up to{" "}
+                <strong>{TRIAL_CALL_CAP} AI calls</strong>. Card required; billing starts after{" "}
+                {TRIAL_DAYS} days unless you cancel.
+              </>
+            )}
           </p>
           {hasPlan ? (
             <div
@@ -191,7 +205,7 @@ export default async function BillingPage() {
                 </span>
               </div>
               <p className="mt-1 text-[11px] uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>
-                excl. VAT · 12-month term · {TRIAL_DAYS}-day free trial
+                excl. VAT · 12-month term{noCardUpgrade ? "" : ` · ${TRIAL_DAYS}-day free trial`}
               </p>
 
               {/* Headline allowances */}
@@ -206,7 +220,7 @@ export default async function BillingPage() {
               <div className="mt-5">
                 <PlanCheckoutButton
                   plan={plan.id}
-                  label={checkoutLabel(plan.id, currentPlan, billing?.status, hasPlan)}
+                  label={checkoutLabel(plan.id, currentPlan, billing?.status, hasPlan, noCardUpgrade)}
                   variant={plan.popular ? "primary" : "secondary"}
                 />
               </div>

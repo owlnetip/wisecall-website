@@ -13,6 +13,7 @@ import {
   planSmsIncluded,
   planOverageRateGbp,
 } from "@/lib/stripe";
+import { canStartNoCardTrial, isNoCardTrial, noCardTrialBillingRow } from "@/lib/trial";
 
 export type Billing = {
   userId: string;
@@ -134,6 +135,65 @@ export function hasActiveAccess(billing: Billing | null): boolean {
   return billing?.status === "trialing" || billing?.status === "active";
 }
 
+export type StartNoCardTrialResult = { ok: boolean; error?: string };
+
+// Grants the advertised 20 inbound AI calls with no Stripe customer and no card.
+// Idempotent while they already have access. Refuses if they previously had a
+// paid/canceled subscription — those accounts continue through /billing.
+export async function startNoCardTrialForUser(userId: string): Promise<StartNoCardTrialResult> {
+  let existing: Billing | null = null;
+  try {
+    existing = await getBillingForUser(userId);
+  } catch (err) {
+    console.error("startNoCardTrialForUser load failed:", err instanceof Error ? err.message : err);
+    return { ok: false, error: "Could not start the free calls." };
+  }
+
+  const decision = canStartNoCardTrial(existing);
+  if (decision === "already_has_access") return { ok: true };
+  if (decision === "must_subscribe") {
+    return { ok: false, error: "Choose a plan to continue." };
+  }
+
+  const supabase = getServiceSupabase();
+  if (!supabase) return { ok: false, error: "Server not configured." };
+
+  const { error } = await supabase.from("wisecall_billing").upsert(noCardTrialBillingRow(userId), {
+    onConflict: "user_id",
+  });
+  if (error) {
+    console.error("startNoCardTrialForUser failed:", error.message);
+    return { ok: false, error: "Could not start the free calls." };
+  }
+
+  await syncEmailChannelProfiles(userId, true);
+  return { ok: true };
+}
+
+// After a no-card (or Stripe) trial hits the 20-call cap, agents are flagged
+// trial_blocked. Paying customers must be able to take calls again.
+export async function clearTrialCapBlock(ownerId: string): Promise<void> {
+  const supabase = getServiceSupabase();
+  if (!supabase) return;
+
+  const { data: profiles } = await supabase
+    .from("wisecall_profiles")
+    .select("id, metadata")
+    .eq("metadata->>owner_id", ownerId);
+
+  for (const row of profiles ?? []) {
+    const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
+    if (metadata.trial_blocked !== true) continue;
+    await supabase
+      .from("wisecall_profiles")
+      .update({
+        is_active: true,
+        metadata: { ...metadata, trial_blocked: false },
+      })
+      .eq("id", row.id as string);
+  }
+}
+
 // Fallback for when the Stripe webhook hasn't synced the subscription yet (or
 // failed to deliver). startCheckout pre-creates a billing row with the customer
 // id + plan but no status; the webhook is supposed to fill in status/
@@ -145,7 +205,7 @@ export async function reconcileBillingFromStripe(
   userId: string,
   billing: Billing | null,
 ): Promise<Billing | null> {
-  if (hasActiveAccess(billing)) return billing; // already good, no work needed
+  if (hasActiveAccess(billing) && !isNoCardTrial(billing)) return billing;
   const customerId = billing?.stripeCustomerId;
   if (!customerId) return billing; // never started checkout, nothing to reconcile
 
@@ -189,7 +249,11 @@ export async function reconcileBillingFromStripe(
       },
       { onConflict: "user_id" },
     );
-    return await getBillingForUser(userId);
+    const refreshed = await getBillingForUser(userId);
+    if (planSub.status === "active") {
+      await clearTrialCapBlock(userId);
+    }
+    return refreshed;
   } catch (err) {
     console.error("reconcileBillingFromStripe failed:", (err as Error).message);
     return billing;

@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAgentsForUser, getCallLogsForUser, getSmsNumbersForUser, getWhatsappNumbersForUser } from "@/lib/agents";
 import { getBillingForUser, hasActiveAccess, getTrialUsage, getEmailChannelUsage, getCallUsage, getWhatsappUsage, getLivechatUsage, getSmsUsage, reconcileBillingFromStripe } from "@/lib/billing";
+import { isNoCardTrial } from "@/lib/trial";
 import { getContactsForUser } from "@/lib/contacts";
 import {
   enrichContactsWithNames,
@@ -68,6 +69,10 @@ export default async function DashboardPage() {
     if (!hasActiveAccess(billing)) {
       redirect("/billing");
     }
+  } else if (!admin && isNoCardTrial(billing) && billing?.stripeCustomerId) {
+    // Returned from Stripe Checkout after the 20-call trial; pick up the paid plan
+    // even though they still have in-app trial access until the webhook lands.
+    billing = await reconcileBillingFromStripe(effectiveUserId, billing);
   }
 
   const emailChannel = getEmailChannelUsage(billing, hasActiveAccess(billing));

@@ -71,12 +71,15 @@ function Owl({ eyeOffset, passwordFocused, blinking }: OwlProps) {
 export function AuthForm({
   mode,
   redirectAfterSignIn = "/dashboard",
+  trial,
 }: {
   mode: "signin" | "signup";
   redirectAfterSignIn?: string;
+  trial?: string;
 }) {
   const isSignup = mode === "signup";
-  const formRedirect = isSignup ? "/billing" : redirectAfterSignIn;
+  const noCardTrial = trial === "calls";
+  const formRedirect = isSignup ? (noCardTrial ? "/dashboard" : "/billing") : redirectAfterSignIn;
 
   const [state, formAction, isPending] = useActionState<AuthState, FormData>(authAction, {});
   const [email, setEmail] = useState("");
@@ -173,7 +176,9 @@ export function AuthForm({
             </p>
             {isSignup ? (
               <p className="mt-2 text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
-                7-day free trial · up to 20 AI calls · card required
+                {noCardTrial
+                  ? "20 free inbound AI calls · no card needed"
+                  : "7-day free trial · up to 20 AI calls · card required"}
               </p>
             ) : null}
           </div>
@@ -181,6 +186,7 @@ export function AuthForm({
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="intent" value={mode} />
             <input type="hidden" name="redirect" value={formRedirect} />
+            {noCardTrial ? <input type="hidden" name="trial" value="calls" /> : null}
 
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.5)" }}>

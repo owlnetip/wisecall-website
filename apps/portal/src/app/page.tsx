@@ -13,12 +13,23 @@ function HomeAuth() {
       : "/dashboard";
 
   // Legacy ?signup=1 links still work; otherwise this is the sign-in page.
+  // ?trial=calls is the Facebook / Try-it-now path: 20 free calls, no card.
+  const trialParam = searchParams.get("trial");
+  const noCardTrial = trialParam === "calls";
   const mode =
-    searchParams.get("signup") === "1" || searchParams.get("redirect") === "/billing"
+    searchParams.get("signup") === "1" ||
+    searchParams.get("redirect") === "/billing" ||
+    noCardTrial
       ? "signup"
       : "signin";
 
-  return <AuthForm mode={mode} redirectAfterSignIn={redirectAfterSignIn} />;
+  return (
+    <AuthForm
+      mode={mode}
+      redirectAfterSignIn={redirectAfterSignIn}
+      trial={noCardTrial ? "calls" : undefined}
+    />
+  );
 }
 
 export default function Home() {

@@ -10,6 +10,7 @@ const corsHeaders = {
 type BillingRow = {
   user_id: string;
   stripe_customer_id: string | null;
+  subscription_id: string | null;
   plan: string | null;
   status: string | null;
   trial_end: string | null;
@@ -166,7 +167,7 @@ Deno.serve(async (req) => {
     const { data: billing, error: billingError } = await supabase
       .from("wisecall_billing")
       .select(
-        "user_id, stripe_customer_id, plan, status, trial_end, trial_call_cap, notification_phone",
+        "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, trial_call_cap, notification_phone",
       )
       .eq("user_id", ownerId)
       .maybeSingle();
@@ -210,16 +211,27 @@ Deno.serve(async (req) => {
     const cap = row.trial_call_cap ?? 20;
     const plan = planLabel(row.plan);
 
-    const smsText =
-      `WiseCall: You've used all ${cap} trial calls, your AI agent is paused. ` +
-      `Manage or cancel before ${endDate} to avoid being charged: ${billingUrl}`;
+    const smsText = row.subscription_id
+      ? `WiseCall: You've used all ${cap} trial calls, your AI agent is paused. ` +
+        `Manage or cancel before ${endDate} to avoid being charged: ${billingUrl}`
+      : `WiseCall: You've used all ${cap} free calls, your AI agent is paused. ` +
+        `Choose a plan to keep taking calls: ${billingUrl}`;
 
-    const emailHtml = `
+    const emailHtml = row.subscription_id
+      ? `
       <p>Hi,</p>
       <p>You've used all <strong>${cap} AI calls</strong> included in your WiseCall free trial (${plan} plan).</p>
       <p>Your AI receptionist is now <strong>paused</strong> and won't answer new calls until your subscription is active.</p>
       <p>Your trial ends on <strong>${endDate}</strong>. After that, billing starts unless you cancel.</p>
       <p><a href="${billingUrl}">Manage your subscription or cancel</a></p>
+      <p>- WiseCall</p>
+    `.trim()
+      : `
+      <p>Hi,</p>
+      <p>You've used all <strong>${cap} free inbound AI calls</strong> on WiseCall.</p>
+      <p>Your AI receptionist is now <strong>paused</strong> and won't answer new calls until you choose a plan.</p>
+      <p>There is no card on file, so nothing will be charged until you subscribe.</p>
+      <p><a href="${billingUrl}">Choose a plan to keep taking calls</a></p>
       <p>- WiseCall</p>
     `.trim();
 
