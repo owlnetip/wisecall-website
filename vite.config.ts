@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { readdirSync, statSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
@@ -28,9 +28,37 @@ function findHtmlFiles(dir: string, root = dir): Record<string, string> {
   return entries
 }
 
+/** Inject Vercel Web Analytics once into every HTML entry (MPA layout equivalent). */
+function vercelWebAnalytics(): Plugin {
+  return {
+    name: 'vercel-web-analytics',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        if (html.includes('/src/vercel-analytics.ts')) {
+          return html
+        }
+        return {
+          html,
+          tags: [
+            {
+              tag: 'script',
+              attrs: {
+                type: 'module',
+                src: '/src/vercel-analytics.ts',
+              },
+              injectTo: 'body',
+            },
+          ],
+        }
+      },
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), vercelWebAnalytics()],
   build: {
     rollupOptions: {
       input: findHtmlFiles(__dirname),
