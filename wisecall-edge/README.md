@@ -17,7 +17,7 @@ Custom integration webhooks are configured per agent in the portal **Technical**
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `WISECALL_EMAIL_WEBHOOK_SECRET`: optional, must match the Supabase `wisecall-email-summary` function secret when that function is protected.
+- `WISECALL_EMAIL_WEBHOOK_SECRET`: optional dedicated secret for `wisecall-email-summary`. If unset, the runtime sends `WISECALL_WEBHOOK_SECRET` (the same secret used for `/api/webhooks/call-completed`).
 - `WISECALL_EMAIL_SUMMARY_URL`: optional override; defaults to `${SUPABASE_URL}/functions/v1/wisecall-email-summary`.
 
 ## Wiring into an existing handler

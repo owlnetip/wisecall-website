@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
+import { mergeNotificationEmails } from "@/lib/call-summary-email";
 import { getSupabaseConfig } from "@/lib/env";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { isAdmin } from "@/lib/admin";
@@ -92,6 +93,8 @@ export type NewAgent = {
   /** Matched portal template id (receptionist / dentally / estate_agent …). */
   templateId?: string;
   integrationWebhooks?: IntegrationWebhook[];
+  /** Main inbox for taken messages and transcripts. */
+  defaultEmail?: string;
 };
 
 export type CreateResult = {
@@ -172,7 +175,8 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     tts_voice_id: voiceId,
     knowledge: input.knowledge ?? "",
     knowledge_fields: input.knowledgeFields ?? {},
-    default_routing_email: "",
+    default_routing_email: (input.defaultEmail ?? "").trim(),
+    notification_emails: mergeNotificationEmails("", input.defaultEmail ?? "", []),
     routing_contacts: input.contacts ?? [],
     transfer_routes: toTransferRoutes(input.contacts ?? []),
   };
@@ -456,7 +460,17 @@ export async function updateAgent(
   if (patch.knowledge !== undefined) nextMetadata.knowledge = patch.knowledge;
   if (patch.knowledgeFields !== undefined) nextMetadata.knowledge_fields = patch.knowledgeFields;
   if (patch.defaultEmail !== undefined) {
+    const previousDefault =
+      typeof metadata.default_routing_email === "string" ? metadata.default_routing_email : "";
     nextMetadata.default_routing_email = patch.defaultEmail;
+    // The hangup email path historically read notification_emails. Keep that
+    // list in sync with the portal "Default routing inbox" so a taken message
+    // actually lands on the address the owner typed in.
+    nextMetadata.notification_emails = mergeNotificationEmails(
+      previousDefault,
+      patch.defaultEmail,
+      nextMetadata.notification_emails,
+    );
   }
   if (patch.contacts !== undefined) {
     // Canonical list the portal owns…

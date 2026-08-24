@@ -1,6 +1,6 @@
 // Best-effort delivery of the standard WiseCall call summary email.
 
-const DEFAULT_TIMEOUT_MS = 8000;
+const DEFAULT_TIMEOUT_MS = 15000;
 const EMAIL_SUMMARY_PATH = "/functions/v1/wisecall-email-summary";
 
 function isPlainObject(value) {
@@ -14,6 +14,15 @@ function getEmailSummaryUrl(env = process.env) {
   const supabaseUrl = (env.SUPABASE_URL || "").trim().replace(/\/+$/, "");
   if (!supabaseUrl) return "";
   return `${supabaseUrl}${EMAIL_SUMMARY_PATH}`;
+}
+
+function getEmailSummarySecret(env = process.env) {
+  return (
+    (env.WISECALL_EMAIL_WEBHOOK_SECRET || "").trim() ||
+    (env.WISECALL_WEBHOOK_SECRET || "").trim() ||
+    (env.WISECALL_TRIAL_REMINDER_SECRET || "").trim() ||
+    (env.WISECALL_POOL_REPLENISH_SECRET || "").trim()
+  );
 }
 
 function transcriptFromHistory(history) {
@@ -70,11 +79,16 @@ function buildEmailSummaryPayload(profile, context, call) {
 async function sendCallEmailSummary(profile, context, call) {
   const url = getEmailSummaryUrl();
   if (!url) return { ok: false, skipped: "missing_email_summary_url" };
-  if (!profile?.slug) return { ok: false, skipped: "missing_profile_slug" };
+  if (!profile?.id && !profile?.slug) return { ok: false, skipped: "missing_profile" };
 
   const headers = { "Content-Type": "application/json", Accept: "application/json" };
-  const secret = (process.env.WISECALL_EMAIL_WEBHOOK_SECRET || "").trim();
+  const secret = getEmailSummarySecret();
   if (secret) headers["x-wisecall-secret"] = secret;
+  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  if (serviceKey) {
+    headers.Authorization = `Bearer ${serviceKey}`;
+    headers.apikey = serviceKey;
+  }
 
   const res = await fetch(url, {
     method: "POST",
@@ -95,6 +109,7 @@ async function sendCallEmailSummary(profile, context, call) {
 
 module.exports = {
   buildEmailSummaryPayload,
+  getEmailSummarySecret,
   getEmailSummaryUrl,
   sendCallEmailSummary,
 };
