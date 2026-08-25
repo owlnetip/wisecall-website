@@ -13,8 +13,9 @@ export const DASHBOARD_VIEWS = [
 
 export type DashboardView = (typeof DASHBOARD_VIEWS)[number];
 
-// Post-auth landing (login, no-card signup, Stripe return, password reset,
-// generic /dashboard). Agents is the product they signed up to create.
+// Post-auth landing (login, Stripe return, password reset, generic /dashboard).
+// No-card trial signup is /dashboard?setup=1, which opens the create-agent
+// wizard overlay on first paint. Agents is still the default tab underneath.
 export const DEFAULT_DASHBOARD_VIEW: DashboardView = "assistants";
 
 const VIEW_ALIASES: Record<string, DashboardView> = {

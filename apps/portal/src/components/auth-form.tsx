@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { authAction, resetPassword, type AuthState } from "@/app/actions/auth";
+import { dashboardSetupPath, parseSetupWebsite } from "@/lib/setup-website";
+import { signupRedirectForTrial } from "@/lib/trial";
 
 interface OwlProps {
   eyeOffset: { x: number; y: number };
@@ -72,14 +74,23 @@ export function AuthForm({
   mode,
   redirectAfterSignIn = "/dashboard",
   trial,
+  website,
 }: {
   mode: "signin" | "signup";
   redirectAfterSignIn?: string;
   trial?: string;
+  website?: string;
 }) {
   const isSignup = mode === "signup";
   const noCardTrial = trial === "calls";
-  const formRedirect = isSignup ? (noCardTrial ? "/dashboard" : "/billing") : redirectAfterSignIn;
+  const setupWebsite = parseSetupWebsite(website) ?? undefined;
+  const formRedirect = isSignup
+    ? noCardTrial
+      ? signupRedirectForTrial("calls", setupWebsite)
+      : "/billing"
+    : setupWebsite
+      ? dashboardSetupPath(setupWebsite)
+      : redirectAfterSignIn;
 
   const [state, formAction, isPending] = useActionState<AuthState, FormData>(authAction, {});
   const [email, setEmail] = useState("");
@@ -187,6 +198,7 @@ export function AuthForm({
             <input type="hidden" name="intent" value={mode} />
             <input type="hidden" name="redirect" value={formRedirect} />
             {noCardTrial ? <input type="hidden" name="trial" value="calls" /> : null}
+            {setupWebsite ? <input type="hidden" name="website" value={setupWebsite} /> : null}
 
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.5)" }}>

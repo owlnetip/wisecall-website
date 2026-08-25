@@ -1442,6 +1442,8 @@ export function CustomerAgentWorkspace({
   initialFollowUps = [],
   initialSelectedAgentId,
   initialView,
+  setupWebsite,
+  openSetupWizard = false,
   loadIssues = [],
 }: {
   initialAssistants?: Assistant[];
@@ -1464,6 +1466,8 @@ export function CustomerAgentWorkspace({
   initialFollowUps?: FollowUp[];
   initialSelectedAgentId?: string;
   initialView?: DashboardView;
+  setupWebsite?: string;
+  openSetupWizard?: boolean;
   loadIssues?: string[];
 }) {
   const [assistants, setAssistants] = useState(initialAssistants ?? []);
@@ -1476,7 +1480,9 @@ export function CustomerAgentWorkspace({
   const [detailTab, setDetailTab] = useState<DetailTab>("behaviour");
   const [searchTerm, setSearchTerm] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
-  const [wizardOpen, setWizardOpen] = useState(false);
+  // First paint must be the wizard when trial signup asked for it — same as
+  // clicking "+ New agent". A later useEffect would flash the empty Agents tab.
+  const [wizardOpen, setWizardOpen] = useState(openSetupWizard);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [ticketOpen, setTicketOpen] = useState(false);
   const [supportChatOpen, setSupportChatOpen] = useState(false);
@@ -2276,7 +2282,7 @@ export function CustomerAgentWorkspace({
               </div>
             )}
 
-            {(view === "assistants") && (
+            {(view === "assistants") && !wizardOpen && (
               <AssistantsList
                 assistants={filteredAssistants}
                 searchTerm={searchTerm}
@@ -2428,6 +2434,7 @@ export function CustomerAgentWorkspace({
 
       {wizardOpen && (
         <SetupWizard
+          initialWebsite={setupWebsite}
           onClose={() => setWizardOpen(false)}
           onSubmit={createFromDraft}
           onManual={() => {

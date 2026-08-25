@@ -4,6 +4,10 @@ import { safeInternalRedirect } from "./redirects";
 
 test("keeps internal paths, queries and fragments", () => {
   assert.equal(safeInternalRedirect("/dashboard?view=inbox#latest"), "/dashboard?view=inbox#latest");
+  assert.equal(
+    safeInternalRedirect("/dashboard?setup=1&website=https%3A%2F%2Fyourwebsite.co.uk%2F"),
+    "/dashboard?setup=1&website=https%3A%2F%2Fyourwebsite.co.uk%2F",
+  );
 });
 
 test("rejects external and malformed redirect targets", () => {

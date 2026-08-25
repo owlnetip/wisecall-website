@@ -73,11 +73,49 @@
       line-height: 1.15;
       letter-spacing: -0.03em;
     }
+    .payoff {
+      margin: 0 0 0.85rem;
+      font-size: 1.02rem;
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.78);
+    }
     .offer {
-      margin: 0 0 1.1rem;
+      margin: 0 0 1rem;
       font-size: 1.02rem;
       font-weight: 700;
       color: #7de8eb;
+    }
+    .try-form {
+      display: grid;
+      gap: 0.65rem;
+    }
+    .try-form label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+    .try-form input {
+      width: 100%;
+      min-height: 3.15rem;
+      padding: 0.85rem 1rem;
+      border-radius: 0.6rem;
+      border: 1.5px solid rgba(125, 232, 235, 0.28);
+      background: #1f3535;
+      color: #fff;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 500;
+      outline: none;
+    }
+    .try-form input::placeholder {
+      color: rgba(255, 255, 255, 0.38);
+      font-weight: 500;
+    }
+    .try-form input:focus {
+      border-color: #7de8eb;
+      box-shadow: 0 0 0 3px rgba(125, 232, 235, 0.18);
     }
     .cta {
       display: flex;
@@ -86,12 +124,15 @@
       width: 100%;
       min-height: 3.15rem;
       padding: 0.85rem 1.2rem;
+      border: 0;
       border-radius: 0.6rem;
       background: linear-gradient(90deg, #7de8eb, #5dbfc2);
       color: #172929;
+      font-family: inherit;
       font-weight: 800;
       font-size: 1.05rem;
       text-decoration: none;
+      cursor: pointer;
       box-shadow: 0 0 28px rgba(125, 232, 235, 0.28);
     }
     .cta:active { transform: scale(0.98); }
@@ -159,14 +200,33 @@
     <main>
       <p class="outcome">They rang. You missed it. They booked someone else.</p>
       <h1>Paste your website. We&rsquo;ll take the calls.</h1>
+      <p class="payoff">Enter your website. We build the receptionist in about 60 seconds, then give you a number to ring.</p>
       <p class="offer">20 free inbound AI calls. No card.</p>
-      <a class="cta" href="https://app.wisecall.io/?signup=1&amp;trial=calls">Try 20 free calls</a>
+      <form id="try-form" class="try-form" action="https://app.wisecall.io/" method="get">
+        <input type="hidden" name="signup" value="1">
+        <input type="hidden" name="trial" value="calls">
+        <label for="website">Your website</label>
+        <input
+          id="website"
+          name="website"
+          type="text"
+          inputmode="url"
+          autocomplete="url"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          enterkeyhint="go"
+          placeholder="yourwebsite.co.uk"
+          required
+        >
+        <button class="cta" type="submit">Build my agent</button>
+      </form>
 
       <p class="ready">Live in about a minute</p>
       <ol class="steps">
-        <li><span class="num">1</span> Paste your website</li>
-        <li><span class="num">2</span> We draft the receptionist, about 60 seconds</li>
-        <li><span class="num">3</span> We give you a number. It answers.</li>
+        <li><span class="num">1</span> Enter your website</li>
+        <li><span class="num">2</span> We build the receptionist, about 60 seconds</li>
+        <li><span class="num">3</span> We give you a number to ring</li>
       </ol>
 
       <p class="demo">
@@ -181,5 +241,20 @@
       <a href="/privacy-policy">Privacy</a>
     </footer>
   </div>
+  <script>
+    var form = document.getElementById("try-form");
+    if (form) {
+      form.addEventListener("submit", function (event) {
+        var input = form.querySelector("[name='website']");
+        if (!input) return;
+        var raw = (input.value || "").trim();
+        if (!raw) {
+          event.preventDefault();
+          return;
+        }
+        if (!/^https?:\/\//i.test(raw)) input.value = "https://" + raw;
+      });
+    }
+  </script>
 </body>
 </html>

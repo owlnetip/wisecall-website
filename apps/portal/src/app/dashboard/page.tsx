@@ -18,14 +18,16 @@ import { getFollowUpsForUser } from "@/lib/follow-ups";
 import { getInsightsForUser, emptyInsights } from "@/lib/insights";
 import { isAnalysisConfigured } from "@/lib/call-analysis";
 import { parseDashboardView } from "@/lib/dashboard-view";
+import { parseSetupWebsite, shouldOpenSetupWizard } from "@/lib/setup-website";
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; website?: string; setup?: string }>;
 }) {
-  const { view: viewParam } = await searchParams;
+  const { view: viewParam, website: websiteParam, setup: setupParam } = await searchParams;
   const initialView = parseDashboardView(viewParam);
+  const setupWebsite = parseSetupWebsite(websiteParam) ?? undefined;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -33,7 +35,12 @@ export default async function DashboardPage({
 
   // Middleware already guards this route, but double-check here.
   if (!user) {
-    redirect("/?redirect=/dashboard");
+    const returnParams = new URLSearchParams();
+    if (setupParam) returnParams.set("setup", setupParam);
+    if (websiteParam) returnParams.set("website", websiteParam);
+    if (viewParam) returnParams.set("view", viewParam);
+    const returnTo = returnParams.size > 0 ? `/dashboard?${returnParams.toString()}` : "/dashboard";
+    redirect(`/?redirect=${encodeURIComponent(returnTo)}`);
   }
 
   const admin = isAdmin(user);
@@ -165,6 +172,15 @@ export default async function DashboardPage({
     ? scopedAgents.find((agent) => agent.id === scopedAgentId)?.name
     : undefined;
 
+  // No-card trial signup lands on /dashboard?setup=1. That is the same action as
+  // "+ New agent": open SetupWizard on step 1 immediately. Returning users who
+  // already have an agent keep the Agents tab.
+  const openSetupWizard = shouldOpenSetupWizard({
+    setup: setupParam,
+    website: websiteParam,
+    agentCount: scopedAgents.length,
+  });
+
   return (
     <CustomerAgentWorkspace
       initialAssistants={scopedAgents}
@@ -196,6 +212,8 @@ export default async function DashboardPage({
       initialFollowUps={scopedFollowUps}
       initialSelectedAgentId={scopedAgentId}
       initialView={initialView}
+      setupWebsite={setupWebsite}
+      openSetupWizard={openSetupWizard}
       loadIssues={orderedLoadIssues}
     />
   );

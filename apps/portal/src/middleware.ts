@@ -8,6 +8,20 @@ function isPathMatch(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+function redirectToSignIn(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const redirectUrl = request.nextUrl.clone();
+  const returnTo = `${pathname}${request.nextUrl.search}`;
+  redirectUrl.pathname = "/";
+  redirectUrl.search = "";
+  const website = request.nextUrl.searchParams.get("website");
+  if (website) redirectUrl.searchParams.set("website", website);
+  const setup = request.nextUrl.searchParams.get("setup");
+  if (setup) redirectUrl.searchParams.set("setup", setup);
+  redirectUrl.searchParams.set("redirect", returnTo);
+  return NextResponse.redirect(redirectUrl);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtected = isPathMatch(pathname, PROTECTED_PREFIXES);
@@ -18,10 +32,7 @@ export async function middleware(request: NextRequest) {
   // Preview/staging builds without Supabase env must still serve public pages.
   if (!supabaseUrl || !supabaseAnonKey) {
     if (isProtected) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/";
-      redirectUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(redirectUrl);
+      return redirectToSignIn(request);
     }
     return NextResponse.next();
   }
@@ -49,10 +60,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (isProtected && !user) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/";
-    redirectUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(redirectUrl);
+    return redirectToSignIn(request);
   }
 
   return response;
