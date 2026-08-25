@@ -13,6 +13,7 @@ const { buildSystemPrompt } = require("../src/prompt");
 const { mergeIntegrationTools } = require("../src/lib/callSession");
 const {
   buildEmailSummaryPayload,
+  getEmailSummarySecret,
   getEmailSummaryUrl,
 } = require("../src/lib/emailSummary");
 
@@ -143,6 +144,20 @@ test("getEmailSummaryUrl defaults to the Supabase edge function URL", () => {
   assert.equal(
     getEmailSummaryUrl({ WISECALL_EMAIL_SUMMARY_URL: "https://hooks.test/email" }),
     "https://hooks.test/email",
+  );
+});
+
+test("getEmailSummarySecret reuses the portal webhook secret when the email-specific one is unset", () => {
+  assert.equal(
+    getEmailSummarySecret({ WISECALL_WEBHOOK_SECRET: "portal-secret" }),
+    "portal-secret",
+  );
+  assert.equal(
+    getEmailSummarySecret({
+      WISECALL_EMAIL_WEBHOOK_SECRET: "email-secret",
+      WISECALL_WEBHOOK_SECRET: "portal-secret",
+    }),
+    "email-secret",
   );
 });
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { analyzeAndStoreCall, isAnalysisConfigured } from "@/lib/call-analysis";
+import { sendCallSummaryForLog } from "@/lib/call-summary-email";
 import { getServiceSupabase } from "@/lib/supabase";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,13 +50,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
   }
 
-  if (!isAnalysisConfigured()) {
-    return NextResponse.json(
-      { ok: false, error: "AI analysis is not configured." },
-      { status: 503 },
-    );
-  }
-
   let callId: string | undefined;
   try {
     const body = await request.json();
@@ -91,16 +85,42 @@ export async function POST(request: Request) {
     }
   })();
 
+  const sendSummaryEmail = (managerSummary?: string) =>
+    sendCallSummaryForLog(callId, { managerSummary }).catch((error) => {
+      console.error(
+        "call-completed: summary email failed:",
+        error instanceof Error ? error.message : error,
+      );
+      return { ok: false as const, error: "summary email failed" };
+    });
+
+  // Taken-message email is independent of Claude analysis. A missed inbox email
+  // is worse than skipping insights, so send even when analysis is unconfigured.
+  if (!isAnalysisConfigured()) {
+    const email = await sendSummaryEmail();
+    return NextResponse.json({
+      ok: true,
+      skipped: "analysis not configured",
+      email,
+    });
+  }
+
   try {
     const analysis = await analyzeAndStoreCall(callId);
+    const email = await sendSummaryEmail(analysis?.short_manager_summary);
     if (!analysis) {
-      return NextResponse.json({ ok: true, skipped: "no usable transcript" });
+      return NextResponse.json({
+        ok: true,
+        skipped: "no usable transcript",
+        email,
+      });
     }
-    return NextResponse.json({ ok: true, analysed: true });
+    return NextResponse.json({ ok: true, analysed: true, email });
   } catch (error) {
     console.error("/api/webhooks/call-completed failed:", error);
+    const email = await sendSummaryEmail();
     return NextResponse.json(
-      { ok: false, error: "Analysis failed." },
+      { ok: false, error: "Analysis failed.", email },
       { status: 500 },
     );
   }

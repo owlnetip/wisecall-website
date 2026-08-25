@@ -1731,6 +1731,7 @@ export function CustomerAgentWorkspace({
       knowledgeFields: draft.knowledgeFields,
       contacts,
       templateId: draft.templateId || "receptionist",
+      defaultEmail,
     });
     if (!result.ok || !result.id) {
       return { ok: false, error: result.error ?? "Could not create the assistant." };

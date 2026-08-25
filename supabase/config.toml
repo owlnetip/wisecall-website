@@ -38,6 +38,11 @@ verify_jwt = false
 [functions.wisecall-action-items-email]
 verify_jwt = false
 
+# Voice hangup summary email — authenticates via x-wisecall-secret or the
+# service-role key. JWT verification must stay off or the telephony runtime 401s.
+[functions.wisecall-email-summary]
+verify_jwt = false
+
 # Property viewing owner-confirm loop — called from voice webhooks / portal
 # with a shared secret or service-role key.
 [functions.wisecall-viewing-request]
