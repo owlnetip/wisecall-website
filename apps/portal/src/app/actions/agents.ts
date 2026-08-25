@@ -24,6 +24,11 @@ import { ingestWebsiteKnowledgeBase } from "@/app/actions/knowledge-base";
 import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhooks";
 import { getVoiceOption } from "@/lib/voices";
 import {
+  CARTESIA_API_VERSION,
+  CARTESIA_SONIC_36_MODEL_ID,
+  cartesiaTranscriptLanguageFields,
+} from "@/lib/cartesia";
+import {
   getCartesiaVoiceId,
   getElevenLabsPreviewSpeed,
   getVoiceRuntimeConfig,
@@ -640,9 +645,10 @@ export type TestVoiceResult = {
 // Cartesia voice catalogue. The real voice UUIDs live in config, not code, so
 // each name maps to an env var (CARTESIA_VOICE_<NAME>). Until an id is set for a
 // voice, preview returns a clear message instead of failing.
-// The Cartesia model used for the in-portal voice preview. Kept in sync with the
-// live call pipeline, both default to Sonic 3.5. Override with CARTESIA_MODEL.
-const CARTESIA_MODEL = process.env.CARTESIA_MODEL || "sonic-3.5";
+// In-portal "Test voice" defaults to Sonic 3.6 (`sonic-preview`) + en-GB so it
+// matches the website demo agent. CARTESIA_MODEL overrides the model id.
+// The live phone TTS caller is on the telephony server, not this function.
+const CARTESIA_MODEL = CARTESIA_SONIC_36_MODEL_ID;
 
 // ElevenLabs model for in-portal voice preview. Override with ELEVENLABS_MODEL.
 const ELEVENLABS_MODEL = process.env.ELEVENLABS_MODEL || "eleven_turbo_v2_5";
@@ -708,7 +714,7 @@ async function synthesizeCartesiaPreview(
     const res = await fetch("https://api.cartesia.ai/tts/bytes", {
       method: "POST",
       headers: {
-        "Cartesia-Version": "2024-11-13",
+        "Cartesia-Version": CARTESIA_API_VERSION,
         "X-API-Key": apiKey,
         "Content-Type": "application/json",
       },
@@ -716,7 +722,7 @@ async function synthesizeCartesiaPreview(
         model_id: CARTESIA_MODEL,
         transcript: sample.slice(0, 300),
         voice: { mode: "id", id: voiceId },
-        language: "en",
+        ...cartesiaTranscriptLanguageFields(CARTESIA_MODEL),
         output_format: {
           container: "mp3",
           sample_rate: 44100,
@@ -777,7 +783,7 @@ export type ProvisionResult = { ok: boolean; routing?: AgentRouting; error?: str
 // telco stack is chosen via WISECALL_ROUTING_PROVIDER, and each branch is the
 // single place to drop in real provisioning once the stack is confirmed.
 //
-//   telnyx     → DDI → Telnyx → Deepgram (STT) → LLM → Cartesia (TTS)
+//   telnyx     → DDI → Telnyx → STT (Deepgram, or Ink-2 on the website demo) → LLM → Cartesia TTS
 //   mor_openai → DDI → MOR → SIP → OpenAI Realtime agent
 //
 // Until a provider is wired, this is a no-op that returns a clear message; the

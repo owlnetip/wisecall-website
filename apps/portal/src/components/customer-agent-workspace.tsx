@@ -143,7 +143,7 @@ export type AgentRouting = {
   provider: RoutingProvider | null;
   number: string; // E.164 DDI, "" while unprovisioned
   status: RoutingStatus;
-  // Telnyx pipeline (DDI → Telnyx → Deepgram/Cartesia)
+  // Telnyx pipeline (DDI → Telnyx → STT → LLM → Cartesia TTS)
   telnyxApplicationId?: string;
   // MOR SIP → OpenAI Realtime
   sipRoute?: string;
