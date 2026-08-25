@@ -198,6 +198,8 @@ export function SetupWizard({
   const [calcomKey, setCalcomKey] = useState("");
   const [calcom, setCalcom] = useState<{ ok: boolean; message: string } | null>(null);
   const [verifying, startVerify] = useTransition();
+  const [showAllTemplates, setShowAllTemplates] = useState(false);
+  const [templateReturnStep, setTemplateReturnStep] = useState<Step | null>(null);
   const [manualInputs, setManualInputs] = useState<BusinessInputs>({
     businessName: "",
     industry: "",
@@ -233,9 +235,10 @@ export function SetupWizard({
     return () => timers.forEach(clearTimeout);
   }, [generating]);
 
+  const selectedTemplate = availableTemplates.find((t) => t.id === draft?.templateId);
+
   // Booking templates gain a diary step: without a connected Cal.com account the
   // agent can offer to take a message but not actually book anything.
-  const selectedTemplate = availableTemplates.find((t) => t.id === draft?.templateId);
   const needsDiary = Boolean(selectedTemplate?.usesCalendarBooking);
 
   // Switching to a non-booking template while sitting on the diary step would
@@ -263,9 +266,16 @@ export function SetupWizard({
     if (prev) setStep(prev);
   }
 
+  function openTemplatePicker() {
+    setShowAllTemplates(true);
+    setTemplateReturnStep("review");
+    setStep("template");
+  }
+
   function generate() {
     setError(null);
     setLoadingPhase(0);
+    setShowAllTemplates(false);
     startGenerate(async () => {
       try {
         const res = await draftAgentFromWebsite(website);
@@ -283,7 +293,8 @@ export function SetupWizard({
           next = applyTemplate(next, matched, aiRef.current);
         }
         setDraft(next);
-        setStep("template");
+        // Scan already matched a template; skip the full catalogue unless they ask to change it.
+        setStep("review");
       } catch {
         setError("Couldn't build your agent. Try again or set up manually.");
       }
@@ -302,6 +313,7 @@ export function SetupWizard({
     setError(null);
     aiRef.current = null;
     setManualMode(true);
+    setShowAllTemplates(false);
     setDraft(blankDraft(accountEmail));
     setStep("basics");
   }
@@ -312,6 +324,25 @@ export function SetupWizard({
 
   function selectTemplate(t: AgentTemplate) {
     setDraft((d) => (d ? applyTemplate(d, t, aiRef.current) : d));
+    setShowAllTemplates(false);
+    if (templateReturnStep) {
+      setStep(templateReturnStep);
+      setTemplateReturnStep(null);
+    }
+  }
+
+  function leaveTemplateStep() {
+    if (templateReturnStep) {
+      setStep(templateReturnStep);
+      setTemplateReturnStep(null);
+      setShowAllTemplates(false);
+      return;
+    }
+    if (manualMode) {
+      goBack();
+      return;
+    }
+    setStep("website");
   }
 
   // The agent doesn't exist yet, so the key is validated against Cal.com now and
@@ -652,43 +683,76 @@ export function SetupWizard({
                     What kind of assistant is this?
                   </h2>
                   <p className="mt-2 text-ink-soft">
-                    We pre-selected the best match. This sets what your assistant can actually
-                    do on a call — you can fine-tune everything next.
+                    {showAllTemplates
+                      ? "Pick the assistant type that fits your business. This sets what it can do on a call."
+                      : manualMode
+                        ? "We started with a general receptionist. Continue, or browse other types below."
+                        : "We matched this from your website. Continue, or choose another type below."}
                   </p>
                 </div>
-                <div className="space-y-6">
-                  {agentTemplateCategories.map((category) => {
-                    const inCategory = availableTemplates.filter((t) => t.category === category.id);
-                    if (!inCategory.length) return null;
-                    return (
-                      <div key={category.id}>
-                        <p className="text-xs font-black uppercase tracking-wide text-ink-faint">
-                          {category.label}
-                        </p>
-                        <p className="mb-2.5 text-xs text-ink-soft">{category.blurb}</p>
-                        <div className="stagger grid gap-3">
-                          {inCategory.map((t) => (
-                            <TemplateCard
-                              key={t.id}
-                              template={t}
-                              active={draft.templateId === t.id}
-                              suggested={
-                                t.id !== "receptionist" &&
-                                Boolean(t.industry) &&
-                                `${draft.industry}`.toLowerCase().includes(t.industry.toLowerCase())
-                              }
-                              onSelect={() => selectTemplate(t)}
-                            />
-                          ))}
+                {!showAllTemplates && selectedTemplate ? (
+                  <div className="space-y-3">
+                    <TemplateCard
+                      template={selectedTemplate}
+                      active
+                      suggested={
+                        selectedTemplate.id !== "receptionist" &&
+                        Boolean(selectedTemplate.industry) &&
+                        `${draft.industry}`.toLowerCase().includes(selectedTemplate.industry.toLowerCase())
+                      }
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAllTemplates(true)}
+                      className="w-full text-center text-sm font-semibold text-teal-deep underline-offset-2 hover:underline"
+                    >
+                      Choose a different assistant type
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {agentTemplateCategories.map((category) => {
+                      const inCategory = availableTemplates.filter((t) => t.category === category.id);
+                      if (!inCategory.length) return null;
+                      return (
+                        <div key={category.id}>
+                          <p className="text-xs font-black uppercase tracking-wide text-ink-faint">
+                            {category.label}
+                          </p>
+                          <p className="mb-2.5 text-xs text-ink-soft">{category.blurb}</p>
+                          <div className="stagger grid gap-3">
+                            {inCategory.map((t) => (
+                              <TemplateCard
+                                key={t.id}
+                                template={t}
+                                active={draft.templateId === t.id}
+                                suggested={
+                                  t.id !== "receptionist" &&
+                                  Boolean(t.industry) &&
+                                  `${draft.industry}`.toLowerCase().includes(t.industry.toLowerCase())
+                                }
+                                onSelect={() => selectTemplate(t)}
+                              />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <WizardFooter
-                  onBack={() => (manualMode ? goBack() : setStep("website"))}
-                  onNext={goNext}
-                  nextLabel="Review the draft"
+                  onBack={leaveTemplateStep}
+                  onNext={() => {
+                    if (templateReturnStep) {
+                      setStep(templateReturnStep);
+                      setTemplateReturnStep(null);
+                      setShowAllTemplates(false);
+                      return;
+                    }
+                    goNext();
+                  }}
+                  nextLabel={templateReturnStep ? "Back to draft" : "Review the draft"}
                 />
               </div>
             )}
@@ -709,6 +773,24 @@ export function SetupWizard({
                 </div>
                 <TextArea label="How it should behave (prompt)" value={draft.prompt} onChange={(v) => patchDraft({ prompt: v })} rows={10} />
                 <TextArea label="What it knows about your business" value={draft.knowledge} onChange={(v) => patchDraft({ knowledge: v })} rows={6} />
+                {selectedTemplate ? (
+                  <p className="text-sm text-ink-soft">
+                    Assistant type:{" "}
+                    <span className="font-semibold text-ink">{selectedTemplate.label}</span>
+                    {!manualMode ? (
+                      <>
+                        {" "}
+                        <button
+                          type="button"
+                          onClick={openTemplatePicker}
+                          className="font-semibold text-teal-deep underline-offset-2 hover:underline"
+                        >
+                          Change type
+                        </button>
+                      </>
+                    ) : null}
+                  </p>
+                ) : null}
                 {error && <p className="text-sm font-medium text-danger">{error}</p>}
                 <WizardFooter onBack={goBack} onNext={goNext} nextLabel="Opening hours" />
               </div>
@@ -989,23 +1071,24 @@ function TemplateCard({
   active,
   suggested,
   onSelect,
+  readOnly = false,
 }: {
   template: AgentTemplate;
   active: boolean;
   suggested: boolean;
-  onSelect: () => void;
+  onSelect?: () => void;
+  readOnly?: boolean;
 }) {
   const Icon = TEMPLATE_ICONS[template.icon];
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`press rounded-2xl border p-5 text-left transition ${
-        active
-          ? "border-teal bg-teal-wash ring-1 ring-teal"
-          : "border-line bg-card shadow-card hover:border-teal/50"
-      }`}
-    >
+  const className = `rounded-2xl border p-5 text-left transition ${
+    active
+      ? "border-teal bg-teal-wash ring-1 ring-teal"
+      : readOnly
+        ? "border-line bg-card shadow-card"
+        : "press border-line bg-card shadow-card hover:border-teal/50"
+  }`;
+
+  const body = (
       <div className="flex items-start gap-3">
         <span
           className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
@@ -1051,6 +1134,15 @@ function TemplateCard({
           )}
         </div>
       </div>
+  );
+
+  if (readOnly) {
+    return <div className={className}>{body}</div>;
+  }
+
+  return (
+    <button type="button" onClick={onSelect} className={className}>
+      {body}
     </button>
   );
 }
