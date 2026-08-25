@@ -14,7 +14,10 @@ import { getServiceSupabase } from "@/lib/supabase";
 import {
   isLikelyExistingSignup,
   shouldAutoConfirmNoCardSignup,
+  wantsStayOnPage,
 } from "@/lib/signup-session";
+import { parseWizardDraft } from "@/lib/wizard-draft";
+import { createAgentFromWizardDraft } from "@/app/actions/agents";
 
 export type AuthState = { error?: string; message?: string };
 
@@ -25,6 +28,7 @@ export async function signInAction(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const redirectTo = safeInternalRedirect(formData.get("redirect"));
+  const stay = wantsStayOnPage(formData.get("stay"));
 
   if (!email || !password) {
     return { error: "Enter your email and password." };
@@ -40,6 +44,7 @@ export async function signInAction(
   // Drop the cached RSC tree so the post-login render uses the fresh session
   // cookie set above, instead of a stale layout that can error on first paint.
   revalidatePath("/", "layout");
+  if (stay) return {};
   redirect(redirectTo);
 }
 
@@ -51,7 +56,9 @@ export async function signUpAction(
   const password = String(formData.get("password") ?? "");
   const trial = String(formData.get("trial") ?? "");
   const noCard = isNoCardTrialRequest(trial);
-  const afterSignup = signupRedirectForTrial(trial, formData.get("website"));
+  const stay = wantsStayOnPage(formData.get("stay"));
+  const afterSignup =
+    stay && noCard ? "/dashboard" : signupRedirectForTrial(trial, formData.get("website"));
   const confirmNext = afterSignup;
 
   if (!email || !password) {
@@ -136,6 +143,7 @@ export async function signUpAction(
   }
 
   revalidatePath("/", "layout");
+  if (stay) return {};
   redirect(afterSignup);
 }
 
@@ -179,6 +187,50 @@ export async function signOutAction() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+// Facebook /try number gate: email + password, then create the drafted agent
+// (which is when a live number is provisioned). Same request so the new session
+// is visible to createAgent without a cookie round-trip.
+export async function finishGuestTrialWithAccount(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const draft = parseWizardDraft(formData.get("draft"));
+  if (!draft) {
+    return { error: "Your setup expired. Go back and build the receptionist again." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user: existing },
+  } = await supabase.auth.getUser();
+
+  if (!existing) {
+    const intent = String(formData.get("intent") ?? "signup");
+    const authData = new FormData();
+    authData.set("email", String(formData.get("email") ?? ""));
+    authData.set("password", String(formData.get("password") ?? ""));
+    authData.set("intent", intent);
+    authData.set("trial", "calls");
+    authData.set("stay", "1");
+    authData.set("redirect", "/dashboard");
+    const authResult =
+      intent === "signin" ? await signInAction({}, authData) : await signUpAction({}, authData);
+    if (authResult.error || authResult.message) return authResult;
+  }
+
+  const created = await createAgentFromWizardDraft(
+    draft as Parameters<typeof createAgentFromWizardDraft>[0],
+  );
+  if (!created.ok) {
+    return {
+      error: created.error ?? "Account is ready, but we couldn't connect a number yet. Try again.",
+    };
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
 }
 
 // Single dispatcher so the login form can switch between sign in / sign up

@@ -20,3 +20,11 @@ export function shouldAutoConfirmNoCardSignup(input: {
 export function isLikelyExistingSignup(identities?: unknown[] | null): boolean {
   return Array.isArray(identities) && identities.length === 0;
 }
+
+// Guest /setup finishes signup in-place (then creates the agent in the same
+// request). Homepage / 7-day signup still redirect as before.
+export function wantsStayOnPage(input: unknown): boolean {
+  if (typeof input !== "string") return false;
+  const value = input.trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes";
+}

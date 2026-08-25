@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   dashboardSetupPath,
+  guestSetupPath,
   parseOpenSetup,
   parseSetupWebsite,
   shouldOpenSetupWizard,
@@ -40,6 +41,15 @@ test("no-card signup always lands on /dashboard?setup=1 so the wizard opens imme
   assert.equal(
     dashboardSetupPath("yourwebsite.co.uk"),
     "/dashboard?setup=1&website=https%3A%2F%2Fyourwebsite.co.uk%2F",
+  );
+});
+
+test("Facebook /try opens the public guest wizard, not signup", () => {
+  assert.equal(guestSetupPath(undefined), "/setup?trial=calls");
+  assert.equal(guestSetupPath("bad"), "/setup?trial=calls");
+  assert.equal(
+    guestSetupPath("yourwebsite.co.uk"),
+    "/setup?trial=calls&website=https%3A%2F%2Fyourwebsite.co.uk%2F",
   );
 });
 

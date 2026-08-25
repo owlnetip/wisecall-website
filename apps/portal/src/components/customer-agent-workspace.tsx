@@ -57,6 +57,7 @@ import { AgentLearningPanel } from "@/components/agent-learning-panel";
 import type { EmailChannelUsage, ChannelUsage, CallUsage } from "@/lib/billing";
 import {
   createAgent,
+  createAgentFromWizardDraft,
   deleteAgent,
   getPendingAgentsStatus,
   provisionNumber,
@@ -65,7 +66,6 @@ import {
   updateAgent,
 } from "@/app/actions/agents";
 import { provisionSmsNumber } from "@/app/actions/sms";
-import { connectCalCom } from "@/app/actions/calendar";
 import type { AgentSmsNumber, AgentWhatsappNumber } from "@/lib/agents";
 import {
   deleteKnowledgeBaseSource,
@@ -1720,51 +1720,17 @@ export function CustomerAgentWorkspace({
     });
   }
 
-  // AI setup wizard finish: create the drafted agent, then apply the fields
-  // createAgent doesn't take (website + office hours), and open it for review.
+  // AI setup wizard finish: create the drafted agent (number is assigned here).
   async function createFromDraft(draft: AgentDraft): Promise<WizardResult> {
     const voice = draft.voice || DEFAULT_VOICE_ID;
     const contacts = draft.contacts ?? [];
     const defaultEmail = (draft.defaultEmail ?? "").trim();
-    const result = await createAgent({
-      name: draft.receptionistName || "Receptionist",
-      businessName: draft.businessName || "New business",
-      industry: draft.industry || "General",
-      prompt: draft.prompt,
-      greeting: draft.greeting,
-      voice,
-      knowledge: draft.knowledge,
-      knowledgeFields: draft.knowledgeFields,
-      contacts,
-      templateId: draft.templateId || "receptionist",
-    });
+    const result = await createAgentFromWizardDraft(draft);
     if (!result.ok || !result.id) {
       return { ok: false, error: result.error ?? "Could not create the assistant." };
     }
 
-    // Persist the remaining wizard answers that createAgent doesn't take
-    // directly (website, opening hours, messages inbox). Contacts are already
-    // saved by createAgent; defaultEmail must go through updateAgent.
     const hasHours = Object.keys(draft.officeHours ?? {}).length > 0;
-    if (draft.website || hasHours || defaultEmail) {
-      await updateAgent(result.id, {
-        website: draft.website,
-        officeHours: draft.officeHours,
-        defaultEmail,
-      });
-    }
-
-    // The diary can only be connected once the agent has an id. The key was
-    // already validated in the wizard, so a failure here is worth surfacing but
-    // must not undo an agent that was created successfully.
-    const calcomApiKey = (draft.calcomApiKey ?? "").trim();
-    if (calcomApiKey) {
-      const connected = await connectCalCom(result.id, calcomApiKey);
-      if (!connected.ok) {
-        console.error("Cal.com connect after setup failed:", connected.error);
-      }
-    }
-
     const routing = result.routing ?? { provider: null as null, number: "", status: "unprovisioned" as const };
     const assistant: Assistant = {
       id: result.id,

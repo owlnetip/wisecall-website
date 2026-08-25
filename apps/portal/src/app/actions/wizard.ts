@@ -1,9 +1,7 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
-import { isAdmin } from "@/lib/admin";
+import { authorizeWizardPreview } from "@/lib/wizard-preview-auth";
 import {
   PublicUrlError,
   assertPublicHttpUrl,
@@ -70,14 +68,8 @@ function normaliseUrl(input: string): string | null {
 // ready-to-review agent (business context, prompt, greeting, opening hours).
 // New-agent only; the user reviews/edits everything before it's created.
 export async function draftAgentFromWebsite(websiteInput: string): Promise<DraftResult> {
-  const auth = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await auth.auth.getUser();
-  if (!user) return { ok: false, error: "Not signed in." };
-  if (!isAdmin(user) && !hasActiveAccess(await getBillingForUser(user.id))) {
-    return { ok: false, error: "Start your free trial first." };
-  }
+  const access = await authorizeWizardPreview("draft");
+  if (!access.ok) return { ok: false, error: access.error };
 
   const normalisedUrl = normaliseUrl(websiteInput);
   if (!normalisedUrl) {
@@ -263,7 +255,7 @@ export async function draftAgentFromWebsite(websiteInput: string): Promise<Draft
         voice: "",
         // Pre-fill the messages inbox with the account holder's email, the most
         // common answer, so most users just confirm it in the wizard.
-        defaultEmail: user.email ?? "",
+        defaultEmail: access.email,
         contacts: [],
       },
     };
@@ -377,14 +369,8 @@ const EMIT_AGENT_DRAFT_TOOL: Anthropic.Messages.Tool = {
 // Builds an AgentDraft from manually-entered business details instead of a website scan.
 // The AI call is identical, we just feed it structured text instead of scraped HTML.
 export async function draftAgentFromInputs(inputs: BusinessInputs): Promise<DraftResult> {
-  const auth = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await auth.auth.getUser();
-  if (!user) return { ok: false, error: "Not signed in." };
-  if (!isAdmin(user) && !hasActiveAccess(await getBillingForUser(user.id))) {
-    return { ok: false, error: "Start your free trial first." };
-  }
+  const access = await authorizeWizardPreview("draft");
+  if (!access.ok) return { ok: false, error: access.error };
   if (!inputs.businessName.trim()) return { ok: false, error: "Business name is required." };
 
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_WISECASE;
@@ -424,7 +410,7 @@ export async function draftAgentFromInputs(inputs: BusinessInputs): Promise<Draf
     const out = block.input as Record<string, unknown>;
     return {
       ok: true,
-      draft: parseDraftOutput(out, { defaultEmail: user.email ?? "" }),
+      draft: parseDraftOutput(out, { defaultEmail: access.email }),
     };
   } catch (err) {
     return {
