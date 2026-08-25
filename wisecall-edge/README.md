@@ -2,6 +2,22 @@
 
 Voice call runtime for WiseCall agents. Deploy to `/opt/wisecall-edge` on the telephony server.
 
+This package owns session lifecycle (billing gate, prompts, webhooks, call logs). It does **not** open the Telnyx media socket or call Cartesia/Deepgram. Those live in the telephony TTS/STT process on the same host.
+
+## Website demo voice (Sonic 3.6)
+
+The wisecall.io live demo is the agent on **+44 113 522 2277** (`tel:+441135222277`). Desktop callback uses `wisecall-demo-callback` with `profile_slug: "wisecall"`. Same voice IDs as Sonic 3.5; keep `language: "en"` and do not send `language` and `locale` together.
+
+A migration sets `metadata.tts_model=sonic-3.6` on that profile only. Other agents are unchanged. Live STT stays Deepgram — Cartesia Ink-2 is a separate STT swap, not a drop-in.
+
+The Telnyx caller must import `resolveVoicePipeline(profile)` (or copy the same rules) and:
+
+1. Send Cartesia TTS `model_id` from `pipeline.ttsModelCandidates` — try `sonic-3.6`, then `sonic-preview` if the API rejects the id.
+2. Pass `language: "en"` only.
+3. If `model_id` is process-wide telephony env rather than per-profile metadata, set `CARTESIA_MODEL=sonic-3.6` (or `sonic-preview`) on that host. That is host-wide, not demo-only.
+
+Prefer per-profile `metadata.tts_model` / `resolveVoicePipeline` so production agents stay on Sonic 3.5.
+
 ## Call lifecycle
 
 ```text

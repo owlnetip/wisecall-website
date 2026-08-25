@@ -24,6 +24,12 @@ import { ingestWebsiteKnowledgeBase } from "@/app/actions/knowledge-base";
 import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhooks";
 import { getVoiceOption } from "@/lib/voices";
 import {
+  CARTESIA_API_VERSION,
+  cartesiaLanguageField,
+  cartesiaTtsModelCandidates,
+  shouldRetryCartesiaModel,
+} from "@/lib/cartesia";
+import {
   getCartesiaVoiceId,
   getElevenLabsPreviewSpeed,
   getVoiceRuntimeConfig,
@@ -640,9 +646,8 @@ export type TestVoiceResult = {
 // Cartesia voice catalogue. The real voice UUIDs live in config, not code, so
 // each name maps to an env var (CARTESIA_VOICE_<NAME>). Until an id is set for a
 // voice, preview returns a clear message instead of failing.
-// The Cartesia model used for the in-portal voice preview. Kept in sync with the
-// live call pipeline, both default to Sonic 3.5. Override with CARTESIA_MODEL.
-const CARTESIA_MODEL = process.env.CARTESIA_MODEL || "sonic-3.5";
+// In-portal "Test voice" tries Sonic 3.6 then sonic-preview. CARTESIA_MODEL
+// overrides the primary id. Live phone TTS is on the telephony host.
 
 // ElevenLabs model for in-portal voice preview. Override with ELEVENLABS_MODEL.
 const ELEVENLABS_MODEL = process.env.ELEVENLABS_MODEL || "eleven_turbo_v2_5";
@@ -704,37 +709,46 @@ async function synthesizeCartesiaPreview(
     return { ok: false, error: `No voice id is configured for ${voiceName} yet.` };
   }
 
-  try {
-    const res = await fetch("https://api.cartesia.ai/tts/bytes", {
-      method: "POST",
-      headers: {
-        "Cartesia-Version": "2024-11-13",
-        "X-API-Key": apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model_id: CARTESIA_MODEL,
-        transcript: sample.slice(0, 300),
-        voice: { mode: "id", id: voiceId },
-        language: "en",
-        output_format: {
-          container: "mp3",
-          sample_rate: 44100,
-          bit_rate: 128000,
-        },
-      }),
-    });
+  const models = cartesiaTtsModelCandidates();
+  let lastError = "Voice preview failed.";
 
-    if (!res.ok) {
+  try {
+    for (let i = 0; i < models.length; i += 1) {
+      const modelId = models[i];
+      const res = await fetch("https://api.cartesia.ai/tts/bytes", {
+        method: "POST",
+        headers: {
+          "Cartesia-Version": CARTESIA_API_VERSION,
+          "X-API-Key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model_id: modelId,
+          transcript: sample.slice(0, 300),
+          voice: { mode: "id", id: voiceId },
+          ...cartesiaLanguageField(),
+          output_format: {
+            container: "mp3",
+            sample_rate: 44100,
+            bit_rate: 128000,
+          },
+        }),
+      });
+
+      if (res.ok) {
+        const buf = Buffer.from(await res.arrayBuffer());
+        return { ok: true, audio: buf.toString("base64"), mime: "audio/mpeg" };
+      }
+
       const detail = await res.text().catch(() => "");
-      return {
-        ok: false,
-        error: `Voice preview failed (${res.status}). ${detail.slice(0, 140)}`.trim(),
-      };
+      lastError = `Voice preview failed (${res.status}). ${detail.slice(0, 140)}`.trim();
+      const hasFallback = i < models.length - 1;
+      if (!hasFallback || !shouldRetryCartesiaModel(res.status)) {
+        return { ok: false, error: lastError };
+      }
     }
 
-    const buf = Buffer.from(await res.arrayBuffer());
-    return { ok: true, audio: buf.toString("base64"), mime: "audio/mpeg" };
+    return { ok: false, error: lastError };
   } catch (err) {
     return {
       ok: false,
@@ -777,7 +791,7 @@ export type ProvisionResult = { ok: boolean; routing?: AgentRouting; error?: str
 // telco stack is chosen via WISECALL_ROUTING_PROVIDER, and each branch is the
 // single place to drop in real provisioning once the stack is confirmed.
 //
-//   telnyx     → DDI → Telnyx → Deepgram (STT) → LLM → Cartesia (TTS)
+//   telnyx     → DDI → Telnyx → STT (Deepgram, or Ink-2 on the website demo) → LLM → Cartesia TTS
 //   mor_openai → DDI → MOR → SIP → OpenAI Realtime agent
 //
 // Until a provider is wired, this is a no-op that returns a clear message; the
