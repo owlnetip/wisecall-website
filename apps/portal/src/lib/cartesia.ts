@@ -1,57 +1,72 @@
-// Cartesia ids and request fields for portal "Test voice" and for tagging
-// the website demo agent. The live phone path (DDI → Telnyx → STT → LLM → TTS)
-// does not live in this repo; it should read the same keys from
-// wisecall_profiles.metadata (see wisecall-edge/src/lib/voicePipeline.js).
+// Cartesia model ids for portal "Test voice" and for tagging the website demo
+// agent. The live Telnyx media path is not in this repo; it should read
+// wisecall_profiles.metadata.tts_model (and CARTESIA_MODEL on the telephony
+// host). Do not send `language` and `locale` together — Cartesia 400s.
 
-/** Dated Cartesia API header used by /tts/bytes. */
 export const CARTESIA_API_VERSION =
-  process.env.CARTESIA_API_VERSION || "2026-08-14";
+  process.env.CARTESIA_API_VERSION || "2024-11-13";
 
-/**
- * Sonic 3.6 (as of 2026-08-25 Cartesia docs still ship it as beta
- * `sonic-preview`; the 2026-08-14 bytes schema also lists `sonic-latest`.
- * `sonic-3.6` is accepted as an override if GA aliases it). Locale `en-GB`
- * 400s on Sonic 3.5 — only send it for 3.6-family ids.
- */
-export const CARTESIA_SONIC_36_MODEL_ID =
-  process.env.CARTESIA_MODEL || "sonic-preview";
-
+/** Preferred Sonic 3.6 id. Cartesia may still only accept `sonic-preview`. */
+export const CARTESIA_SONIC_36_MODEL_ID = "sonic-3.6";
+export const CARTESIA_SONIC_36_FALLBACK_MODEL_ID = "sonic-preview";
 export const CARTESIA_SONIC_35_MODEL_ID = "sonic-3.5";
 
-export const CARTESIA_INK_2_MODEL_ID = process.env.CARTESIA_STT_MODEL || "ink-2";
-
-export const CARTESIA_TTS_LOCALE = process.env.CARTESIA_TTS_LOCALE || "en-GB";
-
-/** Public website demo agent (wisecall.io callback + +441135222277). */
+/** Public website demo (wisecall.io live number + desktop callback). */
 export const WISECALL_WEBSITE_DEMO_SLUG = "wisecall";
+export const WISECALL_WEBSITE_DEMO_DDI_DIGITS = "441135222277";
 
-export function isSonic36Model(modelId: string): boolean {
-  const id = modelId.trim().toLowerCase();
-  return (
-    id === "sonic-preview" ||
-    id === "sonic-latest" ||
-    id === "sonic-3.6" ||
-    id.startsWith("sonic-3.6-")
-  );
+export function cartesiaPreferredModelId(
+  envModel = process.env.CARTESIA_MODEL,
+): string {
+  const id = (envModel || "").trim();
+  return id || CARTESIA_SONIC_36_MODEL_ID;
 }
 
-/** TTS request language vs locale — never set both (Cartesia 400). */
-export function cartesiaTranscriptLanguageFields(
-  modelId: string,
-  locale = CARTESIA_TTS_LOCALE,
-): { locale: string } | { language: string } {
-  if (isSonic36Model(modelId)) {
-    return { locale };
+/**
+ * Try `sonic-3.6` first (or CARTESIA_MODEL), then `sonic-preview` if the API
+ * rejects the primary id. Other explicit models (e.g. sonic-3.5) are not
+ * upgraded via fallback.
+ */
+export function cartesiaTtsModelCandidates(
+  envModel = process.env.CARTESIA_MODEL,
+): string[] {
+  const primary = cartesiaPreferredModelId(envModel);
+  if (primary === CARTESIA_SONIC_36_MODEL_ID) {
+    return [CARTESIA_SONIC_36_MODEL_ID, CARTESIA_SONIC_36_FALLBACK_MODEL_ID];
   }
+  return [primary];
+}
+
+export function shouldRetryCartesiaModel(status: number): boolean {
+  return status === 400 || status === 404 || status === 422;
+}
+
+/** Always `language: "en"`. Never include `locale`. */
+export function cartesiaLanguageField(): { language: "en" } {
   return { language: "en" };
 }
 
-export function demoVoiceMetadata(): Record<string, string> {
+export function phoneDigits(value: string | null | undefined): string {
+  return String(value || "").replace(/\D/g, "");
+}
+
+export function isWebsiteDemoAgent(opts: {
+  slug?: unknown;
+  telnyxNumber?: unknown;
+}): boolean {
+  if (String(opts.slug || "").trim() === WISECALL_WEBSITE_DEMO_SLUG) return true;
+  const digits = phoneDigits(String(opts.telnyxNumber || ""));
+  if (digits === WISECALL_WEBSITE_DEMO_DDI_DIGITS) return true;
+  if (digits === "01135222277") return true;
+  return digits.endsWith("1135222277") && digits.length >= 10 && digits.length <= 13;
+}
+
+/** Demo-only TTS hint. Does not switch STT (Ink-2 is not a Deepgram drop-in). */
+export function demoTtsMetadata(
+  envModel = process.env.CARTESIA_MODEL,
+): Record<string, string> {
   return {
     tts_provider: "cartesia",
-    tts_model: CARTESIA_SONIC_36_MODEL_ID,
-    tts_locale: CARTESIA_TTS_LOCALE,
-    stt_provider: "cartesia",
-    stt_model: CARTESIA_INK_2_MODEL_ID,
+    tts_model: cartesiaPreferredModelId(envModel),
   };
 }

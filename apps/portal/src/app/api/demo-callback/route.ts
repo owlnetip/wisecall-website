@@ -94,6 +94,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         phone: parsed.data.phone,
+        // Same live demo as wisecall.io tap-to-call: +44 113 522 2277.
         profile_slug: "wisecall",
         agent_name: "WiseCall Website Assistant",
         source: parsed.data.source,

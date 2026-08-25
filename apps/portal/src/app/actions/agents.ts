@@ -25,8 +25,9 @@ import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhook
 import { getVoiceOption } from "@/lib/voices";
 import {
   CARTESIA_API_VERSION,
-  CARTESIA_SONIC_36_MODEL_ID,
-  cartesiaTranscriptLanguageFields,
+  cartesiaLanguageField,
+  cartesiaTtsModelCandidates,
+  shouldRetryCartesiaModel,
 } from "@/lib/cartesia";
 import {
   getCartesiaVoiceId,
@@ -645,10 +646,8 @@ export type TestVoiceResult = {
 // Cartesia voice catalogue. The real voice UUIDs live in config, not code, so
 // each name maps to an env var (CARTESIA_VOICE_<NAME>). Until an id is set for a
 // voice, preview returns a clear message instead of failing.
-// In-portal "Test voice" defaults to Sonic 3.6 (`sonic-preview`) + en-GB so it
-// matches the website demo agent. CARTESIA_MODEL overrides the model id.
-// The live phone TTS caller is on the telephony server, not this function.
-const CARTESIA_MODEL = CARTESIA_SONIC_36_MODEL_ID;
+// In-portal "Test voice" tries Sonic 3.6 then sonic-preview. CARTESIA_MODEL
+// overrides the primary id. Live phone TTS is on the telephony host.
 
 // ElevenLabs model for in-portal voice preview. Override with ELEVENLABS_MODEL.
 const ELEVENLABS_MODEL = process.env.ELEVENLABS_MODEL || "eleven_turbo_v2_5";
@@ -710,37 +709,46 @@ async function synthesizeCartesiaPreview(
     return { ok: false, error: `No voice id is configured for ${voiceName} yet.` };
   }
 
-  try {
-    const res = await fetch("https://api.cartesia.ai/tts/bytes", {
-      method: "POST",
-      headers: {
-        "Cartesia-Version": CARTESIA_API_VERSION,
-        "X-API-Key": apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model_id: CARTESIA_MODEL,
-        transcript: sample.slice(0, 300),
-        voice: { mode: "id", id: voiceId },
-        ...cartesiaTranscriptLanguageFields(CARTESIA_MODEL),
-        output_format: {
-          container: "mp3",
-          sample_rate: 44100,
-          bit_rate: 128000,
-        },
-      }),
-    });
+  const models = cartesiaTtsModelCandidates();
+  let lastError = "Voice preview failed.";
 
-    if (!res.ok) {
+  try {
+    for (let i = 0; i < models.length; i += 1) {
+      const modelId = models[i];
+      const res = await fetch("https://api.cartesia.ai/tts/bytes", {
+        method: "POST",
+        headers: {
+          "Cartesia-Version": CARTESIA_API_VERSION,
+          "X-API-Key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model_id: modelId,
+          transcript: sample.slice(0, 300),
+          voice: { mode: "id", id: voiceId },
+          ...cartesiaLanguageField(),
+          output_format: {
+            container: "mp3",
+            sample_rate: 44100,
+            bit_rate: 128000,
+          },
+        }),
+      });
+
+      if (res.ok) {
+        const buf = Buffer.from(await res.arrayBuffer());
+        return { ok: true, audio: buf.toString("base64"), mime: "audio/mpeg" };
+      }
+
       const detail = await res.text().catch(() => "");
-      return {
-        ok: false,
-        error: `Voice preview failed (${res.status}). ${detail.slice(0, 140)}`.trim(),
-      };
+      lastError = `Voice preview failed (${res.status}). ${detail.slice(0, 140)}`.trim();
+      const hasFallback = i < models.length - 1;
+      if (!hasFallback || !shouldRetryCartesiaModel(res.status)) {
+        return { ok: false, error: lastError };
+      }
     }
 
-    const buf = Buffer.from(await res.arrayBuffer());
-    return { ok: true, audio: buf.toString("base64"), mime: "audio/mpeg" };
+    return { ok: false, error: lastError };
   } catch (err) {
     return {
       ok: false,

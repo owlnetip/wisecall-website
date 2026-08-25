@@ -4,19 +4,19 @@ Voice call runtime for WiseCall agents. Deploy to `/opt/wisecall-edge` on the te
 
 This package owns session lifecycle (billing gate, prompts, webhooks, call logs). It does **not** open the Telnyx media socket or call Cartesia/Deepgram. Those live in the telephony TTS/STT process on the same host.
 
-## Website demo voice (Sonic 3.6 + Ink-2)
+## Website demo voice (Sonic 3.6)
 
-The wisecall.io phone demo is profile slug `wisecall` (DDI `+441135222277`). Metadata on that row now includes `tts_model=sonic-preview`, `tts_locale=en-GB`, `stt_provider=cartesia`, `stt_model=ink-2`.
+The wisecall.io live demo is the agent on **+44 113 522 2277** (`tel:+441135222277`). Desktop callback uses `wisecall-demo-callback` with `profile_slug: "wisecall"`. Same voice IDs as Sonic 3.5; keep `language: "en"` and do not send `language` and `locale` together.
 
-The Telnyx caller must import `resolveVoicePipeline(profile)` from this package (or copy the same rules) and:
+A migration sets `metadata.tts_model=sonic-3.6` on that profile only. Other agents are unchanged. Live STT stays Deepgram — Cartesia Ink-2 is a separate STT swap, not a drop-in.
 
-1. Send Cartesia TTS `model_id` from `pipeline.ttsModel` (website demo: `sonic-preview` — Cartesia’s current Sonic 3.6 id; override with `CARTESIA_MODEL=sonic-3.6` or `sonic-latest` if GA aliases those).
-2. Pass `locale: "en-GB"` on Sonic 3.6 (do **not** also send `language`; do **not** send `locale` on Sonic 3.5 — it 400s).
-3. Set `Cartesia-Version: 2026-08-14` on TTS/STT requests.
-4. For the demo agent only, switch STT from Deepgram to Cartesia Ink-2 (`wss://api.cartesia.ai/stt/websocket?model=ink-2`, English only). Leave other agents on Deepgram until Ink-2 is proven.
-5. Do not use a Professional Voice Clone on `sonic-preview` / beta; stock and instant-clone IDs are fine.
+The Telnyx caller must import `resolveVoicePipeline(profile)` (or copy the same rules) and:
 
-A global `CARTESIA_MODEL=sonic-preview` on the telephony host would flip **every** Cartesia agent. Prefer per-profile `metadata.tts_model` or `resolveVoicePipeline`.
+1. Send Cartesia TTS `model_id` from `pipeline.ttsModelCandidates` — try `sonic-3.6`, then `sonic-preview` if the API rejects the id.
+2. Pass `language: "en"` only.
+3. If `model_id` is process-wide telephony env rather than per-profile metadata, set `CARTESIA_MODEL=sonic-3.6` (or `sonic-preview`) on that host. That is host-wide, not demo-only.
+
+Prefer per-profile `metadata.tts_model` / `resolveVoicePipeline` so production agents stay on Sonic 3.5.
 
 ## Call lifecycle
 
