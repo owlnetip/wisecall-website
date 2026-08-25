@@ -10,6 +10,11 @@ import {
   isNoCardTrialRequest,
   signupRedirectForTrial,
 } from "@/lib/trial";
+import { getServiceSupabase } from "@/lib/supabase";
+import {
+  isLikelyExistingSignup,
+  shouldAutoConfirmNoCardSignup,
+} from "@/lib/signup-session";
 
 export type AuthState = { error?: string; message?: string };
 
@@ -75,18 +80,56 @@ export async function signUpAction(
     return { error: error.message };
   }
 
-  // If email confirmation is on, there's no active session yet. The confirm
-  // route starts the no-card trial once they click the email link.
-  if (!data.session) {
+  // Confirm email is on for the project, so signUp often returns a user and no
+  // session, and would otherwise show "check your inbox". For the Facebook
+  // 20-call path we confirm this user via the admin API and sign them in now.
+  // The confirmation email may still go out; it must not block them.
+  let session = data.session;
+  const userId = data.user?.id ?? null;
+
+  if (
+    shouldAutoConfirmNoCardSignup({
+      noCard,
+      hasSession: Boolean(session),
+      userId,
+      identities: data.user?.identities,
+    })
+  ) {
+    const service = getServiceSupabase();
+    if (!service || !userId) {
+      return { error: "Could not finish signup. Try again." };
+    }
+    const { error: confirmError } = await service.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+    });
+    if (confirmError) {
+      console.error("trial signup auto-confirm failed", confirmError.message);
+      return { error: "Could not finish signup. Try again." };
+    }
+    const { data: signedIn, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInError || !signedIn.session) {
+      console.error("trial signup sign-in failed", signInError?.message);
+      return { error: "Could not sign you in. Try again." };
+    }
+    session = signedIn.session;
+  }
+
+  if (!session) {
+    if (noCard && isLikelyExistingSignup(data.user?.identities)) {
+      return { error: "That email already has an account. Sign in instead." };
+    }
     return {
       message: noCard
-        ? "Check your inbox to confirm your email. Your 20 free calls start as soon as you're in — no card needed."
+        ? "Could not sign you in. Try again."
         : "Check your inbox to confirm your email, then choose your plan.",
     };
   }
 
-  if (noCard && data.user) {
-    const started = await startNoCardTrialForUser(data.user.id);
+  if (noCard && userId) {
+    const started = await startNoCardTrialForUser(userId);
     if (!started.ok) {
       return { error: started.error ?? "Could not start the free calls." };
     }

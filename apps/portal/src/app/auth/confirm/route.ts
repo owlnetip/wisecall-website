@@ -40,8 +40,21 @@ export async function GET(request: NextRequest) {
       await grantNoCardTrialIfNeeded();
       redirect(next);
     }
+    // Trial signups are auto-confirmed, so this link may already be used. If
+    // they are signed in, continue; otherwise send them to sign in.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await grantNoCardTrialIfNeeded();
+      redirect(next);
+    }
     console.error("auth/confirm verifyOtp failed", { type, message: error.message });
-    redirect(`/?error=auth&reason=${encodeURIComponent("otp: " + error.message)}`);
+    redirect(
+      noCard
+        ? `/?redirect=${encodeURIComponent(next)}`
+        : `/?error=auth&reason=${encodeURIComponent("otp: " + error.message)}`,
+    );
   }
 
   if (code) {
@@ -50,8 +63,19 @@ export async function GET(request: NextRequest) {
       await grantNoCardTrialIfNeeded();
       redirect(next);
     }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await grantNoCardTrialIfNeeded();
+      redirect(next);
+    }
     console.error("auth/confirm exchangeCodeForSession failed", { message: error.message });
-    redirect(`/?error=auth&reason=${encodeURIComponent("code: " + error.message)}`);
+    redirect(
+      noCard
+        ? `/?redirect=${encodeURIComponent(next)}`
+        : `/?error=auth&reason=${encodeURIComponent("code: " + error.message)}`,
+    );
   }
 
   redirect("/?error=auth&reason=missing_token_or_type");
