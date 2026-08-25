@@ -165,17 +165,24 @@ export function SetupWizard({
   templates,
   accountEmail = "",
   initialWebsite = "",
+  requireAccount = false,
+  onNeedAccount,
+  hideClose = false,
 }: {
   onClose: () => void;
   // Parent creates the agent (createAgent + applies website/hours/email/contacts)
   // and does the optimistic list add. Returns the new agent id or an error.
   onSubmit: (draft: AgentDraft) => Promise<WizardResult>;
-  // Escape hatch to the classic full editor.
-  onManual: () => void;
+  // Escape hatch to the classic full editor. Hidden when omitted (guest /try).
+  onManual?: () => void;
   voices: Voice[];
   templates: AgentTemplate[];
   accountEmail?: string;
   initialWebsite?: string;
+  // Facebook /try: build first, then email+password is the number gate.
+  requireAccount?: boolean;
+  onNeedAccount?: (draft: AgentDraft) => void;
+  hideClose?: boolean;
 }) {
   const [requestedStep, setStep] = useState<Step>("website");
   const [manualMode, setManualMode] = useState(false);
@@ -204,6 +211,7 @@ export function SetupWizard({
   // The original AI-written prompt/greeting, kept so switching back to the
   // general receptionist template restores it instead of the generic text.
   const aiRef = useRef<{ prompt: string; greeting: string } | null>(null);
+  const autoStarted = useRef(false);
 
   const availableTemplates = templates.filter((t) => t.available);
 
@@ -259,24 +267,36 @@ export function SetupWizard({
     setError(null);
     setLoadingPhase(0);
     startGenerate(async () => {
-      const res = await draftAgentFromWebsite(website);
-      if (!res.ok || !res.draft) {
-        setError(res.error ?? "Couldn't build your agent. Try again or set up manually.");
-        return;
+      try {
+        const res = await draftAgentFromWebsite(website);
+        if (!res.ok || !res.draft) {
+          setError(res.error ?? "Couldn't build your agent. Try again or set up manually.");
+          return;
+        }
+        aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
+        // If the scan matched a specialised template, apply it now (the AI prompt
+        // is a generic receptionist; the template carries the real skill flow).
+        let next = res.draft;
+        if (accountEmail && !next.defaultEmail) next = { ...next, defaultEmail: accountEmail };
+        const matched = availableTemplates.find((t) => t.id === next.templateId);
+        if (matched && matched.id !== "receptionist") {
+          next = applyTemplate(next, matched, aiRef.current);
+        }
+        setDraft(next);
+        setStep("template");
+      } catch {
+        setError("Couldn't build your agent. Try again or set up manually.");
       }
-      aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
-      // If the scan matched a specialised template, apply it now (the AI prompt
-      // is a generic receptionist; the template carries the real skill flow).
-      let next = res.draft;
-      if (accountEmail && !next.defaultEmail) next = { ...next, defaultEmail: accountEmail };
-      const matched = availableTemplates.find((t) => t.id === next.templateId);
-      if (matched && matched.id !== "receptionist") {
-        next = applyTemplate(next, matched, aiRef.current);
-      }
-      setDraft(next);
-      setStep("template");
     });
   }
+
+  useEffect(() => {
+    if (autoStarted.current || !initialWebsite.trim()) return;
+    autoStarted.current = true;
+    generate();
+    // First paint from /try already has the URL; start the scan so they don't paste twice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialWebsite]);
 
   function startManual() {
     setError(null);
@@ -325,6 +345,10 @@ export function SetupWizard({
       return;
     }
     setError(null);
+    if (requireAccount && onNeedAccount) {
+      onNeedAccount(draft);
+      return;
+    }
     startSubmit(async () => {
       const res = await onSubmit(draft);
       if (!res.ok) setError(res.error ?? "Couldn't create the agent.");
@@ -404,8 +428,9 @@ export function SetupWizard({
             You control the final step
           </p>
           <p className="mt-1 text-xs leading-relaxed text-[#94b4b2]">
-            Nothing changes while you review. The final button clearly tells you when your first
-            number will be connected and ready for calls.
+            {requireAccount
+              ? "Nothing goes live while you review. You only create an account when you want the number."
+              : "Nothing changes while you review. The final button clearly tells you when your first number will be connected and ready for calls."}
           </p>
         </div>
       </aside>
@@ -426,14 +451,16 @@ export function SetupWizard({
                 style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }}
               />
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="press flex h-9 w-9 items-center justify-center rounded-lg text-ink-faint transition hover:bg-card-tint hover:text-ink"
-              aria-label="Close setup"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            {hideClose ? null : (
+              <button
+                type="button"
+                onClick={onClose}
+                className="press flex h-9 w-9 items-center justify-center rounded-lg text-ink-faint transition hover:bg-card-tint hover:text-ink"
+                aria-label="Close setup"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </header>
         {/* Mobile progress */}
@@ -579,14 +606,18 @@ export function SetupWizard({
                     }
                     setError(null);
                     startGenerateManual(async () => {
-                      const res = await draftAgentFromInputs(manualInputs);
-                      if (!res.ok || !res.draft) {
-                        setError(res.error ?? "Couldn't build the agent.");
-                        return;
+                      try {
+                        const res = await draftAgentFromInputs(manualInputs);
+                        if (!res.ok || !res.draft) {
+                          setError(res.error ?? "Couldn't build the agent.");
+                          return;
+                        }
+                        aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
+                        setDraft(res.draft);
+                        goNext();
+                      } catch {
+                        setError("Couldn't build the agent. Try again.");
                       }
-                      aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
-                      setDraft(res.draft);
-                      goNext();
                     });
                   }}
                   disabled={generatingManual || !manualInputs.businessName.trim()}
@@ -890,9 +921,18 @@ export function SetupWizard({
                 </div>
 
                 <div className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3 text-sm text-[#1f5f60]">
-                  <span className="font-bold">Last step.</span> When you finish, we create your
-                  assistant and connect a phone number automatically — it&apos;ll be ready to
-                  take calls.
+                  {requireAccount ? (
+                    <>
+                      <span className="font-bold">Last step.</span> Create a free account (email
+                      and password) to get your number. 20 free inbound AI calls. No card.
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-bold">Last step.</span> When you finish, we create your
+                      assistant and connect a phone number automatically — it&apos;ll be ready to
+                      take calls.
+                    </>
+                  )}
                 </div>
 
                 {error && <p className="text-sm font-medium text-danger">{error}</p>}
@@ -915,6 +955,10 @@ export function SetupWizard({
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" /> Setting up &amp; connecting number…
                       </>
+                    ) : requireAccount ? (
+                      <>
+                        <Check className="h-4 w-4" /> Get my number
+                      </>
                     ) : (
                       <>
                         <Check className="h-4 w-4" /> Finish &amp; connect number
@@ -922,13 +966,15 @@ export function SetupWizard({
                     )}
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={onManual}
-                  className="w-full text-center text-xs font-semibold text-ink-faint underline-offset-2 hover:underline"
-                >
-                  Prefer the classic editor? Switch to advanced setup
-                </button>
+                {onManual ? (
+                  <button
+                    type="button"
+                    onClick={onManual}
+                    className="w-full text-center text-xs font-semibold text-ink-faint underline-offset-2 hover:underline"
+                  >
+                    Prefer the classic editor? Switch to advanced setup
+                  </button>
+                ) : null}
               </div>
             )}
           </div>

@@ -22,7 +22,9 @@ import {
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
 import { ingestWebsiteKnowledgeBase } from "@/app/actions/knowledge-base";
 import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhooks";
-import { getVoiceOption } from "@/lib/voices";
+import { DEFAULT_VOICE_ID, getVoiceOption } from "@/lib/voices";
+import { connectCalCom } from "@/app/actions/calendar";
+import { authorizeWizardPreview } from "@/lib/wizard-preview-auth";
 import {
   CARTESIA_API_VERSION,
   cartesiaLanguageField,
@@ -761,11 +763,8 @@ async function synthesizeCartesiaPreview(
 // for in-browser playback. The API key stays server-side. Used by the "Test
 // voice" button in the agent editor.
 export async function testVoice(voice: string, text?: string): Promise<TestVoiceResult> {
-  const auth = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await auth.auth.getUser();
-  if (!user) return { ok: false, error: "Not signed in." };
+  const access = await authorizeWizardPreview("voice");
+  if (!access.ok) return { ok: false, error: access.error };
 
   const selected = getVoiceRuntimeConfig(voice);
   if (!selected) return { ok: false, error: "Unknown voice." };
@@ -902,4 +901,75 @@ export async function getPendingAgentsStatus(
     result[row.id as string] = { number, status };
   }
   return result;
+}
+
+export type WizardCreateResult = {
+  ok: boolean;
+  id?: string;
+  slug?: string;
+  error?: string;
+  routing?: CreateResult["routing"];
+};
+
+// Shared finish for SetupWizard (signed-in dashboard and the Facebook guest
+// path after email+password). Creates the agent, which is when a live number
+// is assigned. Must not run before an account exists.
+export async function createAgentFromWizardDraft(draft: {
+  businessName: string;
+  receptionistName?: string;
+  industry?: string;
+  greeting?: string;
+  prompt: string;
+  knowledge?: string;
+  knowledgeFields?: KnowledgeFields;
+  officeHours?: OfficeHours;
+  website?: string;
+  templateId?: string;
+  voice?: string;
+  defaultEmail?: string;
+  contacts?: RoutingContact[];
+  calcomApiKey?: string;
+}): Promise<WizardCreateResult> {
+  const voice = draft.voice || DEFAULT_VOICE_ID;
+  const contacts = draft.contacts ?? [];
+  const defaultEmail = (draft.defaultEmail ?? "").trim();
+  const result = await createAgent({
+    name: draft.receptionistName || "Receptionist",
+    businessName: draft.businessName || "New business",
+    industry: draft.industry || "General",
+    prompt: draft.prompt,
+    greeting: draft.greeting,
+    voice,
+    knowledge: draft.knowledge,
+    knowledgeFields: draft.knowledgeFields,
+    contacts,
+    templateId: draft.templateId || "receptionist",
+  });
+  if (!result.ok || !result.id) {
+    return { ok: false, error: result.error ?? "Could not create the assistant." };
+  }
+
+  const hasHours = Object.keys(draft.officeHours ?? {}).length > 0;
+  if (draft.website || hasHours || defaultEmail) {
+    await updateAgent(result.id, {
+      website: draft.website,
+      officeHours: draft.officeHours,
+      defaultEmail,
+    });
+  }
+
+  const calcomApiKey = (draft.calcomApiKey ?? "").trim();
+  if (calcomApiKey) {
+    const connected = await connectCalCom(result.id, calcomApiKey);
+    if (!connected.ok) {
+      console.error("Cal.com connect after setup failed:", connected.error);
+    }
+  }
+
+  return {
+    ok: true,
+    id: result.id,
+    slug: result.slug,
+    routing: result.routing,
+  };
 }

@@ -5,7 +5,7 @@ export const DEMO_CALLBACK_IP_WINDOW_SECONDS = 15 * 60;
 export const DEMO_CALLBACK_NUMBER_LIMIT = 3;
 export const DEMO_CALLBACK_NUMBER_WINDOW_SECONDS = 60 * 60;
 
-export function getCallbackClientIp(headers: Headers): string {
+export function getCallbackClientIp(headers: { get(name: string): string | null }): string {
   const forwarded =
     headers.get("x-vercel-forwarded-for") ||
     headers.get("x-forwarded-for") ||

@@ -1,9 +1,13 @@
-// Website URL + setup wizard carried from wisecall.io/try through no-card signup.
+// Website URL + setup wizard carried from wisecall.io/try.
+//
+// Facebook /try is agent-first: visitors paste a website, then run SetupWizard
+// on public /setup with no account. Email + password is the number gate, not
+// the first screen. Homepage "Try it now" is still signup-first.
 //
 // There is no /wizard or /dashboard/setup route. Create-agent is a full-screen
 // overlay (SetupWizard) on /dashboard, the same UI as "+ New agent" /
-// "Set up my receptionist". ?setup=1 opens it on first paint so trial signups
-// never see the Agents empty state. ?website= prefills step 1.
+// "Set up my receptionist". ?setup=1 opens it on first paint so signed-in
+// trial users never see the Agents empty state. ?website= prefills step 1.
 
 const MAX_WEBSITE_LENGTH = 300;
 
@@ -41,6 +45,14 @@ export function dashboardSetupPath(website?: unknown): string {
   const parsed = parseSetupWebsite(website);
   if (parsed) params.set("website", parsed);
   return `/dashboard?${params.toString()}`;
+}
+
+// Public guest wizard for wisecall.io/try. No account until they ask for a number.
+export function guestSetupPath(website?: unknown): string {
+  const params = new URLSearchParams({ trial: "calls" });
+  const parsed = parseSetupWebsite(website);
+  if (parsed) params.set("website", parsed);
+  return `/setup?${params.toString()}`;
 }
 
 export function shouldOpenSetupWizard(opts: {

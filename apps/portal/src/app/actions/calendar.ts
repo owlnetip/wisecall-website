@@ -204,9 +204,6 @@ export async function getCalendarConnection(
 export async function verifyCalComApiKey(
   apiKey: string,
 ): Promise<{ ok: true; eventTypes: CalendarEventType[] } | { ok: false; error: string }> {
-  const userId = await effectiveUserId();
-  if (!userId) return { ok: false, error: "Not signed in" };
-
   const key = apiKey.trim();
   if (!key || key.length < 10) return { ok: false, error: "Paste a valid Cal.com API key" };
 
