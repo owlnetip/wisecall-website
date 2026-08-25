@@ -53,19 +53,28 @@ async function consumeGuestWizardRateLimit(
 export async function authorizeWizardPreview(
   kind: GuestWizardRateKind,
 ): Promise<WizardPreviewAuth> {
-  const auth = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await auth.auth.getUser();
-
-  if (user) {
-    if (!isAdmin(user) && !hasActiveAccess(await getBillingForUser(user.id))) {
-      return { ok: false, error: "Start your free trial first." };
-    }
-    return { ok: true, email: user.email ?? "" };
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return { ok: false, error: "Could not start setup. Try again." };
   }
 
-  const limited = await consumeGuestWizardRateLimit(kind);
-  if (!limited.ok) return limited;
-  return { ok: true, email: "" };
+  try {
+    const auth = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await auth.auth.getUser();
+
+    if (user) {
+      if (!isAdmin(user) && !hasActiveAccess(await getBillingForUser(user.id))) {
+        return { ok: false, error: "Start your free trial first." };
+      }
+      return { ok: true, email: user.email ?? "" };
+    }
+
+    const limited = await consumeGuestWizardRateLimit(kind);
+    if (!limited.ok) return limited;
+    return { ok: true, email: "" };
+  } catch (err) {
+    console.error("wizard preview auth failed", err instanceof Error ? err.message : err);
+    return { ok: false, error: "Could not start setup. Try again." };
+  }
 }

@@ -267,22 +267,26 @@ export function SetupWizard({
     setError(null);
     setLoadingPhase(0);
     startGenerate(async () => {
-      const res = await draftAgentFromWebsite(website);
-      if (!res.ok || !res.draft) {
-        setError(res.error ?? "Couldn't build your agent. Try again or set up manually.");
-        return;
+      try {
+        const res = await draftAgentFromWebsite(website);
+        if (!res.ok || !res.draft) {
+          setError(res.error ?? "Couldn't build your agent. Try again or set up manually.");
+          return;
+        }
+        aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
+        // If the scan matched a specialised template, apply it now (the AI prompt
+        // is a generic receptionist; the template carries the real skill flow).
+        let next = res.draft;
+        if (accountEmail && !next.defaultEmail) next = { ...next, defaultEmail: accountEmail };
+        const matched = availableTemplates.find((t) => t.id === next.templateId);
+        if (matched && matched.id !== "receptionist") {
+          next = applyTemplate(next, matched, aiRef.current);
+        }
+        setDraft(next);
+        setStep("template");
+      } catch {
+        setError("Couldn't build your agent. Try again or set up manually.");
       }
-      aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
-      // If the scan matched a specialised template, apply it now (the AI prompt
-      // is a generic receptionist; the template carries the real skill flow).
-      let next = res.draft;
-      if (accountEmail && !next.defaultEmail) next = { ...next, defaultEmail: accountEmail };
-      const matched = availableTemplates.find((t) => t.id === next.templateId);
-      if (matched && matched.id !== "receptionist") {
-        next = applyTemplate(next, matched, aiRef.current);
-      }
-      setDraft(next);
-      setStep("template");
     });
   }
 
@@ -602,14 +606,18 @@ export function SetupWizard({
                     }
                     setError(null);
                     startGenerateManual(async () => {
-                      const res = await draftAgentFromInputs(manualInputs);
-                      if (!res.ok || !res.draft) {
-                        setError(res.error ?? "Couldn't build the agent.");
-                        return;
+                      try {
+                        const res = await draftAgentFromInputs(manualInputs);
+                        if (!res.ok || !res.draft) {
+                          setError(res.error ?? "Couldn't build the agent.");
+                          return;
+                        }
+                        aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
+                        setDraft(res.draft);
+                        goNext();
+                      } catch {
+                        setError("Couldn't build the agent. Try again.");
                       }
-                      aiRef.current = { prompt: res.draft.prompt, greeting: res.draft.greeting };
-                      setDraft(res.draft);
-                      goNext();
                     });
                   }}
                   disabled={generatingManual || !manualInputs.businessName.trim()}
