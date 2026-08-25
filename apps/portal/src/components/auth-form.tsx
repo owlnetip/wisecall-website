@@ -81,6 +81,8 @@ export function AuthForm({
   trial?: string;
   website?: string;
 }) {
+  // Visible signup fields are email + password only. Company, phone and website
+  // are collected later in SetupWizard after the account exists.
   const isSignup = mode === "signup";
   const noCardTrial = trial === "calls";
   const setupWebsite = parseSetupWebsite(website) ?? undefined;
@@ -207,6 +209,8 @@ export function AuthForm({
               <input
                 type="email"
                 name="email"
+                autoComplete="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@wisecall.io"
@@ -235,6 +239,9 @@ export function AuthForm({
               <input
                 type="password"
                 name="password"
+                autoComplete={isSignup ? "new-password" : "current-password"}
+                required
+                minLength={isSignup ? 8 : undefined}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -282,15 +289,7 @@ export function AuthForm({
             </button>
           </form>
 
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1" style={{ background: "rgba(125,232,235,0.1)" }} />
-            <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
-              or
-            </span>
-            <div className="h-px flex-1" style={{ background: "rgba(125,232,235,0.1)" }} />
-          </div>
-
-          <p className="text-center text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="mt-5 text-center text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
             {isSignup ? "Already have an account? " : "Don't have an account? "}
             <Link href={isSignup ? "/" : "/signup"} className="font-semibold" style={{ color: "#7de8eb" }}>
               {isSignup ? "Sign in" : "Start free trial"}
