@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Try WiseCall | 20 free inbound AI calls. No card.</title>
-  <meta name="description" content="Paste your website. WiseCall drafts the receptionist in about a minute, then we give you a number. 20 free inbound AI calls. No card.">
+  <meta name="description" content="Sign up, then paste your website. WiseCall drafts the receptionist in about a minute and gives you a number to ring. 20 free inbound AI calls. No card.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://wisecall.io/try">
   <meta name="theme-color" content="#172929">
@@ -13,12 +13,12 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://wisecall.io/try">
   <meta property="og:title" content="Try WiseCall | 20 free inbound AI calls. No card.">
-  <meta property="og:description" content="Paste your website. Live in about a minute. We give you a number. 20 free inbound AI calls. No card.">
+  <meta property="og:description" content="Sign up, then paste your website. Live in about a minute. We give you a number. 20 free inbound AI calls. No card.">
   <meta property="og:image" content="https://wisecall.io/og-image.jpg">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Try WiseCall | 20 free inbound AI calls. No card.">
-  <meta name="twitter:description" content="Paste your website. Live in about a minute. 20 free inbound AI calls. No card.">
+  <meta name="twitter:description" content="Sign up, then paste your website. Live in about a minute. 20 free inbound AI calls. No card.">
 
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -85,38 +85,6 @@
       font-weight: 700;
       color: #7de8eb;
     }
-    .try-form {
-      display: grid;
-      gap: 0.65rem;
-    }
-    .try-form label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-    }
-    .try-form input {
-      width: 100%;
-      min-height: 3.15rem;
-      padding: 0.85rem 1rem;
-      border-radius: 0.6rem;
-      border: 1.5px solid rgba(125, 232, 235, 0.28);
-      background: #1f3535;
-      color: #fff;
-      font-family: inherit;
-      font-size: 16px;
-      font-weight: 500;
-      outline: none;
-    }
-    .try-form input::placeholder {
-      color: rgba(255, 255, 255, 0.38);
-      font-weight: 500;
-    }
-    .try-form input:focus {
-      border-color: #7de8eb;
-      box-shadow: 0 0 0 3px rgba(125, 232, 235, 0.18);
-    }
     .cta {
       display: flex;
       align-items: center;
@@ -124,15 +92,12 @@
       width: 100%;
       min-height: 3.15rem;
       padding: 0.85rem 1.2rem;
-      border: 0;
       border-radius: 0.6rem;
       background: linear-gradient(90deg, #7de8eb, #5dbfc2);
       color: #172929;
-      font-family: inherit;
       font-weight: 800;
       font-size: 1.05rem;
       text-decoration: none;
-      cursor: pointer;
       box-shadow: 0 0 28px rgba(125, 232, 235, 0.28);
     }
     .cta:active { transform: scale(0.98); }
@@ -199,33 +164,15 @@
 
     <main>
       <p class="outcome">They rang. You missed it. They booked someone else.</p>
-      <h1>Paste your website. We&rsquo;ll take the calls.</h1>
-      <p class="payoff">Enter your website. We build the receptionist in about 60 seconds, then give you a number to ring.</p>
+      <h1>We&rsquo;ll take the calls.</h1>
+      <p class="payoff">Sign up, then paste your website. We build the receptionist in about 60 seconds and give you a number to ring.</p>
       <p class="offer">20 free inbound AI calls. No card.</p>
-      <form id="try-form" class="try-form" action="https://app.wisecall.io/" method="get">
-        <input type="hidden" name="signup" value="1">
-        <input type="hidden" name="trial" value="calls">
-        <label for="website">Your website</label>
-        <input
-          id="website"
-          name="website"
-          type="text"
-          inputmode="url"
-          autocomplete="url"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
-          enterkeyhint="go"
-          placeholder="yourwebsite.co.uk"
-          required
-        >
-        <button class="cta" type="submit">Build my agent</button>
-      </form>
+      <a class="cta" href="https://app.wisecall.io/?signup=1&amp;trial=calls">Build my agent</a>
 
       <p class="ready">Live in about a minute</p>
       <ol class="steps">
-        <li><span class="num">1</span> Enter your website</li>
-        <li><span class="num">2</span> We build the receptionist, about 60 seconds</li>
+        <li><span class="num">1</span> Sign up, no card</li>
+        <li><span class="num">2</span> Paste your website. We build the receptionist, about 60 seconds</li>
         <li><span class="num">3</span> We give you a number to ring</li>
       </ol>
 
@@ -241,20 +188,5 @@
       <a href="/privacy-policy">Privacy</a>
     </footer>
   </div>
-  <script>
-    var form = document.getElementById("try-form");
-    if (form) {
-      form.addEventListener("submit", function (event) {
-        var input = form.querySelector("[name='website']");
-        if (!input) return;
-        var raw = (input.value || "").trim();
-        if (!raw) {
-          event.preventDefault();
-          return;
-        }
-        if (!/^https?:\/\//i.test(raw)) input.value = "https://" + raw;
-      });
-    }
-  </script>
 </body>
 </html>
