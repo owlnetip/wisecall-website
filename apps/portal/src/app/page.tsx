@@ -16,6 +16,7 @@ function HomeAuth() {
   // ?trial=calls is the Facebook / Try-it-now path: 20 free calls, no card.
   const trialParam = searchParams.get("trial");
   const noCardTrial = trialParam === "calls";
+  const websiteParam = searchParams.get("website") ?? undefined;
   const mode =
     searchParams.get("signup") === "1" ||
     searchParams.get("redirect") === "/billing" ||
@@ -28,6 +29,7 @@ function HomeAuth() {
       mode={mode}
       redirectAfterSignIn={redirectAfterSignIn}
       trial={noCardTrial ? "calls" : undefined}
+      website={websiteParam}
     />
   );
 }

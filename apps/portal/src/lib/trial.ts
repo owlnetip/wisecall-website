@@ -1,3 +1,4 @@
+import { dashboardSetupPath } from "./setup-website";
 import { TRIAL_CALL_CAP } from "./stripe";
 
 // Self-serve path used by homepage "Try it now" / Facebook ads: 20 inbound AI
@@ -13,8 +14,11 @@ export function isNoCardTrialRequest(trial: string | null | undefined): boolean 
   return trial === NO_CARD_TRIAL;
 }
 
-export function signupRedirectForTrial(trial: string | null | undefined): string {
-  return isNoCardTrialRequest(trial) ? "/dashboard" : "/billing";
+export function signupRedirectForTrial(
+  trial: string | null | undefined,
+  website?: unknown,
+): string {
+  return isNoCardTrialRequest(trial) ? dashboardSetupPath(website) : "/billing";
 }
 
 // In-app 20-call trial that never created a Stripe subscription. Stripe Checkout

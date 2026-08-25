@@ -46,7 +46,7 @@ export async function signUpAction(
   const password = String(formData.get("password") ?? "");
   const trial = String(formData.get("trial") ?? "");
   const noCard = isNoCardTrialRequest(trial);
-  const afterSignup = signupRedirectForTrial(trial);
+  const afterSignup = signupRedirectForTrial(trial, formData.get("website"));
   const confirmNext = afterSignup;
 
   if (!email || !password) {

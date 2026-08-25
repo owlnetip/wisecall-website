@@ -12,8 +12,13 @@ import {
 test("homepage / Facebook signup is the no-card 20-call path", () => {
   assert.equal(isNoCardTrialRequest("calls"), true);
   assert.equal(isNoCardTrialRequest(null), false);
-  assert.equal(signupRedirectForTrial("calls"), "/dashboard");
+  assert.equal(signupRedirectForTrial("calls"), "/dashboard?setup=1");
   assert.equal(signupRedirectForTrial(undefined), "/billing");
+  assert.equal(
+    signupRedirectForTrial("calls", "yourwebsite.co.uk"),
+    "/dashboard?setup=1&website=https%3A%2F%2Fyourwebsite.co.uk%2F",
+  );
+  assert.equal(signupRedirectForTrial(undefined, "yourwebsite.co.uk"), "/billing");
 });
 
 test("a trialing row with no Stripe subscription is the no-card trial", () => {

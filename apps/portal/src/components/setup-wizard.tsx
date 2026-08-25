@@ -164,6 +164,7 @@ export function SetupWizard({
   voices,
   templates,
   accountEmail = "",
+  initialWebsite = "",
 }: {
   onClose: () => void;
   // Parent creates the agent (createAgent + applies website/hours/email/contacts)
@@ -174,10 +175,11 @@ export function SetupWizard({
   voices: Voice[];
   templates: AgentTemplate[];
   accountEmail?: string;
+  initialWebsite?: string;
 }) {
   const [requestedStep, setStep] = useState<Step>("website");
   const [manualMode, setManualMode] = useState(false);
-  const [website, setWebsite] = useState("");
+  const [website, setWebsite] = useState(initialWebsite);
   const [draft, setDraft] = useState<AgentDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generating, startGenerate] = useTransition();
