@@ -36,6 +36,7 @@ data/research/cqc_directory.zip
 .vercel
 .env*.local
 .env*
+!.env.example
 
 # Written at the repo root by `deno test` / `deno check` on the edge functions
 deno.lock
