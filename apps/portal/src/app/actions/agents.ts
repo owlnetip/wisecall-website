@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getSupabaseConfig } from "@/lib/env";
+import {
+  formatRoutingContactsForProvider,
+  formatTransferPhoneForProvider,
+  type TransferRoutingProvider,
+} from "@/lib/transfer-phone";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { isAdmin } from "@/lib/admin";
 import type {
@@ -68,15 +73,24 @@ export type AgentPatch = {
   negotiatorRules?: NegotiatorRules;
 };
 
-// Builds the legacy transfer_routes object (keyed route → { label, phone,
-// timeout_secs }) from the canonical contacts list, so the existing call
-// pipeline keeps routing transfers without any backend change.
+function routingProviderFromMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): TransferRoutingProvider {
+  const routing = metadata?.routing;
+  if (routing && typeof routing === "object" && "provider" in routing) {
+    const provider = (routing as { provider?: unknown }).provider;
+    if (typeof provider === "string" && provider) return provider;
+  }
+  return process.env.WISECALL_ROUTING_PROVIDER || null;
+}
+
 function toTransferRoutes(
   contacts: RoutingContact[],
+  provider?: TransferRoutingProvider,
 ): Record<string, { label: string; phone: string; timeout_secs: number }> {
   const routes: Record<string, { label: string; phone: string; timeout_secs: number }> = {};
   for (const c of contacts) {
-    const phone = (c.phone ?? "").trim();
+    const phone = formatTransferPhoneForProvider(c.phone ?? "", provider);
     if (!c.transfer || !phone) continue;
     const key = slugify(c.name).replace(/-/g, "_") || c.id;
     routes[key] = { label: c.name.trim() || key, phone, timeout_secs: 25 };
@@ -181,8 +195,14 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     knowledge: input.knowledge ?? "",
     knowledge_fields: input.knowledgeFields ?? {},
     default_routing_email: "",
-    routing_contacts: input.contacts ?? [],
-    transfer_routes: toTransferRoutes(input.contacts ?? []),
+    routing_contacts: formatRoutingContactsForProvider(
+      input.contacts ?? [],
+      process.env.WISECALL_ROUTING_PROVIDER,
+    ),
+    transfer_routes: toTransferRoutes(
+      input.contacts ?? [],
+      process.env.WISECALL_ROUTING_PROVIDER,
+    ),
   };
   if (input.templateId) metadata.template_id = input.templateId;
   if (input.templateId === "estate_agent") {
@@ -453,7 +473,13 @@ export async function updateAgent(
   if (patch.industry !== undefined) nextMetadata.industry = patch.industry;
   if (patch.website !== undefined) nextMetadata.website = patch.website;
   if (patch.fallbackEmail !== undefined) nextMetadata.fallback_email = patch.fallbackEmail;
-  if (patch.transferNumber !== undefined) nextMetadata.transfer_number = patch.transferNumber;
+  const routingProvider = routingProviderFromMetadata(nextMetadata);
+  if (patch.transferNumber !== undefined) {
+    nextMetadata.transfer_number = formatTransferPhoneForProvider(
+      patch.transferNumber,
+      routingProvider,
+    );
+  }
   if (patch.greeting !== undefined) nextMetadata.greeting = patch.greeting;
   if (patch.voice !== undefined) {
     nextMetadata.voice = patch.voice;
@@ -467,10 +493,9 @@ export async function updateAgent(
     nextMetadata.default_routing_email = patch.defaultEmail;
   }
   if (patch.contacts !== undefined) {
-    // Canonical list the portal owns…
-    nextMetadata.routing_contacts = patch.contacts;
-    // …mirrored into the legacy structure the live pipeline already reads.
-    nextMetadata.transfer_routes = toTransferRoutes(patch.contacts);
+    const contacts = formatRoutingContactsForProvider(patch.contacts, routingProvider);
+    nextMetadata.routing_contacts = contacts;
+    nextMetadata.transfer_routes = toTransferRoutes(contacts, routingProvider);
   }
   if (patch.officeHours !== undefined) {
     // Per-day open/close the runtime reads for after-hours mode (metadata.office_hours).
