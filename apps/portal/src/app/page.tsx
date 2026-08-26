@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
+import { resolveAuthLanding } from "@/lib/trial";
 
 function HomeAuth() {
   const searchParams = useSearchParams();
@@ -12,24 +13,19 @@ function HomeAuth() {
       ? redirectParam
       : "/dashboard";
 
-  // Legacy ?signup=1 links still work; otherwise this is the sign-in page.
-  // ?trial=calls is the Facebook / Try-it-now path: 20 free calls, no card.
-  const trialParam = searchParams.get("trial");
-  const noCardTrial = trialParam === "calls";
-  const websiteParam = searchParams.get("website") ?? undefined;
-  const mode =
-    searchParams.get("signup") === "1" ||
-    searchParams.get("redirect") === "/billing" ||
-    noCardTrial
-      ? "signup"
-      : "signin";
+  const landing = resolveAuthLanding({
+    signup: searchParams.get("signup"),
+    trial: searchParams.get("trial"),
+    redirect: redirectParam,
+    website: searchParams.get("website"),
+  });
 
   return (
     <AuthForm
-      mode={mode}
+      mode={landing.mode}
       redirectAfterSignIn={redirectAfterSignIn}
-      trial={noCardTrial ? "calls" : undefined}
-      website={websiteParam}
+      trial={landing.trial}
+      website={landing.website}
     />
   );
 }

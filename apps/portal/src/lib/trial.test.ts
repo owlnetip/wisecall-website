@@ -5,7 +5,9 @@ import {
   checkoutIncludesStripeTrial,
   isNoCardTrial,
   isNoCardTrialRequest,
+  noCardSignupPath,
   noCardTrialBillingRow,
+  resolveAuthLanding,
   signupRedirectForTrial,
 } from "./trial";
 
@@ -19,6 +21,48 @@ test("homepage / Facebook signup is the no-card 20-call path", () => {
     "/dashboard?setup=1&website=https%3A%2F%2Fyourwebsite.co.uk%2F",
   );
   assert.equal(signupRedirectForTrial(undefined, "yourwebsite.co.uk"), "/billing");
+});
+
+test("hangup SMS and generic ?signup=1 are the no-card 20-call offer", () => {
+  assert.equal(noCardSignupPath(), "/?signup=1&trial=calls");
+  assert.equal(
+    noCardSignupPath("yourwebsite.co.uk"),
+    "/?signup=1&trial=calls&website=https%3A%2F%2Fyourwebsite.co.uk%2F",
+  );
+
+  assert.deepEqual(resolveAuthLanding({ signup: "1" }), {
+    mode: "signup",
+    trial: "calls",
+    website: undefined,
+  });
+  assert.deepEqual(resolveAuthLanding({ signup: "1", trial: "calls" }), {
+    mode: "signup",
+    trial: "calls",
+    website: undefined,
+  });
+  assert.deepEqual(resolveAuthLanding({ trial: "calls" }), {
+    mode: "signup",
+    trial: "calls",
+    website: undefined,
+  });
+  assert.deepEqual(resolveAuthLanding({}), {
+    mode: "signin",
+    trial: undefined,
+    website: undefined,
+  });
+});
+
+test("sales-led billing signup stays the 7-day card trial", () => {
+  assert.deepEqual(resolveAuthLanding({ signup: "1", redirect: "/billing" }), {
+    mode: "signup",
+    trial: undefined,
+    website: undefined,
+  });
+  assert.deepEqual(resolveAuthLanding({ redirect: "/billing" }), {
+    mode: "signup",
+    trial: undefined,
+    website: undefined,
+  });
 });
 
 test("a trialing row with no Stripe subscription is the no-card trial", () => {

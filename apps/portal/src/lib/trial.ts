@@ -1,4 +1,4 @@
-import { dashboardSetupPath } from "./setup-website";
+import { dashboardSetupPath, parseSetupWebsite } from "./setup-website";
 import { TRIAL_CALL_CAP } from "./stripe";
 
 // Self-serve path used by homepage "Try it now" / Facebook ads: 20 inbound AI
@@ -12,6 +12,46 @@ export type BillingTrialFields = {
 
 export function isNoCardTrialRequest(trial: string | null | undefined): boolean {
   return trial === NO_CARD_TRIAL;
+}
+
+export function isBillingSignupRedirect(redirect: string | null | undefined): boolean {
+  return redirect === "/billing";
+}
+
+// Canonical self-serve signup URL. Hangup SMS after Talk to Ava, /signup, and
+// homepage "Try it now" should all land here — 20 free calls, no card.
+export function noCardSignupPath(website?: unknown): string {
+  const params = new URLSearchParams({ signup: "1", trial: NO_CARD_TRIAL });
+  const parsed = parseSetupWebsite(website);
+  if (parsed) params.set("website", parsed);
+  return `/?${params.toString()}`;
+}
+
+export type AuthLandingSearch = {
+  signup?: string | null;
+  trial?: string | null;
+  redirect?: string | null;
+  website?: string | null;
+};
+
+// ?signup=1 without a billing redirect is the advertised 20-call offer. That
+// covers hangup SMS and old bookmarks that omitted trial=calls. Card-required
+// 7-day trial stays only on the sales-led /billing path.
+export function resolveAuthLanding(search: AuthLandingSearch): {
+  mode: "signin" | "signup";
+  trial?: string;
+  website?: string;
+} {
+  const billingSignup = isBillingSignupRedirect(search.redirect);
+  const noCard =
+    isNoCardTrialRequest(search.trial) || (search.signup === "1" && !billingSignup);
+  const mode =
+    search.signup === "1" || billingSignup || noCard ? "signup" : "signin";
+  return {
+    mode,
+    trial: noCard ? NO_CARD_TRIAL : undefined,
+    website: search.website ?? undefined,
+  };
 }
 
 export function signupRedirectForTrial(

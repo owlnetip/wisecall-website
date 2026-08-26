@@ -185,7 +185,11 @@ export function AuthForm({
               </span>
             </div>
             <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.72)" }}>
-              {isSignup ? "Create your account" : "Sign in to your account"}
+              {isSignup
+                ? noCardTrial
+                  ? "Get 20 free AI calls"
+                  : "Create your account"
+                : "Sign in to your account"}
             </p>
             {isSignup ? (
               <p className="mt-2 text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
@@ -281,10 +285,14 @@ export function AuthForm({
             >
               {isPending
                 ? isSignup
-                  ? "Creating account…"
+                  ? noCardTrial
+                    ? "Starting 20 free calls…"
+                    : "Creating account…"
                   : "Signing in…"
                 : isSignup
-                  ? "Create account"
+                  ? noCardTrial
+                    ? "Get 20 free calls"
+                    : "Create account"
                   : "Sign in"}
             </button>
           </form>
