@@ -7,6 +7,7 @@ import type {
   RoutingProvider,
   RoutingStatus,
 } from "@/components/customer-agent-workspace";
+import { nextActionsFromAnalysisJson } from "@/lib/conversation-email";
 import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
 import { normaliseNegotiatorRules } from "@/lib/digital-negotiator";
 
@@ -383,14 +384,7 @@ export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
 }
 
 function actionItemsFromRow(row: CallRow): string[] {
-  const json = row.ai_analysis_json;
-  if (!json || typeof json !== "object") return [];
-  const items = json.action_items;
-  if (Array.isArray(items)) {
-    return items.filter((v): v is string => typeof v === "string" && Boolean(v.trim())).slice(0, 5);
-  }
-  const legacy = json.recommended_follow_up;
-  return typeof legacy === "string" && legacy.trim() ? [legacy.trim()] : [];
+  return nextActionsFromAnalysisJson(row.ai_analysis_json);
 }
 
 function mapCallRow(row: CallRow): CallLog {

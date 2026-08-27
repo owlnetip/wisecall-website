@@ -1,4 +1,8 @@
 // Best-effort delivery of the standard WiseCall call summary email.
+// When the portal after-call webhook is configured, hangup defers to it so
+// the team email includes the same next actions the inbox already shows.
+
+const { getPortalWebhookUrl, getPortalWebhookSecret } = require("./portalWebhook");
 
 const DEFAULT_TIMEOUT_MS = 8000;
 const EMAIL_SUMMARY_PATH = "/functions/v1/wisecall-email-summary";
@@ -67,13 +71,25 @@ function buildEmailSummaryPayload(profile, context, call) {
   };
 }
 
-async function sendCallEmailSummary(profile, context, call) {
-  const url = getEmailSummaryUrl();
+function shouldDeferEmailSummaryToPortal(env = process.env) {
+  return Boolean(getPortalWebhookUrl(env) && getPortalWebhookSecret(env));
+}
+
+async function sendCallEmailSummary(profile, context, call, env = process.env) {
+  if (shouldDeferEmailSummaryToPortal(env)) {
+    return { ok: true, skipped: "portal_sends_after_analysis" };
+  }
+
+  const url = getEmailSummaryUrl(env);
   if (!url) return { ok: false, skipped: "missing_email_summary_url" };
   if (!profile?.slug) return { ok: false, skipped: "missing_profile_slug" };
 
   const headers = { "Content-Type": "application/json", Accept: "application/json" };
-  const secret = (process.env.WISECALL_EMAIL_WEBHOOK_SECRET || "").trim();
+  const secret = (
+    env.WISECALL_EMAIL_WEBHOOK_SECRET ||
+    env.WISECALL_WEBHOOK_SECRET ||
+    ""
+  ).trim();
   if (secret) headers["x-wisecall-secret"] = secret;
 
   const res = await fetch(url, {
@@ -97,4 +113,5 @@ module.exports = {
   buildEmailSummaryPayload,
   getEmailSummaryUrl,
   sendCallEmailSummary,
+  shouldDeferEmailSummaryToPortal,
 };
