@@ -4,6 +4,7 @@ import {
   buildPostCallEmailHtml,
   buildPostCallEmailText,
   callerNameFromSources,
+  extraDetailsFromAnalysis,
   portalNextActions,
   postCallEmailSubject,
 } from "../_shared/conversation-email.ts";
@@ -80,7 +81,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
   const { data: profile } = await supabase
     .from("wisecall_profiles")
-    .select("profile_name, business_name, clinic_name, metadata")
+    .select("profile_name, business_name, clinic_name, receptionist_name, metadata")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -97,6 +98,7 @@ serve(async (req) => {
   let logTranscript = "";
   let logOutcome = "";
   let logStartedAt = "";
+  let logFinishedAt = "";
   let logAgentName = "";
   let logMeta: Record<string, unknown> = {};
   let contactName = "";
@@ -105,7 +107,7 @@ serve(async (req) => {
     const { data: log } = await supabase
       .from("wisecall_call_logs")
       .select(
-        "id, summary, transcript, outcome, started_at, profile_name, metadata, ai_insight_summary, ai_analysis_json, contact_id",
+        "id, summary, transcript, outcome, started_at, finished_at, profile_name, metadata, ai_insight_summary, ai_analysis_json, contact_id",
       )
       .eq("id", callLogId)
       .maybeSingle();
@@ -115,6 +117,7 @@ serve(async (req) => {
       logTranscript = String(log.transcript || "");
       logOutcome = String(log.outcome || "");
       logStartedAt = String(log.started_at || "");
+      logFinishedAt = String(log.finished_at || "");
       logAgentName = String(log.profile_name || "");
       logMeta = isPlainObject(log.metadata) ? log.metadata : {};
       if (log.contact_id) {
@@ -160,16 +163,28 @@ serve(async (req) => {
     transcript,
     collected,
   });
+  const details = extraDetailsFromAnalysis(analysisJson);
+  const company =
+    details.company ||
+    (typeof collected.company === "string" ? collected.company : "") ||
+    (typeof collected.contact_company === "string" ? collected.contact_company : "");
   const emailInput = {
     businessName,
     callerId,
     callerName,
+    company,
     summary,
     transcript,
     outcome: outcome || "Conversation recorded",
     startedAt: startedAt || logStartedAt || null,
+    finishedAt: logFinishedAt || null,
+    urgency: details.urgency,
     actionItems,
-    agentName: agentName || logAgentName || "WiseCall",
+    agentName:
+      profile.receptionist_name ||
+      agentName ||
+      logAgentName ||
+      "WiseCall",
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);

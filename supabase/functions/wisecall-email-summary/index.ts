@@ -9,6 +9,7 @@ import {
   buildPostCallEmailHtml,
   buildPostCallEmailText,
   callerNameFromSources,
+  extraDetailsFromAnalysis,
   portalNextActions,
   postCallEmailSubject,
 } from "../_shared/conversation-email.ts";
@@ -112,7 +113,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
   let profileQuery = supabase
     .from("wisecall_profiles")
-    .select("id, slug, profile_name, business_name, clinic_name, metadata");
+    .select("id, slug, profile_name, business_name, clinic_name, receptionist_name, metadata");
   profileQuery = profileId
     ? profileQuery.eq("id", profileId)
     : profileQuery.eq("slug", profileSlug);
@@ -130,6 +131,7 @@ serve(async (req) => {
         transcript: string | null;
         outcome: string | null;
         started_at: string | null;
+        finished_at: string | null;
         profile_name: string | null;
         metadata: Record<string, unknown> | null;
         ai_insight_summary: string | null;
@@ -141,7 +143,7 @@ serve(async (req) => {
     const { data } = await supabase
       .from("wisecall_call_logs")
       .select(
-        "id, summary, transcript, outcome, started_at, profile_name, metadata, ai_insight_summary, ai_analysis_json, contact_id",
+        "id, summary, transcript, outcome, started_at, finished_at, profile_name, metadata, ai_insight_summary, ai_analysis_json, contact_id",
       )
       .eq("call_id", callId)
       .maybeSingle();
@@ -208,16 +210,36 @@ serve(async (req) => {
     transcript,
     collected,
   });
+  const details = extraDetailsFromAnalysis(callLog?.ai_analysis_json);
+  const company =
+    details.company ||
+    (typeof collected.company === "string" ? collected.company : "") ||
+    (typeof collected.contact_company === "string" ? collected.contact_company : "");
+  const durationRaw = extra.duration_seconds ?? collected.duration_seconds;
+  const durationSeconds =
+    typeof durationRaw === "number"
+      ? durationRaw
+      : typeof durationRaw === "string" && durationRaw.trim()
+        ? Number(durationRaw)
+        : null;
   const emailInput = {
     businessName,
     callerId,
     callerName,
+    company,
     summary,
     transcript,
     outcome: outcome || callLog?.outcome || "Conversation recorded",
     startedAt: startedAt || callLog?.started_at || null,
+    finishedAt: callLog?.finished_at || null,
+    durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : null,
+    urgency: details.urgency,
     actionItems,
-    agentName: callLog?.profile_name || profile.profile_name || "WiseCall",
+    agentName:
+      profile.receptionist_name ||
+      callLog?.profile_name ||
+      profile.profile_name ||
+      "WiseCall",
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);

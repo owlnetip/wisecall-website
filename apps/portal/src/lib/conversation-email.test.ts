@@ -76,10 +76,10 @@ test("summary html includes follow-ups with the portal headings", () => {
   assert.match(html, /1 follow-up needed/);
   assert.match(html, /Follow-up needed/);
   assert.match(html, /Call Luke back about broadband/);
-  assert.match(html, /What happened/);
+  assert.match(html, /WiseCall Summary/);
   assert.match(html, /Caller Luke asked for a callback/);
   assert.match(html, /please call me back/);
-  assert.match(html, /Conversation/);
+  assert.match(html, /Full Conversation/);
 });
 
 test("omits the follow-up list when none exist and says none", () => {
@@ -108,7 +108,7 @@ test("plain-text email includes the same next actions", () => {
   assert.match(text, /Next step: 1 follow-up needed/);
   assert.match(text, /Follow-up needed:/);
   assert.match(text, /- Call Luke back about broadband/);
-  assert.match(text, /What happened: Callback requested/);
+  assert.match(text, /WiseCall Summary: Callback requested/);
 });
 
 test("shows the caller name at the top and keeps the number", () => {
@@ -121,11 +121,13 @@ test("shows the caller name at the top and keeps the number", () => {
     outcome: "remote_hangup",
     actionItems: [],
   });
-  assert.match(html, /New message from Luke/);
-  assert.match(html, />Caller<\/td><td[^>]*>Luke/);
-  assert.match(html, />Number<\/td><td>07825395792/);
+  assert.match(html, />Luke</);
+  assert.match(html, /Caller Name/);
+  assert.match(html, /Caller Phone/);
+  assert.match(html, /07825395792/);
   assert.match(html, /Caller ended/);
   assert.match(html, /Wise<\/span><span[^>]*>Call/);
+  assert.match(html, /left a message for The Home Cloud/);
   assert.equal(postCallEmailSubject({
     businessName: "The Home Cloud",
     callerId: "07825395792",
@@ -158,7 +160,7 @@ assistant: I have texted the repair link.`);
     outcome: "Completed",
     actionItems: [],
   });
-  assert.match(html, />Luke</);
+  assert.match(html, /WiseCall:/);
   assert.match(html, /Please visit thehomecloud.co.uk/);
   assert.match(html, /That&#39;s it. Thanks./);
   assert.equal(html.includes("function_response"), false);

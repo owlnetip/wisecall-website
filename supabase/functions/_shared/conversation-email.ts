@@ -1,5 +1,5 @@
 // Keep in sync with apps/portal/src/lib/conversation-email.ts
-// Portal inbox wording + branded caller/agent transcript bubbles.
+// Dark WiseCall branded post-call email: caller name, summary, labelled conversation.
 
 export function nextActionsFromAnalysisJson(json: unknown): string[] {
   if (!json || typeof json !== "object") return [];
@@ -221,30 +221,88 @@ export type PostCallEmailInput = {
   businessName: string;
   callerId: string;
   callerName?: string;
+  company?: string;
   summary: string;
   transcript: string;
   outcome: string;
   startedAt?: string | null;
+  finishedAt?: string | null;
+  durationSeconds?: number | null;
+  urgency?: string;
   actionItems: string[];
   agentName?: string;
 };
 
 const EMAIL_LOGO_URL = "https://app.wisecall.io/owl-logo.png";
 const BRAND_DARK = "#172929";
-const BRAND_TEAL = "#148b8e";
 const BRAND_MINT = "#7de8eb";
+const FONT =
+  "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
-function formatWhen(startedAt?: string | null): string {
-  if (!startedAt) return "";
+export function extraDetailsFromAnalysis(json: unknown): {
+  company: string;
+  urgency: string;
+} {
+  if (!json || typeof json !== "object") return { company: "", urgency: "" };
+  const record = json as Record<string, unknown>;
+  const company = typeof record.company === "string" ? record.company.trim() : "";
+  const urgencyRaw =
+    typeof record.urgency_level === "string"
+      ? record.urgency_level.trim()
+      : typeof record.urgency === "string"
+        ? record.urgency.trim()
+        : "";
+  const urgency = urgencyRaw
+    ? urgencyRaw.charAt(0).toUpperCase() + urgencyRaw.slice(1).toLowerCase()
+    : "";
+  return { company, urgency };
+}
+
+export function durationLabel(
+  durationSeconds?: number | null,
+  startedAt?: string | null,
+  finishedAt?: string | null,
+): string {
+  let seconds = typeof durationSeconds === "number" && Number.isFinite(durationSeconds)
+    ? Math.max(0, Math.round(durationSeconds))
+    : 0;
+  if (!seconds && startedAt && finishedAt) {
+    const start = Date.parse(startedAt);
+    const end = Date.parse(finishedAt);
+    if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+      seconds = Math.round((end - start) / 1000);
+    }
+  }
+  if (!seconds) return "";
+  if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  if (!rest) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+  return `${minutes} min ${rest} sec`;
+}
+
+function londonParts(startedAt?: string | null): { date: string; time: string } {
+  if (!startedAt) return { date: "", time: "" };
   const date = new Date(startedAt);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString("en-GB", { timeZone: "Europe/London" });
+  if (Number.isNaN(date.getTime())) return { date: "", time: "" };
+  return {
+    date: date.toLocaleDateString("en-GB", { timeZone: "Europe/London" }),
+    time: date.toLocaleTimeString("en-GB", { timeZone: "Europe/London" }),
+  };
+}
+
+function displayAgentName(agentName?: string): string {
+  const name = (agentName || "").trim();
+  if (!name) return "WiseCall";
+  const first = name.split(/\s+/)[0] || "";
+  if (first && first.length <= 16 && !/^(the|test|voice|desk|home)$/i.test(first)) return first;
+  return "WiseCall";
 }
 
 function callerHeading(input: PostCallEmailInput): string {
   const name = cleanCallerName(input.callerName);
-  if (name) return `New message from ${name}`;
-  return `New message for ${input.businessName}`;
+  if (name) return name;
+  return "Call transcript";
 }
 
 export function postCallEmailSubject(input: PostCallEmailInput): string {
@@ -255,25 +313,32 @@ export function postCallEmailSubject(input: PostCallEmailInput): string {
     : `Message from ${who} · ${input.businessName}`;
 }
 
+function card(inner: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;border:1px solid rgba(125,232,235,.35);border-radius:12px;border-left:4px solid ${BRAND_MINT};">
+<tr><td style="padding:16px 18px;">${inner}</td></tr>
+</table>`;
+}
+
+function sectionTitle(label: string): string {
+  return `<p style="margin:0 0 10px;font-size:18px;font-weight:800;color:${BRAND_MINT};">${escapeEmailHtml(label)}</p>`;
+}
+
+function detailRow(label: string, value: string, last = false): string {
+  const border = last ? "none" : "1px solid rgba(125,232,235,.18)";
+  return `<tr>
+<td style="padding:10px 0;border-bottom:${border};color:${BRAND_MINT};font-size:14px;width:42%;">${escapeEmailHtml(label)}</td>
+<td style="padding:10px 0;border-bottom:${border};color:#ffffff;font-size:14px;font-weight:700;text-align:right;">${escapeEmailHtml(value)}</td>
+</tr>`;
+}
+
 function followUpBlockHtml(actionItems: string[]): string {
   if (!actionItems.length) return "";
   const items = actionItems
-    .map(
-      (item) =>
-        `<li style="margin:0 0 8px;color:#0e4b4d;">${escapeEmailHtml(item)}</li>`,
-    )
+    .map((item) => `<li style="margin:0 0 8px;color:#ffffff;">${escapeEmailHtml(item)}</li>`)
     .join("");
-  return `
-      <div style="margin:0 0 18px;padding:14px 16px;background:#f0faf9;border:1px solid #cfe9e4;border-radius:10px;">
-        <p style="margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:${BRAND_TEAL};">Follow-up needed</p>
-        <ul style="margin:0;padding-left:18px;">${items}</ul>
-      </div>`;
-}
-
-function agentBubbleLabel(agentName: string): string {
-  const first = agentName.trim().split(/\s+/)[0] || "";
-  if (first && first.length <= 16 && !/^(the|test|voice|desk|home)$/i.test(first)) return first;
-  return "AI agent";
+  return card(
+    `${sectionTitle("Follow-up needed")}<ul style="margin:0;padding-left:18px;">${items}</ul>`,
+  );
 }
 
 function nl2br(value: string): string {
@@ -285,64 +350,83 @@ function transcriptHtml(input: PostCallEmailInput): string {
   if (!transcript) return "";
   const turns = parseEmailTranscript(transcript);
   const callerLabel = cleanCallerName(input.callerName) || "Caller";
-  const agentLabel = agentBubbleLabel(input.agentName || "WiseCall");
+  const lines = turns.length
+    ? turns
+        .map((turn) => {
+          const label = turn.speaker === "caller" ? callerLabel : "WiseCall";
+          return `<p style="margin:0 0 12px;line-height:1.55;color:#ffffff;"><span style="color:${BRAND_MINT};font-weight:800;">${escapeEmailHtml(label)}:</span> ${nl2br(turn.text)}</p>`;
+        })
+        .join("")
+    : `<p style="margin:0;line-height:1.55;color:#ffffff;">${nl2br(transcript)}</p>`;
 
-  const bubbles = turns
-    .map((turn) => {
-      const isCaller = turn.speaker === "caller";
-      const inner = isCaller
-        ? `<td style="background:${BRAND_DARK};border-radius:16px 16px 4px 16px;padding:10px 14px;">
-            <p style="margin:0 0 4px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:${BRAND_MINT};">${escapeEmailHtml(callerLabel)}</p>
-            <p style="margin:0;font-size:14px;line-height:1.5;color:#ffffff;">${nl2br(turn.text)}</p>
-          </td>`
-        : `<td style="background:#ffffff;border:1px solid #d7e4e3;border-radius:16px 16px 16px 4px;padding:10px 14px;">
-            <p style="margin:0 0 4px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:${BRAND_TEAL};">${escapeEmailHtml(agentLabel)}</p>
-            <p style="margin:0;font-size:14px;line-height:1.5;color:${BRAND_DARK};">${nl2br(turn.text)}</p>
-          </td>`;
-      return `<tr><td align="${isCaller ? "right" : "left"}" style="padding:6px 8px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:82%;${isCaller ? "margin-left:auto;" : ""}">
-          <tr>${inner}</tr>
-        </table>
-      </td></tr>`;
-    })
-    .join("");
-
-  return `
-      <h3 style="margin:0 0 8px;font-size:15px;color:${BRAND_DARK};">Conversation</h3>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f7;border:1px solid #d7e4e3;border-radius:12px;">
-        ${bubbles || `<tr><td style="padding:14px;font-size:14px;color:${BRAND_DARK};">${nl2br(transcript)}</td></tr>`}
-      </table>`;
+  return `${sectionTitle("Full Conversation")}${card(lines)}`;
 }
 
-function wrapBrandedEmail(innerHtml: string): string {
+export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
+  const { date, time } = londonParts(input.startedAt);
+  const outcome = emailOutcomeLabel(input.outcome);
+  const agentName = displayAgentName(input.agentName);
+  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const summary = input.summary.trim();
+  const callerName = cleanCallerName(input.callerName);
+  const callerId = (input.callerId || "Unknown").trim() || "Unknown";
+  const company = (input.company || "").trim();
+  const duration = durationLabel(input.durationSeconds, input.startedAt, input.finishedAt);
+  const urgency = (input.urgency || "").trim();
+  const heading = callerHeading(input);
+
+  const detailRows = [
+    detailRow("Agent Name", agentName),
+    detailRow("Caller Name", callerName || "Not captured"),
+    company ? detailRow("Caller Company", company) : "",
+    detailRow("Caller Phone", callerId),
+    duration ? detailRow("Call Duration", duration) : "",
+    urgency ? detailRow("Urgency", urgency) : "",
+    date ? detailRow("Date", date) : "",
+    time ? detailRow("Time", time) : "",
+    detailRow("Outcome", outcome),
+    detailRow("Next step", nextStepLabel(actionItems), true),
+  ].filter(Boolean).join("");
+
+  const inner = `
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 18px;">
+        <tr>
+          <td style="vertical-align:middle;padding:0 10px 0 0;">
+            <img src="${EMAIL_LOGO_URL}" alt="" height="32" style="height:32px;width:auto;display:block;" />
+          </td>
+          <td style="vertical-align:middle;font-size:28px;line-height:1;font-weight:800;">
+            <span style="color:#ffffff;">Wise</span><span style="color:${BRAND_MINT};">Call</span>
+          </td>
+        </tr>
+      </table>
+      <h1 style="margin:0 0 6px;font-size:28px;line-height:1.2;color:#ffffff;">${escapeEmailHtml(heading)}</h1>
+      <p style="margin:0 0 22px;color:#d8eeee;font-size:15px;">${
+        callerName
+          ? `left a message for ${escapeEmailHtml(input.businessName)}`
+          : `Call transcript for ${escapeEmailHtml(input.businessName)}`
+      }</p>
+      ${card(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows}</table>`)}
+      ${followUpBlockHtml(actionItems)}
+      ${
+        summary
+          ? `${sectionTitle("WiseCall Summary")}${card(`<p style="margin:0;color:#ffffff;line-height:1.6;">${escapeEmailHtml(summary)}</p>`)}`
+          : ""
+      }
+      ${transcriptHtml(input)}
+      <p style="margin:8px 0 0;font-size:12px;color:#9bb3b3;">Open the conversation in your WiseCall inbox to call back or mark follow-ups done.</p>`;
+
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
-<body style="margin:0;padding:0;background:#f4f7f7;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f7;padding:24px 0;">
+<body style="margin:0;padding:0;background:${BRAND_DARK};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND_DARK};padding:24px 0;">
 <tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #d8e4e4;">
-<tr><td style="background:${BRAND_DARK};padding:18px 28px;">
-<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-<tr>
-<td style="vertical-align:middle;padding:0 10px 0 0;">
-<img src="${EMAIL_LOGO_URL}" alt="" height="32" style="height:32px;width:auto;display:block;" />
-</td>
-<td style="vertical-align:middle;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:20px;line-height:1;font-weight:800;">
-<span style="color:#ffffff;">Wise</span><span style="color:${BRAND_MINT};">Call</span>
-</td>
-</tr>
-</table>
-</td></tr>
-<tr><td style="padding:28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#1a2b2b;">
-${innerHtml}
-</td></tr>
-<tr><td style="padding:18px 28px;background:#f4f7f7;border-top:1px solid #d8e4e4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#5a7272;">
-WiseCall · AI receptionists for UK businesses<br/>
-<a href="https://wisecall.io" style="color:#0e7d82;text-decoration:none;">wisecall.io</a>
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;font-family:${FONT};color:#ffffff;">
+<tr><td style="padding:8px 24px 28px;">
+${inner}
 </td></tr>
 </table>
 </td></tr>
@@ -351,63 +435,23 @@ WiseCall · AI receptionists for UK businesses<br/>
 </html>`;
 }
 
-export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
-  const when = formatWhen(input.startedAt);
-  const outcome = emailOutcomeLabel(input.outcome);
-  const agentName = (input.agentName || "WiseCall").trim() || "WiseCall";
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
-  const summary = input.summary.trim();
-  const callerName = cleanCallerName(input.callerName);
-  const callerId = (input.callerId || "Unknown").trim() || "Unknown";
-
-  const inner = `
-      <h2 style="margin:0 0 8px;font-size:22px;color:${BRAND_DARK};">${escapeEmailHtml(callerHeading(input))}</h2>
-      <p style="margin:0 0 16px;color:#4a5c5b;">A caller left a message with your WiseCall assistant.</p>
-      <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
-        ${
-          callerName
-            ? `<tr><td style="padding:6px 0;color:${BRAND_TEAL};font-weight:700;width:120px;">Caller</td><td style="font-weight:800;color:${BRAND_DARK};">${escapeEmailHtml(callerName)}</td></tr>
-        <tr><td style="padding:6px 0;color:${BRAND_TEAL};font-weight:700;">Number</td><td>${escapeEmailHtml(callerId)}</td></tr>`
-            : `<tr><td style="padding:6px 0;color:${BRAND_TEAL};font-weight:700;width:120px;">Caller</td><td>${escapeEmailHtml(callerId)}</td></tr>`
-        }
-        ${when ? `<tr><td style="padding:6px 0;color:${BRAND_TEAL};font-weight:700;">When</td><td>${escapeEmailHtml(when)}</td></tr>` : ""}
-      </table>
-      <table style="width:100%;border-collapse:collapse;margin:0 0 18px;background:#f7fafa;border:1px solid #d7e4e3;border-radius:10px;">
-        <tr>
-          <td style="padding:12px 14px;border-right:1px solid #d7e4e3;width:33%;vertical-align:top;">
-            <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Outcome</p>
-            <p style="margin:0;font-size:14px;font-weight:800;">${escapeEmailHtml(outcome)}</p>
-          </td>
-          <td style="padding:12px 14px;border-right:1px solid #d7e4e3;width:33%;vertical-align:top;">
-            <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Next step</p>
-            <p style="margin:0;font-size:14px;font-weight:800;color:${actionItems.length ? "#0e4b4d" : "#1f7a5c"};">${escapeEmailHtml(nextStepLabel(actionItems))}</p>
-          </td>
-          <td style="padding:12px 14px;width:33%;vertical-align:top;">
-            <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Handled by</p>
-            <p style="margin:0;font-size:14px;font-weight:800;">${escapeEmailHtml(agentName)}</p>
-          </td>
-        </tr>
-      </table>
-      ${followUpBlockHtml(actionItems)}
-      ${
-        summary
-          ? `<h3 style="margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">What happened</h3><p style="margin:0 0 16px;padding:12px;background:#f0faf9;border-radius:8px;">${escapeEmailHtml(summary)}</p>`
-          : ""
-      }
-      ${transcriptHtml(input)}
-      <p style="margin:20px 0 0;font-size:12px;color:#7a8a89;">Open the conversation in your WiseCall inbox to call back or mark follow-ups done.</p>`;
-
-  return wrapBrandedEmail(inner);
-}
-
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
   const callerName = cleanCallerName(input.callerName);
   const turns = parseEmailTranscript(input.transcript);
+  const { date, time } = londonParts(input.startedAt);
+  const duration = durationLabel(input.durationSeconds, input.startedAt, input.finishedAt);
   const blocks = [
+    "WiseCall",
     callerHeading(input),
-    callerName ? `Caller: ${callerName}` : "",
-    `Number: ${input.callerId || "Unknown"}`,
+    `Agent Name: ${displayAgentName(input.agentName)}`,
+    `Caller Name: ${callerName || "Not captured"}`,
+    input.company?.trim() ? `Caller Company: ${input.company.trim()}` : "",
+    `Caller Phone: ${input.callerId || "Unknown"}`,
+    duration ? `Call Duration: ${duration}` : "",
+    input.urgency?.trim() ? `Urgency: ${input.urgency.trim()}` : "",
+    date ? `Date: ${date}` : "",
+    time ? `Time: ${time}` : "",
     input.outcome.trim() ? `Outcome: ${emailOutcomeLabel(input.outcome)}` : "",
     `Next step: ${nextStepLabel(actionItems)}`,
   ].filter(Boolean);
@@ -416,15 +460,17 @@ export function buildPostCallEmailText(input: PostCallEmailInput): string {
     blocks.push(["Follow-up needed:", ...actionItems.map((item) => `- ${item}`)].join("\n"));
   }
   if (input.summary.trim()) {
-    blocks.push(`What happened: ${input.summary.trim()}`);
+    blocks.push(`WiseCall Summary: ${input.summary.trim()}`);
   }
   if (turns.length) {
     const callerLabel = callerName || "Caller";
-    const agentLabel = agentBubbleLabel(input.agentName || "WiseCall");
     blocks.push(
-      turns
-        .map((turn) => `${turn.speaker === "caller" ? callerLabel : agentLabel}: ${turn.text}`)
-        .join("\n\n"),
+      [
+        "Full Conversation",
+        ...turns.map(
+          (turn) => `${turn.speaker === "caller" ? callerLabel : "WiseCall"}: ${turn.text}`,
+        ),
+      ].join("\n"),
     );
   } else if (input.transcript.trim()) {
     blocks.push(input.transcript.trim());
