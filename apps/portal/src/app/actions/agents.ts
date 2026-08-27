@@ -42,11 +42,7 @@ import {
   getVoiceRuntimeConfig,
   resolveVoiceRuntime,
 } from "@/lib/voice-runtime";
-import {
-  defaultNegotiatorRules,
-  normaliseNegotiatorRules,
-  type NegotiatorRules,
-} from "@/lib/digital-negotiator";
+import { mergeNotificationEmails, primaryInboxEmail } from "@/lib/notification-recipients";
 
 export type AgentPatch = {
   name?: string;
@@ -490,7 +486,13 @@ export async function updateAgent(
   if (patch.knowledge !== undefined) nextMetadata.knowledge = patch.knowledge;
   if (patch.knowledgeFields !== undefined) nextMetadata.knowledge_fields = patch.knowledgeFields;
   if (patch.defaultEmail !== undefined) {
-    nextMetadata.default_routing_email = patch.defaultEmail;
+    const trimmed = patch.defaultEmail.trim();
+    nextMetadata.default_routing_email = trimmed;
+    nextMetadata.notification_emails = mergeNotificationEmails(
+      primaryInboxEmail(metadata),
+      trimmed,
+      metadata.notification_emails,
+    );
   }
   if (patch.contacts !== undefined) {
     const contacts = formatRoutingContactsForProvider(patch.contacts, routingProvider);

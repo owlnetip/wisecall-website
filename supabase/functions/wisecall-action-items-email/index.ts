@@ -5,6 +5,10 @@ import {
   buildPostCallEmailText,
   portalNextActions,
 } from "../_shared/conversation-email.ts";
+import {
+  asEmailList,
+  callSummaryRecipients,
+} from "../_shared/notification-recipients.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,30 +22,8 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function asEmailList(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
-  if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
-  return [];
-}
-
-function uniqueEmails(values: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const value of values) {
-    const email = value.trim();
-    const key = email.toLowerCase();
-    if (!email || seen.has(key)) continue;
-    seen.add(key);
-    out.push(email);
-  }
-  return out;
-}
-
 function recipients(metadata: Record<string, unknown>): string[] {
-  const configured = uniqueEmails([
-    ...asEmailList(metadata.default_routing_email),
-    ...asEmailList(metadata.notification_emails),
-  ]);
+  const configured = callSummaryRecipients(metadata);
   if (configured.length) return configured;
   return asEmailList(Deno.env.get("WISECALL_EMAIL_TO") || "info@owlnet.io");
 }
