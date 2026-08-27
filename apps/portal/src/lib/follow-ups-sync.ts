@@ -78,10 +78,12 @@ export async function sendActionItemsEmail(input: {
   outcome?: string;
   startedAt?: string | null;
   agentName?: string;
-}): Promise<void> {
+}): Promise<{ ok: boolean; skipped?: string; error?: string; sent?: number }> {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceKey) return;
+  if (!supabaseUrl || !serviceKey) {
+    return { ok: false, skipped: "missing_supabase" };
+  }
 
   const url = `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/wisecall-action-items-email`;
 
@@ -104,11 +106,30 @@ export async function sendActionItemsEmail(input: {
         agent_name: input.agentName ?? "",
       }),
     });
-    if (!res.ok) {
-      console.error("sendActionItemsEmail failed:", res.status, await res.text().catch(() => ""));
+    const text = await res.text().catch(() => "");
+    let body: Record<string, unknown> | null = null;
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : null;
+    } catch {
+      body = null;
     }
+    if (!res.ok) {
+      const error = typeof body?.error === "string" ? body.error : text.slice(0, 300);
+      console.error("sendActionItemsEmail failed:", res.status, error);
+      return { ok: false, error };
+    }
+    if (body && body.ok === false) {
+      const skipped = typeof body.skipped === "string" ? body.skipped : undefined;
+      const error = typeof body.error === "string" ? body.error : undefined;
+      console.error("sendActionItemsEmail skipped:", skipped || error || text.slice(0, 300));
+      return { ok: false, skipped, error };
+    }
+    const sent = typeof body?.sent === "number" ? body.sent : undefined;
+    return { ok: true, sent };
   } catch (err) {
-    console.error("sendActionItemsEmail error:", err instanceof Error ? err.message : err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("sendActionItemsEmail error:", message);
+    return { ok: false, error: message };
   }
 }
 
@@ -122,7 +143,7 @@ export async function sendPostCallEmailForLog(
     actionItems?: string[];
     managerSummary?: string;
   },
-): Promise<{ ok: boolean; skipped?: string; error?: string }> {
+): Promise<{ ok: boolean; skipped?: string; error?: string; sent?: number }> {
   const supabase = getServiceSupabase();
   if (!supabase) return { ok: false, skipped: "missing_supabase" };
 
@@ -178,7 +199,7 @@ export async function sendPostCallEmailForLog(
     return { ok: true, skipped: "no_content" };
   }
 
-  await sendActionItemsEmail({
+  const sent = await sendActionItemsEmail({
     callLogId,
     profileId: log.profile_id,
     callerId: log.caller_id ?? "Unknown",
@@ -190,5 +211,13 @@ export async function sendPostCallEmailForLog(
     agentName: log.profile_name || "WiseCall",
   });
 
-  return { ok: true };
+  if (!sent.ok) {
+    return {
+      ok: false,
+      skipped: sent.skipped,
+      error: sent.error || "email send failed",
+    };
+  }
+
+  return { ok: true, sent: sent.sent };
 }

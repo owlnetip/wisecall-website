@@ -1,13 +1,7 @@
-// wisecall-email-summary — hangup fallback for the after-call team email.
+// wisecall-email-summary — hangup post-call team email.
 //
-// Called from the voice runtime (wisecall-edge/src/lib/emailSummary.js). When
-// the portal call-completed webhook is configured, the runtime skips this and
-// the portal sends after analysis so next actions are included. This function
-// still looks up stored action_items / follow-ups so a hangup-only send matches
-// the portal when analysis already ran.
-//
-// Auth: x-wisecall-secret matching WISECALL_EMAIL_WEBHOOK_SECRET or the shared
-// portal webhook secrets, OR Authorization Bearer <service role>.
+// Called from the voice runtime on every hangup. Portal may send again after
+// analysis with next actions; dedup is on the call log metadata.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -16,6 +10,11 @@ import {
   buildPostCallEmailText,
   portalNextActions,
 } from "../_shared/conversation-email.ts";
+import {
+  asEmailList,
+  callSummaryRecipients,
+  type TransferHint,
+} from "../_shared/notification-recipients.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,31 +51,21 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function asEmailList(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
-  if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
-  return [];
+function transferFromBody(body: Record<string, unknown>): TransferHint | null {
+  const extra = isPlainObject(body.extra) ? body.extra : {};
+  const session = isPlainObject(body.session) ? body.session : {};
+  const collected = isPlainObject(session.collected) ? session.collected : {};
+  const transfer = isPlainObject(extra.transfer) ? extra.transfer : {};
+  const routeKey = String(
+    transfer.route_key || collected.transfer_route_key || "",
+  ).trim();
+  const label = String(transfer.label || collected.transfer_label || "").trim();
+  if (!routeKey && !label) return null;
+  return { route_key: routeKey || undefined, label: label || undefined };
 }
 
-function uniqueEmails(values: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const value of values) {
-    const email = value.trim();
-    const key = email.toLowerCase();
-    if (!email || seen.has(key)) continue;
-    seen.add(key);
-    out.push(email);
-  }
-  return out;
-}
-
-function recipients(metadata: Record<string, unknown>): string[] {
-  const configured = uniqueEmails([
-    ...asEmailList(metadata.default_routing_email),
-    ...asEmailList(metadata.notification_emails),
-    ...asEmailList(metadata.fallback_email),
-  ]);
+function recipients(metadata: Record<string, unknown>, transfer?: TransferHint | null): string[] {
+  const configured = callSummaryRecipients(metadata, transfer);
   if (configured.length) return configured;
   return asEmailList(Deno.env.get("WISECALL_EMAIL_TO") || "info@owlnet.io");
 }
@@ -129,7 +118,7 @@ serve(async (req) => {
   if (!profile) return json({ ok: false, error: "Profile not found" }, 404);
 
   const metadata = isPlainObject(profile.metadata) ? profile.metadata : {};
-  const to = recipients(metadata);
+  const to = recipients(metadata, transferFromBody(body));
   if (!to.length) return json({ ok: true, skipped: "no_recipients" });
 
   let callLog:

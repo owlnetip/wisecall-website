@@ -15,7 +15,6 @@ const {
   buildEmailSummaryPayload,
   getEmailSummaryUrl,
   sendCallEmailSummary,
-  shouldDeferEmailSummaryToPortal,
 } = require("../src/lib/emailSummary");
 
 test("substituteTemplates replaces call context tokens", () => {
@@ -200,30 +199,4 @@ test("buildEmailSummaryPayload falls back to conversation history when transcrip
     payload.extra.transcript,
     "assistant: How can I help?\nuser: Please call me back.",
   );
-});
-
-test("defers hangup email when portal analysis webhook is configured", async () => {
-  assert.equal(
-    shouldDeferEmailSummaryToPortal({
-      WISECALL_PORTAL_URL: "https://app.wisecall.io",
-      WISECALL_WEBHOOK_SECRET: "secret",
-    }),
-    true,
-  );
-  assert.equal(
-    shouldDeferEmailSummaryToPortal({
-      SUPABASE_URL: "https://example.supabase.co",
-    }),
-    false,
-  );
-  const result = await sendCallEmailSummary(
-    { slug: "agent" },
-    { callId: "c1", callerId: "07700" },
-    { summary: "Message taken.", transcript: "user: call me back" },
-    {
-      WISECALL_PORTAL_URL: "https://app.wisecall.io",
-      WISECALL_WEBHOOK_SECRET: "secret",
-    },
-  );
-  assert.deepEqual(result, { ok: true, skipped: "portal_sends_after_analysis" });
 });

@@ -1,8 +1,7 @@
 // Best-effort delivery of the standard WiseCall call summary email.
-// When the portal after-call webhook is configured, hangup defers to it so
-// the team email includes the same next actions the inbox already shows.
-
-const { getPortalWebhookUrl, getPortalWebhookSecret } = require("./portalWebhook");
+// Always fires on hangup so the team gets something even if portal analysis
+// is slow or the post-analysis sender is not deployed yet. Portal may send
+// again after analysis with next actions; dedup is on the call log metadata.
 
 const DEFAULT_TIMEOUT_MS = 8000;
 const EMAIL_SUMMARY_PATH = "/functions/v1/wisecall-email-summary";
@@ -71,18 +70,12 @@ function buildEmailSummaryPayload(profile, context, call) {
   };
 }
 
-function shouldDeferEmailSummaryToPortal(env = process.env) {
-  return Boolean(getPortalWebhookUrl(env) && getPortalWebhookSecret(env));
-}
-
 async function sendCallEmailSummary(profile, context, call, env = process.env) {
-  if (shouldDeferEmailSummaryToPortal(env)) {
-    return { ok: true, skipped: "portal_sends_after_analysis" };
-  }
-
   const url = getEmailSummaryUrl(env);
   if (!url) return { ok: false, skipped: "missing_email_summary_url" };
-  if (!profile?.slug) return { ok: false, skipped: "missing_profile_slug" };
+  if (!profile?.slug && !profile?.id) {
+    return { ok: false, skipped: "missing_profile_slug" };
+  }
 
   const headers = { "Content-Type": "application/json", Accept: "application/json" };
   const secret = (
@@ -113,5 +106,4 @@ module.exports = {
   buildEmailSummaryPayload,
   getEmailSummaryUrl,
   sendCallEmailSummary,
-  shouldDeferEmailSummaryToPortal,
 };
