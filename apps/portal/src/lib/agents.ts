@@ -295,6 +295,7 @@ const OUTCOME_LABELS: Record<string, string> = {
   live_chat_in_progress: "Chat in progress",
   live_chat_ended: "Chat ended",
   // Phone / voice
+  remote_hangup: "Caller ended",
   caller_stop: "Caller ended",
   transfer: "Transferred",
   transferred: "Transferred",

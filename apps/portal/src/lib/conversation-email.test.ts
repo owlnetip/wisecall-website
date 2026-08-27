@@ -3,9 +3,12 @@ import { test } from "node:test";
 import {
   buildPostCallEmailHtml,
   buildPostCallEmailText,
+  callerNameFromSources,
   nextActionsFromAnalysisJson,
   nextStepLabel,
+  parseEmailTranscript,
   portalNextActions,
+  postCallEmailSubject,
 } from "./conversation-email";
 
 test("reads action_items the same way the portal inbox does", () => {
@@ -76,7 +79,7 @@ test("summary html includes follow-ups with the portal headings", () => {
   assert.match(html, /What happened/);
   assert.match(html, /Caller Luke asked for a callback/);
   assert.match(html, /please call me back/);
-  assert.match(html, /Conversation transcript/);
+  assert.match(html, /Conversation/);
 });
 
 test("omits the follow-up list when none exist and says none", () => {
@@ -106,4 +109,75 @@ test("plain-text email includes the same next actions", () => {
   assert.match(text, /Follow-up needed:/);
   assert.match(text, /- Call Luke back about broadband/);
   assert.match(text, /What happened: Callback requested/);
+});
+
+test("shows the caller name at the top and keeps the number", () => {
+  const html = buildPostCallEmailHtml({
+    businessName: "The Home Cloud",
+    callerId: "07825395792",
+    callerName: "Luke",
+    summary: "Caller Luke reported a repair.",
+    transcript: "user: I'm looking to report a repair",
+    outcome: "remote_hangup",
+    actionItems: [],
+  });
+  assert.match(html, /New message from Luke/);
+  assert.match(html, />Caller<\/td><td[^>]*>Luke/);
+  assert.match(html, />Number<\/td><td>07825395792/);
+  assert.match(html, /Caller ended/);
+  assert.match(html, /Wise<\/span><span[^>]*>Call/);
+  assert.equal(postCallEmailSubject({
+    businessName: "The Home Cloud",
+    callerId: "07825395792",
+    callerName: "Luke",
+    summary: "",
+    transcript: "",
+    outcome: "",
+    actionItems: [],
+  }), "Message from Luke · The Home Cloud");
+});
+
+test("parses branded transcript bubbles and drops tool-call dumps", () => {
+  const turns = parseEmailTranscript(`assistant: Hi, thanks for calling.
+user: Home cloud.
+[function_response] send_information_sms {"ok":true,"status":"sent"}
+[function_request] send_information_sms {"link_type":"repair"}
+assistant: I have texted the repair link.`);
+  assert.deepEqual(turns, [
+    { speaker: "agent", text: "Hi, thanks for calling." },
+    { speaker: "caller", text: "Home cloud." },
+    { speaker: "agent", text: "I have texted the repair link." },
+  ]);
+
+  const html = buildPostCallEmailHtml({
+    businessName: "The Home Cloud",
+    callerId: "07825395792",
+    callerName: "Luke",
+    summary: "Repair reported.",
+    transcript: "assistant: Please visit thehomecloud.co.uk\nuser: That's it. Thanks.\n[function_response] send_information_sms {\"ok\":true}",
+    outcome: "Completed",
+    actionItems: [],
+  });
+  assert.match(html, />Luke</);
+  assert.match(html, /Please visit thehomecloud.co.uk/);
+  assert.match(html, /That&#39;s it. Thanks./);
+  assert.equal(html.includes("function_response"), false);
+  assert.equal(html.includes("send_information_sms"), false);
+});
+
+test("resolves caller name from analysis, then captured-name summary", () => {
+  assert.equal(
+    callerNameFromSources({
+      analysisJson: { caller_name: "Luke" },
+      summary: "Caller Loop said: looking to report a repair.",
+    }),
+    "Luke",
+  );
+  assert.equal(
+    callerNameFromSources({
+      summary: "Caller Luke said: Looking to report a repair. Captured name Luke, phone 07825395792.",
+    }),
+    "Luke",
+  );
+  assert.equal(callerNameFromSources({ summary: "Opening hours question." }), "");
 });

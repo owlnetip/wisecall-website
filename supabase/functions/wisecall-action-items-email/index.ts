@@ -3,7 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   buildPostCallEmailHtml,
   buildPostCallEmailText,
+  callerNameFromSources,
   portalNextActions,
+  postCallEmailSubject,
 } from "../_shared/conversation-email.ts";
 import {
   asEmailList,
@@ -71,6 +73,7 @@ serve(async (req) => {
   const bodyOutcome = typeof body.outcome === "string" ? body.outcome : "";
   const startedAt = typeof body.started_at === "string" ? body.started_at : "";
   const agentName = typeof body.agent_name === "string" ? body.agent_name : "";
+  const bodyCallerName = typeof body.caller_name === "string" ? body.caller_name : "";
 
   if (!profileId) return json({ ok: true, skipped: "missing_profile" });
 
@@ -96,12 +99,13 @@ serve(async (req) => {
   let logStartedAt = "";
   let logAgentName = "";
   let logMeta: Record<string, unknown> = {};
+  let contactName = "";
 
   if (callLogId) {
     const { data: log } = await supabase
       .from("wisecall_call_logs")
       .select(
-        "id, summary, transcript, outcome, started_at, profile_name, metadata, ai_insight_summary, ai_analysis_json",
+        "id, summary, transcript, outcome, started_at, profile_name, metadata, ai_insight_summary, ai_analysis_json, contact_id",
       )
       .eq("id", callLogId)
       .maybeSingle();
@@ -113,6 +117,14 @@ serve(async (req) => {
       logStartedAt = String(log.started_at || "");
       logAgentName = String(log.profile_name || "");
       logMeta = isPlainObject(log.metadata) ? log.metadata : {};
+      if (log.contact_id) {
+        const { data: contact } = await supabase
+          .from("wisecall_contacts")
+          .select("name")
+          .eq("id", log.contact_id)
+          .maybeSingle();
+        contactName = String(contact?.name || "");
+      }
     }
     const { data: followUps } = await supabase
       .from("wisecall_follow_ups")
@@ -140,9 +152,18 @@ serve(async (req) => {
     return json({ ok: true, skipped: "already_sent" });
   }
 
+  const collected = isPlainObject(logMeta.collected) ? logMeta.collected : {};
+  const callerName = callerNameFromSources({
+    callerName: bodyCallerName || contactName,
+    analysisJson,
+    summary,
+    transcript,
+    collected,
+  });
   const emailInput = {
     businessName,
     callerId,
+    callerName,
     summary,
     transcript,
     outcome: outcome || "Conversation recorded",
@@ -152,9 +173,7 @@ serve(async (req) => {
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);
-  const subject = actionItems.length
-    ? `Follow-up needed · ${callerId} · ${businessName}`
-    : `Message from ${callerId} · ${businessName}`;
+  const subject = postCallEmailSubject(emailInput);
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

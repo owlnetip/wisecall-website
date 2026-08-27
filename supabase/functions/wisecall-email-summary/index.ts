@@ -8,7 +8,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   buildPostCallEmailHtml,
   buildPostCallEmailText,
+  callerNameFromSources,
   portalNextActions,
+  postCallEmailSubject,
 } from "../_shared/conversation-email.ts";
 import {
   asEmailList,
@@ -132,13 +134,14 @@ serve(async (req) => {
         metadata: Record<string, unknown> | null;
         ai_insight_summary: string | null;
         ai_analysis_json: unknown;
+        contact_id: string | null;
       }
     | null = null;
   if (callId) {
     const { data } = await supabase
       .from("wisecall_call_logs")
       .select(
-        "id, summary, transcript, outcome, started_at, profile_name, metadata, ai_insight_summary, ai_analysis_json",
+        "id, summary, transcript, outcome, started_at, profile_name, metadata, ai_insight_summary, ai_analysis_json, contact_id",
       )
       .eq("call_id", callId)
       .maybeSingle();
@@ -146,6 +149,15 @@ serve(async (req) => {
   }
 
   const logMeta = isPlainObject(callLog?.metadata) ? callLog.metadata : {};
+  let contactName = "";
+  if (callLog?.contact_id) {
+    const { data: contact } = await supabase
+      .from("wisecall_contacts")
+      .select("name")
+      .eq("id", callLog.contact_id)
+      .maybeSingle();
+    contactName = String(contact?.name || "");
+  }
   let followUpTitles: string[] = [];
   if (callLog?.id) {
     const { data: followUps } = await supabase
@@ -184,9 +196,22 @@ serve(async (req) => {
     profile.clinic_name ||
     profile.profile_name ||
     "Your business";
+  const collected = isPlainObject(logMeta.collected)
+    ? logMeta.collected
+    : isPlainObject(session.collected)
+      ? session.collected
+      : {};
+  const callerName = callerNameFromSources({
+    callerName: contactName,
+    analysisJson: callLog?.ai_analysis_json,
+    summary,
+    transcript,
+    collected,
+  });
   const emailInput = {
     businessName,
     callerId,
+    callerName,
     summary,
     transcript,
     outcome: outcome || callLog?.outcome || "Conversation recorded",
@@ -196,9 +221,7 @@ serve(async (req) => {
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);
-  const subject = actionItems.length
-    ? `Follow-up needed · ${callerId} · ${businessName}`
-    : `Message from ${callerId} · ${businessName}`;
+  const subject = postCallEmailSubject(emailInput);
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

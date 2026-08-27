@@ -1,8 +1,10 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildPostCallEmailHtml,
+  callerNameFromSources,
   nextActionsFromAnalysisJson,
   nextStepLabel,
+  parseEmailTranscript,
 } from "./conversation-email.ts";
 
 Deno.test("does not invent next actions when analysis stored none", () => {
@@ -37,4 +39,31 @@ Deno.test("omits the follow-up list when none exist", () => {
   });
   if (!html.includes("No follow-up needed")) throw new Error("missing none label");
   if (html.includes("<ul")) throw new Error("should omit follow-up list");
+});
+
+Deno.test("puts the caller name at the top", () => {
+  const html = buildPostCallEmailHtml({
+    businessName: "The Home Cloud",
+    callerId: "07825395792",
+    callerName: "Luke",
+    summary: "Caller Luke reported a repair.",
+    transcript: "user: repair",
+    outcome: "remote_hangup",
+    actionItems: [],
+  });
+  if (!html.includes("New message from Luke")) throw new Error("missing name heading");
+  if (!html.includes("07825395792")) throw new Error("missing number");
+  if (!html.includes("Caller ended")) throw new Error("missing friendly outcome");
+});
+
+Deno.test("drops tool-call dumps from the branded transcript", () => {
+  const turns = parseEmailTranscript(
+    "assistant: Hi\nuser: Hello\n[function_response] send_information_sms {\"ok\":true}\nassistant: Done",
+  );
+  assertEquals(turns, [
+    { speaker: "agent", text: "Hi" },
+    { speaker: "caller", text: "Hello" },
+    { speaker: "agent", text: "Done" },
+  ]);
+  assertEquals(callerNameFromSources({ analysisJson: { caller_name: "Luke" } }), "Luke");
 });
