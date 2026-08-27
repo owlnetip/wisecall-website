@@ -42,6 +42,11 @@ import {
   getVoiceRuntimeConfig,
   resolveVoiceRuntime,
 } from "@/lib/voice-runtime";
+import {
+  defaultNegotiatorRules,
+  normaliseNegotiatorRules,
+  type NegotiatorRules,
+} from "@/lib/digital-negotiator";
 import { mergeNotificationEmails, primaryInboxEmail } from "@/lib/notification-recipients";
 
 export type AgentPatch = {
