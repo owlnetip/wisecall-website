@@ -299,12 +299,6 @@ function displayAgentName(agentName?: string): string {
   return "WiseCall";
 }
 
-function callerHeading(input: PostCallEmailInput): string {
-  const name = cleanCallerName(input.callerName);
-  if (name) return name;
-  return "Call transcript";
-}
-
 export function postCallEmailSubject(input: PostCallEmailInput): string {
   const who = cleanCallerName(input.callerName) || input.callerId || "Unknown";
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
@@ -373,7 +367,6 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const company = (input.company || "").trim();
   const duration = durationLabel(input.durationSeconds, input.startedAt, input.finishedAt);
   const urgency = (input.urgency || "").trim();
-  const heading = callerHeading(input);
 
   const detailRows = [
     detailRow("Agent Name", agentName),
@@ -399,12 +392,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
           </td>
         </tr>
       </table>
-      <h1 style="margin:0 0 6px;font-size:28px;line-height:1.2;color:#ffffff;">${escapeEmailHtml(heading)}</h1>
-      <p style="margin:0 0 22px;color:#d8eeee;font-size:15px;">${
-        callerName
-          ? `left a message for ${escapeEmailHtml(input.businessName)}`
-          : `Call transcript for ${escapeEmailHtml(input.businessName)}`
-      }</p>
+      <p style="margin:0 0 22px;font-size:20px;font-weight:700;color:#ffffff;">Call transcript</p>
       ${card(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows}</table>`)}
       ${followUpBlockHtml(actionItems)}
       ${
@@ -443,7 +431,7 @@ export function buildPostCallEmailText(input: PostCallEmailInput): string {
   const duration = durationLabel(input.durationSeconds, input.startedAt, input.finishedAt);
   const blocks = [
     "WiseCall",
-    callerHeading(input),
+    "Call transcript",
     `Agent Name: ${displayAgentName(input.agentName)}`,
     `Caller Name: ${callerName || "Not captured"}`,
     input.company?.trim() ? `Caller Company: ${input.company.trim()}` : "",

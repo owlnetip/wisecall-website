@@ -51,7 +51,9 @@ Deno.test("puts the caller name at the top", () => {
     outcome: "remote_hangup",
     actionItems: [],
   });
-  if (!html.includes("New message from Luke") && !html.includes(">Luke<")) throw new Error("missing name heading");
+  if (!html.includes("Caller Name")) throw new Error("missing caller name row");
+  if (!html.includes("Luke")) throw new Error("missing caller name");
+  if (html.includes("<h1")) throw new Error("should not use a large name heading");
   if (!html.includes("07825395792")) throw new Error("missing number");
   if (!html.includes("Caller ended")) throw new Error("missing friendly outcome");
 });

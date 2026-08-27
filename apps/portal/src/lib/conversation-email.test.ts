@@ -70,7 +70,7 @@ test("summary html includes follow-ups with the portal headings", () => {
     actionItems: ["Call Luke back about broadband"],
     agentName: "Mia",
   });
-  assert.match(html, /Excel Telecom/);
+  assert.match(html, /Call transcript/);
   assert.match(html, /07825395792/);
   assert.match(html, /Next step/);
   assert.match(html, /1 follow-up needed/);
@@ -121,13 +121,14 @@ test("shows the caller name at the top and keeps the number", () => {
     outcome: "remote_hangup",
     actionItems: [],
   });
-  assert.match(html, />Luke</);
+  assert.match(html, /Call transcript/);
   assert.match(html, /Caller Name/);
+  assert.match(html, /Luke/);
   assert.match(html, /Caller Phone/);
   assert.match(html, /07825395792/);
   assert.match(html, /Caller ended/);
   assert.match(html, /Wise<\/span><span[^>]*>Call/);
-  assert.match(html, /left a message for The Home Cloud/);
+  assert.equal(html.includes("<h1"), false);
   assert.equal(postCallEmailSubject({
     businessName: "The Home Cloud",
     callerId: "07825395792",
