@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getServiceSupabase } from "@/lib/supabase";
-import { sendActionItemsEmail, syncFollowUpsFromAnalysis } from "@/lib/follow-ups-sync";
+import { sendPostCallEmailForLog, syncFollowUpsFromAnalysis } from "@/lib/follow-ups-sync";
 import { syncEnquiryFromAnalysis } from "@/lib/enquiries-sync";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -322,10 +322,14 @@ type AnalyzableRow = {
   contact_id: string | null;
   summary: string | null;
   transcript: string | null;
+  outcome: string | null;
+  started_at: string | null;
+  call_id: string | null;
+  metadata: Record<string, unknown> | null;
 };
 
 const ANALYZABLE_SELECT =
-  "id, profile_id, profile_name, caller_id, contact_id, summary, transcript";
+  "id, profile_id, profile_name, caller_id, contact_id, summary, transcript, outcome, started_at, call_id, metadata";
 
 async function persistAnalysis(
   callId: string,
@@ -350,14 +354,16 @@ async function persistAnalysis(
       row.contact_id,
       analysis,
     );
-    if (actionItems.length) {
-      void sendActionItemsEmail({
-        callLogId: callId,
-        profileId: row.profile_id,
-        callerId: row.caller_id ?? "Unknown",
+    try {
+      await sendPostCallEmailForLog(callId, {
         actionItems,
         managerSummary: analysis.short_manager_summary,
       });
+    } catch (err) {
+      console.error(
+        "sendPostCallEmailForLog failed:",
+        err instanceof Error ? err.message : err,
+      );
     }
     await syncEnquiryFromAnalysis(
       callId,

@@ -38,6 +38,11 @@ verify_jwt = false
 [functions.wisecall-action-items-email]
 verify_jwt = false
 
+# Hangup fallback for the post-call team email. Voice runtime authenticates
+# with a shared secret, not a logged-in Supabase JWT.
+[functions.wisecall-email-summary]
+verify_jwt = false
+
 # Property viewing owner-confirm loop — called from voice webhooks / portal
 # with a shared secret or service-role key.
 [functions.wisecall-viewing-request]
