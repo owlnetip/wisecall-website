@@ -10,6 +10,7 @@ import {
   readCallbackRateLimitResult,
 } from "@/lib/demo-callback-rate-limit";
 import { getDemoCallbackEndpoint } from "@/lib/env";
+import { parseSetupWebsite } from "@/lib/setup-website";
 import { getServiceSupabase } from "@/lib/supabase";
 import { callbackSchema } from "@/lib/validation";
 
@@ -34,6 +35,19 @@ export async function POST(request: Request) {
         { ok: false, error: "Demo calls are temporarily unavailable. Please try again shortly." },
         { status: 503 },
       );
+    }
+
+    const website = parseSetupWebsite(parsed.data.website);
+    if (website) {
+      try {
+        console.info(
+          "demo-callback website",
+          new URL(website).hostname,
+          parsed.data.source,
+        );
+      } catch {
+        /* hostname logging is best-effort */
+      }
     }
 
     const ipKey = createCallbackRateLimitKey("ip", getCallbackClientIp(request.headers));

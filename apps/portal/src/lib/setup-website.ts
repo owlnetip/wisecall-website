@@ -47,7 +47,8 @@ export function dashboardSetupPath(website?: unknown): string {
   return `/dashboard?${params.toString()}`;
 }
 
-// Public guest wizard for wisecall.io/try. No account until they ask for a number.
+// Public guest wizard for wisecall.io/try. Hosted at app.wisecall.io/setup.
+// wisecall.io/setup is a separate no-auth Meta landing that rings the test agent.
 export function guestSetupPath(website?: unknown): string {
   const params = new URLSearchParams({ trial: "calls" });
   const parsed = parseSetupWebsite(website);

@@ -31,6 +31,12 @@ export const callbackSchema = z.object({
     .min(7, "Enter a mobile number")
     .max(32, "Mobile number is too long"),
   source: z.string().trim().max(120).default("portal_demo"),
+  website: z
+    .string()
+    .trim()
+    .max(300, "Website URL is too long")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type DemoRequestInput = z.infer<typeof demoRequestSchema>;

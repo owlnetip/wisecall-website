@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "serve": "npx serve .",
-    "build:jameshare": "node scripts/build-jameshare.mjs"
+    "build:jameshare": "node scripts/build-jameshare.mjs",
+    "test:setup-callback": "node scripts/test-setup-callback.mjs"
   },
   "dependencies": {
     "@microsoft/clarity": "^1.0.2",
