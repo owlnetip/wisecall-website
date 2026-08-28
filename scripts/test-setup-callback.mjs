@@ -199,7 +199,8 @@ check("does not mention Ofcom, BT, Twilio or Telnyx", !/Ofcom|Twilio|Telnyx|\bBT
 check("does not say texts you", !/texts you/i.test(html));
 check("does not say looked after", !/looked after/i.test(html));
 check("masks form fields for Clarity", html.includes('data-clarity-mask="true"'));
-check("does not auto-dial", !html.includes('href="tel:+441135222277"') || html.includes("/try"));
+check("does not auto-dial", !html.includes('href="tel:'));
+check("does not use 2277 as a CTA on this page", !html.includes("0113 522 2277"));
 
 console.log(`\n${results.filter(Boolean).length}/${results.length} checks passed`);
 process.exit(results.every(Boolean) ? 0 : 1);
