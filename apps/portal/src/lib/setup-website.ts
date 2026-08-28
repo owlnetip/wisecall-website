@@ -1,8 +1,14 @@
 // Website URL + setup wizard carried from wisecall.io/try.
 //
 // Facebook /try is agent-first: visitors paste a website, then run SetupWizard
-// on public /setup with no account. Email + password is the number gate, not
-// the first screen. Homepage "Try it now" is still signup-first.
+// on public app.wisecall.io/setup with no account. The last step rings them on
+// THAT test agent (guest profile + existing demo-callback). Email + password is
+// not the wall; hangup signup can still offer 20 free calls.
+// Homepage "Try it now" is still signup-first.
+//
+// wisecall.io/setup is only a Vercel redirect into this portal route. Do not
+// add a marketing landing at setup/index.html — that rings the generic Ava
+// demo (profile_slug wisecall) and was rejected.
 //
 // There is no /wizard or /dashboard/setup route. Create-agent is a full-screen
 // overlay (SetupWizard) on /dashboard, the same UI as "+ New agent" /
@@ -47,7 +53,7 @@ export function dashboardSetupPath(website?: unknown): string {
   return `/dashboard?${params.toString()}`;
 }
 
-// Public guest wizard for wisecall.io/try. No account until they ask for a number.
+// Public guest wizard for wisecall.io/try. No account until after they hear the call.
 export function guestSetupPath(website?: unknown): string {
   const params = new URLSearchParams({ trial: "calls" });
   const parsed = parseSetupWebsite(website);
