@@ -35,7 +35,7 @@ export type ParsedWizardDraft = {
   calcomApiKey?: string;
 };
 
-// Guest /setup posts the finished wizard draft with the email+password form.
+// Guest /setup posts the finished wizard draft with the UK number to ring them.
 // Keep this structural: a truncated or hostile payload must not create an agent.
 export function parseWizardDraft(input: unknown): ParsedWizardDraft | null {
   if (typeof input !== "string" || !input || input.length > MAX_DRAFT_JSON_LENGTH) {

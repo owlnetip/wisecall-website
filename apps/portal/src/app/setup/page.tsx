@@ -6,7 +6,9 @@ import { dashboardSetupPath, parseSetupWebsite } from "@/lib/setup-website";
 
 export const metadata: Metadata = {
   title: "Build your WiseCall receptionist",
-  description: "Paste your website. We draft the receptionist. Create an account to get your number and 20 free inbound AI calls.",
+  description:
+    "Paste your website. We draft the receptionist. Enter your UK number and we call you so you can hear it. No account first.",
+  robots: { index: false, follow: true },
 };
 
 export default async function GuestSetupPage({

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Try WiseCall | Talk to Ava. 20 free inbound AI calls.</title>
-  <meta name="description" content="Talk to Ava, the WiseCall assistant. Pick an industry to roleplay. After you hang up you get a text with the signup link if you want. 20 free inbound AI calls. No card.">
+  <title>Try WiseCall | Paste your website. We call you.</title>
+  <meta name="description" content="Paste your website. We draft the receptionist and call you so you can hear it. 20 free inbound AI calls. No card.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://wisecall.io/try">
   <meta name="theme-color" content="#172929">
@@ -12,13 +12,13 @@
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://wisecall.io/try">
-  <meta property="og:title" content="Try WiseCall | Talk to Ava. 20 free inbound AI calls.">
-  <meta property="og:description" content="Talk to Ava, the WiseCall assistant. Pick an industry to roleplay. After you hang up you get a text with the signup link if you want. 20 free inbound AI calls. No card.">
+  <meta property="og:title" content="Try WiseCall | Paste your website. We call you.">
+  <meta property="og:description" content="Paste your website. We draft the receptionist and call you so you can hear it. 20 free inbound AI calls. No card.">
   <meta property="og:image" content="https://wisecall.io/og-image.jpg">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Try WiseCall | Talk to Ava. 20 free inbound AI calls.">
-  <meta name="twitter:description" content="Talk to Ava, the WiseCall assistant. Pick an industry to roleplay. After you hang up you get a text with the signup link if you want. 20 free inbound AI calls. No card.">
+  <meta name="twitter:title" content="Try WiseCall | Paste your website. We call you.">
+  <meta name="twitter:description" content="Paste your website. We draft the receptionist and call you so you can hear it. 20 free inbound AI calls. No card.">
 
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -92,64 +92,79 @@
       font-weight: 700;
       color: #7de8eb;
     }
+    .try-form {
+      display: grid;
+      gap: 0.65rem;
+    }
+    .try-form label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+    .try-form input {
+      width: 100%;
+      min-height: 3.15rem;
+      padding: 0.85rem 1rem;
+      border-radius: 0.6rem;
+      border: 1.5px solid rgba(125, 232, 235, 0.28);
+      background: #1f3535;
+      color: #fff;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 500;
+      outline: none;
+    }
+    .try-form input::placeholder {
+      color: rgba(255, 255, 255, 0.38);
+      font-weight: 500;
+    }
+    .try-form input:focus {
+      border-color: #7de8eb;
+      box-shadow: 0 0 0 3px rgba(125, 232, 235, 0.18);
+    }
     .cta {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.15rem;
       width: 100%;
-      min-height: 4.15rem;
-      padding: 0.9rem 1.2rem;
+      min-height: 3.15rem;
+      padding: 0.85rem 1.2rem;
       border: 0;
-      border-radius: 0.75rem;
+      border-radius: 0.6rem;
       background: linear-gradient(90deg, #7de8eb, #5dbfc2);
       color: #172929;
       font-family: inherit;
       font-weight: 800;
-      font-size: 1.2rem;
-      line-height: 1.2;
+      font-size: 1.05rem;
       text-decoration: none;
       cursor: pointer;
       box-shadow: 0 0 28px rgba(125, 232, 235, 0.28);
       -webkit-tap-highlight-color: transparent;
     }
     .cta:active { transform: scale(0.98); }
-    .cta-label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .cta-number {
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      opacity: 0.82;
-    }
-    .dial {
+    .skip {
       margin: 0.7rem 0 0;
       text-align: center;
-      font-size: 0.95rem;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.62);
+      font-size: 0.85rem;
     }
-    .dial a {
-      color: #7de8eb;
-      font-weight: 700;
+    .skip a {
+      color: rgba(125, 232, 235, 0.85);
+      font-weight: 600;
       text-decoration: none;
     }
-    .note {
-      margin: 0.85rem 0 0;
-      font-size: 0.88rem;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.55);
+    .ready {
+      margin: 1.35rem 0 0.7rem;
+      font-size: 0.95rem;
+      font-weight: 700;
     }
     .steps {
       list-style: none;
-      margin: 1.15rem 0 0;
+      margin: 0;
       padding: 0;
       display: grid;
-      gap: 0.5rem;
+      gap: 0.55rem;
     }
     .steps li {
       display: flex;
@@ -166,61 +181,31 @@
       font-size: 0.82rem;
       color: #7de8eb;
     }
-    .own-line {
-      margin: 0 0 1.25rem;
-      padding: 1.35rem 0 0;
+    .ava {
+      margin: 1.35rem 0 0;
+      padding: 1.25rem 0 0;
       border-top: 1px solid rgba(125, 232, 235, 0.12);
     }
-    .own-line h2 {
-      margin: 0 0 0.45rem;
+    .ava h2 {
+      margin: 0 0 0.4rem;
       font-size: 1.05rem;
       font-weight: 700;
       letter-spacing: -0.02em;
     }
-    .own-line p {
-      margin: 0 0 0.85rem;
+    .ava p {
+      margin: 0 0 0.75rem;
       font-size: 0.9rem;
       line-height: 1.45;
       color: rgba(255, 255, 255, 0.58);
     }
-    .try-form {
-      display: grid;
-      gap: 0.55rem;
-    }
-    .try-form label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-    }
-    .try-form input {
-      width: 100%;
-      min-height: 2.85rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.6rem;
-      border: 1.5px solid rgba(125, 232, 235, 0.22);
-      background: #1f3535;
-      color: #fff;
-      font-family: inherit;
-      font-size: 16px;
-      font-weight: 500;
-      outline: none;
-    }
-    .try-form input::placeholder {
-      color: rgba(255, 255, 255, 0.38);
-      font-weight: 500;
-    }
-    .try-form input:focus {
-      border-color: #7de8eb;
-      box-shadow: 0 0 0 3px rgba(125, 232, 235, 0.18);
-    }
     .cta-secondary {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 0.1rem;
       width: 100%;
-      min-height: 2.85rem;
+      min-height: 3.15rem;
       padding: 0.7rem 1.1rem;
       border: 1.5px solid rgba(125, 232, 235, 0.35);
       border-radius: 0.6rem;
@@ -233,6 +218,17 @@
       cursor: pointer;
     }
     .cta-secondary:active { transform: scale(0.98); }
+    .cta-number {
+      font-size: 0.82rem;
+      font-weight: 600;
+      opacity: 0.82;
+    }
+    .note {
+      margin: 0.7rem 0 0;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.45);
+    }
     footer {
       margin: 0.25rem 0 0;
       padding-top: 0.85rem;
@@ -257,39 +253,15 @@
     </header>
 
     <main>
-      <section class="hero" aria-label="Talk to Ava">
+      <section class="hero" aria-label="Build your receptionist">
         <p class="outcome">They rang. You missed it. They booked someone else.</p>
-        <h1>Hear Ava first.</h1>
-        <p class="payoff">I&rsquo;m Ava, the WiseCall assistant. Tell me what industry to roleplay: dental, trades, property, legal, or name one.</p>
+        <h1>Hear your receptionist.</h1>
+        <p class="payoff">Paste your website. We draft the receptionist, then call you so you can hear it. You get the summary.</p>
         <p class="offer">20 free inbound AI calls. No card.</p>
 
-        <a class="cta" href="tel:+441135222277">
-          <span class="cta-label">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6.6 4.8c.3-.7 1.1-1.1 1.9-.9l2.1.6c.7.2 1.2.8 1.3 1.5l.3 2.2c.1.6-.2 1.2-.7 1.5l-1.3.8a12.4 12.4 0 0 0 5.5 5.5l.8-1.3c.3-.5.9-.8 1.5-.7l2.2.3c.7.1 1.3.6 1.5 1.3l.6 2.1c.2.8-.2 1.6-.9 1.9-.8.4-1.8.6-2.8.6C11.3 20.2 3.8 12.7 3.8 7.6c0-1 .2-2 .8-2.8Z" fill="currentColor"/>
-            </svg>
-            Talk to Ava
-          </span>
-          <span class="cta-number">0113 522 2277</span>
-        </a>
-        <p class="dial">
-          Or dial <a href="tel:+441135222277">+44 113 522 2277</a>
-        </p>
-        <p class="note">She answers as Ava, not in your business name, until you set up on your own line. After you hang up you get a text with the signup link if you want.</p>
-
-        <ol class="steps">
-          <li><span class="num">1</span> Talk to Ava</li>
-          <li><span class="num">2</span> Pick an industry to roleplay</li>
-          <li><span class="num">3</span> Hang up. You&rsquo;ll get a text with the signup link</li>
-        </ol>
-      </section>
-
-      <section class="own-line" aria-label="Get 20 free calls on your own line">
-        <h2>Get 20 free calls on your own line</h2>
-        <p>Optional. Paste your website and we&rsquo;ll draft a receptionist in your name. No card.</p>
         <form id="try-form" class="try-form" action="https://app.wisecall.io/setup" method="get">
           <input type="hidden" name="trial" value="calls">
-          <label for="website">Your website (optional)</label>
+          <label for="website">Your website</label>
           <input
             id="website"
             name="website"
@@ -301,9 +273,29 @@
             spellcheck="false"
             enterkeyhint="go"
             placeholder="yourwebsite.co.uk"
+            required
+            data-clarity-mask="true"
           >
-          <button class="cta-secondary" type="submit">Get 20 free calls</button>
+          <button class="cta" type="submit">Build my agent</button>
         </form>
+        <p class="skip"><a href="https://app.wisecall.io/setup?trial=calls">No website? Start without one</a></p>
+
+        <p class="ready">Hear it in about a minute</p>
+        <ol class="steps">
+          <li><span class="num">1</span> Paste your website</li>
+          <li><span class="num">2</span> We draft the receptionist, about 60 seconds</li>
+          <li><span class="num">3</span> We call you. Hear it now</li>
+        </ol>
+      </section>
+
+      <section class="ava" aria-label="Talk to Ava">
+        <h2>Or talk to Ava first</h2>
+        <p>I&rsquo;m Ava, the WiseCall assistant. Tell me what industry to roleplay: dental, trades, property, legal, or name one.</p>
+        <a class="cta-secondary" href="tel:+441135222277">
+          <span>Talk to Ava</span>
+          <span class="cta-number">0113 522 2277</span>
+        </a>
+        <p class="note">She answers as Ava, not in your business name, until you set up on your own line. After you hang up you get a text with the signup link if you want.</p>
       </section>
     </main>
 
@@ -316,12 +308,12 @@
   <script>
     var form = document.getElementById("try-form");
     if (form) {
-      form.addEventListener("submit", function () {
+      form.addEventListener("submit", function (event) {
         var input = form.querySelector("[name='website']");
         if (!input) return;
         var raw = (input.value || "").trim();
         if (!raw) {
-          input.removeAttribute("name");
+          event.preventDefault();
           return;
         }
         if (!/^https?:\/\//i.test(raw)) input.value = "https://" + raw;

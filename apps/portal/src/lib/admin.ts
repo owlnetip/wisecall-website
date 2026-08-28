@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
+import { isGuestTestAgentMetadata } from "@/lib/guest-test-agent";
 
 // Who counts as an admin. app_metadata is server-controlled; user_metadata is
 // intentionally ignored because account holders can update it themselves. An
@@ -76,7 +77,7 @@ export async function getAdminOverview(): Promise<AdminOverview | null> {
     return { agents: [], stats: { agents: 0, live: 0, customers: 0, calls: 0 } };
   }
 
-  const rows = (profiles ?? []) as ProfileRow[];
+  const rows = (profiles ?? []).filter((row) => !isGuestTestAgentMetadata(row.metadata)) as ProfileRow[];
 
   // Tally call counts per profile in one pass.
   const counts: Record<string, number> = {};

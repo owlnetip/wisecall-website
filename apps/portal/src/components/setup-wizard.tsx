@@ -12,6 +12,7 @@ import {
   Mail,
   Plus,
   Trash2,
+  Phone,
   PhoneForwarded,
   Play,
   Square,
@@ -167,6 +168,7 @@ export function SetupWizard({
   initialWebsite = "",
   requireAccount = false,
   onNeedAccount,
+  onHearIt,
   hideClose = false,
 }: {
   onClose: () => void;
@@ -179,9 +181,11 @@ export function SetupWizard({
   templates: AgentTemplate[];
   accountEmail?: string;
   initialWebsite?: string;
-  // Facebook /try: build first, then email+password is the number gate.
+  // Public /setup: build first. Hear-it-now rings their test agent; account
+  // is not the wall. onNeedAccount stays as a fallback if no outbound hook.
   requireAccount?: boolean;
   onNeedAccount?: (draft: AgentDraft) => void;
+  onHearIt?: (draft: AgentDraft, phone: string) => Promise<WizardResult>;
   hideClose?: boolean;
 }) {
   const [requestedStep, setStep] = useState<Step>("website");
@@ -192,6 +196,9 @@ export function SetupWizard({
   const [generating, startGenerate] = useTransition();
   const [generatingManual, startGenerateManual] = useTransition();
   const [submitting, startSubmit] = useTransition();
+  const [testPhone, setTestPhone] = useState("");
+  const [callPlaced, setCallPlaced] = useState(false);
+  const ringVisitor = Boolean(requireAccount && onHearIt);
   const [loadingPhase, setLoadingPhase] = useState(0);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -376,6 +383,21 @@ export function SetupWizard({
       return;
     }
     setError(null);
+    if (ringVisitor && onHearIt) {
+      if (!testPhone.trim()) {
+        setError("Enter a UK mobile number so we can call you.");
+        return;
+      }
+      startSubmit(async () => {
+        const res = await onHearIt(draft, testPhone);
+        if (!res.ok) {
+          setError(res.error ?? "Could not start the test call.");
+          return;
+        }
+        setCallPlaced(true);
+      });
+      return;
+    }
     if (requireAccount && onNeedAccount) {
       onNeedAccount(draft);
       return;
@@ -447,7 +469,7 @@ export function SetupWizard({
                 >
                   {done ? <Check className="anim-pop h-3.5 w-3.5" /> : idx + 1}
                 </span>
-                {STEP_TITLES[s]}
+                {s === "handoff" && ringVisitor ? "Hear it now" : STEP_TITLES[s]}
               </li>
             );
           })}
@@ -459,9 +481,11 @@ export function SetupWizard({
             You control the final step
           </p>
           <p className="mt-1 text-xs leading-relaxed text-[#94b4b2]">
-            {requireAccount
-              ? "Nothing goes live while you review. You only create an account when you want the number."
-              : "Nothing changes while you review. The final button clearly tells you when your first number will be connected and ready for calls."}
+            {ringVisitor
+              ? "Nothing goes live while you review. Enter your number at the end and we call you so you can hear this receptionist."
+              : requireAccount
+                ? "Nothing goes live while you review. You only create an account when you want the number."
+                : "Nothing changes while you review. The final button clearly tells you when your first number will be connected and ready for calls."}
           </p>
         </div>
       </aside>
@@ -470,7 +494,9 @@ export function SetupWizard({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-4 border-b border-line bg-card px-4 py-3 sm:px-8">
           <div className="min-w-0">
-            <p className="text-sm font-black text-ink">{STEP_TITLES[step]}</p>
+            <p className="text-sm font-black text-ink">
+              {ringVisitor && step === "handoff" ? "Hear it now" : STEP_TITLES[step]}
+            </p>
             <p className="text-xs text-ink-soft">
               Step {stepIndex + 1} of {totalSteps}
             </p>
@@ -527,6 +553,7 @@ export function SetupWizard({
                     placeholder="yourbusiness.co.uk"
                     className="h-14 w-full bg-transparent text-lg text-ink outline-none placeholder:text-ink-faint"
                     autoFocus
+                    data-clarity-mask="true"
                   />
                 </div>
                 {error && <p className="mt-3 text-sm font-medium text-danger">{error}</p>}
@@ -964,21 +991,58 @@ export function SetupWizard({
             {/* STEP: handoff — where messages go + who calls can reach. One step,
                 because they answer the same question: "when the AI needs a human,
                 what happens?" */}
-            {step === "handoff" && draft && (
+            {step === "handoff" && draft && callPlaced && ringVisitor && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-black text-ink sm:text-3xl">We&apos;re calling you now</h2>
+                <p className="text-ink-soft">
+                  Answer to hear the receptionist we drafted from your website
+                  {draft.businessName ? ` for ${draft.businessName}` : ""}.
+                </p>
+                <p className="text-sm text-ink-soft">
+                  After you hang up you get the summary. 20 free inbound AI calls if you want them. No card.
+                </p>
+              </div>
+            )}
+
+            {step === "handoff" && draft && !(callPlaced && ringVisitor) && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-ink sm:text-3xl">
-                    When the AI needs a human
+                    {ringVisitor ? "Hear it now" : "When the AI needs a human"}
                   </h2>
                   <p className="mt-2 text-ink-soft">
-                    Tell us where messages should land and who urgent calls can reach. You can
-                    skip the team part and add people later.
+                    {ringVisitor
+                      ? "Enter your UK mobile and we call you so you can hear this receptionist."
+                      : "Tell us where messages should land and who urgent calls can reach. You can skip the team part and add people later."}
                   </p>
                 </div>
+
+                {ringVisitor ? (
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
+                      Your UK mobile
+                    </span>
+                    <div className="flex items-center gap-2 rounded-xl border border-line-strong bg-card px-3 shadow-card transition focus-within:border-teal">
+                      <Phone className="h-4 w-4 flex-shrink-0 text-ink-faint" />
+                      <input
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        value={testPhone}
+                        onChange={(e) => setTestPhone(e.target.value)}
+                        placeholder="07…"
+                        className="h-12 w-full bg-transparent text-ink outline-none placeholder:text-ink-faint"
+                        data-clarity-mask="true"
+                        required
+                      />
+                    </div>
+                  </label>
+                ) : null}
 
                 <label className="block">
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
                     Main email for messages &amp; transcripts
+                    {ringVisitor ? " (optional)" : ""}
                   </span>
                   <div className="flex items-center gap-2 rounded-xl border border-line-strong bg-card px-3 shadow-card transition focus-within:border-teal">
                     <Mail className="h-4 w-4 flex-shrink-0 text-ink-faint" />
@@ -988,6 +1052,7 @@ export function SetupWizard({
                       onChange={(e) => patchDraft({ defaultEmail: e.target.value })}
                       placeholder="you@yourbusiness.co.uk"
                       className="h-12 w-full bg-transparent text-ink outline-none placeholder:text-ink-faint"
+                      data-clarity-mask="true"
                     />
                   </div>
                 </label>
@@ -1003,7 +1068,13 @@ export function SetupWizard({
                 </div>
 
                 <div className="rounded-xl border border-teal/20 bg-teal-wash px-4 py-3 text-sm text-[#1f5f60]">
-                  {requireAccount ? (
+                  {ringVisitor ? (
+                    <>
+                      <span className="font-bold">We call you.</span> This uses the receptionist
+                      just drafted from your website. No account, card, or &ldquo;call our
+                      number&rdquo; first.
+                    </>
+                  ) : requireAccount ? (
                     <>
                       <span className="font-bold">Last step.</span> Create a free account (email
                       and password) to get your number. 20 free inbound AI calls. No card.
@@ -1035,7 +1106,12 @@ export function SetupWizard({
                   >
                     {submitting ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" /> Setting up &amp; connecting number…
+                        <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                        {ringVisitor ? "Calling you…" : "Setting up & connecting number…"}
+                      </>
+                    ) : ringVisitor ? (
+                      <>
+                        <Phone className="h-4 w-4" /> Call me
                       </>
                     ) : requireAccount ? (
                       <>

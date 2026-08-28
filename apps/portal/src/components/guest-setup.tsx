@@ -1,41 +1,40 @@
 "use client";
 
-import { useState } from "react";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { SetupWizard, type WizardResult } from "@/components/setup-wizard";
-import { TrialAccountGate } from "@/components/trial-account-gate";
 import { agentTemplates } from "@/lib/agent-templates";
 import { voiceOptions } from "@/lib/voices";
 
 const TRY_URL = "https://wisecall.io/try";
 
 export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
-  const [pendingDraft, setPendingDraft] = useState<AgentDraft | null>(null);
-
-  function handleNeedAccount(draft: AgentDraft) {
-    setPendingDraft(draft);
-  }
-
-  async function refuseSubmit(): Promise<WizardResult> {
-    return { ok: false, error: "Create an account to get your number." };
+  async function ringVisitor(draft: AgentDraft, phone: string): Promise<WizardResult> {
+    const response = await fetch("/api/setup-test-callback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, draft }),
+    });
+    const result = (await response.json().catch(() => ({}))) as {
+      ok?: boolean;
+      error?: string;
+    };
+    if (!response.ok || result.ok === false) {
+      return { ok: false, error: result.error || "Could not start the test call." };
+    }
+    return { ok: true };
   }
 
   return (
-    <>
-      <SetupWizard
-        initialWebsite={initialWebsite}
-        requireAccount
-        onNeedAccount={handleNeedAccount}
-        onClose={() => {
-          window.location.href = TRY_URL;
-        }}
-        onSubmit={refuseSubmit}
-        voices={voiceOptions}
-        templates={agentTemplates}
-      />
-      {pendingDraft ? (
-        <TrialAccountGate draft={pendingDraft} onCancel={() => setPendingDraft(null)} />
-      ) : null}
-    </>
+    <SetupWizard
+      initialWebsite={initialWebsite}
+      requireAccount
+      onHearIt={ringVisitor}
+      onClose={() => {
+        window.location.href = TRY_URL;
+      }}
+      onSubmit={async () => ({ ok: false, error: "Hear the call first." })}
+      voices={voiceOptions}
+      templates={agentTemplates}
+    />
   );
 }

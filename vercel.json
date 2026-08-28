@@ -12,6 +12,16 @@
   ],
   "redirects": [
     {
+      "source": "/setup",
+      "destination": "https://app.wisecall.io/setup",
+      "permanent": false
+    },
+    {
+      "source": "/setup/",
+      "destination": "https://app.wisecall.io/setup",
+      "permanent": false
+    },
+    {
       "source": "/industries/dental",
       "destination": "/dental",
       "permanent": true
