@@ -26,8 +26,9 @@ function isAuthorised(req: Request): boolean {
   const bearerKey = authHeader.toLowerCase().startsWith("bearer ")
     ? authHeader.slice(7).trim()
     : "";
-  const providedKey = (req.headers.get("apikey") || bearerKey).trim();
-  return providedKey === serviceKey;
+  const apiKey = (req.headers.get("apikey") || "").trim();
+  // Gateway may overwrite `apikey` with the anon key; accept either header.
+  return apiKey === serviceKey || bearerKey === serviceKey;
 }
 
 Deno.serve(async (req) => {
