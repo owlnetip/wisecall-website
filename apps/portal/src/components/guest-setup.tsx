@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Globe, Loader2, Mail, Phone, Sparkles } from "lucide-react";
+import { Globe, Loader2, Mail, Phone } from "lucide-react";
 import { draftAgentFromWebsite, type AgentDraft } from "@/app/actions/wizard";
+import {
+  guestAutoRingKey,
+  shouldAutoRingGuest,
+} from "@/lib/guest-auto-ring";
 import { ALWAYS_OPEN_OFFICE_HOURS } from "@/lib/guest-test-agent";
+import { toE164UkMobile } from "@/lib/uk-callback-number";
 
 const TRY_URL = "https://wisecall.io/try";
 
@@ -19,10 +24,18 @@ function isLikelyEmail(value: string): boolean {
   return trimmed.includes("@") && trimmed.includes(".");
 }
 
-export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
+export function GuestSetup({
+  initialWebsite,
+  initialPhone = "",
+  initialEmail = "",
+}: {
+  initialWebsite: string;
+  initialPhone?: string;
+  initialEmail?: string;
+}) {
   const [website, setWebsite] = useState(initialWebsite);
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState(initialPhone);
+  const [email, setEmail] = useState(initialEmail);
   const [draft, setDraft] = useState<AgentDraft | null>(null);
   const [scannedWebsite, setScannedWebsite] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +43,22 @@ export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
   const [scanning, startScan] = useTransition();
   const [callPlaced, setCallPlaced] = useState(false);
   const [scanPhase, setScanPhase] = useState(0);
-  const autoStarted = useRef(false);
   const inflightScan = useRef<{ url: string; promise: Promise<AgentDraft | null> } | null>(null);
+  const rangKey = useRef<string | null>(null);
+  const phoneRef = useRef(phone);
+  const emailRef = useRef(email);
+  const websiteRef = useRef(website);
+  const draftRef = useRef(draft);
+  const scannedRef = useRef(scannedWebsite);
+  const callPlacedRef = useRef(callPlaced);
+  const callingRef = useRef(calling);
+  phoneRef.current = phone;
+  emailRef.current = email;
+  websiteRef.current = website;
+  draftRef.current = draft;
+  scannedRef.current = scannedWebsite;
+  callPlacedRef.current = callPlaced;
+  callingRef.current = calling;
 
   useEffect(() => {
     if (!scanning) return;
@@ -44,7 +71,6 @@ export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
   function scan(url: string): Promise<AgentDraft | null> {
     const key = url.trim();
     if (inflightScan.current?.url === key) return inflightScan.current.promise;
-    setError(null);
     setScanPhase(0);
     const promise = new Promise<AgentDraft | null>((resolve) => {
       startScan(async () => {
@@ -63,6 +89,7 @@ export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
           };
           setDraft(next);
           setScannedWebsite(key);
+          setError(null);
           resolve(next);
         } catch {
           if (inflightScan.current?.url === key) inflightScan.current = null;
@@ -75,50 +102,33 @@ export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
     return promise;
   }
 
-  useEffect(() => {
-    if (autoStarted.current || !initialWebsite.trim()) return;
-    autoStarted.current = true;
-    void scan(initialWebsite);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialWebsite]);
-
-  function submit() {
-    const site = website.trim();
-    if (!site) {
-      setError("Paste your website so we can draft your receptionist.");
-      return;
-    }
-    if (!phone.trim()) {
-      setError("Enter a UK mobile number so we can call you.");
-      return;
-    }
-    if (!isLikelyEmail(email)) {
+  async function ringDraft(ready: AgentDraft, site: string) {
+    if (!isLikelyEmail(emailRef.current)) {
       setError("That doesn't look like a valid email address.");
       return;
     }
-    setError(null);
-    startCall(async () => {
-      let ready = draft;
-      if (!ready || scannedWebsite !== site) {
-        ready = await scan(site);
-      }
-      if (!ready) return;
+    const key = guestAutoRingKey(phoneRef.current, site);
+    if (!key) return;
+    if (rangKey.current === key || callPlacedRef.current || callingRef.current) return;
+    rangKey.current = key;
 
+    startCall(async () => {
       const payload: AgentDraft = {
         ...ready,
         voice: "Gemma",
-        defaultEmail: email.trim(),
+        defaultEmail: emailRef.current.trim(),
       };
       const response = await fetch("/api/setup-test-callback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, draft: payload }),
+        body: JSON.stringify({ phone: phoneRef.current, draft: payload }),
       });
       const result = (await response.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
       };
       if (!response.ok || result.ok === false) {
+        if (rangKey.current === key) rangKey.current = null;
         setError(result.error || "Could not start the test call.");
         return;
       }
@@ -126,7 +136,42 @@ export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
     });
   }
 
+  function tryAutoRing(ready: AgentDraft | null, site: string) {
+    if (
+      !shouldAutoRingGuest({
+        callPlaced: callPlacedRef.current,
+        ringing: callingRef.current,
+        draftReady: Boolean(ready),
+        website: websiteRef.current,
+        scannedWebsite: site,
+        phone: phoneRef.current,
+      })
+    ) {
+      return;
+    }
+    if (!ready) return;
+    void ringDraft(ready, site);
+  }
+
+  useEffect(() => {
+    const site = website.trim();
+    if (!site) return;
+    const timer = window.setTimeout(() => {
+      void scan(site).then((ready) => {
+        if (ready) tryAutoRing(ready, site);
+      });
+    }, initialWebsite.trim() && site === initialWebsite.trim() ? 0 : 450);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [website]);
+
+  useEffect(() => {
+    tryAutoRing(draft, scannedWebsite);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone, draft, scannedWebsite]);
+
   const busy = scanning || calling;
+  const numberReady = Boolean(toE164UkMobile(phone));
 
   return (
     <div className="min-h-screen bg-surface">
@@ -152,7 +197,7 @@ export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
           <div>
             <h1 className="text-2xl font-black text-ink sm:text-3xl">Hear your receptionist</h1>
             <p className="mt-2 text-ink-soft">
-              Paste your website. Enter your number. We draft it and call you.
+              Paste your website and UK mobile. We draft it and call you — no extra tap.
             </p>
 
             <label className="mt-7 block">
@@ -186,13 +231,11 @@ export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
                   autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !busy) submit();
-                  }}
                   placeholder="07…"
                   className="h-12 w-full bg-transparent text-ink outline-none placeholder:text-ink-faint"
                   data-clarity-mask="true"
                   required
+                  autoFocus={Boolean(initialWebsite) && !initialPhone}
                 />
               </div>
             </label>
@@ -215,35 +258,42 @@ export function GuestSetup({ initialWebsite }: { initialWebsite: string }) {
             </label>
 
             {scanning && (
-              <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-teal-deep">
+              <p className="mt-5 flex items-center gap-2 text-sm font-semibold text-teal-deep">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {SCAN_STEPS[scanPhase]}
+                {numberReady
+                  ? `${SCAN_STEPS[scanPhase]} We'll call you the moment it's ready.`
+                  : SCAN_STEPS[scanPhase]}
+              </p>
+            )}
+
+            {calling && (
+              <p className="mt-5 flex items-center gap-2 text-sm font-semibold text-teal-deep">
+                <Loader2 className="h-4 w-4 animate-spin" /> Calling you now…
+              </p>
+            )}
+
+            {!busy && draft && scannedWebsite === website.trim() && !numberReady && (
+              <p className="mt-5 text-sm font-semibold text-ink-soft">
+                Receptionist is ready. Enter your UK mobile and we call you straight away.
               </p>
             )}
 
             {error && <p className="mt-4 text-sm font-medium text-danger">{error}</p>}
 
-            <button
-              type="button"
-              onClick={submit}
-              disabled={busy}
-              className="press mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-good px-5 font-black text-white transition hover:bg-[#0e7a4d] disabled:opacity-60"
-            >
-              {calling ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Calling you…
-                </>
-              ) : scanning ? (
-                <>
-                  <Sparkles className="h-4 w-4" /> Drafting, then we&apos;ll call
-                </>
-              ) : (
-                <>
-                  <Phone className="h-4 w-4" /> Call me
-                </>
-              )}
-            </button>
-            <p className="mt-3 text-center text-xs text-ink-faint">
+            {error && draft && numberReady && !calling ? (
+              <button
+                type="button"
+                onClick={() => {
+                  rangKey.current = null;
+                  tryAutoRing(draft, scannedWebsite);
+                }}
+                className="press mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-good px-5 font-black text-white transition hover:bg-[#0e7a4d]"
+              >
+                <Phone className="h-4 w-4" /> Try calling again
+              </button>
+            ) : null}
+
+            <p className="mt-4 text-center text-xs text-ink-faint">
               No account or card first. We call you on the receptionist drafted from your site, not Ava.
             </p>
           </div>
