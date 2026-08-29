@@ -256,7 +256,7 @@
       <section class="hero" aria-label="Build your receptionist">
         <p class="outcome">They rang. You missed it. They booked someone else.</p>
         <h1>Hear your receptionist.</h1>
-        <p class="payoff">Paste your website. We draft the receptionist, then call you so you can hear it. You get the summary.</p>
+        <p class="payoff">Paste your website and mobile. We draft the receptionist and call you so you can hear it. You get the summary.</p>
         <p class="offer">20 free inbound AI calls. No card.</p>
 
         <form id="try-form" class="try-form" action="https://app.wisecall.io/setup" method="get">
@@ -271,20 +271,42 @@
             autocapitalize="none"
             autocorrect="off"
             spellcheck="false"
-            enterkeyhint="go"
+            enterkeyhint="next"
             placeholder="yourwebsite.co.uk"
             required
             data-clarity-mask="true"
           >
-          <button class="cta" type="submit">Build my agent</button>
+          <label for="phone">UK mobile</label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="tel"
+            enterkeyhint="go"
+            placeholder="07… your mobile"
+            required
+            data-clarity-mask="true"
+          >
+          <label for="email">Email (optional)</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="Email (optional)"
+            data-clarity-mask="true"
+          >
+          <p id="try-error" class="note" hidden></p>
+          <button class="cta" type="submit">Hear it now</button>
         </form>
         <p class="skip"><a href="https://app.wisecall.io/setup?trial=calls">No website? Start without one</a></p>
 
         <p class="ready">Hear it in about a minute</p>
         <ol class="steps">
-          <li><span class="num">1</span> Paste your website</li>
-          <li><span class="num">2</span> We draft the receptionist, about 60 seconds</li>
-          <li><span class="num">3</span> We call you. Hear it now</li>
+          <li><span class="num">1</span> Paste your website and mobile</li>
+          <li><span class="num">2</span> We draft the receptionist</li>
+          <li><span class="num">3</span> We call you when it&rsquo;s ready</li>
         </ol>
       </section>
 
@@ -306,17 +328,34 @@
     </footer>
   </div>
   <script>
+    function toUkMobile(value) {
+      var digits = String(value || "").replace(/\D/g, "");
+      if (digits.indexOf("00") === 0) digits = digits.slice(2);
+      if (digits.charAt(0) === "0" && digits.length === 11) digits = "44" + digits.slice(1);
+      if (digits.length === 10 && digits.charAt(0) === "7") digits = "44" + digits;
+      return /^447\d{9}$/.test(digits) ? "+" + digits : "";
+    }
     var form = document.getElementById("try-form");
+    var err = document.getElementById("try-error");
     if (form) {
       form.addEventListener("submit", function (event) {
-        var input = form.querySelector("[name='website']");
-        if (!input) return;
-        var raw = (input.value || "").trim();
+        var site = form.querySelector("[name='website']");
+        var mobile = form.querySelector("[name='phone']");
+        if (!site || !mobile) return;
+        var raw = (site.value || "").trim();
         if (!raw) {
           event.preventDefault();
           return;
         }
-        if (!/^https?:\/\//i.test(raw)) input.value = "https://" + raw;
+        if (!/^https?:\/\//i.test(raw)) site.value = "https://" + raw;
+        if (!toUkMobile(mobile.value)) {
+          event.preventDefault();
+          if (err) {
+            err.hidden = false;
+            err.textContent = "Enter a UK mobile (07… or +44) so we can call you.";
+          }
+          mobile.focus();
+        }
       });
     }
   </script>
