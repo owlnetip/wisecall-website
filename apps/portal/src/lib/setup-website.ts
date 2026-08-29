@@ -1,9 +1,9 @@
 // Website URL + setup wizard carried from wisecall.io/try.
 //
-// Facebook /try is agent-first: visitors paste a website, then run SetupWizard
-// on public app.wisecall.io/setup with no account. The last step rings them on
-// THAT test agent (guest profile + existing demo-callback). Email + password is
-// not the wall; hangup signup can still offer 20 free calls.
+// Facebook /try is agent-first: visitors paste a website, then a one-screen
+// Call me flow on public app.wisecall.io/setup (no wizard steps). We draft
+// THEIR agent in Gemma, 24/7, and ring that guest profile — never Ava.
+// Email + password is not the wall; hangup signup can still offer 20 free calls.
 // Homepage "Try it now" is still signup-first.
 //
 // wisecall.io/setup is only a Vercel redirect into this portal route. Do not

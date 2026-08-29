@@ -7,7 +7,7 @@ import { dashboardSetupPath, parseSetupWebsite } from "@/lib/setup-website";
 export const metadata: Metadata = {
   title: "Build your WiseCall receptionist",
   description:
-    "Paste your website. We draft the receptionist. Enter your UK number and we call you so you can hear it. No account first.",
+    "Paste your website and your UK number. We draft the receptionist and call you. No account first.",
   robots: { index: false, follow: true },
 };
 
