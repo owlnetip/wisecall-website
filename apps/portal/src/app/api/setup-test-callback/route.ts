@@ -11,7 +11,13 @@ import {
 } from "@/lib/demo-callback-rate-limit";
 import { getDemoCallbackEndpoint } from "@/lib/env";
 import {
+  placeGuestCallbackViaTelnyx,
+  readTelnyxCallbackConfig,
+} from "@/lib/guest-callback-texml";
+import {
   buildGuestTestAgentInsert,
+  guestCallbackTargetError,
+  guestRoutingNumber,
   guestTestAgentSlug,
   guestTestCallbackBody,
   guestTestVoiceName,
@@ -47,7 +53,13 @@ export async function POST(request: Request) {
     const draft = readDraft(payload.draft);
     if (!draft) {
       return NextResponse.json(
-        { ok: false, error: "Your setup expired. Go back and build the receptionist again." },
+        { ok: false, error: "Paste your website first so we can draft your receptionist." },
+        { status: 400 },
+      );
+    }
+    if (!draft.prompt.trim() || !draft.businessName.trim()) {
+      return NextResponse.json(
+        { ok: false, error: "We could not draft your receptionist from that website. Try another URL." },
         { status: 400 },
       );
     }
@@ -113,35 +125,81 @@ export async function POST(request: Request) {
       );
     }
 
-    const voiceName = guestTestVoiceName(draft.voice);
+    const voiceName = guestTestVoiceName();
     const { ttsProvider, voiceId } = resolveVoiceRuntime(voiceName);
-    const slug = guestTestAgentSlug(draft.businessName, crypto.randomUUID().replace(/-/g, "").slice(0, 8));
+    const unique = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+    const slug = guestTestAgentSlug(draft.businessName, unique);
+    const routingNumber = guestRoutingNumber(unique);
+    const targetError = guestCallbackTargetError({ slug, calledNumber: routingNumber });
+    if (targetError) {
+      return NextResponse.json({ ok: false, error: targetError }, { status: 500 });
+    }
+
     const row = buildGuestTestAgentInsert(draft, {
       slug,
+      routingNumber,
       voice: { ttsProvider, voiceId, voiceName },
     });
 
-    const { error: insertError } = await service.from("wisecall_profiles").insert(row);
-    if (insertError) {
-      console.error("guest test agent insert failed", insertError.message);
+    const { data: inserted, error: insertError } = await service
+      .from("wisecall_profiles")
+      .insert(row)
+      .select("id, slug, telnyx_number, system_prompt")
+      .single();
+
+    if (insertError || !inserted) {
+      console.error("guest test agent insert failed", insertError?.message);
       return NextResponse.json(
-        { ok: false, error: "Could not start the test call. Try again." },
+        { ok: false, error: "Could not create your receptionist. Try again." },
         { status: 502 },
       );
     }
 
+    const liveSlug = String(inserted.slug || "");
+    const liveNumber = String(inserted.telnyx_number || "");
+    const liveError = guestCallbackTargetError({ slug: liveSlug, calledNumber: liveNumber });
+    if (liveError || !String(inserted.system_prompt || "").trim()) {
+      console.error("guest test agent insert produced an uncallable profile", {
+        slug: liveSlug,
+        telnyx_number: liveNumber,
+        has_prompt: Boolean(String(inserted.system_prompt || "").trim()),
+      });
+      await service.from("wisecall_profiles").delete().eq("id", inserted.id);
+      return NextResponse.json({ ok: false, error: liveError || "Could not create your receptionist. Try again." }, { status: 502 });
+    }
+
     const agentName =
       draft.receptionistName.trim() || `${draft.businessName.trim()} assistant`;
+    const callbackBody = guestTestCallbackBody({
+      phone,
+      slug: liveSlug,
+      calledNumber: liveNumber,
+      agentName,
+    });
+
+    const telnyx = readTelnyxCallbackConfig();
+    if (telnyx) {
+      const placed = await placeGuestCallbackViaTelnyx({
+        phone,
+        profileSlug: liveSlug,
+        calledNumber: liveNumber,
+        agentName,
+        config: telnyx,
+      });
+      if (!placed.ok) {
+        return NextResponse.json({ ok: false, error: placed.error }, { status: placed.status });
+      }
+      return NextResponse.json({
+        ok: true,
+        message: placed.message,
+        agentName,
+      });
+    }
+
     const response = await fetch(getDemoCallbackEndpoint(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        guestTestCallbackBody({
-          phone,
-          slug,
-          agentName,
-        }),
-      ),
+      body: JSON.stringify(callbackBody),
     });
     const result = await response.json().catch(() => ({}));
 

@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-// Routes that require a signed-in user. /setup is public: Facebook /try runs
-// SetupWizard before an account, then rings them on the test agent.
+// Routes that require a signed-in user. /setup is public: Facebook /try is a
+// one-screen Call me flow that rings the website-drafted test agent.
 const PROTECTED_PREFIXES = ["/dashboard", "/admin", "/demo/new", "/billing"];
 
 function isPathMatch(pathname: string, prefixes: string[]): boolean {

@@ -60,3 +60,8 @@ verify_jwt = false
 # voice webhooks with a shared secret, or the portal with the service-role key.
 [functions.wisecall-calendar-booking]
 verify_jwt = false
+
+# Public Call me / guest website-setup ring-back. Telnyx + marketing site and
+# the portal post JSON with no Supabase JWT.
+[functions.wisecall-demo-callback]
+verify_jwt = false
