@@ -65,3 +65,8 @@ verify_jwt = false
 # the portal post JSON with no Supabase JWT.
 [functions.wisecall-demo-callback]
 verify_jwt = false
+
+# Internal forwarder — portal after-call webhook reuses wisecall-demo-sms
+# (Ava hangup signup) for guest Facebook test calls. Service-role only.
+[functions.wisecall-guest-hangup-sms]
+verify_jwt = false
