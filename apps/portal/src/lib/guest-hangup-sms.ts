@@ -81,7 +81,28 @@ export function getDemoSmsEndpoint(): string {
   if (explicit) return explicit;
   const config = getSupabaseConfig();
   if (!config) return "";
-  return `${config.url.replace(/\/+$/, "")}/functions/v1/wisecall-demo-sms`;
+  const secret = process.env.WISECALL_DEMO_SMS_SECRET?.trim();
+  const functionName = secret ? "wisecall-demo-sms" : "wisecall-guest-hangup-sms";
+  return `${config.url.replace(/\/+$/, "")}/functions/v1/${functionName}`;
+}
+
+export function demoSmsRequestHeaders(): Record<string, string> | null {
+  const secret = process.env.WISECALL_DEMO_SMS_SECRET?.trim();
+  if (secret) {
+    return {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "X-WiseCall-Demo-Secret": secret,
+    };
+  }
+  const config = getSupabaseConfig();
+  if (!config) return null;
+  return {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    apikey: config.serviceRoleKey,
+    Authorization: `Bearer ${config.serviceRoleKey}`,
+  };
 }
 
 export async function sendGuestHangupSignupSms(
@@ -92,24 +113,21 @@ export async function sendGuestHangupSignupSms(
   }
 
   const url = getDemoSmsEndpoint();
-  const secret = process.env.WISECALL_DEMO_SMS_SECRET?.trim();
-  if (!url || !secret) {
+  const headers = demoSmsRequestHeaders();
+  if (!url || !headers) {
     return { ok: false, skipped: "demo sms not configured" };
   }
 
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "X-WiseCall-Demo-Secret": secret,
-    },
+    headers,
     body: JSON.stringify(buildDemoSmsAfterCallBody(input)),
     signal: AbortSignal.timeout(8000),
   });
   const body = (await response.json().catch(() => ({}))) as {
     success?: boolean;
     skipped?: string;
+    suppressed?: boolean;
     error?: string;
   };
 
@@ -121,5 +139,6 @@ export async function sendGuestHangupSignupSms(
     };
   }
 
-  return { ok: true, status: response.status, skipped: body.skipped };
+  const skipped = body.skipped || (body.suppressed ? "rate_limited" : undefined);
+  return { ok: true, status: response.status, skipped };
 }

@@ -3,6 +3,8 @@ import { test } from "node:test";
 import {
   buildDemoSmsAfterCallBody,
   callConnectedForHangupSms,
+  demoSmsRequestHeaders,
+  getDemoSmsEndpoint,
   shouldSendGuestHangupSignupSms,
 } from "./guest-hangup-sms";
 import { GUEST_TEST_AGENT_SOURCE } from "./guest-test-agent";
@@ -61,6 +63,38 @@ test("a guest call with a real transcript counts as connected", () => {
     }),
     true,
   );
+});
+
+test("uses the service-role forwarder when the demo SMS secret is not on the portal", () => {
+  const prevUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const prevKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const prevSecret = process.env.WISECALL_DEMO_SMS_SECRET;
+  const prevEndpoint = process.env.WISECALL_DEMO_SMS_ENDPOINT;
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test";
+  delete process.env.WISECALL_DEMO_SMS_SECRET;
+  delete process.env.WISECALL_DEMO_SMS_ENDPOINT;
+  try {
+    assert.equal(
+      getDemoSmsEndpoint(),
+      "https://example.supabase.co/functions/v1/wisecall-guest-hangup-sms",
+    );
+    assert.deepEqual(demoSmsRequestHeaders(), {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      apikey: "service-role-test",
+      Authorization: "Bearer service-role-test",
+    });
+  } finally {
+    if (prevUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    else process.env.NEXT_PUBLIC_SUPABASE_URL = prevUrl;
+    if (prevKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = prevKey;
+    if (prevSecret === undefined) delete process.env.WISECALL_DEMO_SMS_SECRET;
+    else process.env.WISECALL_DEMO_SMS_SECRET = prevSecret;
+    if (prevEndpoint === undefined) delete process.env.WISECALL_DEMO_SMS_ENDPOINT;
+    else process.env.WISECALL_DEMO_SMS_ENDPOINT = prevEndpoint;
+  }
 });
 
 test("payload matches the existing wisecall-demo-sms after_call hook", () => {
