@@ -126,6 +126,7 @@ import {
   getAgentOperationalState,
   type AgentOperationalState,
 } from "@/lib/agent-operational-state";
+import { displayAgentPhoneNumber } from "@/lib/agent-routing";
 import {
   DEFAULT_DASHBOARD_VIEW,
   type DashboardView,
@@ -265,6 +266,8 @@ export type Assistant = {
   negotiatorRules?: NegotiatorRules;
   ownerEmail?: string; // admin view only, which customer owns this agent
   ownerId?: string; // admin view only, owner's auth user id (for "log in as")
+  /** Website-setup test agent — handled a callback, no inbound DDI yet. */
+  guestTest?: boolean;
 };
 
 // Per-day office hours. Only OPEN days are present; a missing day = closed.
@@ -1556,8 +1559,9 @@ export function CustomerAgentWorkspace({
           if (!update || update.status !== "live") return a;
           return {
             ...a,
-            phoneNumber: update.number,
+            phoneNumber: displayAgentPhoneNumber({ number: update.number, status: "live" }),
             status: "Live",
+            guestTest: false,
             routing: { ...a.routing, number: update.number, status: "live" as const },
           };
         }),
@@ -1691,7 +1695,7 @@ export function CustomerAgentWorkspace({
         name: receptionist,
         businessName: business,
         industry: template.industry,
-        phoneNumber: routing.number || (routing.status === "pending" ? "Setting up…" : "Number pending"),
+        phoneNumber: displayAgentPhoneNumber(routing),
         status: routing.status === "live" ? "Live" : "Setup",
         receptionistName: receptionist,
         prompt,
@@ -1738,9 +1742,9 @@ export function CustomerAgentWorkspace({
       name: draft.receptionistName || "Receptionist",
       businessName: draft.businessName || "New business",
       industry: draft.industry || "General",
-      phoneNumber: routing.number || (routing.status === "pending" ? "Setting up…" : "Number pending"),
-      status: routing.status === "live" ? "Live" : "Setup",
-      receptionistName: draft.receptionistName || "Receptionist",
+        phoneNumber: displayAgentPhoneNumber(routing),
+        status: routing.status === "live" ? "Live" : "Setup",
+        receptionistName: draft.receptionistName || "Receptionist",
       prompt: draft.prompt,
       greeting: draft.greeting,
       voice,
@@ -1828,8 +1832,9 @@ export function CustomerAgentWorkspace({
         updateSelected(
           {
             routing: result.routing,
-            phoneNumber: result.routing.number || "Number pending",
+            phoneNumber: displayAgentPhoneNumber(result.routing),
             status: result.routing.status === "live" ? "Live" : "Setup",
+            guestTest: result.routing.status === "live" ? false : selectedAssistant.guestTest,
           },
           false,
         );
@@ -1866,8 +1871,9 @@ export function CustomerAgentWorkspace({
           ? {
               ...assistant,
               routing,
-              phoneNumber: routing.number || (routing.status === "pending" ? "Setting up…" : "Number pending"),
+              phoneNumber: displayAgentPhoneNumber(routing),
               status: routing.status === "live" ? "Live" : "Setup",
+              guestTest: routing.status === "live" ? false : assistant.guestTest,
             }
           : assistant,
       ),
@@ -2758,7 +2764,9 @@ function AssistantDetail({
           ? "Number setting up"
           : operationalState === "review"
             ? "Needs review before answering"
-            : "Phone line not connected";
+            : assistant.guestTest
+              ? "Test call only · no inbound number"
+              : "Phone line not connected";
   const stateDot =
     operationalState === "live"
       ? "live-dot bg-good"
@@ -3165,6 +3173,7 @@ function AssistantDetail({
           {assistant.routing.status !== "live" ? (
             <RoutingCard
               routing={assistant.routing}
+              guestTest={assistant.guestTest}
               isProvisioning={isProvisioning}
               error={provisionError}
               onProvision={onProvision}
@@ -5378,11 +5387,13 @@ function NumberRow({
 
 function RoutingCard({
   routing,
+  guestTest = false,
   isProvisioning,
   error,
   onProvision,
 }: {
   routing: AgentRouting;
+  guestTest?: boolean;
   isProvisioning: boolean;
   error: string | null;
   onProvision: () => void;
@@ -5397,13 +5408,23 @@ function RoutingCard({
           <NumberRow
             icon={Phone}
             iconClass="bg-teal-wash text-teal"
-            number={live ? routing.number : pending ? "Setting up…" : "No number yet"}
+            number={
+              live
+                ? routing.number
+                : pending
+                  ? "Setting up…"
+                  : guestTest
+                    ? "Test call only"
+                    : "No number yet"
+            }
             purpose={
               live
                 ? "Live and answering calls"
                 : pending
                   ? "Provisioning — usually ready within 5 minutes"
-                  : "Assign a number to put this agent on a phone line"
+                  : guestTest
+                    ? "A test call already reached you. Assign a number so customers can ring this agent."
+                    : "Assign a number to put this agent on a phone line"
             }
             live={live}
             pendingDot={pending}

@@ -10,6 +10,8 @@ import type {
 import { nextActionsFromAnalysisJson } from "@/lib/conversation-email";
 import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
 import { normaliseNegotiatorRules } from "@/lib/digital-negotiator";
+import { displayAgentPhoneNumber, resolveAgentRouting } from "@/lib/agent-routing";
+import { isGuestTestAgentMetadata } from "@/lib/guest-test-agent";
 
 // The subdomain the email channel listens on. Must match the edge function's
 // WISECALL_EMAIL_INBOUND_DOMAIN (wisecall-email-inbound).
@@ -55,27 +57,21 @@ function meta(row: ProfileRow, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
-// Reads the provider-agnostic routing block from metadata.routing. Falls back to
-// the legacy telnyx_number column so agents provisioned before this field still
-// show as live.
+// Reads the provider-agnostic routing block. Guest +4455 test keys are not
+// live DDIs; a real telnyx_number still counts so list and detail agree.
 function readRouting(row: ProfileRow): AgentRouting {
-  const raw = row.metadata?.routing;
-  if (raw && typeof raw === "object") {
-    const r = raw as Record<string, unknown>;
-    return {
-      provider: (r.provider as RoutingProvider | null) ?? null,
-      number: typeof r.number === "string" ? r.number : "",
-      status: (r.status as RoutingStatus) ?? "unprovisioned",
-      telnyxApplicationId:
-        typeof r.telnyxApplicationId === "string" ? r.telnyxApplicationId : undefined,
-      sipRoute: typeof r.sipRoute === "string" ? r.sipRoute : undefined,
-      openaiVoice: typeof r.openaiVoice === "string" ? r.openaiVoice : undefined,
-    };
-  }
-  if (row.telnyx_number) {
-    return { provider: "telnyx", number: row.telnyx_number, status: "live" };
-  }
-  return { provider: null, number: "", status: "unprovisioned" };
+  const resolved = resolveAgentRouting({
+    telnyxNumber: row.telnyx_number,
+    metadata: row.metadata,
+  });
+  return {
+    provider: resolved.provider as RoutingProvider | null,
+    number: resolved.number,
+    status: resolved.status as RoutingStatus,
+    telnyxApplicationId: resolved.telnyxApplicationId,
+    sipRoute: resolved.sipRoute,
+    openaiVoice: resolved.openaiVoice,
+  };
 }
 
 // Reads the canonical routing_contacts list. If it isn't there yet (agents set up
@@ -182,6 +178,7 @@ function readOfficeHours(row: ProfileRow): Record<string, { open: string; close:
 
 function mapProfile(row: ProfileRow): Assistant {
   const routing = readRouting(row);
+  const guestTest = isGuestTestAgentMetadata(row.metadata);
   return {
     id: row.id,
     slug: row.slug || "",
@@ -190,7 +187,8 @@ function mapProfile(row: ProfileRow): Assistant {
     name: row.receptionist_name || row.profile_name || "Assistant",
     businessName: row.business_name || row.clinic_name || "",
     industry: meta(row, "industry") || "General",
-    phoneNumber: routing.number || (routing.status === "pending" ? "Setting up…" : "Number pending"),
+    phoneNumber: displayAgentPhoneNumber(routing, { guestTest }),
+    guestTest,
     status: row.is_active ? "Live" : "Setup",
     receptionistName: row.receptionist_name || row.profile_name || "",
     prompt: row.system_prompt || "",

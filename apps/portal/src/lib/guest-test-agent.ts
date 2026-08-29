@@ -61,6 +61,13 @@ export function guestRoutingNumber(unique: string): string {
   return `+4455${nine}`;
 }
 
+// The synthetic +4455 key written on guest test agents. Must never be shown or
+// counted as a customer inbound DDI.
+export function isGuestRoutingNumber(value: string): boolean {
+  const digits = phoneDigits(value);
+  return digits.startsWith("4455") && digits.length === 13;
+}
+
 export const GUEST_CALLBACK_MISSING_AGENT =
   "Could not start the test call on the receptionist we just drafted. Try again.";
 

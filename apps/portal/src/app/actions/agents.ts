@@ -47,6 +47,8 @@ import {
   normaliseNegotiatorRules,
   type NegotiatorRules,
 } from "@/lib/digital-negotiator";
+import { isCustomerDdi, resolveAgentRouting } from "@/lib/agent-routing";
+import { GUEST_TEST_AGENT_SOURCE } from "@/lib/guest-test-agent";
 import { mergeNotificationEmails, primaryInboxEmail } from "@/lib/notification-recipients";
 
 export type AgentPatch = {
@@ -169,10 +171,9 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     .not("telnyx_number", "is", null);
   if (numberReadError) return { ok: false, error: numberReadError.message };
 
-  const hasIncludedNumber = (existingNumberedAgents ?? []).some((row) => {
-    const number = String(row.telnyx_number ?? "").trim();
-    return number.startsWith("+");
-  });
+  const hasIncludedNumber = (existingNumberedAgents ?? []).some((row) =>
+    isCustomerDdi(String(row.telnyx_number ?? "")),
+  );
   const shouldAssignIncludedNumber = !hasIncludedNumber;
 
   const base = slugify(`${input.name}-${input.businessName}`) || "agent";
@@ -839,7 +840,7 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
 
   const { data: row, error: readError } = await service
     .from("wisecall_profiles")
-    .select("id, metadata")
+    .select("id, telnyx_number, metadata")
     .eq("id", agentId)
     .maybeSingle();
   if (readError) return { ok: false, error: readError.message };
@@ -850,13 +851,76 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
     return { ok: false, error: "You don't have access to this agent." };
   }
 
+  const alreadyLive = resolveAgentRouting({
+    telnyxNumber: row.telnyx_number as string | null,
+    metadata,
+  });
+  if (alreadyLive.status === "live" && alreadyLive.number) {
+    return {
+      ok: true,
+      routing: {
+        provider: alreadyLive.provider ?? "telnyx",
+        number: alreadyLive.number,
+        status: "live",
+        telnyxApplicationId: alreadyLive.telnyxApplicationId,
+        sipRoute: alreadyLive.sipRoute,
+        openaiVoice: alreadyLive.openaiVoice,
+      },
+    };
+  }
+
   const provider = process.env.WISECALL_ROUTING_PROVIDER;
 
   switch (provider) {
     case "telnyx":
-      // TODO: search + order a Telnyx number, attach to the Voice API
-      // Application, then persist routing below. Until then:
-      return { ok: false, error: "Telnyx provisioning isn't switched on yet." };
+    case undefined:
+    case "": {
+      // Same pooled DDI path as createAgent. Guest +4455 keys are not live, so
+      // Assign number on a test agent replaces them with a real inbound number.
+      try {
+        const { data: assigned } = await service.rpc("wisecall_assign_pool_number", {
+          p_profile_id: agentId,
+        });
+        if (assigned) {
+          const nextMeta: Record<string, unknown> = {
+            ...metadata,
+            guest_test: false,
+            awaiting_number: false,
+            routing: { provider: "telnyx", number: assigned, status: "live" },
+          };
+          if (nextMeta.source === GUEST_TEST_AGENT_SOURCE) {
+            nextMeta.source = "portal_claimed_guest";
+          }
+          await service
+            .from("wisecall_profiles")
+            .update({
+              telnyx_number: assigned,
+              is_active: true,
+              metadata: nextMeta,
+            })
+            .eq("id", agentId);
+          revalidatePath("/dashboard");
+          revalidatePath("/admin");
+          return { ok: true, routing: { provider: "telnyx", number: assigned as string, status: "live" } };
+        }
+        await service
+          .from("wisecall_profiles")
+          .update({
+            metadata: {
+              ...metadata,
+              awaiting_number: true,
+              routing: { provider: "telnyx", number: "", status: "pending" },
+            },
+          })
+          .eq("id", agentId);
+        revalidatePath("/dashboard");
+        revalidatePath("/admin");
+        return { ok: true, routing: { provider: "telnyx", number: "", status: "pending" } };
+      } catch (poolErr) {
+        console.error("pool number assign failed:", (poolErr as Error).message);
+        return { ok: false, error: "Could not assign a number. Try again." };
+      }
+    }
 
     case "mor_sip": {
       // Calls wisecall-provision-mor-agent (loveableowlnetportal) which:
@@ -926,11 +990,14 @@ export async function getPendingAgentsStatus(
 
   const result: Record<string, { number: string; status: "pending" | "live" }> = {};
   for (const row of data ?? []) {
-    const raw = row.metadata as Record<string, unknown> | null;
-    const r = (raw?.routing ?? {}) as Record<string, unknown>;
-    const number = typeof r.number === "string" ? r.number : (row.telnyx_number as string | null) ?? "";
-    const status = row.is_active && number ? "live" : "pending";
-    result[row.id as string] = { number, status };
+    const routing = resolveAgentRouting({
+      telnyxNumber: row.telnyx_number as string | null,
+      metadata: row.metadata as Record<string, unknown> | null,
+    });
+    result[row.id as string] = {
+      number: routing.number,
+      status: routing.status === "live" ? "live" : "pending",
+    };
   }
   return result;
 }

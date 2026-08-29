@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { isGuestTestAgentMetadata } from "@/lib/guest-test-agent";
+import { resolveAgentRouting } from "@/lib/agent-routing";
 
 // Who counts as an admin. app_metadata is server-controlled; user_metadata is
 // intentionally ignored because account holders can update it themselves. An
@@ -50,12 +51,11 @@ type ProfileRow = {
 };
 
 function phoneOf(row: ProfileRow): string {
-  if (row.telnyx_number) return row.telnyx_number;
-  const routing = row.metadata?.routing as Record<string, unknown> | undefined;
-  if (routing && typeof routing.number === "string" && routing.number) {
-    return routing.number;
-  }
-  return "-";
+  const routing = resolveAgentRouting({
+    telnyxNumber: row.telnyx_number,
+    metadata: row.metadata,
+  });
+  return routing.status === "live" && routing.number ? routing.number : "-";
 }
 
 // Builds the full cross-customer overview for the admin console. Service-role

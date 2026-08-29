@@ -12,6 +12,7 @@ import {
   GUEST_TEST_AGENT_SOURCE,
   isAvaDemoNumber,
   isAvaDemoSlug,
+  isGuestRoutingNumber,
   isGuestTestAgentMetadata,
 } from "./guest-test-agent";
 import { parseWizardDraft } from "./wizard-draft";
@@ -47,6 +48,8 @@ test("guest routing numbers are unique and are not Ava's DDI", () => {
   assert.match(a, /^\+4455\d{9}$/);
   assert.notEqual(a, b);
   assert.equal(isAvaDemoNumber(a), false);
+  assert.equal(isGuestRoutingNumber(a), true);
+  assert.equal(isGuestRoutingNumber("+441135221606"), false);
   assert.equal(isAvaDemoNumber("+441135222277"), true);
   assert.equal(isAvaDemoNumber("+441135221606"), true);
   assert.equal(isAvaDemoSlug("wisecall"), true);
