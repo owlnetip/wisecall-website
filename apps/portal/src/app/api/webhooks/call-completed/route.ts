@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { analyzeAndStoreCall, isAnalysisConfigured } from "@/lib/call-analysis";
 import { sendPostCallEmailForLog } from "@/lib/follow-ups-sync";
+import { sendGuestHangupSignupSms } from "@/lib/guest-hangup-sms";
 import { getServiceSupabase } from "@/lib/supabase";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -71,6 +72,43 @@ export async function POST(request: Request) {
       return { ok: false as const, error: "summary email failed" };
     });
 
+  const sendGuestSignupSms = async () => {
+    try {
+      const service = getServiceSupabase();
+      if (!service) return { ok: true as const, skipped: "supabase not configured" };
+      const { data: log } = await service
+        .from("wisecall_call_logs")
+        .select("id, profile_id, caller_id, outcome, summary, transcript")
+        .eq("id", completedCallId)
+        .maybeSingle();
+      if (!log?.profile_id) return { ok: true as const, skipped: "no call log" };
+      const { data: profile } = await service
+        .from("wisecall_profiles")
+        .select("id, slug, profile_name, business_name, clinic_name, metadata")
+        .eq("id", log.profile_id)
+        .maybeSingle();
+      if (!profile) return { ok: true as const, skipped: "no profile" };
+      return await sendGuestHangupSignupSms({
+        profileId: profile.id,
+        profileSlug: profile.slug,
+        profileName: profile.profile_name,
+        businessName: profile.business_name || profile.clinic_name,
+        metadata: profile.metadata,
+        callId: log.id,
+        callerId: log.caller_id,
+        outcome: log.outcome,
+        summary: log.summary,
+        transcript: log.transcript,
+      });
+    } catch (error) {
+      console.error(
+        "call-completed: guest hangup SMS failed:",
+        error instanceof Error ? error.message : error,
+      );
+      return { ok: false as const, error: "guest hangup SMS failed" };
+    }
+  };
+
   // Record the call against the owner's monthly allowance (fire-and-forget, never
   // block the response on billing; a failure here is logged but doesn't fail the call).
   void (async () => {
@@ -94,6 +132,11 @@ export async function POST(request: Request) {
       console.error("call-completed: usage recording failed:", err instanceof Error ? err.message : err);
     }
   })();
+
+  const guestSms = await sendGuestSignupSms();
+  if (!guestSms.ok) {
+    console.error("call-completed: guest hangup SMS:", guestSms);
+  }
 
   // Taken-message / post-call email still goes out when Claude is off. Analysis
   // is what fills next actions; without it the email omits that block.
