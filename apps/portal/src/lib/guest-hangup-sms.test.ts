@@ -66,14 +66,22 @@ test("a guest call with a real transcript counts as connected", () => {
 });
 
 test("uses the service-role forwarder when the demo SMS secret is not on the portal", () => {
-  const prevUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const prevKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const prevSecret = process.env.WISECALL_DEMO_SMS_SECRET;
-  const prevEndpoint = process.env.WISECALL_DEMO_SMS_ENDPOINT;
+  const prev = {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    WISECALL_DEMO_SMS_SECRET: process.env.WISECALL_DEMO_SMS_SECRET,
+    WISECALL_DEMO_SMS_ENDPOINT: process.env.WISECALL_DEMO_SMS_ENDPOINT,
+    WISECALL_WEBHOOK_SECRET: process.env.WISECALL_WEBHOOK_SECRET,
+    WISECALL_TRIAL_REMINDER_SECRET: process.env.WISECALL_TRIAL_REMINDER_SECRET,
+    WISECALL_POOL_REPLENISH_SECRET: process.env.WISECALL_POOL_REPLENISH_SECRET,
+  };
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test";
+  process.env.WISECALL_TRIAL_REMINDER_SECRET = "trial-secret-test";
   delete process.env.WISECALL_DEMO_SMS_SECRET;
   delete process.env.WISECALL_DEMO_SMS_ENDPOINT;
+  delete process.env.WISECALL_WEBHOOK_SECRET;
+  delete process.env.WISECALL_POOL_REPLENISH_SECRET;
   try {
     assert.equal(
       getDemoSmsEndpoint(),
@@ -82,18 +90,15 @@ test("uses the service-role forwarder when the demo SMS secret is not on the por
     assert.deepEqual(demoSmsRequestHeaders(), {
       "Content-Type": "application/json",
       Accept: "application/json",
+      "x-wisecall-secret": "trial-secret-test",
       apikey: "service-role-test",
       Authorization: "Bearer service-role-test",
     });
   } finally {
-    if (prevUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    else process.env.NEXT_PUBLIC_SUPABASE_URL = prevUrl;
-    if (prevKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-    else process.env.SUPABASE_SERVICE_ROLE_KEY = prevKey;
-    if (prevSecret === undefined) delete process.env.WISECALL_DEMO_SMS_SECRET;
-    else process.env.WISECALL_DEMO_SMS_SECRET = prevSecret;
-    if (prevEndpoint === undefined) delete process.env.WISECALL_DEMO_SMS_ENDPOINT;
-    else process.env.WISECALL_DEMO_SMS_ENDPOINT = prevEndpoint;
+    for (const [key, value] of Object.entries(prev)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });
 

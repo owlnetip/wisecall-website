@@ -87,22 +87,28 @@ export function getDemoSmsEndpoint(): string {
 }
 
 export function demoSmsRequestHeaders(): Record<string, string> | null {
-  const secret = process.env.WISECALL_DEMO_SMS_SECRET?.trim();
-  if (secret) {
-    return {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "X-WiseCall-Demo-Secret": secret,
-    };
-  }
+  const demoSecret = process.env.WISECALL_DEMO_SMS_SECRET?.trim();
+  const webhookSecret = [
+    process.env.WISECALL_WEBHOOK_SECRET,
+    process.env.WISECALL_TRIAL_REMINDER_SECRET,
+    process.env.WISECALL_POOL_REPLENISH_SECRET,
+  ]
+    .map((value) => value?.trim() || "")
+    .find(Boolean);
   const config = getSupabaseConfig();
-  if (!config) return null;
-  return {
+  if (!demoSecret && !webhookSecret && !config) return null;
+
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
-    apikey: config.serviceRoleKey,
-    Authorization: `Bearer ${config.serviceRoleKey}`,
   };
+  if (demoSecret) headers["X-WiseCall-Demo-Secret"] = demoSecret;
+  if (webhookSecret) headers["x-wisecall-secret"] = webhookSecret;
+  if (config) {
+    headers.apikey = config.serviceRoleKey;
+    headers.Authorization = `Bearer ${config.serviceRoleKey}`;
+  }
+  return headers;
 }
 
 export async function sendGuestHangupSignupSms(
