@@ -5,10 +5,12 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
 import {
   getStripe,
-  lineItemsForPlan,
+  lineItemsForPlanWithInterval,
   planHasTrial,
   isPlanId,
+  isBillingInterval,
   type PlanId,
+  type BillingInterval,
   TRIAL_DAYS,
   TRIAL_CALL_CAP,
 } from "@/lib/stripe";
@@ -23,8 +25,12 @@ export type CheckoutResult = { ok: boolean; url?: string; error?: string };
 // customer and reuses it (so an upgrade attaches to the same customer).
 // The subscription is recorded by the webhook once checkout completes; the
 // webhook also cancels any prior subscription so an upgrade doesn't double-bill.
-export async function startCheckout(planInput: string): Promise<CheckoutResult> {
+export async function startCheckout(
+  planInput: string,
+  intervalInput: string = "month",
+): Promise<CheckoutResult> {
   const plan: PlanId = isPlanId(planInput) ? planInput : "professional";
+  const interval: BillingInterval = isBillingInterval(intervalInput) ? intervalInput : "month";
 
   const auth = await createSupabaseServerClient();
   const {
@@ -74,7 +80,7 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
-    line_items: lineItemsForPlan(plan),
+    line_items: await lineItemsForPlanWithInterval(stripe, plan, interval),
     payment_method_collection: "always",
     allow_promotion_codes: true,
     billing_address_collection: "required",
@@ -86,9 +92,9 @@ export async function startCheckout(planInput: string): Promise<CheckoutResult> 
             trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
           }
         : {}),
-      metadata: { owner_id: user.id, plan },
+      metadata: { owner_id: user.id, plan, interval },
     },
-    metadata: { owner_id: user.id, plan },
+    metadata: { owner_id: user.id, plan, interval },
     success_url: `${baseUrl}/dashboard`,
     cancel_url: `${baseUrl}/billing`,
   });

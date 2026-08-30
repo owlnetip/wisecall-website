@@ -29,9 +29,9 @@ Support: hello@wisecall.io`,
     id: "wisecall-pricing",
     title: `${DEMO_KB_TITLE_PREFIX}Pricing & plans`,
     category: "General",
-    text: `WiseCall pricing (excl. VAT, 12-month term):
+    text: `WiseCall pricing (excl. VAT, 30-day rolling, or save 15% annually):
 
-Starter, £99/month
+Starter, £99/month (£84.15/month billed annually, £1,009.80/year)
 - 100 AI calls / month
 - 100 AI email replies / month
 - 250 WhatsApp conversations / month
@@ -39,7 +39,7 @@ Starter, £99/month
 - 100 SMS messages and notifications / month
 - Ideal for small businesses
 
-Professional, £199/month (most popular)
+Professional, £199/month (most popular; £169.15/month billed annually, £2,029.80/year)
 - 300 AI calls / month
 - 500 AI email replies / month
 - 500 WhatsApp conversations / month
@@ -47,7 +47,7 @@ Professional, £199/month (most popular)
 - 300 SMS messages and notifications / month
 - For growing businesses with regular inbound enquiries
 
-Business, £399/month
+Business, £399/month (£339.15/month billed annually, £4,069.80/year)
 - 750 AI calls / month
 - 2,000 AI email replies / month
 - 2,000 WhatsApp conversations / month
@@ -104,7 +104,7 @@ Do I need to change my phone number?
 No. WiseCall can work with your existing number via call forwarding or SIP/PBX integration depending on your setup.
 
 Is there a contract?
-Plans are on a 12-month term, billed monthly. Prices are shown excluding VAT.
+Plans are 30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%. Prices are shown excluding VAT.
 
 What happens if I exceed my plan allowance?
 Additional AI calls are charged at your plan's overage rate. Email, WhatsApp, live chat and SMS allowances are shown on the billing page; contact support if you need a higher tier.

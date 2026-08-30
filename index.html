@@ -105,23 +105,23 @@
     /* Pulse dot */
     @keyframes pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     .pulse-dot { animation: pulse-soft 2.2s ease-in-out infinite; }
-    /* WiseCall voice orb: crisp glossy sphere, soft feathered rim */
-    .orb-stage { position: relative; width: 240px; height: 240px; margin-left: auto; margin-right: auto; display: block; cursor: pointer; border: 0; padding: 0; background: transparent; }
-    .orb-stage.is-static { cursor: default; pointer-events: none; }
-    .orb { position: absolute; inset: 0; border-radius: 50%;
-      background:
-        radial-gradient(circle at 34% 27%, #eafdfe 0%, #b4f4f6 15%, #79dfe2 36%, #46b8bb 58%, #228f92 80%, #12686a 96%);
-      box-shadow: inset -8px -10px 26px rgba(8, 60, 62, 0.35), 0 0 36px rgba(125, 232, 235, 0.22), 0 22px 46px rgba(12, 53, 54, 0.26);
-      animation: orb-float 7s ease-in-out infinite;
-      transition: box-shadow 0.4s ease, filter 0.4s ease; }
-    .orb-swirl { position: absolute; inset: 0; border-radius: 50%;
-      background: radial-gradient(circle at 32% 26%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 22%, transparent 40%);
-      mix-blend-mode: screen; filter: blur(4px);
-      animation: orb-spin 30s linear infinite; }
-    .orb-core { display: none; }
-    .orb-stage:hover .orb { box-shadow: 0 0 60px rgba(125, 232, 235, 0.32); filter: brightness(1.05); }
-    @keyframes orb-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
-    @keyframes orb-spin { to { transform: rotate(360deg); } }
+    /* Hero live-call product card */
+    .hero-call-card { border-radius: 1.25rem; background: rgba(12, 28, 28, 0.72); border: 1px solid rgba(125, 232, 235, 0.16); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38); }
+    .hero-industry-tab { padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.55); background: transparent; border: 0; cursor: pointer; transition: color 0.2s, background-color 0.2s; }
+    .hero-industry-tab:hover { color: #fff; }
+    .hero-industry-tab.is-active { color: #0f2a2b; background: #7de8eb; }
+    #heroCallCard { transition: opacity 0.25s ease; }
+    #heroCallCard.is-swapping { opacity: 0.4; }
+    .voice-wave { display: flex; align-items: center; gap: 2.5px; height: 22px; }
+    .voice-wave span { display: block; width: 2px; border-radius: 999px; background: #7de8eb; opacity: 0.72; height: var(--h, 8px); transform-origin: center; animation: voice-bar 1.6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+    @keyframes voice-bar { 0%, 100% { transform: scaleY(0.55); opacity: 0.4; } 50% { transform: scaleY(1); opacity: 0.9; } }
+    .billing-toggle { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px; background: rgba(12, 31, 31, 0.08); }
+    .billing-toggle button { border: 0; border-radius: 999px; padding: 0.45rem 1.15rem; font-size: 0.875rem; font-weight: 600; background: transparent; color: rgba(12, 31, 31, 0.62); cursor: pointer; }
+    .billing-toggle button.is-active { background: #0c1f1f; color: #fff; }
+    .billing-save-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.72rem; font-weight: 700; color: #0a8a8e; background: rgba(10, 138, 142, 0.12); }
+    @media (prefers-reduced-motion: reduce) {
+      .voice-wave span, .pulse-dot { animation: none !important; }
+    }
     .demo-phone-input {
       appearance: none;
       -webkit-appearance: none;
@@ -164,9 +164,6 @@
     .video-play-btn { width: 5.5rem; height: 5.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(125, 232, 235, 0.95); box-shadow: 0 0 0 12px rgba(125,232,235,0.18), 0 18px 50px rgba(0,0,0,0.4); transition: transform 0.25s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.25s ease; }
     .video-play-overlay:hover .video-play-btn { transform: scale(1.06); box-shadow: 0 0 0 16px rgba(125,232,235,0.22), 0 22px 60px rgba(0,0,0,0.45); }
     @media (max-width: 640px) { .video-play-btn { width: 4.25rem; height: 4.25rem; } }
-    @media (max-width: 1023px) {
-      .hero-demo-panel .orb-stage { width: 200px; height: 200px; }
-    }
   </style>  <link rel="stylesheet" href="/light-sections.css" data-wc-light>
 </head>
 
@@ -184,10 +181,11 @@
         <a href="#industries" class="hover:text-[#7de8eb] transition-colors">Industries</a>
         <a href="#integrations" class="hover:text-[#7de8eb] transition-colors">Integrations</a>
         <a href="#pricing" class="hover:text-[#7de8eb] transition-colors">Pricing</a>
+        <a href="#" class="contact-link hover:text-[#7de8eb] transition-colors" data-inquiry="Demo Request">Book a demo</a>
       </div>
       <div class="flex items-center gap-3">
-        <a href="https://app.wisecall.io/?signup=1&trial=calls" class="mbtn hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]" data-inquiry="Demo Request">
-          Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        <a href="https://app.wisecall.io/?signup=1&trial=calls" class="mbtn hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold shadow-[0_0_24px_rgba(125,232,235,0.25)] hover:shadow-[0_0_36px_rgba(125,232,235,0.45)]" data-inquiry="Demo Request">
+          Try 20 free calls
         </a>
         <button id="mobileMenuToggle" aria-label="Open menu" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
           <i data-lucide="menu" class="w-5 h-5"></i>
@@ -200,8 +198,9 @@
         <a href="#industries" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Industries</a>
         <a href="#integrations" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Integrations</a>
         <a href="#pricing" class="py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link">Pricing</a>
-        <a href="https://app.wisecall.io/?signup=1&trial=calls" class="mbtn mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold" data-inquiry="Demo Request">
-          Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        <a href="#" class="contact-link py-2 text-base hover:text-[#7de8eb] transition-colors mobile-link" data-inquiry="Demo Request">Book a demo</a>
+        <a href="https://app.wisecall.io/?signup=1&trial=calls" class="mbtn mt-2 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] text-sm font-bold" data-inquiry="Demo Request">
+          Try 20 free calls
         </a>
       </div>
     </div>
@@ -230,9 +229,8 @@
     <div class="absolute top-24 left-1/4 w-96 h-96 bg-[#7de8eb] rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
     <div class="absolute bottom-16 right-1/4 w-80 h-80 bg-[#7de8eb] rounded-full blur-[120px] opacity-15 pointer-events-none"></div>
 
-    <div class="relative z-10 max-w-7xl mx-auto w-full flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-      <!-- Intro: headline first on all breakpoints -->
-      <div class="order-1 lg:col-start-1 lg:row-start-1 w-full">
+    <div class="relative z-10 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+      <div class="w-full">
         <div class="motion inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#7de8eb]/20 backdrop-blur-sm mb-6 lg:mb-8" data-anim="fade-up">
           <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
           <span class="text-sm text-white/80">The AI front desk for UK businesses</span>
@@ -243,87 +241,71 @@
           <span class="bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] bg-clip-text text-transparent">Every enquiry captured.</span>
         </h1>
 
-        <p class="motion text-lg sm:text-xl text-white/70 leading-relaxed max-w-xl" data-anim="fade-up" style="transition-delay:0.1s">
+        <p class="motion text-lg sm:text-xl text-white/70 leading-relaxed max-w-xl mb-8" data-anim="fade-up" style="transition-delay:0.1s">
           WiseCall is the AI front desk for UK businesses. It answers in your business name, asks the right questions, books or routes the next step, and sends your team a clear summary.
         </p>
+
+        <div class="motion" data-anim="fade-up" style="transition-delay:0.15s">
+          <a href="https://app.wisecall.io/?signup=1&trial=calls" class="mbtn inline-flex items-center justify-center px-8 py-4 rounded-full bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
+            Try 20 free calls
+          </a>
+        </div>
+        <p class="motion text-sm text-white/45 mt-3 mb-8" data-anim="fade-up" style="transition-delay:0.18s">20 free calls to test your setup. No card.</p>
+        <p class="motion text-sm text-white/55" data-anim="fade-up" style="transition-delay:0.2s">UK support · UK data · No phone system needed</p>
       </div>
 
-      <!-- Live demo: second on mobile (above CTAs), right column on desktop -->
-      <div class="motion order-2 lg:order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 w-full hero-demo-panel" data-anim="fade-left" style="transition-delay:0.1s">
-        <div class="max-w-md mx-auto text-center">
-          <span class="inline-flex items-center gap-2 text-sm text-[#7de8eb] font-semibold">
-            <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>
-            Live Demo
-          </span>
-          <h2 class="font-bold text-white text-2xl sm:text-3xl mt-3 mb-2">Hear it for yourself</h2>
-          <p class="text-white/55 text-sm mb-6 lg:hidden">Tap below to call the WiseCall demo agent straight from your phone.</p>
-          <p class="text-white/55 text-sm mb-6 hidden lg:block">Enter your mobile and the WiseCall demo agent calls you back.</p>
-
-          <!-- Mobile: tap-to-call orb -->
-          <div class="lg:hidden flex flex-col items-center">
-            <a href="tel:+441135222277" class="orb-stage mb-6" aria-label="Call the WiseCall demo">
-              <span class="orb">
-                <span class="orb-swirl"></span>
-                <span class="orb-core"></span>
-              </span>
-            </a>
-            <a href="tel:+441135222277" class="mbtn inline-flex items-center justify-center gap-3 rounded-full bg-[#7de8eb] px-7 py-4 text-[#172929] font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)] transition-shadow w-full max-w-xs">
-              <i data-lucide="phone-call" class="w-5 h-5"></i>
-              Call the demo
-            </a>
-          </div>
-
-          <!-- Desktop: callback form -->
-          <form id="demoCallbackForm" class="hidden lg:flex flex-col items-center" novalidate>
-            <div class="orb-stage is-static mb-8" aria-hidden="true">
-              <span class="orb">
-                <span class="orb-swirl"></span>
-                <span class="orb-core"></span>
-              </span>
+      <div class="motion w-full hero-demo-panel" data-anim="fade-left" style="transition-delay:0.1s">
+        <div class="max-w-md mx-auto">
+          <div id="heroCallCard" class="hero-call-card p-5 sm:p-6" aria-live="polite">
+            <div class="flex items-center justify-between gap-3 mb-5">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white">
+                  <span class="pulse-dot w-2 h-2 rounded-full bg-[#7de8eb] inline-block"></span>LIVE
+                </span>
+                <span class="px-1.5 py-0.5 rounded border border-white/20 text-[10px] font-semibold tracking-wide text-white/50">DEMO</span>
+              </div>
+              <div id="heroIndustryTabs" class="flex items-center gap-0.5" role="tablist" aria-label="Demo industry">
+                <button type="button" class="hero-industry-tab is-active" data-hero-sector="0" role="tab" aria-selected="true">Dental</button>
+                <button type="button" class="hero-industry-tab" data-hero-sector="1" role="tab" aria-selected="false">Legal</button>
+                <button type="button" class="hero-industry-tab" data-hero-sector="2" role="tab" aria-selected="false">Property</button>
+              </div>
             </div>
 
-            <div class="w-full max-w-sm flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 backdrop-blur-sm focus-within:border-[#7de8eb]/70 focus-within:bg-white/10 transition-colors">
+            <p class="text-white/55 text-sm">Answering as <span id="hero-business" class="text-white font-semibold">Bright Smile Dental</span></p>
+            <div class="flex items-end justify-between gap-3 mt-1 mb-3">
+              <p id="hero-number" class="text-white font-semibold text-lg tracking-wide">+44 7700 900482</p>
+              <p id="hero-timer" class="text-[#7de8eb] font-semibold tabular-nums">00:18</p>
+            </div>
+            <div class="voice-wave mb-5" aria-hidden="true">
+              <span style="--h:7px;--d:0s"></span><span style="--h:12px;--d:.08s"></span><span style="--h:9px;--d:.16s"></span><span style="--h:16px;--d:.04s"></span><span style="--h:11px;--d:.2s"></span><span style="--h:18px;--d:.12s"></span><span style="--h:8px;--d:.24s"></span><span style="--h:14px;--d:.06s"></span><span style="--h:10px;--d:.18s"></span><span style="--h:17px;--d:.1s"></span><span style="--h:9px;--d:.22s"></span><span style="--h:13px;--d:.02s"></span><span style="--h:7px;--d:.14s"></span><span style="--h:15px;--d:.28s"></span><span style="--h:11px;--d:.1s"></span><span style="--h:8px;--d:.2s"></span>
+            </div>
+
+            <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-white/40 mb-1.5">Caller</p>
+            <p id="hero-caller" class="text-white/80 text-sm leading-relaxed mb-4">I'd like to register and book a check-up.</p>
+            <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7de8eb] mb-1.5">WiseCall</p>
+            <p id="hero-agent" class="text-white text-sm leading-relaxed mb-5">Booked. Wednesday at 9.30. I've texted you the confirmation.</p>
+
+            <div class="rounded-xl bg-black/25 border border-white/8 p-4">
+              <div class="flex items-center justify-between gap-3 mb-2">
+                <p class="text-white text-sm font-semibold">Call summary</p>
+                <span id="hero-status" class="px-2 py-0.5 rounded-full bg-[#7de8eb] text-[#0f2a2b] text-[10px] font-bold uppercase tracking-wider">Booked</span>
+              </div>
+              <p id="hero-summary" class="text-sm leading-relaxed mb-1"><span class="text-[#7de8eb] font-semibold">Booked</span> <span class="text-white/55">· New patient · Private · Wed 9.30</span></p>
+              <p id="hero-note" class="text-white/50 text-xs">Appointment booked. SMS sent to the caller.</p>
+            </div>
+          </div>
+
+          <form id="demoCallbackForm" class="mt-5" novalidate>
+            <div class="w-full flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 backdrop-blur-sm focus-within:border-[#7de8eb]/70 focus-within:bg-white/10 transition-colors">
               <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
-              <input id="demoCallbackPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile number" aria-label="Mobile number for demo callback" class="demo-phone-input min-w-0 flex-1 outline-none font-semibold text-base tracking-wide">
+              <input id="demoCallbackPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+44 ········" aria-label="Mobile number for demo callback" class="demo-phone-input min-w-0 flex-1 outline-none font-semibold text-base tracking-wide">
               <button id="demoCallbackButton" type="submit" class="shrink-0 rounded-full bg-[#7de8eb] px-4 py-2 text-[#172929] text-sm font-bold hover:bg-[#9cf1f3] transition-colors">Call me</button>
             </div>
           </form>
-          <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-4" aria-live="polite"></p>
-          <p class="text-white/40 text-sm mt-2 hidden lg:block">
-            Prefer to dial in? <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white">+44 113 522 2277</a>.
+          <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-3" aria-live="polite"></p>
+          <p class="text-white/45 text-sm mt-3 text-center sm:text-left">
+            We'll ring you in 10 seconds. Or dial <a href="tel:+441135222277" class="text-[#7de8eb] hover:text-white font-semibold">+44 113 522 2277</a>
           </p>
-        </div>
-      </div>
-
-      <!-- CTAs + trust badges: third on mobile, left column below intro on desktop -->
-      <div class="order-3 lg:col-start-1 lg:row-start-2 w-full">
-        <div class="motion flex flex-col sm:flex-row gap-4" data-anim="fade-up" style="transition-delay:0.15s">
-          <a href="https://app.wisecall.io/?signup=1&trial=calls" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10 lg:bg-gradient-to-r lg:from-[#7de8eb] lg:to-[#5dbfc2] lg:text-[#172929] lg:border-0 lg:font-bold lg:shadow-[0_0_34px_rgba(125,232,235,0.35)] lg:hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
-            Try it now <i data-lucide="arrow-right" class="w-5 h-5"></i>
-          </a>
-          <a href="#" class="contact-link mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10" data-inquiry="Demo Request">
-            Book a demo
-          </a>
-        </div>
-        <p class="motion text-sm text-white/45 mt-3 mb-8 lg:mb-10" data-anim="fade-up" style="transition-delay:0.18s">20 free inbound AI calls. No card needed.</p>
-
-        <div class="motion grid grid-cols-2 sm:grid-cols-4 gap-3" data-anim="fade-up" style="transition-delay:0.2s">
-          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
-            <i data-lucide="map-pin" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="text-xs text-white/70">UK-based support</span>
-          </div>
-          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
-            <i data-lucide="shield-check" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="text-xs text-white/70">GDPR-aware</span>
-          </div>
-          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
-            <i data-lucide="phone-off" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="text-xs text-white/70">No phone system needed</span>
-          </div>
-          <div class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#7de8eb]/10 text-center">
-            <i data-lucide="clock" class="w-5 h-5 text-[#7de8eb]"></i>
-            <span class="text-xs text-white/70">Out-of-hours, overflow or full-time</span>
-          </div>
         </div>
       </div>
     </div>
@@ -1065,15 +1047,16 @@
     <div class="absolute inset-0 bg-gradient-to-b from-[#172929] via-[#1a3535]/20 to-[#172929] pointer-events-none"></div>
     <div class="relative z-10 max-w-7xl mx-auto">
       <div class="motion text-center mb-8" data-anim="fade-up">
-        <span class="text-sm text-[#7de8eb] font-semibold">Pricing</span>
-        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">One AI front desk. Five ways to capture enquiries.</h2>
-        <p class="text-xl text-white/70 max-w-3xl mx-auto">Voice, email, WhatsApp, live chat and SMS, all included. Choose the plan that matches your call volume.</p>
+        <span class="text-sm text-[#7de8eb] font-semibold uppercase tracking-wider">Pricing</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-5">One AI front desk. Pay monthly, or save 15% on the year.</h2>
+        <p class="text-xl text-white/70 max-w-3xl mx-auto">30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.</p>
       </div>
-      <div class="motion flex justify-center mb-10" data-anim="fade-up" style="transition-delay:0.05s">
-        <div class="inline-flex items-center gap-3 rounded-full bg-[#7de8eb]/10 border border-[#7de8eb]/30 px-5 py-2.5">
-          <i data-lucide="calendar-check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i>
-          <span class="text-white/85 text-sm"><span class="text-[#7de8eb] font-semibold">7-day pilot included</span>. Try WiseCall on live calls before the 12-month term begins</span>
+      <div class="motion flex flex-wrap items-center justify-center gap-3 mb-10" data-anim="fade-up" style="transition-delay:0.05s">
+        <div class="billing-toggle" role="group" aria-label="Billing cycle">
+          <button type="button" data-billing="monthly">Monthly</button>
+          <button type="button" class="is-active" data-billing="annual">Annual</button>
         </div>
+        <span class="billing-save-chip">Save 15%</span>
       </div>
 
       <div class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-8 items-stretch">
@@ -1083,12 +1066,13 @@
             <h3 class="text-2xl font-bold text-white">Starter</h3>
             <p class="text-white/50 text-sm mt-1">Small businesses, sole traders and teams who want to stop missing calls</p>
           </div>
-          <div class="mb-5">
-            <div class="flex items-baseline gap-2">
-              <span class="text-5xl font-bold text-white tracking-tight">£99</span>
+          <div class="mb-5" data-plan-price data-monthly="99" data-annual="84.15" data-year="1,009.80">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="text-5xl font-bold text-white tracking-tight" data-price-amount>£84.15</span>
               <span class="text-white/50 text-sm">/month</span>
+              <span data-price-save class="billing-save-chip">Save 15%</span>
             </div>
-            <p class="text-white/40 text-xs mt-1">excl. VAT &middot; 12-month term</p>
+            <p class="text-white/40 text-xs mt-1" data-price-note>£1,009.80/year · billed annually · excl. VAT</p>
           </div>
           <div class="mb-6 pb-6 border-b border-[#7de8eb]/10 space-y-2.5">
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">100</span> AI Calls</span></div>
@@ -1097,7 +1081,7 @@
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">100</span> Live Chat Conversations</span></div>
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="bell" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">100</span> SMS Messages and Notifications</span></div>
           </div>
-          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors mb-6" data-inquiry="Demo Request - Starter (100 calls, £99/mo)">Start a 7-day pilot</a>
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors mb-6" data-inquiry="Demo Request - Starter (100 calls, £99/mo)">Try 20 free calls</a>
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
@@ -1114,12 +1098,13 @@
             <h3 class="text-2xl font-bold text-white">Professional</h3>
             <p class="text-white/50 text-sm mt-1">Growing businesses with regular inbound enquiries</p>
           </div>
-          <div class="mb-5">
-            <div class="flex items-baseline gap-2">
-              <span class="text-5xl font-bold text-white tracking-tight">£199</span>
+          <div class="mb-5" data-plan-price data-monthly="199" data-annual="169.15" data-year="2,029.80">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="text-5xl font-bold text-white tracking-tight" data-price-amount>£169.15</span>
               <span class="text-white/50 text-sm">/month</span>
+              <span data-price-save class="billing-save-chip">Save 15%</span>
             </div>
-            <p class="text-white/40 text-xs mt-1">excl. VAT &middot; 12-month term</p>
+            <p class="text-white/40 text-xs mt-1" data-price-note>£2,029.80/year · billed annually · excl. VAT</p>
           </div>
           <div class="mb-6 pb-6 border-b border-[#7de8eb]/15 space-y-2.5">
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">300</span> AI Calls</span></div>
@@ -1128,7 +1113,7 @@
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">300</span> Live Chat Conversations</span></div>
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="bell" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">300</span> SMS Messages and Notifications</span></div>
           </div>
-          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)] mb-6" data-inquiry="Demo Request - Professional (300 calls, £199/mo)">Start a 7-day pilot</a>
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] font-bold text-sm shadow-[0_0_20px_rgba(125,232,235,0.3)] mb-6" data-inquiry="Demo Request - Professional (300 calls, £199/mo)">Try 20 free calls</a>
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
@@ -1144,12 +1129,13 @@
             <h3 class="text-2xl font-bold text-white">Business</h3>
             <p class="text-white/50 text-sm mt-1">Busy teams, multi-site businesses and companies with high call volume</p>
           </div>
-          <div class="mb-5">
-            <div class="flex items-baseline gap-2">
-              <span class="text-5xl font-bold text-white tracking-tight">£399</span>
+          <div class="mb-5" data-plan-price data-monthly="399" data-annual="339.15" data-year="4,069.80">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="text-5xl font-bold text-white tracking-tight" data-price-amount>£339.15</span>
               <span class="text-white/50 text-sm">/month</span>
+              <span data-price-save class="billing-save-chip">Save 15%</span>
             </div>
-            <p class="text-white/40 text-xs mt-1">excl. VAT &middot; 12-month term</p>
+            <p class="text-white/40 text-xs mt-1" data-price-note>£4,069.80/year · billed annually · excl. VAT</p>
           </div>
           <div class="mb-6 pb-6 border-b border-[#7de8eb]/10 space-y-2.5">
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="phone-call" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">750</span> AI Calls</span></div>
@@ -1158,7 +1144,7 @@
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="messages-square" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">1,000</span> Live Chat Conversations</span></div>
             <div class="flex items-center gap-2.5 text-white/85 text-sm"><i data-lucide="bell" class="w-4 h-4 text-[#7de8eb] flex-shrink-0"></i><span><span class="text-[#7de8eb] font-semibold">750</span> SMS Messages and Notifications</span></div>
           </div>
-          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors mb-6" data-inquiry="Demo Request - Business (750 calls, £399/mo)">Start a 7-day pilot</a>
+          <a href="https://app.wisecall.io/?signup=1&redirect=/billing" class="mbtn block text-center py-3 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors mb-6" data-inquiry="Demo Request - Business (750 calls, £399/mo)">Try 20 free calls</a>
           <ul class="space-y-2 text-sm">
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>AI receptionist, 24/7</li>
             <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Call summaries &amp; transcripts</li>            <li class="flex items-start gap-2 text-white/65"><i data-lucide="check" class="w-4 h-4 text-[#7de8eb] flex-shrink-0 mt-0.5"></i>Appointment booking</li>
@@ -1169,21 +1155,9 @@
         </div>
       </div>
 
-      <!-- Enterprise row -->
-      <div class="motion max-w-6xl mx-auto mb-6" data-anim="fade-up" style="transition-delay:0.13s">
-        <div class="rounded-xl bg-white/[.04] border border-[#7de8eb]/15 px-6 py-5 grid sm:grid-cols-[1fr_auto] sm:items-center gap-5">
-          <div class="flex-1">
-            <div class="flex flex-wrap items-center gap-3 mb-1.5">
-              <h3 class="text-xl font-bold text-white">Enterprise</h3>
-              <span class="px-2.5 py-1 rounded-full bg-[#7de8eb]/10 text-[#7de8eb] text-[11px] font-semibold">750+ calls</span>
-            </div>
-            <p class="text-white/55 text-sm leading-relaxed">Custom volume, integrations and onboarding for larger or multi-location teams.</p>
-          </div>
-          <div class="flex items-center gap-4 sm:justify-end">
-            <span class="text-lg font-bold text-[#7de8eb] whitespace-nowrap">Custom pricing</span>
-            <a href="#" class="contact-link mbtn inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white/10 text-white border border-[#7de8eb]/30 font-semibold text-sm hover:bg-white/20 transition-colors" data-inquiry="Enterprise Enquiry">Talk to us <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
-          </div>
-        </div>
+      <div class="motion text-center" data-anim="fade-up" style="transition-delay:0.13s">
+        <p class="text-white/60 text-sm">750+ calls · custom · <a href="#" class="contact-link text-[#7de8eb] font-semibold underline underline-offset-2 hover:text-white" data-inquiry="Enterprise Enquiry">Talk to us</a></p>
+        <p class="text-white/40 text-sm mt-3">20 free calls to test your setup. No card.</p>
       </div>
     </div>
   </section>
@@ -1334,7 +1308,7 @@
             What UK outbound calls are included?
             <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
           </summary>
-          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Every plan includes outbound calls to UK 01/02 (local and national), UK 03, and major UK mobile networks. Standard exclusions apply. See the full inclusions and exclusions listed under the <a href="#pricing" class="text-[#7de8eb]">Pricing</a> section.</div>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Every plan includes outbound calls to UK 01/02 (local and national), UK 03, and major UK mobile networks.</div>
         </details>
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
@@ -1350,7 +1324,7 @@
             How does pricing work?
             <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
           </summary>
-          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Plans start from £99/month (Starter, 100 AI calls), rising to £199/month (Professional, 300 calls) and £399/month (Business, 750 calls). Enterprise pricing is custom. All plans include every WiseCall feature, the only difference is the number of AI calls included each month. Additional calls are billed monthly at the overage rate shown on your plan. All prices exclude VAT. Full details are listed under the pricing section.</div>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Plans start from £99/month on 30-day rolling (Starter, 100 AI calls), rising to £199/month (Professional, 300 calls) and £399/month (Business, 750 calls). Pay annually and save 15%: Starter £84.15/month (£1,009.80/year), Professional £169.15/month (£2,029.80/year), Business £339.15/month (£4,069.80/year). Enterprise pricing is custom. All plans include every WiseCall feature, the only difference is the number of AI calls included each month. All prices exclude VAT. Full details are listed under the pricing section.</div>
         </details>
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
@@ -1358,7 +1332,7 @@
             What is the contract term?
             <i data-lucide="chevron-down" class="faq-chevron w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
           </summary>
-          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">All WiseCall plans require a 12-month minimum term. Payment is made monthly by Direct Debit. You can upgrade at any time. Downgrades are handled at the point of renewal at the end of your current term.</div>
+          <div class="px-6 pb-5 text-white/60 text-sm leading-relaxed">Plans are 30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%. You can upgrade at any time.</div>
         </details>
 
         <details class="group rounded-xl bg-white/5 border border-[#7de8eb]/10 hover:border-[#7de8eb]/25 transition-colors">
@@ -1389,14 +1363,14 @@
         <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">Ready to see WiseCall in action?</h2>
         <p class="text-xl text-white/70 mb-10 leading-relaxed">Book a demo and we will recommend the right plan based on your current call volumes and team setup. Most businesses are up and running within a week.</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <a href="https://app.wisecall.io/?signup=1&trial=calls" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
-            Try it now <i data-lucide="arrow-right" class="w-5 h-5"></i>
+          <a href="https://app.wisecall.io/?signup=1&trial=calls" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-full font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]" data-inquiry="Demo Request">
+            Try 20 free calls
           </a>
-          <a href="#" class="contact-link mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10" data-inquiry="Demo Request">
+          <a href="#" class="contact-link inline-flex items-center justify-center gap-2 px-8 py-4 text-white/80 font-semibold text-lg hover:text-[#7de8eb]" data-inquiry="Demo Request">
             Book a demo
           </a>
         </div>
-        <p class="text-white/40 text-sm">12-month minimum term. Monthly Direct Debit. UK-based support.</p>
+        <p class="text-white/40 text-sm">20 free calls to test your setup. No card.</p>
       </div>
     </div>
   </section>
@@ -1533,6 +1507,117 @@
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
+
+    // Hero live-call card (Dental / Legal / Property only)
+    const heroCallCard = document.getElementById('heroCallCard');
+    const heroIndustryTabs = document.getElementById('heroIndustryTabs');
+    if (heroCallCard && heroIndustryTabs) {
+      const heroSectors = [
+        {
+          business: 'Bright Smile Dental',
+          number: '+44 7700 900482',
+          seconds: 18,
+          caller: "I'd like to register and book a check-up.",
+          agent: "Booked. Wednesday at 9.30. I've texted you the confirmation.",
+          status: 'Booked',
+          summaryRest: '· New patient · Private · Wed 9.30',
+          note: 'Appointment booked. SMS sent to the caller.',
+        },
+        {
+          business: 'Hale & Co Solicitors',
+          number: '+44 7700 900913',
+          seconds: 22,
+          caller: "I'm buying a flat and need a quote for conveyancing.",
+          agent: "Booked. Thursday at 10.00. I've texted you the confirmation.",
+          status: 'Booked',
+          summaryRest: '· Conveyancing · New enquiry · Thu 10.00',
+          note: 'Appointment booked. SMS sent to the caller.',
+        },
+        {
+          business: 'Marsh & Park Estate Agents',
+          number: '+44 7700 900184',
+          seconds: 16,
+          caller: "I'd like a valuation and to book a viewing.",
+          agent: "Booked. Saturday at 11.00. I've texted you the confirmation.",
+          status: 'Booked',
+          summaryRest: '· Valuation · Viewing · Sat 11.00',
+          note: 'Valuation booked. SMS sent to the caller.',
+        },
+      ];
+      const heroTabs = Array.from(heroIndustryTabs.querySelectorAll('.hero-industry-tab'));
+      const setHero = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let heroSeconds = heroSectors[0].seconds;
+
+      function formatTimer(total) {
+        const m = String(Math.floor(total / 60)).padStart(2, '0');
+        const s = String(total % 60).padStart(2, '0');
+        return `${m}:${s}`;
+      }
+
+      function renderHeroSector(i) {
+        const s = heroSectors[i];
+        heroCallCard.classList.add('is-swapping');
+        setTimeout(() => {
+          setHero('hero-business', s.business);
+          setHero('hero-number', s.number);
+          setHero('hero-caller', s.caller);
+          setHero('hero-agent', s.agent);
+          setHero('hero-status', s.status);
+          setHero('hero-note', s.note);
+          const summary = document.getElementById('hero-summary');
+          if (summary) summary.innerHTML = `<span class="text-[#7de8eb] font-semibold">Booked</span> <span class="text-white/55">${s.summaryRest}</span>`;
+          heroSeconds = s.seconds;
+          setHero('hero-timer', formatTimer(heroSeconds));
+          heroTabs.forEach((t, idx) => {
+            t.classList.toggle('is-active', idx === i);
+            t.setAttribute('aria-selected', idx === i ? 'true' : 'false');
+          });
+          heroCallCard.classList.remove('is-swapping');
+        }, 160);
+      }
+
+      heroTabs.forEach((t) => t.addEventListener('click', () => {
+        renderHeroSector(Number(t.dataset.heroSector));
+      }));
+
+      if (!reduceMotion) {
+        setInterval(() => {
+          heroSeconds += 1;
+          setHero('hero-timer', formatTimer(heroSeconds));
+        }, 1000);
+      }
+    }
+
+    // Pricing monthly / annual toggle (annual selected by default)
+    (function initPricingToggle() {
+      const buttons = document.querySelectorAll('[data-billing]');
+      const cards = document.querySelectorAll('[data-plan-price]');
+      if (!buttons.length || !cards.length) return;
+
+      function apply(cycle) {
+        buttons.forEach((b) => b.classList.toggle('is-active', b.dataset.billing === cycle));
+        cards.forEach((card) => {
+          const monthly = card.dataset.monthly;
+          const annual = card.dataset.annual;
+          const year = card.dataset.year;
+          const priceEl = card.querySelector('[data-price-amount]');
+          const noteEl = card.querySelector('[data-price-note]');
+          const saveEl = card.querySelector('[data-price-save]');
+          if (cycle === 'annual') {
+            if (priceEl) priceEl.textContent = '£' + annual;
+            if (noteEl) noteEl.textContent = '£' + year + '/year · billed annually · excl. VAT';
+            if (saveEl) saveEl.hidden = false;
+          } else {
+            if (priceEl) priceEl.textContent = '£' + monthly;
+            if (noteEl) noteEl.textContent = '30-day rolling · excl. VAT';
+            if (saveEl) saveEl.hidden = true;
+          }
+        });
+      }
+
+      buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.billing)));
+    })();
 
     // Sector-aware call showcase rotation
     const callShowcase = document.getElementById('callShowcase');
@@ -1693,7 +1778,7 @@
       <i data-lucide="phone-call" class="w-4 h-4 shrink-0"></i> Call the demo
     </a>
     <a href="https://app.wisecall.io/?signup=1&trial=calls" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 border border-[#7de8eb]/30 text-white font-semibold text-sm px-4 py-3">
-      Try it now
+      Try 20 free calls
     </a>
   </div>
   <script>

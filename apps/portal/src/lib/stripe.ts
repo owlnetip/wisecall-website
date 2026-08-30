@@ -46,6 +46,35 @@ export const EMAIL_OVERAGE_GBP = 0.75;
 
 export type PlanId = "starter" | "professional" | "business";
 export type LegacyPlanId = "core" | "growth" | "pro";
+export type BillingInterval = "month" | "year";
+
+export const STARTER_ANNUAL_PRICE = process.env.STRIPE_STARTER_ANNUAL_PRICE || "";
+export const PROFESSIONAL_ANNUAL_PRICE = process.env.STRIPE_PROFESSIONAL_ANNUAL_PRICE || "";
+export const BUSINESS_ANNUAL_PRICE = process.env.STRIPE_BUSINESS_ANNUAL_PRICE || "";
+
+export const PLAN_MONTHLY_GBP: Record<PlanId, number> = {
+  starter: 99,
+  professional: 199,
+  business: 399,
+};
+
+export const PLAN_ANNUAL_MONTHLY_GBP: Record<PlanId, number> = {
+  starter: 84.15,
+  professional: 169.15,
+  business: 339.15,
+};
+
+export const PLAN_ANNUAL_GBP: Record<PlanId, number> = {
+  starter: 1009.8,
+  professional: 2029.8,
+  business: 4069.8,
+};
+
+export const PLAN_ANNUAL_PENCE: Record<PlanId, number> = {
+  starter: 100980,
+  professional: 202980,
+  business: 406980,
+};
 
 // Per-plan monthly allowances for the bundled AI channels (single-platform model).
 export const PLAN_CALLS_INCLUDED: Record<PlanId, number> = {
@@ -114,8 +143,18 @@ const PLAN_PRICE: Record<PlanId, string> = {
   business: BUSINESS_PRICE,
 };
 
+const PLAN_ANNUAL_PRICE: Record<PlanId, string> = {
+  starter: STARTER_ANNUAL_PRICE,
+  professional: PROFESSIONAL_ANNUAL_PRICE,
+  business: BUSINESS_ANNUAL_PRICE,
+};
+
 export function isPlanId(value: string): value is PlanId {
   return value === "starter" || value === "professional" || value === "business";
+}
+
+export function isBillingInterval(value: string): value is BillingInterval {
+  return value === "month" || value === "year";
 }
 
 // Every plan starts with the same 7-day free trial (call cap enforced in-app).
@@ -147,8 +186,40 @@ export function planDisplayName(plan: string | null | undefined): string {
 }
 
 // Checkout line items for a plan, a single licensed price with manual 20% VAT.
-export function lineItemsForPlan(plan: PlanId): Stripe.Checkout.SessionCreateParams.LineItem[] {
+export function lineItemsForPlan(
+  plan: PlanId,
+  interval: BillingInterval = "month",
+): Stripe.Checkout.SessionCreateParams.LineItem[] {
+  if (interval === "year" && PLAN_ANNUAL_PRICE[plan]) {
+    return [{ price: PLAN_ANNUAL_PRICE[plan], quantity: 1, tax_rates: [VAT_RATE] }];
+  }
   return [{ price: PLAN_PRICE[plan], quantity: 1, tax_rates: [VAT_RATE] }];
+}
+
+// Annual checkout uses a dedicated Stripe price when configured, otherwise
+// builds a yearly price from the existing monthly product (15% off).
+export async function lineItemsForPlanWithInterval(
+  stripe: Stripe,
+  plan: PlanId,
+  interval: BillingInterval = "month",
+): Promise<Stripe.Checkout.SessionCreateParams.LineItem[]> {
+  if (interval !== "year") return lineItemsForPlan(plan, interval);
+  if (PLAN_ANNUAL_PRICE[plan]) return lineItemsForPlan(plan, interval);
+
+  const monthly = await stripe.prices.retrieve(PLAN_PRICE[plan]);
+  const product = typeof monthly.product === "string" ? monthly.product : monthly.product.id;
+  return [
+    {
+      price_data: {
+        currency: "gbp",
+        product,
+        unit_amount: PLAN_ANNUAL_PENCE[plan],
+        recurring: { interval: "year" },
+      },
+      quantity: 1,
+      tax_rates: [VAT_RATE],
+    },
+  ];
 }
 
 export function lineItemsForEmailChannel(): Stripe.Checkout.SessionCreateParams.LineItem[] {
