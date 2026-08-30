@@ -4,7 +4,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Globe, Loader2, Mail, Phone } from "lucide-react";
 import { draftAgentFromWebsite, type AgentDraft } from "@/app/actions/wizard";
 import {
+  avaAutoRingKey,
   guestAutoRingKey,
+  shouldAutoRingAva,
   shouldAutoRingGuest,
 } from "@/lib/guest-auto-ring";
 import { ALWAYS_OPEN_OFFICE_HOURS } from "@/lib/guest-test-agent";
@@ -28,10 +30,12 @@ export function GuestSetup({
   initialWebsite,
   initialPhone = "",
   initialEmail = "",
+  noWebsite = false,
 }: {
   initialWebsite: string;
   initialPhone?: string;
   initialEmail?: string;
+  noWebsite?: boolean;
 }) {
   const [website, setWebsite] = useState(initialWebsite);
   const [phone, setPhone] = useState(initialPhone);
@@ -102,6 +106,38 @@ export function GuestSetup({
     return promise;
   }
 
+  async function ringAva() {
+    if (!isLikelyEmail(emailRef.current)) {
+      setError("That doesn't look like a valid email address.");
+      return;
+    }
+    const key = avaAutoRingKey(phoneRef.current);
+    if (!key) return;
+    if (rangKey.current === key || callPlacedRef.current || callingRef.current) return;
+    rangKey.current = key;
+
+    startCall(async () => {
+      const response = await fetch("/api/demo-callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneRef.current,
+          source: "facebook_try_no_website",
+        }),
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!response.ok || result.ok === false) {
+        if (rangKey.current === key) rangKey.current = null;
+        setError(result.error || "Could not start the test call.");
+        return;
+      }
+      setCallPlaced(true);
+    });
+  }
+
   async function ringDraft(ready: AgentDraft, site: string) {
     if (!isLikelyEmail(emailRef.current)) {
       setError("That doesn't look like a valid email address.");
@@ -154,6 +190,22 @@ export function GuestSetup({
   }
 
   useEffect(() => {
+    if (!noWebsite) return;
+    if (
+      !shouldAutoRingAva({
+        callPlaced: callPlacedRef.current,
+        ringing: callingRef.current,
+        phone: phoneRef.current,
+      })
+    ) {
+      return;
+    }
+    void ringAva();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noWebsite, phone]);
+
+  useEffect(() => {
+    if (noWebsite) return;
     const site = website.trim();
     if (!site) return;
     const timer = window.setTimeout(() => {
@@ -166,9 +218,10 @@ export function GuestSetup({
   }, [website]);
 
   useEffect(() => {
+    if (noWebsite) return;
     tryAutoRing(draft, scannedWebsite);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phone, draft, scannedWebsite]);
+  }, [noWebsite, phone, draft, scannedWebsite]);
 
   const busy = scanning || calling;
   const numberReady = Boolean(toE164UkMobile(phone));
@@ -186,40 +239,50 @@ export function GuestSetup({
           <div>
             <h1 className="text-2xl font-black text-ink sm:text-3xl">We&apos;re calling you now</h1>
             <p className="mt-3 text-ink-soft">
-              Answer to hear the receptionist we drafted from your website
-              {draft?.businessName ? ` for ${draft.businessName}` : ""}. Gemma, around the clock.
+              {noWebsite
+                ? "Answer to hear Ava. She answers as Ava, not in your business name."
+                : `Answer to hear the receptionist we drafted from your website${
+                    draft?.businessName ? ` for ${draft.businessName}` : ""
+                  }. Gemma, around the clock.`}
             </p>
             <p className="mt-4 text-sm text-ink-soft">
-              After you hang up you get the summary. 20 free inbound AI calls if you want them. No card.
+              After you hang up you get a text with the signup link if you want. 20 free inbound AI
+              calls. No card.
             </p>
           </div>
         ) : (
           <div>
-            <h1 className="text-2xl font-black text-ink sm:text-3xl">Hear your receptionist</h1>
+            <h1 className="text-2xl font-black text-ink sm:text-3xl">
+              {noWebsite ? "Hear Ava" : "Hear your receptionist"}
+            </h1>
             <p className="mt-2 text-ink-soft">
-              Paste your website and UK mobile. We draft it and call you — no extra tap.
+              {noWebsite
+                ? "Enter your UK mobile. We call you so you can hear Ava — no extra tap."
+                : "Paste your website and UK mobile. We draft it and call you — no extra tap."}
             </p>
 
-            <label className="mt-7 block">
-              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
-                Your website
-              </span>
-              <div className="flex items-center gap-2 rounded-xl border border-line-strong bg-card px-3 shadow-card transition focus-within:border-teal">
-                <Globe className="h-4 w-4 flex-shrink-0 text-ink-faint" />
-                <input
-                  type="url"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="yourbusiness.co.uk"
-                  className="h-12 w-full bg-transparent text-ink outline-none placeholder:text-ink-faint"
-                  autoFocus={!initialWebsite}
-                  data-clarity-mask="true"
-                  required
-                />
-              </div>
-            </label>
+            {!noWebsite ? (
+              <label className="mt-7 block">
+                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
+                  Your website
+                </span>
+                <div className="flex items-center gap-2 rounded-xl border border-line-strong bg-card px-3 shadow-card transition focus-within:border-teal">
+                  <Globe className="h-4 w-4 flex-shrink-0 text-ink-faint" />
+                  <input
+                    type="url"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    placeholder="yourbusiness.co.uk"
+                    className="h-12 w-full bg-transparent text-ink outline-none placeholder:text-ink-faint"
+                    autoFocus={!initialWebsite}
+                    data-clarity-mask="true"
+                    required
+                  />
+                </div>
+              </label>
+            ) : null}
 
-            <label className="mt-4 block">
+            <label className={`${noWebsite ? "mt-7" : "mt-4"} block`}>
               <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
                 UK mobile
               </span>
@@ -235,7 +298,7 @@ export function GuestSetup({
                   className="h-12 w-full bg-transparent text-ink outline-none placeholder:text-ink-faint"
                   data-clarity-mask="true"
                   required
-                  autoFocus={Boolean(initialWebsite) && !initialPhone}
+                  autoFocus={noWebsite || (Boolean(initialWebsite) && !initialPhone)}
                 />
               </div>
             </label>
@@ -272,7 +335,11 @@ export function GuestSetup({
               </p>
             )}
 
-            {!busy && draft && scannedWebsite === website.trim() && !numberReady && (
+            {!busy &&
+              !noWebsite &&
+              draft &&
+              scannedWebsite === website.trim() &&
+              !numberReady && (
               <p className="mt-5 text-sm font-semibold text-ink-soft">
                 Receptionist is ready. Enter your UK mobile and we call you straight away.
               </p>
@@ -280,12 +347,13 @@ export function GuestSetup({
 
             {error && <p className="mt-4 text-sm font-medium text-danger">{error}</p>}
 
-            {error && draft && numberReady && !calling ? (
+            {error && numberReady && !calling && (noWebsite || draft) ? (
               <button
                 type="button"
                 onClick={() => {
                   rangKey.current = null;
-                  tryAutoRing(draft, scannedWebsite);
+                  if (noWebsite) void ringAva();
+                  else tryAutoRing(draft, scannedWebsite);
                 }}
                 className="press mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-good px-5 font-black text-white transition hover:bg-[#0e7a4d]"
               >
@@ -294,7 +362,9 @@ export function GuestSetup({
             ) : null}
 
             <p className="mt-4 text-center text-xs text-ink-faint">
-              No account or card first. We call you on the receptionist drafted from your site, not Ava.
+              {noWebsite
+                ? "No account or card first. You hear Ava, not a receptionist drafted from your site. She answers as Ava, not in your business name."
+                : "No account or card first. We call you on the receptionist drafted from your site, not Ava."}
             </p>
           </div>
         )}

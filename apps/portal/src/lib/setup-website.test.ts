@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   dashboardSetupPath,
   guestSetupPath,
+  parseNoWebsite,
   parseOpenSetup,
   parseSetupWebsite,
   shouldOpenSetupWizard,
@@ -51,6 +52,18 @@ test("Facebook /try opens the public guest wizard, not signup", () => {
     guestSetupPath("yourwebsite.co.uk"),
     "/setup?trial=calls&website=https%3A%2F%2Fyourwebsite.co.uk%2F",
   );
+  assert.equal(guestSetupPath(undefined, { noWebsite: true }), "/setup?trial=calls&nowebsite=1");
+  assert.equal(
+    guestSetupPath("yourwebsite.co.uk", { noWebsite: true }),
+    "/setup?trial=calls&website=https%3A%2F%2Fyourwebsite.co.uk%2F",
+  );
+});
+
+test("nowebsite query is only used when no website was pasted", () => {
+  assert.equal(parseNoWebsite("1"), true);
+  assert.equal(parseNoWebsite("yes"), true);
+  assert.equal(parseNoWebsite(""), false);
+  assert.equal(parseNoWebsite("website"), false);
 });
 
 test("setup=1 opens the create-agent wizard only when they have no agents yet", () => {
