@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  avaAutoRingKey,
   guestAutoRingKey,
   parseSetupEmail,
   parseSetupPhone,
+  shouldAutoRingAva,
   shouldAutoRingGuest,
 } from "./guest-auto-ring";
 
@@ -36,6 +38,15 @@ test("auto-ring key is per number and website so a new draft can call again", ()
   );
   assert.equal(guestAutoRingKey("07700 900", "https://northwind.example/"), null);
   assert.equal(guestAutoRingKey("07700 900123", ""), null);
+});
+
+test("Ava no-website path auto-rings on a complete UK mobile only", () => {
+  assert.equal(shouldAutoRingAva({ callPlaced: false, ringing: false, phone: "07700 900123" }), true);
+  assert.equal(shouldAutoRingAva({ callPlaced: false, ringing: false, phone: "07700 900" }), false);
+  assert.equal(shouldAutoRingAva({ callPlaced: true, ringing: false, phone: "07700 900123" }), false);
+  assert.equal(shouldAutoRingAva({ callPlaced: false, ringing: true, phone: "07700 900123" }), false);
+  assert.equal(avaAutoRingKey("07700 900123"), "+447700900123:ava");
+  assert.equal(avaAutoRingKey("07700 900"), null);
 });
 
 test("setup query prefills only a real UK mobile and a plausible email", () => {

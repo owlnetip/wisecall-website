@@ -3,22 +3,29 @@ import { redirect } from "next/navigation";
 import { GuestSetup } from "@/components/guest-setup";
 import { parseSetupEmail, parseSetupPhone } from "@/lib/guest-auto-ring";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { dashboardSetupPath, parseSetupWebsite } from "@/lib/setup-website";
+import { dashboardSetupPath, parseNoWebsite, parseSetupWebsite } from "@/lib/setup-website";
 
 export const metadata: Metadata = {
-  title: "Build your WiseCall receptionist",
+  title: "Hear WiseCall",
   description:
-    "Paste your website and UK mobile. We draft the receptionist and call you when it is ready. No account first.",
+    "Enter your UK mobile. We call you so you can hear the receptionist. No account first.",
   robots: { index: false, follow: true },
 };
 
 export default async function GuestSetupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ website?: string; trial?: string; phone?: string; email?: string }>;
+  searchParams: Promise<{
+    website?: string;
+    trial?: string;
+    phone?: string;
+    email?: string;
+    nowebsite?: string;
+  }>;
 }) {
-  const { website, phone, email } = await searchParams;
+  const { website, phone, email, nowebsite } = await searchParams;
   const setupWebsite = parseSetupWebsite(website) ?? "";
+  const noWebsite = parseNoWebsite(nowebsite) && !setupWebsite;
   const setupPhone = parseSetupPhone(phone);
   const setupEmail = parseSetupEmail(email);
 
@@ -37,6 +44,7 @@ export default async function GuestSetupPage({
       initialWebsite={setupWebsite}
       initialPhone={setupPhone}
       initialEmail={setupEmail}
+      noWebsite={noWebsite}
     />
   );
 }

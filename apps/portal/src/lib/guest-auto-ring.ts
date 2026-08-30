@@ -10,6 +10,14 @@ export function guestAutoRingKey(phone: string, scannedWebsite: string): string 
   return `${e164}:${site}`;
 }
 
+export const AVA_AUTO_RING_KEY = "ava";
+
+export function avaAutoRingKey(phone: string): string | null {
+  const e164 = toE164UkMobile(phone);
+  if (!e164) return null;
+  return `${e164}:${AVA_AUTO_RING_KEY}`;
+}
+
 export function shouldAutoRingGuest(opts: {
   callPlaced: boolean;
   ringing: boolean;
@@ -21,6 +29,15 @@ export function shouldAutoRingGuest(opts: {
   if (opts.callPlaced || opts.ringing) return false;
   if (!opts.draftReady) return false;
   if (opts.website.trim() !== opts.scannedWebsite.trim()) return false;
+  return Boolean(toE164UkMobile(opts.phone));
+}
+
+export function shouldAutoRingAva(opts: {
+  callPlaced: boolean;
+  ringing: boolean;
+  phone: string;
+}): boolean {
+  if (opts.callPlaced || opts.ringing) return false;
   return Boolean(toE164UkMobile(opts.phone));
 }
 

@@ -53,11 +53,22 @@ export function dashboardSetupPath(website?: unknown): string {
   return `/dashboard?${params.toString()}`;
 }
 
+export function parseNoWebsite(input: unknown): boolean {
+  if (typeof input !== "string") return false;
+  const value = input.trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes";
+}
+
 // Public guest wizard for wisecall.io/try. No account until after they hear the call.
-export function guestSetupPath(website?: unknown): string {
+// A pasted website always wins over nowebsite=1.
+export function guestSetupPath(website?: unknown, opts?: { noWebsite?: boolean }): string {
   const params = new URLSearchParams({ trial: "calls" });
   const parsed = parseSetupWebsite(website);
-  if (parsed) params.set("website", parsed);
+  if (parsed) {
+    params.set("website", parsed);
+    return `/setup?${params.toString()}`;
+  }
+  if (opts?.noWebsite) params.set("nowebsite", "1");
   return `/setup?${params.toString()}`;
 }
 
