@@ -48,6 +48,9 @@ export type PlanId = "starter" | "professional" | "business";
 export type LegacyPlanId = "core" | "growth" | "pro";
 export type BillingInterval = "month" | "year";
 
+// Yearly prices (15% off). Create with `npx tsx scripts/ensure-annual-stripe-prices.ts --apply`
+// then paste the ids here / into Vercel env. Until then, checkout builds a yearly
+// price_data from the monthly product so marketing and Stripe do not disagree.
 export const STARTER_ANNUAL_PRICE = process.env.STRIPE_STARTER_ANNUAL_PRICE || "";
 export const PROFESSIONAL_ANNUAL_PRICE = process.env.STRIPE_PROFESSIONAL_ANNUAL_PRICE || "";
 export const BUSINESS_ANNUAL_PRICE = process.env.STRIPE_BUSINESS_ANNUAL_PRICE || "";

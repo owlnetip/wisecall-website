@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "stripe:ensure-annual": "tsx scripts/ensure-annual-stripe-prices.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
