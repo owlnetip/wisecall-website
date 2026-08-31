@@ -15,7 +15,7 @@ import {
   PROFESSIONAL_PRICE,
   STARTER_PRICE,
   type PlanId,
-} from "../src/lib/stripe.ts";
+} from "../src/lib/stripe";
 
 const apply = process.argv.includes("--apply");
 
