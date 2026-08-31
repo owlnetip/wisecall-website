@@ -19,8 +19,13 @@ test("annual prices are exactly 15% off the monthly rolling rates", () => {
   }
 });
 
-test("lineItemsForPlan stays on the monthly Stripe price when no annual id is set", () => {
+test("lineItemsForPlan uses the dedicated yearly Stripe price for annual checkout", () => {
   const items = lineItemsForPlan("starter", "year");
+  assert.equal(items[0]?.price, process.env.STRIPE_STARTER_ANNUAL_PRICE || "price_1UAZxnF6ZlidDG7daiSu6CTd");
+});
+
+test("lineItemsForPlan stays on the monthly Stripe price for monthly checkout", () => {
+  const items = lineItemsForPlan("starter", "month");
   assert.equal(items[0]?.price, process.env.STRIPE_STARTER_PRICE || "price_1TmcN7F6ZlidDG7dL2VOwz61");
 });
 

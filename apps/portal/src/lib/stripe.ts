@@ -48,12 +48,15 @@ export type PlanId = "starter" | "professional" | "business";
 export type LegacyPlanId = "core" | "growth" | "pro";
 export type BillingInterval = "month" | "year";
 
-// Yearly prices (15% off). Create with `npx tsx scripts/ensure-annual-stripe-prices.ts --apply`
-// then paste the ids here / into Vercel env. Until then, checkout builds a yearly
-// price_data from the monthly product so marketing and Stripe do not disagree.
-export const STARTER_ANNUAL_PRICE = process.env.STRIPE_STARTER_ANNUAL_PRICE || "";
-export const PROFESSIONAL_ANNUAL_PRICE = process.env.STRIPE_PROFESSIONAL_ANNUAL_PRICE || "";
-export const BUSINESS_ANNUAL_PRICE = process.env.STRIPE_BUSINESS_ANNUAL_PRICE || "";
+// Yearly prices (15% off) on the same live products as the monthly plans
+// (acct_1TiwraF6ZlidDG7d). Created 2026-08-31. Checkout falls back to price_data
+// if an override env is empty.
+export const STARTER_ANNUAL_PRICE =
+  process.env.STRIPE_STARTER_ANNUAL_PRICE || "price_1UAZxnF6ZlidDG7daiSu6CTd"; // £1,009.80/year
+export const PROFESSIONAL_ANNUAL_PRICE =
+  process.env.STRIPE_PROFESSIONAL_ANNUAL_PRICE || "price_1UAZxoF6ZlidDG7dTyfIgws5"; // £2,029.80/year
+export const BUSINESS_ANNUAL_PRICE =
+  process.env.STRIPE_BUSINESS_ANNUAL_PRICE || "price_1UAZxpF6ZlidDG7d9nVCXXs5"; // £4,069.80/year
 
 export const PLAN_MONTHLY_GBP: Record<PlanId, number> = {
   starter: 99,
@@ -199,8 +202,8 @@ export function lineItemsForPlan(
   return [{ price: PLAN_PRICE[plan], quantity: 1, tax_rates: [VAT_RATE] }];
 }
 
-// Annual checkout uses a dedicated Stripe price when configured, otherwise
-// builds a yearly price from the existing monthly product (15% off).
+// Annual checkout uses the dedicated yearly Stripe price when configured,
+// otherwise builds a yearly price from the existing monthly product (15% off).
 export async function lineItemsForPlanWithInterval(
   stripe: Stripe,
   plan: PlanId,
