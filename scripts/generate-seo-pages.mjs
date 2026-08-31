@@ -564,7 +564,7 @@ function renderPricing() {
     description: 'WiseCall AI receptionist pricing for UK businesses: Starter £99, Professional £199 and Business £399 per month on 30-day rolling, or save 15% annually.',
     path: '/pricing/',
   };
-  const body = `${hero({ eyebrow: 'Pricing', h1: 'One AI front desk. Pay monthly, or save 15% on the year.', lead: '30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.', cta: 'Try 20 free calls', panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
+  const body = `${hero({ eyebrow: 'Pricing', h1: 'One AI front desk.', lead: '30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.', cta: 'Try 20 free calls', panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
 <style>
   .billing-toggle { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px; background: rgba(255,255,255,.08); }
   .billing-toggle button { border: 0; border-radius: 999px; padding: .45rem 1.15rem; font-size: .875rem; font-weight: 600; background: transparent; color: rgba(255,255,255,.62); cursor: pointer; }
