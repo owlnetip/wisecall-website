@@ -1,10 +1,11 @@
 // Website URL + setup wizard carried from wisecall.io/try.
 //
-// Facebook /try is agent-first: visitors paste a website and UK mobile, then
-// public app.wisecall.io/setup drafts THEIR agent (Gemma, 24/7) and rings that
-// guest profile the moment it is ready — no second tap, never Ava.
+// Facebook /try is number-first on the marketing page: UK mobile (email
+// optional) auto-calls Ava via the existing wisecall demo-callback. "Got a
+// website?" is a small secondary into this public /setup guest wizard, which
+// drafts THEIR agent (Gemma, 24/7) and rings that guest profile.
 // Email + password is not the wall; hangup signup can still offer 20 free calls.
-// Homepage "Try it now" is still signup-first.
+// Homepage "Try it now" is still signup-first. Do not move homepage CTAs onto /try.
 //
 // wisecall.io/setup is only a Vercel redirect into this portal route. Do not
 // add a marketing landing at setup/index.html — that rings the generic Ava

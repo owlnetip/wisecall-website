@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Try WiseCall | Paste your website. We call you.</title>
-  <meta name="description" content="Paste your website. We draft the receptionist and call you so you can hear it. 20 free inbound AI calls. No card.">
+  <title>Try WiseCall | Enter your mobile. We call you.</title>
+  <meta name="description" content="Enter your UK mobile. We call you so you can hear Ava. 20 free inbound AI calls. No card.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://wisecall.io/try">
   <meta name="theme-color" content="#172929">
@@ -12,13 +12,13 @@
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://wisecall.io/try">
-  <meta property="og:title" content="Try WiseCall | Paste your website. We call you.">
-  <meta property="og:description" content="Paste your website. We draft the receptionist and call you so you can hear it. 20 free inbound AI calls. No card.">
+  <meta property="og:title" content="Try WiseCall | Enter your mobile. We call you.">
+  <meta property="og:description" content="Enter your UK mobile. We call you so you can hear Ava. 20 free inbound AI calls. No card.">
   <meta property="og:image" content="https://wisecall.io/og-image.jpg">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Try WiseCall | Paste your website. We call you.">
-  <meta name="twitter:description" content="Paste your website. We draft the receptionist and call you so you can hear it. 20 free inbound AI calls. No card.">
+  <meta name="twitter:title" content="Try WiseCall | Enter your mobile. We call you.">
+  <meta name="twitter:description" content="Enter your UK mobile. We call you so you can hear Ava. 20 free inbound AI calls. No card.">
 
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -94,7 +94,7 @@
     }
     .try-form {
       display: grid;
-      gap: 0.65rem;
+      gap: 0.55rem;
     }
     .try-form label {
       position: absolute;
@@ -124,33 +124,30 @@
       border-color: #7de8eb;
       box-shadow: 0 0 0 3px rgba(125, 232, 235, 0.18);
     }
-    .cta {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: 3.15rem;
-      padding: 0.85rem 1.2rem;
-      border: 0;
-      border-radius: 0.6rem;
-      background: linear-gradient(90deg, #7de8eb, #5dbfc2);
-      color: #172929;
-      font-family: inherit;
-      font-weight: 800;
-      font-size: 1.05rem;
-      text-decoration: none;
-      cursor: pointer;
-      box-shadow: 0 0 28px rgba(125, 232, 235, 0.28);
-      -webkit-tap-highlight-color: transparent;
+    .try-form input[type="email"] {
+      min-height: 2.65rem;
+      padding: 0.6rem 1rem;
+      font-size: 15px;
+      border-color: rgba(125, 232, 235, 0.16);
+      background: rgba(31, 53, 53, 0.72);
     }
-    .cta:active { transform: scale(0.98); }
-    .skip {
-      margin: 0.7rem 0 0;
+    .status {
+      margin: 0.15rem 0 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #7de8eb;
+    }
+    .status[data-state="error"] { color: #ffb4b4; }
+    .status[hidden] { display: none; }
+    .called h1 { margin-bottom: 0.55rem; }
+    .website-link {
+      margin: 1.15rem 0 0;
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
     }
-    .skip a {
-      color: rgba(125, 232, 235, 0.85);
+    .website-link a {
+      color: rgba(125, 232, 235, 0.78);
       font-weight: 600;
       text-decoration: none;
     }
@@ -181,54 +178,31 @@
       font-size: 0.82rem;
       color: #7de8eb;
     }
-    .ava {
-      margin: 1.35rem 0 0;
-      padding: 1.25rem 0 0;
-      border-top: 1px solid rgba(125, 232, 235, 0.12);
-    }
-    .ava h2 {
-      margin: 0 0 0.4rem;
-      font-size: 1.05rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-    .ava p {
-      margin: 0 0 0.75rem;
-      font-size: 0.9rem;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.58);
-    }
-    .cta-secondary {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.1rem;
-      width: 100%;
-      min-height: 3.15rem;
-      padding: 0.7rem 1.1rem;
-      border: 1.5px solid rgba(125, 232, 235, 0.35);
-      border-radius: 0.6rem;
-      background: transparent;
-      color: #7de8eb;
-      font-family: inherit;
-      font-weight: 700;
-      font-size: 0.95rem;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .cta-secondary:active { transform: scale(0.98); }
-    .cta-number {
-      font-size: 0.82rem;
-      font-weight: 600;
-      opacity: 0.82;
-    }
-    .note {
-      margin: 0.7rem 0 0;
+    .honest {
+      margin: 1.15rem 0 0;
       font-size: 0.82rem;
       line-height: 1.45;
       color: rgba(255, 255, 255, 0.45);
     }
+    .retry {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 3.15rem;
+      margin-top: 0.75rem;
+      padding: 0.85rem 1.2rem;
+      border: 0;
+      border-radius: 0.6rem;
+      background: linear-gradient(90deg, #7de8eb, #5dbfc2);
+      color: #172929;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 1.05rem;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .retry:active { transform: scale(0.98); }
     footer {
       margin: 0.25rem 0 0;
       padding-top: 0.85rem;
@@ -253,29 +227,15 @@
     </header>
 
     <main>
-      <section class="hero" aria-label="Build your receptionist">
+      <section id="try-idle" class="hero" aria-label="Hear Ava">
         <p class="outcome">They rang. You missed it. They booked someone else.</p>
-        <h1>Hear your receptionist.</h1>
-        <p class="payoff">Paste your website and mobile. We draft the receptionist and call you so you can hear it. You get the summary.</p>
+        <h1>Hear Ava.</h1>
+        <p class="payoff">Enter your UK mobile. We call you so you can hear Ava — no extra tap.</p>
         <p class="offer">20 free inbound AI calls. No card.</p>
 
         <form id="try-form" class="try-form" action="https://app.wisecall.io/setup" method="get">
           <input type="hidden" name="trial" value="calls">
-          <label for="website">Your website</label>
-          <input
-            id="website"
-            name="website"
-            type="text"
-            inputmode="url"
-            autocomplete="url"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
-            enterkeyhint="next"
-            placeholder="yourwebsite.co.uk"
-            required
-            data-clarity-mask="true"
-          >
+          <input type="hidden" name="nowebsite" value="1">
           <label for="phone">UK mobile</label>
           <input
             id="phone"
@@ -286,6 +246,7 @@
             enterkeyhint="go"
             placeholder="07… your mobile"
             required
+            autofocus
             data-clarity-mask="true"
           >
           <label for="email">Email (optional)</label>
@@ -297,27 +258,30 @@
             placeholder="Email (optional)"
             data-clarity-mask="true"
           >
-          <p id="try-error" class="note" hidden></p>
-          <button class="cta" type="submit">Hear it now</button>
+          <p id="try-status" class="status" hidden></p>
         </form>
-        <p class="skip"><a href="https://app.wisecall.io/setup?trial=calls&nowebsite=1">No website? Start without one</a></p>
 
-        <p class="ready">Hear it in about a minute</p>
+        <p class="website-link">
+          <a id="website-path" href="https://app.wisecall.io/setup?trial=calls">Got a website? We’ll draft your receptionist</a>
+        </p>
+
+        <p class="ready">We call as soon as the number is in</p>
         <ol class="steps">
-          <li><span class="num">1</span> Paste your website and mobile</li>
-          <li><span class="num">2</span> We draft the receptionist</li>
-          <li><span class="num">3</span> We call you when it&rsquo;s ready</li>
+          <li><span class="num">1</span> Enter your UK mobile</li>
+          <li><span class="num">2</span> We call you</li>
+          <li><span class="num">3</span> You hear Ava</li>
         </ol>
+        <p class="honest">You hear Ava, not a receptionist drafted from your site. She answers as Ava, not in your business name. After you hang up you get a text with the signup link if you want.</p>
       </section>
 
-      <section class="ava" aria-label="Talk to Ava">
-        <h2>Or talk to Ava first</h2>
-        <p>I&rsquo;m Ava, the WiseCall assistant. Tell me what industry to roleplay: dental, trades, property, legal, or name one.</p>
-        <a class="cta-secondary" href="tel:+441135222277">
-          <span>Talk to Ava</span>
-          <span class="cta-number">0113 522 2277</span>
-        </a>
-        <p class="note">She answers as Ava, not in your business name, until you set up on your own line. After you hang up you get a text with the signup link if you want.</p>
+      <section id="try-called" class="hero called" aria-label="We're calling you" hidden>
+        <h1>We’re calling you now</h1>
+        <p class="payoff">Answer to hear Ava. She answers as Ava, not in your business name.</p>
+        <p class="offer">After you hang up you get a text with the signup link if you want. 20 free inbound AI calls. No card.</p>
+        <p class="honest">This is Ava, the same WiseCall demo as the homepage. Not a receptionist drafted from your site.</p>
+        <p class="website-link">
+          <a id="website-path-after" href="https://app.wisecall.io/setup?trial=calls">Got a website? We’ll draft your receptionist</a>
+        </p>
       </section>
     </main>
 
@@ -328,6 +292,10 @@
     </footer>
   </div>
   <script>
+    var WISECALL_DEMO_CALLBACK_ENDPOINT =
+      window.WISECALL_DEMO_CALLBACK_ENDPOINT ||
+      "https://zgzzpwaqqftmugzpccpm.supabase.co/functions/v1/wisecall-demo-callback";
+
     function toUkMobile(value) {
       var digits = String(value || "").replace(/\D/g, "");
       if (digits.indexOf("00") === 0) digits = digits.slice(2);
@@ -335,28 +303,114 @@
       if (digits.length === 10 && digits.charAt(0) === "7") digits = "44" + digits;
       return /^447\d{9}$/.test(digits) ? "+" + digits : "";
     }
+
     var form = document.getElementById("try-form");
-    var err = document.getElementById("try-error");
-    if (form) {
+    var phone = document.getElementById("phone");
+    var email = document.getElementById("email");
+    var statusEl = document.getElementById("try-status");
+    var idle = document.getElementById("try-idle");
+    var called = document.getElementById("try-called");
+    var websiteLinks = [
+      document.getElementById("website-path"),
+      document.getElementById("website-path-after"),
+    ];
+    var rangKey = "";
+    var calling = false;
+
+    function setStatus(message, state) {
+      if (!statusEl) return;
+      statusEl.hidden = !message;
+      statusEl.textContent = message || "";
+      statusEl.setAttribute("data-state", state || "idle");
+    }
+
+    function websiteHref() {
+      var params = new URLSearchParams({ trial: "calls" });
+      if (toUkMobile(phone && phone.value)) params.set("phone", String(phone.value || "").trim());
+      var rawEmail = String((email && email.value) || "").trim();
+      if (rawEmail && rawEmail.indexOf("@") !== -1 && rawEmail.indexOf(".") !== -1) {
+        params.set("email", rawEmail);
+      }
+      return "https://app.wisecall.io/setup?" + params.toString();
+    }
+
+    function syncWebsiteLinks() {
+      var href = websiteHref();
+      websiteLinks.forEach(function (link) {
+        if (link) link.href = href;
+      });
+    }
+
+    function showCalled() {
+      if (idle) idle.hidden = true;
+      if (called) called.hidden = false;
+    }
+
+    function ringAva(force) {
+      var typed = String((phone && phone.value) || "").trim();
+      var key = toUkMobile(typed);
+      if (!key) return;
+      if (!force && (rangKey === key || calling)) return;
+      rangKey = key;
+      calling = true;
+      setStatus("Calling you now…", "idle");
+
+      fetch(WISECALL_DEMO_CALLBACK_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: typed,
+          profile_slug: "wisecall",
+          agent_name: "WiseCall Website Assistant",
+          source: "facebook_try",
+        }),
+      })
+        .then(function (response) {
+          return response.json().catch(function () { return {}; }).then(function (result) {
+            if (!response.ok || result.ok === false) {
+              throw new Error(result.error || "Could not start the demo call.");
+            }
+            showCalled();
+          });
+        })
+        .catch(function (error) {
+          calling = false;
+          rangKey = "";
+          setStatus(error.message || "Could not start the demo call. Check the number and try again.", "error");
+          if (!document.getElementById("try-retry") && form) {
+            var retry = document.createElement("button");
+            retry.id = "try-retry";
+            retry.type = "button";
+            retry.className = "retry";
+            retry.textContent = "Try calling again";
+            retry.addEventListener("click", function () {
+              ringAva(true);
+            });
+            form.appendChild(retry);
+          }
+        })
+        .then(function () {
+          calling = false;
+        });
+    }
+
+    if (form && phone) {
+      phone.addEventListener("input", function () {
+        syncWebsiteLinks();
+        if (toUkMobile(phone.value)) ringAva(false);
+      });
+      if (email) email.addEventListener("input", syncWebsiteLinks);
       form.addEventListener("submit", function (event) {
-        var site = form.querySelector("[name='website']");
-        var mobile = form.querySelector("[name='phone']");
-        if (!site || !mobile) return;
-        var raw = (site.value || "").trim();
-        if (!raw) {
-          event.preventDefault();
+        event.preventDefault();
+        if (!toUkMobile(phone.value)) {
+          setStatus("Enter a UK mobile (07… or +44) so we can call you.", "error");
+          phone.focus();
           return;
         }
-        if (!/^https?:\/\//i.test(raw)) site.value = "https://" + raw;
-        if (!toUkMobile(mobile.value)) {
-          event.preventDefault();
-          if (err) {
-            err.hidden = false;
-            err.textContent = "Enter a UK mobile (07… or +44) so we can call you.";
-          }
-          mobile.focus();
-        }
+        ringAva(true);
       });
+      syncWebsiteLinks();
+      if (toUkMobile(phone.value)) ringAva(false);
     }
   </script>
 </body>
