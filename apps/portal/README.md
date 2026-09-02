@@ -19,6 +19,31 @@ Separate Next.js app for `app.wisecall.io`.
 - `/api/insights` - authenticated, tenant-scoped AI Insights roll-up (`?range=today|7d|30d`)
 - `/api/insights/backfill` - authenticated, analyses a small batch of the tenant's un-analysed calls
 - `/api/webhooks/call-completed` - service webhook the call runtime POSTs after a call completes; runs the after-call AI analysis (secret-protected)
+- `/api/webhooks/meta-leadgen` - public Meta Lead Ads webhook. GET echoes `hub.challenge`. POST fetches the Instant Form lead from Graph, keeps UK mobiles only, and places the existing Ava demo callback (`profile_slug` `wisecall`). Same rate limits as `/api/demo-callback`.
+
+## Facebook Instant Form (Meta Lead Ads)
+
+Instant Form leads ring Ava on the same path as the homepage / `/try` number-first callback. There is no extra landing page or wizard.
+
+**Callback URL to paste in Meta** (App Dashboard → Webhooks → Page → `leadgen`):
+
+```text
+https://app.wisecall.io/api/webhooks/meta-leadgen
+```
+
+`https://wisecall.io/api/webhooks/meta-leadgen` rewrites to the same portal route once the marketing site deploy is live. Use the `app.wisecall.io` URL if you are wiring Meta before that rewrite exists.
+
+**Verify Token:** the same string as Vercel env `META_VERIFY_TOKEN` on the **portal** project (`app.wisecall.io`).
+
+**Page access token:** Vercel env `META_PAGE_ACCESS_TOKEN` on that same portal project. Generate a Page token with `leads_retrieval` (and the Page subscribe permissions Meta currently requires). This agent cannot mint that token.
+
+**Subscribe the Page** after the webhook verifies:
+
+```text
+POST https://graph.facebook.com/v25.0/{PAGE_ID}/subscribed_apps?subscribed_fields=leadgen&access_token={PAGE_ACCESS_TOKEN}
+```
+
+Instant Form should collect a UK mobile only (no website field). Non-UK numbers are dropped and are not dialled. Hangup signup SMS is unchanged: Instant Form uses Ava (`wisecall`), so the same after-call SMS path as homepage / `/try` guest callbacks still applies.
 
 ## AI Insights
 
@@ -57,6 +82,12 @@ Optional integrations:
 
 - `WISECALL_DEMO_SMS_WEBHOOK_URL` - receives `{ mobile, demoUrl, businessName, industry, demoId, message }`
 - `WISECALL_DEMO_CALLBACK_ENDPOINT` - defaults to the existing WiseCall demo callback Edge Function
+
+Facebook Instant Form (portal Vercel project only):
+
+- `META_VERIFY_TOKEN` - string Meta sends as `hub.verify_token`; echo `hub.challenge` only when it matches
+- `META_PAGE_ACCESS_TOKEN` - Page token used to `GET /{leadgen_id}` from Graph
+- `META_APP_SECRET` - optional; when set, POST must include a valid `X-Hub-Signature-256`
 
 ## Vercel
 
