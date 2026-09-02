@@ -49,6 +49,12 @@ test("website draft is a small secondary path, not the first step", () => {
   assert.doesNotMatch(html, /No website\? Start without one/);
 });
 
+test("callback confirmation stays hidden until Ava rings them", () => {
+  assert.match(html, /\[hidden\] \{ display: none !important; \}/);
+  assert.match(html, /id="try-called"[^>]*\bhidden\b/);
+  assert.match(html, /id="try-idle"/);
+});
+
 test("copy sells missed calls and keeps the hangup signup offer", () => {
   assert.match(html, /miss fewer calls/);
   assert.match(html, /take the enquiry/);
