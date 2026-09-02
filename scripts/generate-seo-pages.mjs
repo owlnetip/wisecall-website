@@ -530,14 +530,18 @@ ${ctaBlock('Want to hear how WiseCall would answer your calls?', 'Book a demo an
 const pricingPlans = [
   {
     name: 'Starter',
-    price: '£99',
+    monthly: '99',
+    annual: '84.15',
+    year: '1,009.80',
     tagline: 'Small businesses, sole traders and teams who want to stop missing calls',
     calls: '100 AI Calls',
     included: ['100 AI Email Replies', '250 WhatsApp Messages', '100 Live Chat Conversations', '100 SMS Messages and Notifications'],
   },
   {
     name: 'Professional',
-    price: '£199',
+    monthly: '199',
+    annual: '169.15',
+    year: '2,029.80',
     tagline: 'Growing businesses with regular inbound enquiries',
     calls: '300 AI Calls',
     included: ['500 AI Email Replies', '800 WhatsApp Messages', '300 Live Chat Conversations', '300 SMS Messages and Notifications'],
@@ -545,7 +549,9 @@ const pricingPlans = [
   },
   {
     name: 'Business',
-    price: '£399',
+    monthly: '399',
+    annual: '339.15',
+    year: '4,069.80',
     tagline: 'Busy teams, multi-site businesses and companies with high call volume',
     calls: '750 AI Calls',
     included: ['2,000 AI Email Replies', '2,500 WhatsApp Messages', '1,000 Live Chat Conversations', '750 SMS Messages and Notifications'],
@@ -555,16 +561,31 @@ const pricingPlans = [
 function renderPricing() {
   const page = {
     title: 'WiseCall Pricing UK | AI Receptionist Plans',
-    description: 'WiseCall AI receptionist pricing for UK businesses: Starter £99, Professional £199 and Business £399 per month, plus a 7-day pilot before the 12-month term begins.',
+    description: 'WiseCall AI receptionist pricing for UK businesses: Starter £99, Professional £199 and Business £399 per month on 30-day rolling, or save 15% annually.',
     path: '/pricing/',
   };
-  const body = `${hero({ eyebrow: 'Pricing', h1: 'AI Receptionist Pricing <span class="text-[#7de8eb]">for UK Businesses</span>', lead: 'One AI front desk covering voice, email, WhatsApp, live chat and SMS. Choose the plan that matches your call volume, or start a 7-day pilot before the 12-month term begins.', cta: 'Start a 7-day pilot', panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
-<section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${pricingPlans.map((plan) => `<div class="card-strong p-7 relative">${plan.popular ? '<span class="absolute -top-3 left-7 px-3 py-1 rounded-full bg-[#7de8eb] text-[#0f1f1f] text-xs font-bold">Most Popular</span>' : ''}<h2 class="text-2xl font-bold mb-3">${esc(plan.name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(plan.tagline)}</p><div class="mb-5"><span class="text-4xl font-black">${esc(plan.price)}</span><span class="text-white/60">/month</span><div class="text-white/50 text-sm mt-1">excl. VAT &middot; 12-month term</div></div><ul class="space-y-2 text-white/70 mb-6">${[plan.calls, ...plan.included, 'AI receptionist, 24/7', 'Call summaries and transcripts', 'Appointment booking', 'Call transfers and routing'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul><a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3">Start a 7-day pilot</a></div>`).join('')}</div>
-<div class="max-w-7xl mx-auto mt-8"><div class="card p-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><h2 class="text-xl font-bold mb-2">Enterprise</h2><p class="text-white/68">Custom call volume, bespoke integrations and onboarding. Suited to larger teams, franchises, healthcare, legal, dental, property and multi-location businesses.</p></div><a href="/#contact" class="btn btn-secondary px-8 py-3 whitespace-nowrap">Talk to us</a></div></div>
+  const body = `${hero({ eyebrow: 'Pricing', h1: 'One AI front desk.', lead: '30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.', cta: 'Try 20 free calls', panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
+<style>
+  .billing-toggle { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px; background: rgba(255,255,255,.08); }
+  .billing-toggle button { border: 0; border-radius: 999px; padding: .45rem 1.15rem; font-size: .875rem; font-weight: 600; background: transparent; color: rgba(255,255,255,.62); cursor: pointer; }
+  .billing-toggle button.is-active { background: #fff; color: #0c1f1f; }
+  .billing-save-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: .2rem .65rem; font-size: .72rem; font-weight: 700; color: #7de8eb; background: rgba(125,232,235,.12); }
+</style>
+<section class="px-6 pb-20">
+  <div class="flex flex-wrap items-center justify-center gap-3 mb-10">
+    <div class="billing-toggle" role="group" aria-label="Billing cycle">
+      <button type="button" data-billing="monthly">Monthly</button>
+      <button type="button" class="is-active" data-billing="annual">Annual</button>
+    </div>
+    <span class="billing-save-chip">Save 15%</span>
+  </div>
+  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${pricingPlans.map((plan) => `<div class="card-strong p-7 relative">${plan.popular ? '<span class="absolute -top-3 left-7 px-3 py-1 rounded-full bg-[#7de8eb] text-[#0f1f1f] text-xs font-bold">Most Popular</span>' : ''}<h2 class="text-2xl font-bold mb-3">${esc(plan.name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(plan.tagline)}</p><div class="mb-5" data-plan-price data-monthly="${esc(plan.monthly)}" data-annual="${esc(plan.annual)}" data-year="${esc(plan.year)}"><span class="text-4xl font-black" data-price-amount>£${esc(plan.annual)}</span><span class="text-white/60">/month</span> <span data-price-save class="billing-save-chip">Save 15%</span><div class="text-white/50 text-sm mt-1" data-price-note>£${esc(plan.year)}/year · billed annually · excl. VAT</div></div><ul class="space-y-2 text-white/70 mb-6">${[plan.calls, ...plan.included, 'AI receptionist, 24/7', 'Call summaries and transcripts', 'Appointment booking', 'Call transfers and routing'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul><a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3">Try 20 free calls</a></div>`).join('')}</div>
+  <p class="text-center text-white/60 text-sm mt-10">750+ calls · custom · <a href="/#contact" class="text-[#7de8eb] underline underline-offset-2">Talk to us</a></p>
 </section>
 ${faqSection([
-  { question: 'How does WiseCall pricing work?', answer: 'WiseCall pricing is based on the plan you choose (Starter, Professional or Business) and the number of AI-handled calls, emails, WhatsApp messages, live chat conversations and SMS notifications included each month. The best plan depends on your enquiry volume.' },
-  { question: 'What is included in every plan?', answer: 'Every plan includes a 24/7 AI receptionist, call summaries and transcripts, appointment booking, call transfers and routing, a dashboard, and a 7-day pilot before the 12-month term begins.' },
+  { question: 'How does WiseCall pricing work?', answer: 'WiseCall pricing is based on the plan you choose (Starter, Professional or Business) and the number of AI-handled calls, emails, WhatsApp messages, live chat conversations and SMS notifications included each month. Pay monthly on 30-day rolling, or save 15% when you pay annually. All prices exclude VAT.' },
+  { question: 'What is included in every plan?', answer: 'Every plan includes a 24/7 AI receptionist, call summaries and transcripts, appointment booking, call transfers and routing, and a dashboard. You can try 20 free calls to test your setup, with no card.' },
+  { question: 'What is the contract term?', answer: 'Plans are 30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.' },
   { question: 'What happens if we receive more AI calls than our plan includes?', answer: 'If your business regularly exceeds its monthly allowance, we will recommend moving to a more suitable plan. Book a demo and we can advise based on your call volume.' },
 ], 'Pricing Questions')}
 ${relatedLinks([
@@ -572,7 +593,32 @@ ${relatedLinks([
   { path: '/compare/wisecall-vs-voicemail/', title: 'WiseCall vs voicemail', text: 'See what changes when WiseCall answers instead of a recorded message.' },
   { path: '/resources/missed-call-calculator/', title: 'Calculate missed call value', text: 'Estimate the opportunity cost of unanswered calls before choosing a plan.' },
 ])}
-${ctaBlock('Need help choosing a plan?', 'Book a free 15-minute demo and we will recommend a plan based on your current call volume.')}`;
+${ctaBlock('Need help choosing a plan?', 'Book a free 15-minute demo and we will recommend a plan based on your current call volume.')}
+<script>
+(function () {
+  const buttons = document.querySelectorAll('[data-billing]');
+  const cards = document.querySelectorAll('[data-plan-price]');
+  if (!buttons.length || !cards.length) return;
+  function apply(cycle) {
+    buttons.forEach((b) => b.classList.toggle('is-active', b.dataset.billing === cycle));
+    cards.forEach((card) => {
+      const priceEl = card.querySelector('[data-price-amount]');
+      const noteEl = card.querySelector('[data-price-note]');
+      const saveEl = card.querySelector('[data-price-save]');
+      if (cycle === 'annual') {
+        if (priceEl) priceEl.textContent = '£' + card.dataset.annual;
+        if (noteEl) noteEl.textContent = '£' + card.dataset.year + '/year · billed annually · excl. VAT';
+        if (saveEl) saveEl.hidden = false;
+      } else {
+        if (priceEl) priceEl.textContent = '£' + card.dataset.monthly;
+        if (noteEl) noteEl.textContent = '30-day rolling · excl. VAT';
+        if (saveEl) saveEl.hidden = true;
+      }
+    });
+  }
+  buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.billing)));
+})();
+</script>`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Pricing', path: page.path }])]);
 }
 

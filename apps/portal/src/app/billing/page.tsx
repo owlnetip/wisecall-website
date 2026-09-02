@@ -4,7 +4,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe";
 import { isNoCardTrial } from "@/lib/trial";
-import { PlanCheckoutButton, ManageSubscriptionButton } from "./start-trial-button";
+import { ManageSubscriptionButton } from "./start-trial-button";
+import { PlanGrid } from "./plan-grid";
 import { getEmailChannelUsage } from "@/lib/billing";
 
 type Plan = {
@@ -72,17 +73,6 @@ const INCLUSIONS = [
   "SMS notifications",
 ];
 
-function Tick() {
-  return (
-    <span
-      className="mt-0.5 inline-flex size-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-      style={{ background: "rgba(125,232,235,0.18)", color: "#7de8eb" }}
-    >
-      ✓
-    </span>
-  );
-}
-
 function checkoutLabel(
   planId: Plan["id"],
   currentPlan: string | null,
@@ -137,7 +127,7 @@ export default async function BillingPage() {
           </h1>
           <p className="mt-2 text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
             Everything included. Choose the amount of AI communication your business needs.
-            Prices exclude VAT, billed monthly on a 12-month term.
+            Prices exclude VAT. 30-day rolling as standard, or save 15% annually.
           </p>
           <p
             className="mx-auto mt-4 max-w-2xl rounded-xl px-4 py-3 text-xs leading-relaxed"
@@ -175,68 +165,14 @@ export default async function BillingPage() {
           ) : null}
         </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.id}
-              className="relative flex flex-col rounded-2xl p-6"
-              style={{
-                background: "#1f3535",
-                border: plan.popular ? "1.5px solid #7de8eb" : "1.5px solid rgba(255,255,255,0.08)",
-              }}
-            >
-              {plan.popular ? (
-                <span
-                  className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide"
-                  style={{ background: "#7de8eb", color: "#0c1717" }}
-                >
-                  Best value
-                </span>
-              ) : null}
-              <h2 className="text-xl font-bold">{plan.name}</h2>
-              <p className="mt-1 text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
-                {plan.tagline}
-              </p>
-
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-3xl font-bold">{plan.price}</span>
-                <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
-                  /month
-                </span>
-              </div>
-              <p className="mt-1 text-[11px] uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>
-                excl. VAT · 12-month term{noCardUpgrade ? "" : ` · ${TRIAL_DAYS}-day free trial`}
-              </p>
-
-              {/* Headline allowances */}
-              <div className="mt-4 space-y-2 border-y border-white/10 py-4">
-                {plan.allowances.map((allowance) => (
-                  <div key={allowance} className="flex items-center gap-2 text-sm font-semibold text-white">
-                    <span style={{ color: "#7de8eb" }}>✓</span> {allowance}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5">
-                <PlanCheckoutButton
-                  plan={plan.id}
-                  label={checkoutLabel(plan.id, currentPlan, billing?.status, hasPlan, noCardUpgrade)}
-                  variant={plan.popular ? "primary" : "secondary"}
-                />
-              </div>
-
-              {/* Full inclusions */}
-              <ul className="mt-5 space-y-2.5">
-                {INCLUSIONS.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-white/80">
-                    <Tick />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        <PlanGrid
+          plans={PLANS}
+          inclusions={INCLUSIONS}
+          currentPlan={currentPlan}
+          checkoutLabel={(planId) =>
+            checkoutLabel(planId, currentPlan, billing?.status, hasPlan, noCardUpgrade)
+          }
+        />
 
         {hasPlan ? (
           <div

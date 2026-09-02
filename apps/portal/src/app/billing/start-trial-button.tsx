@@ -41,10 +41,12 @@ export function PlanCheckoutButton({
   plan,
   label,
   variant = "primary",
+  interval = "month",
 }: {
   plan: string;
   label: string;
   variant?: "primary" | "secondary";
+  interval?: "month" | "year";
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export function PlanCheckoutButton({
   function go() {
     setError(null);
     startTransition(async () => {
-      const res = await startCheckout(plan);
+      const res = await startCheckout(plan, interval);
       if (res.ok && res.url) {
         window.location.href = res.url;
       } else {
