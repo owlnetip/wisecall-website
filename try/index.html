@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Try WiseCall | Enter your mobile. We call you.</title>
-  <meta name="description" content="Enter your UK mobile. We call you so you can hear Ava. 20 free inbound AI calls. No card.">
+  <title>Try WiseCall | Call Ava in one tap</title>
+  <meta name="description" content="Tap Call Ava to hear her take the enquiry. 20 free inbound AI calls. No card.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://wisecall.io/try">
   <meta name="theme-color" content="#172929">
@@ -12,13 +12,13 @@
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://wisecall.io/try">
-  <meta property="og:title" content="Try WiseCall | Enter your mobile. We call you.">
-  <meta property="og:description" content="Enter your UK mobile. We call you so you can hear Ava. 20 free inbound AI calls. No card.">
+  <meta property="og:title" content="Try WiseCall | Call Ava in one tap">
+  <meta property="og:description" content="Tap Call Ava to hear her take the enquiry. 20 free inbound AI calls. No card.">
   <meta property="og:image" content="https://wisecall.io/og-image.jpg">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Try WiseCall | Enter your mobile. We call you.">
-  <meta name="twitter:description" content="Enter your UK mobile. We call you so you can hear Ava. 20 free inbound AI calls. No card.">
+  <meta name="twitter:title" content="Try WiseCall | Call Ava in one tap">
+  <meta name="twitter:description" content="Tap Call Ava to hear her take the enquiry. 20 free inbound AI calls. No card.">
 
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,7 +47,7 @@
       display: flex;
       align-items: center;
       gap: 0.65rem;
-      padding: 0.85rem 0 0.25rem;
+      padding: 0.7rem 0 0.15rem;
     }
     header img {
       height: 2.25rem;
@@ -61,11 +61,10 @@
       letter-spacing: -0.02em;
     }
     .hero {
-      min-height: calc(100dvh - 4.5rem);
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      padding: 0.5rem 0 2.25rem;
+      justify-content: flex-start;
+      padding: 0.35rem 0 1.75rem;
     }
     .outcome {
       margin: 0;
@@ -74,7 +73,7 @@
       color: rgba(255, 255, 255, 0.55);
     }
     h1 {
-      margin: 0.35rem 0 0.7rem;
+      margin: 0.3rem 0 0.55rem;
       font-size: clamp(1.7rem, 7vw, 2.2rem);
       font-weight: 800;
       line-height: 1.15;
@@ -91,6 +90,51 @@
       font-size: 1.02rem;
       font-weight: 700;
       color: #7de8eb;
+    }
+    .call-ava {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 4.4rem;
+      padding: 1.1rem 1.2rem;
+      border-radius: 0.9rem;
+      background: #7de8eb;
+      color: #172929;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: clamp(1.4rem, 6.4vw, 1.85rem);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      text-decoration: none;
+      text-align: center;
+      box-shadow: 0 0 36px rgba(125, 232, 235, 0.32);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .call-ava:active { transform: scale(0.98); }
+    .dial-hint {
+      margin: 0.55rem 0 0;
+      text-align: center;
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.62);
+    }
+    .dial-hint a {
+      color: #7de8eb;
+      text-decoration: none;
+    }
+    .secondary {
+      margin: 1.35rem 0 0;
+      padding: 0.95rem 0 0;
+      border-top: 1px solid rgba(125, 232, 235, 0.14);
+    }
+    .secondary-label {
+      margin: 0 0 0.65rem;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.62);
     }
     .try-form {
       display: grid;
@@ -229,47 +273,56 @@
     <main>
       <section id="try-idle" class="hero" aria-label="Hear Ava">
         <p class="outcome">They rang. You missed it. They booked someone else.</p>
-        <h1>Hear Ava.</h1>
-        <p class="payoff">Enter your UK mobile. We call you so you can hear Ava — no extra tap.</p>
-        <p class="offer">20 free inbound AI calls. No card.</p>
+        <h1>Hear Ava take the enquiry.</h1>
+        <p class="payoff">One tap opens your dialer. Hear Ava answer so you miss fewer calls.</p>
 
-        <form id="try-form" class="try-form" action="https://app.wisecall.io/setup" method="get">
-          <input type="hidden" name="trial" value="calls">
-          <input type="hidden" name="nowebsite" value="1">
-          <label for="phone">UK mobile</label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            inputmode="tel"
-            autocomplete="tel"
-            enterkeyhint="go"
-            placeholder="07… your mobile"
-            required
-            autofocus
-            data-clarity-mask="true"
-          >
-          <label for="email">Email (optional)</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autocomplete="email"
-            placeholder="Email (optional)"
-            data-clarity-mask="true"
-          >
-          <p id="try-status" class="status" hidden></p>
-        </form>
+        <a id="call-ava" class="call-ava" href="tel:+441135222277">Call Ava</a>
+        <p class="dial-hint">
+          <a href="tel:+441135222277">+44 113 522 2277</a>
+          <span aria-hidden="true"> · </span>
+          <a href="tel:+441135222277">0113 522 2277</a>
+          <br>20 free calls. No card.
+        </p>
+
+        <div class="secondary">
+          <p class="secondary-label">Or enter your number and we’ll call you</p>
+          <form id="try-form" class="try-form" action="https://app.wisecall.io/setup" method="get">
+            <input type="hidden" name="trial" value="calls">
+            <input type="hidden" name="nowebsite" value="1">
+            <label for="phone">UK mobile</label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              enterkeyhint="go"
+              placeholder="07… your mobile"
+              required
+              data-clarity-mask="true"
+            >
+            <label for="email">Email (optional)</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder="Email (optional)"
+              data-clarity-mask="true"
+            >
+            <p id="try-status" class="status" hidden></p>
+          </form>
+        </div>
 
         <p class="website-link">
           <a id="website-path" href="https://app.wisecall.io/setup?trial=calls">Got a website? We’ll draft your receptionist</a>
         </p>
 
-        <p class="ready">We call as soon as the number is in</p>
+        <p class="ready">Hear her in one tap</p>
         <ol class="steps">
-          <li><span class="num">1</span> Enter your UK mobile</li>
-          <li><span class="num">2</span> We call you</li>
-          <li><span class="num">3</span> You hear Ava</li>
+          <li><span class="num">1</span> Tap Call Ava</li>
+          <li><span class="num">2</span> Hear her take the enquiry</li>
+          <li><span class="num">3</span> Miss fewer calls</li>
         </ol>
         <p class="honest">You hear Ava, not a receptionist drafted from your site. She answers as Ava, not in your business name. After you hang up you get a text with the signup link if you want.</p>
       </section>
