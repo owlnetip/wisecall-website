@@ -8,6 +8,14 @@
     {
       "source": "/jameshare/",
       "destination": "/api/jameshare"
+    },
+    {
+      "source": "/api/webhooks/meta-leadgen",
+      "destination": "https://app.wisecall.io/api/webhooks/meta-leadgen"
+    },
+    {
+      "source": "/api/webhooks/meta-leadgen/",
+      "destination": "https://app.wisecall.io/api/webhooks/meta-leadgen"
     }
   ],
   "redirects": [
