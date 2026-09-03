@@ -887,6 +887,7 @@ function allRoutes() {
     '/blog/missed-calls-cost-uk-businesses/',
     '/ai-consultancy',
     '/ai-workshop',
+    '/partners',
   ];
 }
 
@@ -925,6 +926,7 @@ ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${
 - Missed call calculator: ${site.url}/resources/missed-call-calculator/
 - Call transcript guide: ${site.url}/resources/call-transcript-guide/
 - Missed calls guide: ${site.url}/blog/missed-calls-cost-uk-businesses/
+- Partners: ${site.url}/partners
 
 ## Important positioning
 
