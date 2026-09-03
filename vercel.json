@@ -78,6 +78,11 @@
       "source": "/privacy-notice",
       "destination": "/privacy-policy",
       "permanent": true
+    },
+    {
+      "source": "/partners/",
+      "destination": "/partners",
+      "permanent": true
     }
   ],
   "headers": [
