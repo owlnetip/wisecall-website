@@ -62,7 +62,9 @@ export async function impersonateUser(targetUserId: string, profileId?: string) 
   }
 
   await setImpersonationCookies(targetUserId, scopedProfileId);
-  redirect("/dashboard");
+  // Land on Inbox so "Login as" is immediately the agent-scoped conversation
+  // feed, not the account-wide Agents tab.
+  redirect("/dashboard?view=inbox");
 }
 
 // Form-friendly entry point for the admin "Login as" button (hidden fields, no bind).
