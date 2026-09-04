@@ -2,8 +2,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import {
   blogPosts,
   comparisonPages,
-  comparisonRows,
   futureIndustries,
+  ukAiReceptionistComparison,
   globalFaqs,
   industries,
   integrations,
@@ -622,25 +622,279 @@ ${ctaBlock('Need help choosing a plan?', 'Book a free 15-minute demo and we will
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Pricing', path: page.path }])]);
 }
 
+function sourceAnchor(name, href) {
+  if (!href) return esc(name);
+  const external = /^https?:\/\//.test(href) && !href.startsWith(site.url);
+  const rel = external ? ' rel="noopener noreferrer"' : '';
+  return `<a href="${esc(href)}" class="text-[#7de8eb] underline underline-offset-2 hover:text-white"${rel}>${esc(name)}</a>`;
+}
+
+function comparisonTable(columns, rows, { firstHeader = '', minClass = 'compare-table' } = {}) {
+  return `<div class="overflow-x-auto card p-3 -mx-2 sm:mx-0"><table class="w-full text-left text-sm ${minClass}"><thead><tr class="text-[#7de8eb]"><th class="p-4 whitespace-nowrap">${esc(firstHeader)}</th>${columns.map((col) => `<th class="p-4 whitespace-nowrap">${typeof col === 'string' ? esc(col) : sourceAnchor(col.name, col.href)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell, index) => `<td class="p-4 text-white/72 align-top${index === 0 ? ' font-semibold text-white/85 whitespace-nowrap' : ''}">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+
+function linkedFaqSection(faqs, title) {
+  return `<section class="px-6 py-20" id="faq">
+  <div class="max-w-4xl mx-auto">
+    <div class="eyebrow mb-6"><i data-lucide="help-circle" class="w-4 h-4"></i>FAQ</div>
+    <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
+    <div class="space-y-3 mt-10">
+      ${faqs.map((faq) => `<details class="card p-6">
+        <summary class="flex items-start justify-between gap-4"><h3 class="font-bold text-lg">${esc(faq.question)}</h3><i data-lucide="chevron-down" class="text-[#7de8eb] flex-shrink-0"></i></summary>
+        <p class="text-white/68 leading-relaxed mt-4">${esc(faq.answer)}${faq.link ? ` ${sourceAnchor(faq.link.label, faq.link.href)}` : ''}</p>
+      </details>`).join('')}
+    </div>
+  </div>
+</section>`;
+}
+
 function renderComparison() {
+  const data = ukAiReceptionistComparison;
   const page = {
-    title: 'Best AI Receptionist UK Comparison | WiseCall',
-    description: 'Compare WiseCall with human receptionist services, voicemail, virtual assistants and generic AI call answering options for UK businesses.',
+    title: data.title,
+    description: data.description,
     path: '/compare/ai-receptionist-uk-comparison/',
   };
-  const body = `${hero({ eyebrow: 'Comparison', h1: 'AI Receptionist UK <span class="text-[#7de8eb]">Comparison</span>', lead: 'A practical comparison for UK businesses evaluating AI receptionists, virtual receptionists, voicemail and in-house call handling.', panel: comparisonHeroPanel })}
-<section class="px-6 py-20"><div class="max-w-7xl mx-auto overflow-x-auto card p-3"><table class="w-full text-left text-sm"><thead><tr class="text-[#7de8eb]"><th class="p-4">Criteria</th><th class="p-4">WiseCall</th><th class="p-4">Human receptionist service</th><th class="p-4">Voicemail / callback</th></tr></thead><tbody>${comparisonRows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell) => `<td class="p-4 text-white/72">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
-${faqSection([
-  { question: 'What is the best AI receptionist for UK businesses?', answer: 'The best AI receptionist for a UK business depends on call volume, routing needs, integrations, compliance expectations and whether a phone system is included. WiseCall is designed for UK service businesses that want AI call answering plus a business phone system foundation.' },
-  { question: 'Is an AI receptionist better than voicemail?', answer: 'An AI receptionist is usually more useful than voicemail because it can answer immediately, ask questions, capture structured information and route next steps. Voicemail depends on the caller leaving a message and the team calling back later.' },
-], 'AI Receptionist Comparison Questions')}
+  const writeUps = [
+    {
+      title: 'WiseCall',
+      paragraphs: [
+        'Answers in your business name, asks the right questions, books or routes the next step, then sends your team a proper summary. Same knowledge on email, WhatsApp, live chat and SMS.',
+        'You do not need a phone system. We give you a number, or we connect the one you have. Calls and data stay in the UK. Dental can book eligible appointments into Dentally. It never gives clinical advice.',
+        '20 inbound AI calls to try it, no card. 30-day rolling, or 15% off yearly.',
+        'Skip us if you only want the cheapest unlimited minutes and you do not care about the phone stack.',
+      ],
+    },
+    {
+      title: 'Hey Jodie',
+      paragraphs: [
+        '£49, £99 or £199. Unlimited minutes. 7 days free. Keep your number. Clean offer. Basic does not book or transfer.',
+        'Skip Jodie if you need WhatsApp and email on the same agent, or a UK number of your own rather than call forwarding.',
+      ],
+    },
+    {
+      title: 'Fonio',
+      paragraphs: [
+        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds SIP and outbound campaigns. 30-day money-back. Hosted in Germany.',
+        'Fine if you are happy paying in euros and keeping data in the EU. Less fine if you wanted a UK receptionist product with a pound invoice.',
+      ],
+    },
+    {
+      title: 'whoza',
+      paragraphs: [
+        'For plumbers, heating engineers and builders. £59 a month for 10 jobs. You pay for work captured, not spam calls. Honest for someone on the tools.',
+        'Not for a dental practice or a law firm. They are not trying to be.',
+      ],
+    },
+    {
+      title: 'IONOS',
+      paragraphs: [
+        '£39, £69 or £99 excl. VAT on their UK page today, billed by call count, 30-day money-back. Fine as a cheap add-on if you already use IONOS. It is not a front desk with booking rules and a dedicated number.',
+      ],
+    },
+    {
+      title: 'Moneypenny',
+      paragraphs: [
+        'Everyone in the UK has heard of them. They have an AI receptionist now. The site still sends you to a quote. If the caller has to reach a person, start there.',
+      ],
+    },
+  ];
+  const checks = [
+    'Where is the call data. UK, EU, or they do not say. For dental, care and legal this is a real question, not a slogan.',
+    'Do you also need a phone system. Forwarding a mobile is fine until you want overflow, a ported number, or routing to mobiles without a second supplier.',
+    'What happens on email and WhatsApp. Most of these products only answer the phone. Your customers do not only ring.',
+    'Is the price a cap or a meter. Unlimited minutes, per-minute extras, per-call extras and per-job billing feel very different at 80 calls a week.',
+  ];
+  const faqsForSchema = data.faqs.map((faq) => ({
+    question: faq.question,
+    answer: faq.link ? `${faq.answer} ${faq.link.label}: ${faq.link.href}` : faq.answer,
+  }));
+  const body = `<style>
+    .compare-table { min-width: 68rem; }
+    .compare-table-sm { min-width: 36rem; }
+    .compare-table th:first-child, .compare-table td:first-child,
+    .compare-table-sm th:first-child, .compare-table-sm td:first-child {
+      position: sticky; left: 0; z-index: 1;
+      background: #1a3232;
+    }
+    .demo-phone-input {
+      appearance: none; -webkit-appearance: none;
+      background: transparent !important; border: 0; box-shadow: none !important;
+      color: #ffffff; caret-color: #7de8eb; min-height: 2.5rem;
+    }
+    .demo-phone-input::placeholder { color: rgba(255,255,255,0.48); }
+  </style>
+<section class="px-6 py-20 md:py-28">
+  <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-center">
+    <div>
+      <div class="eyebrow mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>Comparison</div>
+      <h1 class="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-7">Best AI receptionist UK <span class="text-[#7de8eb]">2026</span></h1>
+      <p class="text-xl md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
+      <p class="text-lg text-white/68 leading-relaxed max-w-3xl mb-9">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary px-8 py-4">Try 20 free calls <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
+        <a href="/try" class="btn btn-secondary px-8 py-4">Call the live demo</a>
+      </div>
+    </div>
+    <div class="card-strong p-7">
+      <p class="text-white/78 text-xl leading-relaxed">WiseCall is in the table. We are not pretending otherwise.</p>
+    </div>
+  </div>
+</section>
+<section class="px-6 py-20">
+  <div class="max-w-4xl mx-auto">
+    <div class="eyebrow mb-6"><i data-lucide="list-checks" class="w-4 h-4"></i>Quick take</div>
+    <h2 class="text-4xl md:text-5xl font-black mb-8">Quick take</h2>
+    <div class="space-y-5 text-lg text-white/72 leading-relaxed">
+      <p>Hey Jodie is the cheapest unlimited-minutes plan, from £49 a month. Bookings and transfers are not on Basic.</p>
+      <p>IONOS is the cheapest metered starter: £39 a month excl. VAT for 30 calls, then 49p a call.</p>
+      <p>whoza is for UK trades, from £59 a month, billed around captured jobs.</p>
+      <p>Moneypenny is the one with a human behind the AI. They do not publish a price.</p>
+      <p>Fonio is a European product. Solo is €99 a month (€84 if you pay annually) for 1,000 minutes. Servers are in Nuremberg.</p>
+      <p>WiseCall starts at £99 a month on 30-day rolling, or £84.15 if you pay annually. UK hosting, a number included, and the same agent on phone, email, WhatsApp, live chat and SMS. 20 inbound AI calls to try it, no card.</p>
+      <p>If the only thing you care about is the lowest headline price, we are not the cheapest. If you care where the calls live and whether you need a separate phone system, we are the one built for that.</p>
+    </div>
+  </div>
+</section>
+<section class="px-6 py-20" id="prices">
+  <div class="max-w-7xl mx-auto">
+    <div class="eyebrow mb-6"><i data-lucide="table" class="w-4 h-4"></i>Prices</div>
+    <h2 class="text-4xl md:text-5xl font-black mb-8">Prices</h2>
+    ${comparisonTable(data.columns, data.rows, { firstHeader: '' })}
+    <p class="text-white/55 text-sm leading-relaxed mt-5">Sources:
+      ${data.sources.map((source, index) => `${index ? ', ' : ''}${sourceAnchor(source.name, source.href)}`).join('')}
+    </p>
+  </div>
+</section>
+<section class="px-6 py-20">
+  <div class="max-w-4xl mx-auto space-y-5">
+    ${writeUps.map((item) => `<article class="card p-7">
+      <h2 class="text-2xl font-bold mb-4">${esc(item.title)}</h2>
+      <div class="space-y-4">${item.paragraphs.map((text) => `<p class="text-white/68 leading-relaxed">${esc(text)}</p>`).join('')}</div>
+    </article>`).join('')}
+  </div>
+</section>
+<section class="px-6 py-20">
+  <div class="max-w-4xl mx-auto">
+    <div class="eyebrow mb-6"><i data-lucide="search" class="w-4 h-4"></i>Before you buy</div>
+    <h2 class="text-4xl md:text-5xl font-black mb-8">Four things to check before you buy</h2>
+    <ol class="space-y-5">
+      ${checks.map((text, index) => `<li class="card p-6 flex gap-4"><span class="text-[#7de8eb] font-black text-2xl leading-none">${index + 1}</span><p class="text-white/72 leading-relaxed">${esc(text)}</p></li>`).join('')}
+    </ol>
+    <div class="card-strong p-7 mt-8">
+      <p class="text-white/80 leading-relaxed">Ours: UK, phone system included, same agent across channels, 30-day rolling, published GBP price.</p>
+    </div>
+  </div>
+</section>
+<section class="px-6 py-20">
+  <div class="max-w-7xl mx-auto">
+    <div class="eyebrow mb-6"><i data-lucide="git-compare" class="w-4 h-4"></i>WiseCall and Fonio</div>
+    <h2 class="text-4xl md:text-5xl font-black mb-5">WiseCall and Fonio</h2>
+    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mb-8">Fonio is the well-funded European AI phone assistant. WiseCall is the UK one.</p>
+    ${comparisonTable(data.fonioColumns.slice(1), data.fonioRows, { firstHeader: data.fonioColumns[0], minClass: 'compare-table-sm' })}
+    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number, whose data, and whose invoice.</p>
+  </div>
+</section>
+<section id="demo" class="px-6 py-20">
+  <div class="max-w-5xl mx-auto card-strong p-10 md:p-14">
+    <h2 class="text-4xl md:text-5xl font-black mb-5 text-center">Try it</h2>
+    <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-center">Call the live demo, or start 20 inbound AI calls with no card. Most businesses are live within a week. 30-day rolling. Cancel before the next month.</p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+      <a href="/try" class="btn btn-secondary px-8 py-4">Call the live demo</a>
+      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary px-8 py-4">Try 20 free calls</a>
+    </div>
+    <form id="demoCallbackForm" class="max-w-md mx-auto" novalidate>
+      <div class="flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 focus-within:border-[#7de8eb]/70">
+        <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
+        <input id="demoCallbackPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="07…" aria-label="Mobile number for demo callback" class="demo-phone-input min-w-0 flex-1 outline-none font-semibold text-base tracking-wide">
+        <button id="demoCallbackButton" type="submit" class="shrink-0 rounded-full bg-[#7de8eb] px-4 py-2 text-[#172929] text-sm font-bold hover:bg-[#9cf1f3] transition-colors">Call me</button>
+      </div>
+      <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-3 text-center" aria-live="polite"></p>
+    </form>
+    <p class="text-white/55 text-sm text-center mt-8">
+      ${[
+        { href: '/try', label: 'Try' },
+        { href: '/pricing/', label: 'Pricing' },
+        { href: '/dental', label: 'Dental' },
+        { href: '/trades', label: 'Trades' },
+        { href: '/legal', label: 'Legal' },
+      ].map((item) => sourceAnchor(item.label, item.href)).join(' · ')}
+    </p>
+  </div>
+</section>
+${linkedFaqSection(data.faqs, 'Questions')}
 ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
   ...comparisonPages.map((c) => ({ path: `/compare/${c.slug}/`, title: `WiseCall vs ${c.subject}`, text: `A focused comparison against ${c.subject.toLowerCase()}.` })),
 ])}
-${ctaBlock('Compare WiseCall against your current setup', 'Book a demo and we will map WiseCall against your current call handling process.')}`;
-  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: 'AI Receptionist UK Comparison', path: page.path }])]);
+<p class="max-w-7xl mx-auto px-6 pb-10 text-white/45 text-sm leading-relaxed">Prices last checked ${esc(data.checked)}. If someone changes a plan, update this table the same day.</p>
+<script>
+(function () {
+  const endpoint = window.WISECALL_DEMO_CALLBACK_ENDPOINT || 'https://zgzzpwaqqftmugzpccpm.supabase.co/functions/v1/wisecall-demo-callback';
+  const form = document.getElementById('demoCallbackForm');
+  const phoneInput = document.getElementById('demoCallbackPhone');
+  const button = document.getElementById('demoCallbackButton');
+  const status = document.getElementById('demoCallbackStatus');
+  if (!form || !phoneInput || !button || !status) return;
+  function setStatus(message, state) {
+    status.textContent = message;
+    status.classList.toggle('hidden', !message);
+    status.classList.toggle('text-[#7de8eb]', state === 'success');
+    status.classList.toggle('text-red-200', state === 'error');
+    status.classList.toggle('text-white/55', state !== 'success' && state !== 'error');
+  }
+  function toUkMobile(value) {
+    let digits = String(value || '').replace(/\\D+/g, '');
+    if (digits.startsWith('00')) digits = digits.slice(2);
+    if (digits.startsWith('0') && digits.length === 11) digits = '44' + digits.slice(1);
+    if (digits.length === 10 && digits.startsWith('7')) digits = '44' + digits;
+    return /^447\\d{9}$/.test(digits) ? '+' + digits : '';
+  }
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const phone = toUkMobile(phoneInput.value);
+    if (!phone) {
+      phoneInput.focus();
+      setStatus('Enter a UK mobile number so the agent can call you.', 'error');
+      return;
+    }
+    button.disabled = true;
+    button.textContent = 'Calling...';
+    setStatus('Starting the WiseCall demo...', 'idle');
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: phone,
+          profile_slug: 'wisecall',
+          agent_name: 'WiseCall Website Assistant',
+          source: 'wisecall_compare_uk'
+        })
+      });
+      const result = await response.json().catch(function () { return {}; });
+      if (!response.ok || result.ok === false) throw new Error(result.error || 'Could not start the demo call.');
+      setStatus(result.message || 'The WiseCall demo agent is calling now.', 'success');
+    } catch (error) {
+      setStatus(error.message || 'Could not start the demo call. Please try again.', 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Call me';
+    }
+  });
+})();
+</script>`;
+  return layout(page, body, [
+    organisationSchema(),
+    webPageSchema(page),
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: 'Compare', path: '/compare/' },
+      { name: 'Best AI receptionist UK 2026', path: page.path },
+    ]),
+    faqSchema(faqsForSchema),
+  ]);
 }
 
 function renderComparisonPage(comparison) {
