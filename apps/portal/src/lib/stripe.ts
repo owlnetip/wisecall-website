@@ -1,4 +1,40 @@
 import Stripe from "stripe";
+import {
+  PLAN_ANNUAL_PENCE,
+  isPlanId,
+  planCallsIncluded,
+  planEmailIncluded,
+  planLivechatIncluded,
+  planSmsIncluded,
+  planWhatsappIncluded,
+  type BillingInterval,
+  type PlanId,
+} from "@/lib/stripe-plans";
+
+export {
+  PLAN_ANNUAL_GBP,
+  PLAN_ANNUAL_MONTHLY_GBP,
+  PLAN_ANNUAL_PENCE,
+  PLAN_CALLS_INCLUDED,
+  PLAN_EMAIL_INCLUDED,
+  PLAN_LIVECHAT_INCLUDED,
+  PLAN_MONTHLY_GBP,
+  PLAN_OVERAGE_RATE_GBP,
+  PLAN_SMS_INCLUDED,
+  PLAN_WHATSAPP_INCLUDED,
+  TRIAL_CALL_CAP,
+  TRIAL_DAYS,
+  isBillingInterval,
+  isPlanId,
+  planCallsIncluded,
+  planDisplayName,
+  planEmailIncluded,
+  planLivechatIncluded,
+  planOverageRateGbp,
+  planSmsIncluded,
+  planWhatsappIncluded,
+} from "@/lib/stripe-plans";
+export type { BillingInterval, LegacyPlanId, PlanId } from "@/lib/stripe-plans";
 
 // Server-only Stripe client. The secret key never reaches the browser.
 // Returns null when unconfigured so callers can degrade gracefully (mirrors the
@@ -23,9 +59,6 @@ export function getStripeWebhookSecret(): string | null {
 // Override via env for test-mode duplicates during local development.
 export const VAT_RATE = process.env.STRIPE_VAT_RATE || "txr_1Tj5YzF6ZlidDG7dypciEivC";
 
-export const TRIAL_DAYS = 7;
-export const TRIAL_CALL_CAP = 20;
-
 // Monthly subscription plans (£/mo). Override via env for test-mode duplicates.
 export const STARTER_PRICE = process.env.STRIPE_STARTER_PRICE || "price_1TmcN7F6ZlidDG7dL2VOwz61"; // £99/mo
 export const PROFESSIONAL_PRICE = process.env.STRIPE_PROFESSIONAL_PRICE || "price_1TmcN8F6ZlidDG7dq22YymbJ"; // £199/mo
@@ -44,10 +77,6 @@ export const EMAIL_CHANNEL_MONTHLY_GBP = 0; // bundled, no separate charge
 export const EMAIL_INCLUDED_REPLIES = 100;
 export const EMAIL_OVERAGE_GBP = 0.75;
 
-export type PlanId = "starter" | "professional" | "business";
-export type LegacyPlanId = "core" | "growth" | "pro";
-export type BillingInterval = "month" | "year";
-
 // Yearly prices (15% off) on the same live products as the monthly plans
 // (acct_1TiwraF6ZlidDG7d). Created 2026-08-31. Checkout falls back to price_data
 // if an override env is empty.
@@ -57,91 +86,6 @@ export const PROFESSIONAL_ANNUAL_PRICE =
   process.env.STRIPE_PROFESSIONAL_ANNUAL_PRICE || "price_1UAZxoF6ZlidDG7dTyfIgws5"; // £2,029.80/year
 export const BUSINESS_ANNUAL_PRICE =
   process.env.STRIPE_BUSINESS_ANNUAL_PRICE || "price_1UAZxpF6ZlidDG7d9nVCXXs5"; // £4,069.80/year
-
-export const PLAN_MONTHLY_GBP: Record<PlanId, number> = {
-  starter: 99,
-  professional: 199,
-  business: 399,
-};
-
-export const PLAN_ANNUAL_MONTHLY_GBP: Record<PlanId, number> = {
-  starter: 84.15,
-  professional: 169.15,
-  business: 339.15,
-};
-
-export const PLAN_ANNUAL_GBP: Record<PlanId, number> = {
-  starter: 1009.8,
-  professional: 2029.8,
-  business: 4069.8,
-};
-
-export const PLAN_ANNUAL_PENCE: Record<PlanId, number> = {
-  starter: 100980,
-  professional: 202980,
-  business: 406980,
-};
-
-// Per-plan monthly allowances for the bundled AI channels (single-platform model).
-export const PLAN_CALLS_INCLUDED: Record<PlanId, number> = {
-  starter: 100,
-  professional: 300,
-  business: 750,
-};
-
-export const PLAN_EMAIL_INCLUDED: Record<PlanId, number> = {
-  starter: 100,
-  professional: 500,
-  business: 2000,
-};
-
-export const PLAN_WHATSAPP_INCLUDED: Record<PlanId, number> = {
-  starter: 250,
-  professional: 500,
-  business: 2000,
-};
-
-export const PLAN_LIVECHAT_INCLUDED: Record<PlanId, number> = {
-  starter: 100,
-  professional: 500,
-  business: 2000,
-};
-
-export const PLAN_SMS_INCLUDED: Record<PlanId, number> = {
-  starter: 100,
-  professional: 500,
-  business: 2000,
-};
-
-export const PLAN_OVERAGE_RATE_GBP: Record<PlanId, number> = {
-  starter: 0.65,
-  professional: 0.55,
-  business: 0.45,
-};
-
-export function planCallsIncluded(plan: string | null | undefined): number {
-  return PLAN_CALLS_INCLUDED[plan as PlanId] ?? 0;
-}
-
-export function planEmailIncluded(plan: string | null | undefined): number {
-  return PLAN_EMAIL_INCLUDED[plan as PlanId] ?? 0;
-}
-
-export function planWhatsappIncluded(plan: string | null | undefined): number {
-  return PLAN_WHATSAPP_INCLUDED[plan as PlanId] ?? 0;
-}
-
-export function planLivechatIncluded(plan: string | null | undefined): number {
-  return PLAN_LIVECHAT_INCLUDED[plan as PlanId] ?? 0;
-}
-
-export function planSmsIncluded(plan: string | null | undefined): number {
-  return PLAN_SMS_INCLUDED[plan as PlanId] ?? 0;
-}
-
-export function planOverageRateGbp(plan: string | null | undefined): number {
-  return PLAN_OVERAGE_RATE_GBP[plan as PlanId] ?? 0.65;
-}
 
 export type SubscriptionDeal = {
   plan: string;
@@ -204,42 +148,10 @@ const PLAN_ANNUAL_PRICE: Record<PlanId, string> = {
   business: BUSINESS_ANNUAL_PRICE,
 };
 
-export function isPlanId(value: string): value is PlanId {
-  return value === "starter" || value === "professional" || value === "business";
-}
-
-export function isBillingInterval(value: string): value is BillingInterval {
-  return value === "month" || value === "year";
-}
-
 // Every plan starts with the same 7-day free trial (call cap enforced in-app).
 export function planHasTrial(plan: PlanId): boolean {
   void plan;
   return true;
-}
-
-export function planDisplayName(plan: string | null | undefined): string {
-  switch (plan) {
-    case "starter":
-      return "Starter";
-    case "professional":
-      return "Professional";
-    case "business":
-      return "Business";
-    // Legacy plan names, existing subscribers
-    case "core":
-      return "Core (legacy)";
-    case "growth":
-      return "Growth (legacy)";
-    case "pro":
-      return "Pro (legacy)";
-    case "payg":
-      return "Pay As You Go (legacy)";
-    case "managed":
-      return "Managed";
-    default:
-      return plan ?? "a plan";
-  }
 }
 
 // Checkout line items for a plan, a single licensed price with manual 20% VAT.

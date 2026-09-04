@@ -124,7 +124,10 @@ function mapBilling(row: BillingRow): Billing {
 // yet (user hasn't started a trial) or Supabase isn't configured.
 export async function getBillingForUser(userId: string): Promise<Billing | null> {
   const supabase = getServiceSupabase();
-  if (!supabase) throw new Error("Billing data is not configured.");
+  if (!supabase) {
+    console.error("getBillingForUser: billing data is not configured");
+    return null;
+  }
 
   const first = await supabase
     .from("wisecall_billing")
@@ -132,7 +135,7 @@ export async function getBillingForUser(userId: string): Promise<Billing | null>
     .eq("user_id", userId)
     .maybeSingle();
 
-  let data = first.data;
+  let data = first.data as BillingRow | null;
   let error = first.error;
   // Preview/production can race the custom-deal migration (or a stale PostgREST
   // schema cache). Fall back to the catalogue columns so /billing still renders.
@@ -142,13 +145,13 @@ export async function getBillingForUser(userId: string): Promise<Billing | null>
       .select(BILLING_SELECT_CORE)
       .eq("user_id", userId)
       .maybeSingle();
-    data = fallback.data;
+    data = fallback.data as BillingRow | null;
     error = fallback.error;
   }
 
   if (error) {
     console.error("getBillingForUser failed:", error.message);
-    throw new Error("Could not load billing status.");
+    return null;
   }
   return data ? mapBilling(data as BillingRow) : null;
 }

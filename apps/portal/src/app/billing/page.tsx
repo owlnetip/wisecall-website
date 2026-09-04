@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
-import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe";
+import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe-plans";
 import { isNoCardTrial } from "@/lib/trial";
 import { isAdmin } from "@/lib/admin";
 import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
@@ -181,9 +181,17 @@ export default async function BillingPage() {
           plans={PLANS}
           inclusions={INCLUSIONS}
           currentPlan={currentPlan}
-          checkoutLabel={(planId) =>
-            checkoutLabel(planId, currentPlan, billing?.status, hasPlan, noCardUpgrade)
-          }
+          checkoutLabels={{
+            starter: checkoutLabel("starter", currentPlan, billing?.status, hasPlan, noCardUpgrade),
+            professional: checkoutLabel(
+              "professional",
+              currentPlan,
+              billing?.status,
+              hasPlan,
+              noCardUpgrade,
+            ),
+            business: checkoutLabel("business", currentPlan, billing?.status, hasPlan, noCardUpgrade),
+          }}
         />
 
         {hasPlan ? (
