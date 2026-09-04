@@ -72,6 +72,7 @@ export async function sendActionItemsEmail(input: {
   callLogId: string;
   profileId: string;
   callerId: string;
+  callerName?: string;
   actionItems: string[];
   managerSummary?: string;
   transcript?: string;
@@ -98,6 +99,7 @@ export async function sendActionItemsEmail(input: {
         call_log_id: input.callLogId,
         profile_id: input.profileId,
         caller_id: input.callerId,
+        caller_name: input.callerName ?? "",
         action_items: input.actionItems,
         manager_summary: input.managerSummary ?? "",
         transcript: input.transcript ?? "",
