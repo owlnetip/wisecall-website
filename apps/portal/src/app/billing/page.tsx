@@ -1,9 +1,12 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe";
 import { isNoCardTrial } from "@/lib/trial";
+import { isAdmin } from "@/lib/admin";
+import { IMPERSONATE_COOKIE } from "@/lib/impersonation";
 import { ManageSubscriptionButton } from "./start-trial-button";
 import { PlanGrid } from "./plan-grid";
 import { getEmailChannelUsage } from "@/lib/billing";
@@ -95,8 +98,17 @@ export default async function BillingPage() {
 
   if (!user) redirect("/?signup=1&redirect=/billing");
 
+  const impersonateId = isAdmin(user) ? (await cookies()).get(IMPERSONATE_COOKIE)?.value : undefined;
+  const billingUserId = impersonateId || user.id;
+
   // This page doubles as the upgrade screen, so we do NOT redirect active users away.
-  const billing = await getBillingForUser(user.id);
+  let billing = null;
+  try {
+    billing = await getBillingForUser(billingUserId);
+  } catch (err) {
+    console.error("billing page: load failed", err instanceof Error ? err.message : err);
+    billing = null;
+  }
   const noCardUpgrade = isNoCardTrial(billing);
   const hasPlan = hasActiveAccess(billing) && !noCardUpgrade;
   const currentPlan = billing?.plan ?? null;

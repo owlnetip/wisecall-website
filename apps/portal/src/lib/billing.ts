@@ -80,8 +80,10 @@ type BillingRow = {
   overage_waived: boolean | null;
 };
 
-const BILLING_SELECT =
-  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end, whatsapp_monthly_allowance, whatsapp_used_period, whatsapp_overage_period, livechat_monthly_allowance, livechat_used_period, livechat_overage_period, sms_monthly_allowance, sms_used_period, sms_overage_period, included_agents, overage_waived";
+const BILLING_SELECT_CORE =
+  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end, whatsapp_monthly_allowance, whatsapp_used_period, whatsapp_overage_period, livechat_monthly_allowance, livechat_used_period, livechat_overage_period, sms_monthly_allowance, sms_used_period, sms_overage_period";
+
+const BILLING_SELECT = `${BILLING_SELECT_CORE}, included_agents, overage_waived`;
 
 function mapBilling(row: BillingRow): Billing {
   const plan = row.plan ?? null;
@@ -124,11 +126,25 @@ export async function getBillingForUser(userId: string): Promise<Billing | null>
   const supabase = getServiceSupabase();
   if (!supabase) throw new Error("Billing data is not configured.");
 
-  const { data, error } = await supabase
+  const first = await supabase
     .from("wisecall_billing")
     .select(BILLING_SELECT)
     .eq("user_id", userId)
     .maybeSingle();
+
+  let data = first.data;
+  let error = first.error;
+  // Preview/production can race the custom-deal migration (or a stale PostgREST
+  // schema cache). Fall back to the catalogue columns so /billing still renders.
+  if (error && /included_agents|overage_waived|schema cache/i.test(error.message)) {
+    const fallback = await supabase
+      .from("wisecall_billing")
+      .select(BILLING_SELECT_CORE)
+      .eq("user_id", userId)
+      .maybeSingle();
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error("getBillingForUser failed:", error.message);
