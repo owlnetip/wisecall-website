@@ -114,6 +114,7 @@ import { SupportChatPanel } from "./support-chat-panel";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateCustomerForm, stopImpersonating } from "@/app/actions/admin";
+import { filterRowsByAgent, visibleInboxProfileIds } from "@/lib/inbox-scope";
 import { OutboundManager } from "@/components/outbound-manager";
 import { AgentPreviewModal } from "./agent-preview-modal";
 import { Button } from "@/components/ui/button";
@@ -1441,6 +1442,7 @@ export function CustomerAgentWorkspace({
   analysisEnabled = false,
   initialFollowUps = [],
   initialSelectedAgentId,
+  agentLocked = false,
   initialView,
   setupWebsite,
   openSetupWizard = false,
@@ -1465,6 +1467,7 @@ export function CustomerAgentWorkspace({
   analysisEnabled?: boolean; // whether the Claude API key is configured
   initialFollowUps?: FollowUp[];
   initialSelectedAgentId?: string;
+  agentLocked?: boolean;
   initialView?: DashboardView;
   setupWebsite?: string;
   openSetupWizard?: boolean;
@@ -1506,6 +1509,7 @@ export function CustomerAgentWorkspace({
   const [isDeleting, startDelete] = useTransition();
   const [isSettingLive, startSetLive] = useTransition();
   const [followUps, setFollowUps] = useState(initialFollowUps);
+  const [adminShowAllInboxes, setAdminShowAllInboxes] = useState(false);
 
   // Warn before a full page unload (tab close, refresh, external navigation)
   // while any agent has unsaved edits, so in-progress configuration isn't lost.
@@ -1569,20 +1573,32 @@ export function CustomerAgentWorkspace({
   const selectedAssistant =
     assistants.find((assistant) => assistant.id === selectedId) ?? assistants[0];
 
-  const scopedCallLogs = useMemo(() => {
-    if (!adminMode || !selectedAssistant) return callLogs;
-    return callLogs.filter((log) => log.profileId === selectedAssistant.id);
-  }, [adminMode, selectedAssistant, callLogs]);
+  const inboxProfileIds = useMemo(
+    () =>
+      visibleInboxProfileIds({
+        ownedIds: assistants.map((assistant) => assistant.id),
+        selectedAgentId: selectedAssistant?.id,
+        agentLocked,
+        adminMode,
+        adminShowAllInboxes,
+      }),
+    [assistants, selectedAssistant?.id, agentLocked, adminMode, adminShowAllInboxes],
+  );
 
-  const scopedContacts = useMemo(() => {
-    if (!adminMode || !selectedAssistant) return contacts;
-    return contacts.filter((contact) => contact.profileId === selectedAssistant.id);
-  }, [adminMode, selectedAssistant, contacts]);
+  const scopedCallLogs = useMemo(
+    () => filterRowsByAgent(callLogs, inboxProfileIds),
+    [callLogs, inboxProfileIds],
+  );
 
-  const scopedFollowUps = useMemo(() => {
-    if (!adminMode || !selectedAssistant) return followUps;
-    return followUps.filter((item) => item.profileId === selectedAssistant.id);
-  }, [adminMode, selectedAssistant, followUps]);
+  const scopedContacts = useMemo(
+    () => filterRowsByAgent(contacts, inboxProfileIds),
+    [contacts, inboxProfileIds],
+  );
+
+  const scopedFollowUps = useMemo(
+    () => filterRowsByAgent(followUps, inboxProfileIds),
+    [followUps, inboxProfileIds],
+  );
 
   const hasEstateAgent = useMemo(
     () => assistants.some((assistant) => isEstateAgentTemplate(assistant.templateId)),
@@ -2010,6 +2026,25 @@ export function CustomerAgentWorkspace({
                   )
                 )}
               </nav>
+              {adminMode && selectedAssistant?.ownerId ? (
+                <div className="mx-4 mb-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[#6d8b89]">
+                    Agent login
+                  </p>
+                  <p className="mt-1 truncate text-sm font-black text-white">
+                    {selectedAssistant.name}
+                  </p>
+                  <p className="truncate text-[11px] text-[#94b4b2]">
+                    {selectedAssistant.ownerEmail ?? "Customer"}
+                  </p>
+                  <LoginAsAgentButton
+                    ownerId={selectedAssistant.ownerId}
+                    profileId={selectedAssistant.id}
+                    agentName={selectedAssistant.name}
+                    className="mt-2 w-full"
+                  />
+                </div>
+              ) : null}
               <div className="mx-4 mb-4 rounded-2xl bg-[#1a3535] p-5 text-center">
                 <SupportOwl />
                 <p className="text-sm font-bold text-white">Need setup help?</p>
@@ -2109,6 +2144,26 @@ export function CustomerAgentWorkspace({
               )
             )}
           </nav>
+
+          {adminMode && selectedAssistant?.ownerId ? (
+            <div className="mx-4 mb-3 rounded-xl border border-white/10 bg-white/5 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[#6d8b89]">
+                Agent login
+              </p>
+              <p className="mt-1 truncate text-sm font-black text-white">
+                {selectedAssistant.name}
+              </p>
+              <p className="truncate text-[11px] text-[#94b4b2]">
+                {selectedAssistant.ownerEmail ?? "Customer"}
+              </p>
+              <LoginAsAgentButton
+                ownerId={selectedAssistant.ownerId}
+                profileId={selectedAssistant.id}
+                agentName={selectedAssistant.name}
+                className="mt-2 w-full"
+              />
+            </div>
+          ) : null}
 
           <div className="m-4 rounded-2xl bg-[#1a3535] p-5 text-center">
             <SupportOwl />
@@ -2318,6 +2373,28 @@ export function CustomerAgentWorkspace({
                 onFollowUpStatus={handleFollowUpStatus}
                 selectedId={selectedCallId}
                 onSelect={setSelectedCallId}
+                agentName={selectedAssistant?.name}
+                agentLocked={agentLocked}
+                adminMode={adminMode}
+                agents={assistants.map((assistant) => ({
+                  id: assistant.id,
+                  name: assistant.name || "Agent",
+                }))}
+                selectedAgentId={selectedAssistant?.id}
+                onSelectAgent={(id) => {
+                  setSelectedId(id);
+                  setAdminShowAllInboxes(false);
+                  setSelectedCallId(null);
+                }}
+                showAllInboxes={adminMode && adminShowAllInboxes}
+                onShowAllInboxes={
+                  adminMode && !agentLocked
+                    ? (show) => {
+                        setAdminShowAllInboxes(show);
+                        setSelectedCallId(null);
+                      }
+                    : undefined
+                }
               />
             )}
 
@@ -2497,6 +2574,40 @@ const MODAL_OVERLAY =
 const MODAL_PANEL =
   "anim-scale-in flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-float";
 
+function LoginAsAgentButton({
+  ownerId,
+  profileId,
+  agentName,
+  className,
+  variant = "accent",
+}: {
+  ownerId: string;
+  profileId: string;
+  agentName: string;
+  className?: string;
+  variant?: "accent" | "header";
+}) {
+  const header = variant === "header";
+  return (
+    <form action={impersonateCustomerForm} className={className}>
+      <input type="hidden" name="ownerId" value={ownerId} />
+      <input type="hidden" name="profileId" value={profileId} />
+      <button
+        type="submit"
+        className={
+          header
+            ? "press inline-flex h-9 max-w-[14rem] items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-black text-white transition hover:bg-[#263130]"
+            : "press inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[#7de8eb] px-3 text-xs font-black text-[#0e1b1b] transition hover:bg-[#5de0e5]"
+        }
+        title={`Open the inbox for ${agentName} only — not every agent on this account`}
+      >
+        <LogOut className="h-3.5 w-3.5 shrink-0 rotate-180" />
+        <span className="truncate">{header ? "Login as" : `Login as ${agentName}`}</span>
+      </button>
+    </form>
+  );
+}
+
 // One agent = one card. The card answers the three questions that matter at a
 // glance — is it live, what number is it on, how busy has it been — and one
 // click opens the full editor.
@@ -2512,38 +2623,49 @@ function AgentCard({
   const operationalState = getAgentOperationalState(assistant);
   const live = operationalState === "live";
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="lift press flex w-full flex-col rounded-2xl border border-line bg-card p-5 text-left shadow-card"
-    >
-      <div className="flex w-full items-start justify-between gap-3">
-        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#172929] to-[#0e1b1b] text-base font-black text-[#7de8eb]">
-          {(assistant.name || "A").charAt(0).toUpperCase()}
-        </span>
-        <AgentStatePill assistant={assistant} />
-      </div>
-      <p className="mt-3 truncate text-base font-black text-ink">{assistant.name}</p>
-      <p className="mt-0.5 truncate text-sm text-ink-soft">
-        {assistant.businessName}
-        {assistant.industry ? ` · ${assistant.industry}` : ""}
-      </p>
-      {adminMode && (
-        <p className="mt-0.5 truncate text-xs text-ink-faint">
-          {assistant.ownerEmail ?? "Unassigned"}
+    <div className="lift flex w-full flex-col rounded-2xl border border-line bg-card shadow-card">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="press flex w-full flex-col p-5 text-left"
+      >
+        <div className="flex w-full items-start justify-between gap-3">
+          <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#172929] to-[#0e1b1b] text-base font-black text-[#7de8eb]">
+            {(assistant.name || "A").charAt(0).toUpperCase()}
+          </span>
+          <AgentStatePill assistant={assistant} />
+        </div>
+        <p className="mt-3 truncate text-base font-black text-ink">{assistant.name}</p>
+        <p className="mt-0.5 truncate text-sm text-ink-soft">
+          {assistant.businessName}
+          {assistant.industry ? ` · ${assistant.industry}` : ""}
         </p>
-      )}
-      <div className="mt-4 flex w-full items-center justify-between gap-2 border-t border-line pt-3">
-        <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-ink-soft">
-          {live ? <span className="live-dot h-1.5 w-1.5 flex-shrink-0 rounded-full bg-good" /> : <Phone className="h-3.5 w-3.5 flex-shrink-0 text-ink-faint" />}
-          <span className="truncate font-mono">{assistant.phoneNumber}</span>
-        </span>
-        <span className="flex flex-shrink-0 items-center gap-1 text-xs font-bold tabular-nums text-ink-faint">
-          {assistant.calls > 0 ? `${assistant.calls} calls` : "No calls yet"}
-          <ChevronRight className="h-3.5 w-3.5" />
-        </span>
-      </div>
-    </button>
+        {adminMode && (
+          <p className="mt-0.5 truncate text-xs text-ink-faint">
+            {assistant.ownerEmail ?? "Unassigned"}
+          </p>
+        )}
+        <div className="mt-4 flex w-full items-center justify-between gap-2 border-t border-line pt-3">
+          <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-ink-soft">
+            {live ? <span className="live-dot h-1.5 w-1.5 flex-shrink-0 rounded-full bg-good" /> : <Phone className="h-3.5 w-3.5 flex-shrink-0 text-ink-faint" />}
+            <span className="truncate font-mono">{assistant.phoneNumber}</span>
+          </span>
+          <span className="flex flex-shrink-0 items-center gap-1 text-xs font-bold tabular-nums text-ink-faint">
+            {assistant.calls > 0 ? `${assistant.calls} calls` : "No calls yet"}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      </button>
+      {adminMode && assistant.ownerId ? (
+        <div className="border-t border-line px-5 pb-4 pt-3">
+          <LoginAsAgentButton
+            ownerId={assistant.ownerId}
+            profileId={assistant.id}
+            agentName={assistant.name}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -2851,18 +2973,12 @@ function AssistantDetail({
             </button>
           ) : null}
           {adminMode && assistant.ownerId ? (
-            <form action={impersonateCustomerForm}>
-              <input type="hidden" name="ownerId" value={assistant.ownerId} />
-              <input type="hidden" name="profileId" value={assistant.id} />
-              <button
-                type="submit"
-                className="press inline-flex h-9 max-w-[11rem] items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-black text-white transition hover:bg-[#263130]"
-                title={`View ${assistant.name} as the customer sees it — inbox scoped to this agent`}
-              >
-                <LogOut className="h-3.5 w-3.5 shrink-0 rotate-180" />
-                <span className="truncate">Login as</span>
-              </button>
-            </form>
+            <LoginAsAgentButton
+              ownerId={assistant.ownerId}
+              profileId={assistant.id}
+              agentName={assistant.name}
+              variant="header"
+            />
           ) : null}
           {onDelete ? (
             <div ref={menuRef} className="relative">
@@ -4767,10 +4883,12 @@ function InboxRow({
   log,
   selected,
   onClick,
+  showAgentName,
 }: {
   log: CallLog;
   selected: boolean;
   onClick: () => void;
+  showAgentName?: boolean;
 }) {
   return (
     <button
@@ -4789,6 +4907,7 @@ function InboxRow({
           </span>
         </span>
         <span className="mt-0.5 block truncate text-xs text-ink-soft">
+          {showAgentName && log.agentName ? `${log.agentName} · ` : ""}
           {log.summary || friendlyOutcome(log.outcome)}
         </span>
       </span>
@@ -4980,12 +5099,28 @@ function UnifiedInbox({
   onFollowUpStatus,
   selectedId,
   onSelect,
+  agentName,
+  agentLocked,
+  adminMode,
+  agents = [],
+  selectedAgentId,
+  onSelectAgent,
+  showAllInboxes,
+  onShowAllInboxes,
 }: {
   callLogs: CallLog[];
   followUps: FollowUp[];
   onFollowUpStatus: (id: string, status: FollowUp["status"]) => void;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  agentName?: string;
+  agentLocked?: boolean;
+  adminMode?: boolean;
+  agents?: { id: string; name: string }[];
+  selectedAgentId?: string;
+  onSelectAgent?: (id: string) => void;
+  showAllInboxes?: boolean;
+  onShowAllInboxes?: (show: boolean) => void;
 }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | CallChannel>("all");
@@ -5012,18 +5147,71 @@ function UnifiedInbox({
   // you land, mobile still starts on the list.
   const selected = callLogs.find((l) => l.id === selectedId) ?? filtered[0] ?? null;
 
+  const scopedLabel = showAllInboxes ? "all agents" : agentName || "this agent";
+  const subtitle = agentLocked
+    ? `Only conversations ${agentName || "this agent"} handled — phone, WhatsApp, SMS, email and web chat.`
+    : showAllInboxes
+      ? "Every conversation across all agents, on every channel."
+      : adminMode
+        ? `Inbox for ${agentName || "the selected agent"}. All inboxes is an admin-only view.`
+        : "Every conversation your AI has handled, on every channel.";
+
+  const scopeBar =
+    adminMode || agentLocked ? (
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {adminMode && !agentLocked && agents.length > 1 && !showAllInboxes && onSelectAgent ? (
+          <label className="flex items-center gap-2 text-xs font-bold text-ink-soft">
+            Agent
+            <select
+              value={selectedAgentId || ""}
+              onChange={(event) => onSelectAgent(event.target.value)}
+              className="rounded-lg border border-line bg-card px-2 py-1.5 text-xs font-bold text-ink"
+            >
+              {agents.map((agent) => (
+                <option key={agent.id} value={agent.id}>
+                  {agent.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {agentLocked ? (
+          <span className="rounded-full bg-teal-wash px-3 py-1 text-xs font-black text-teal">
+            {agentName || "This agent"} only
+          </span>
+        ) : null}
+        {onShowAllInboxes ? (
+          <button
+            type="button"
+            onClick={() => onShowAllInboxes(!showAllInboxes)}
+            className={`press rounded-lg px-3 py-1.5 text-xs font-black transition ${
+              showAllInboxes
+                ? "bg-ink text-white"
+                : "border border-line bg-card text-ink hover:bg-card-tint"
+            }`}
+          >
+            {showAllInboxes ? "This agent only" : "All inboxes"}
+          </button>
+        ) : null}
+      </div>
+    ) : null;
+
   if (callLogs.length === 0) {
     return (
       <div className="anim-rise mx-auto max-w-2xl">
         <h1 className="text-2xl font-black text-ink sm:text-3xl">Inbox</h1>
+        <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>
+        {scopeBar}
         <div className="mt-6 rounded-2xl border border-dashed border-line-strong bg-card px-5 py-20 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-wash">
             <Inbox className="h-7 w-7 text-teal" />
           </div>
-          <p className="text-lg font-black text-ink">Your inbox is ready</p>
+          <p className="text-lg font-black text-ink">
+            {agentLocked || adminMode ? `No conversations for ${scopedLabel}` : "Your inbox is ready"}
+          </p>
           <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
-            Every call, WhatsApp, SMS, email and web chat your AI handles will land here, with
-            a summary and full transcript. Try calling your agent&apos;s number to see it work.
+            Every call, WhatsApp, SMS, email and web chat this agent handles will land here, with
+            a summary and full transcript.
           </p>
         </div>
       </div>
@@ -5035,9 +5223,8 @@ function UnifiedInbox({
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-ink sm:text-3xl">Inbox</h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            Every conversation your AI has handled, on every channel.
-          </p>
+          <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>
+          {scopeBar}
         </div>
       </div>
 
@@ -5085,6 +5272,7 @@ function UnifiedInbox({
                   key={log.id}
                   log={log}
                   selected={log.id === selected?.id}
+                  showAgentName={Boolean(showAllInboxes)}
                   onClick={() => {
                     onSelect(log.id);
                     setMobileDetail(true);

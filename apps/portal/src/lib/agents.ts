@@ -10,6 +10,10 @@ import type {
 import { nextActionsFromAnalysisJson } from "@/lib/conversation-email";
 import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
 import { normaliseNegotiatorRules } from "@/lib/digital-negotiator";
+import { channelFromLog, type CallChannel } from "@/lib/call-channel";
+import { scopedProfileIds } from "@/lib/inbox-scope";
+
+export type { CallChannel };
 
 // The subdomain the email channel listens on. Must match the edge function's
 // WISECALL_EMAIL_INBOUND_DOMAIN (wisecall-email-inbound).
@@ -230,19 +234,22 @@ function mapProfile(row: ProfileRow): Assistant {
 // customer can never receive another customer's rows. Ownership is stored in the
 // existing `metadata` jsonb (no schema change needed). Authenticated product
 // screens must never fall back to demo agents when this read fails.
-export async function getAgentsForUser(userId: string): Promise<Assistant[]> {
+export async function getAgentsForUser(userId: string, profileId?: string): Promise<Assistant[]> {
   const supabase = getServiceSupabase();
   if (!supabase) {
     throw new Error("Agent data is not configured.");
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("wisecall_profiles")
     .select(
       "id, slug, profile_name, receptionist_name, business_name, clinic_name, telnyx_number, is_active, system_prompt, greeting, after_hours_message, business_context, timezone, metadata",
     )
     .eq("metadata->>owner_id", userId)
     .order("created_at", { ascending: false });
+  if (profileId) query = query.eq("id", profileId);
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("getAgentsForUser failed:", error.message);
@@ -251,10 +258,6 @@ export async function getAgentsForUser(userId: string): Promise<Assistant[]> {
 
   return (data as ProfileRow[]).map(mapProfile);
 }
-
-// Which inbound channel the interaction arrived on. Phone is the default for
-// historical/voice logs that predate per-channel tagging.
-export type CallChannel = "phone" | "whatsapp" | "sms" | "email" | "chat";
 
 export type CallLog = {
   id: string;
@@ -318,23 +321,7 @@ export function friendlyOutcome(raw: string | null | undefined): string {
 }
 
 function channelFromRow(row: CallRow): CallChannel {
-  const meta = (row.metadata as Record<string, unknown> | null) ?? {};
-  const raw = String(meta.channel ?? "").toLowerCase();
-  if (raw === "whatsapp" || raw === "sms" || raw === "email" || raw === "chat") return raw;
-
-  // Fallback for rows logged before metadata.channel existed (or when the column
-  // isn't persisted), infer from the outcome/summary the edge functions write.
-  const outcome = String(row.outcome ?? "").toLowerCase();
-  const summary = String(row.summary ?? "").toLowerCase();
-  if (outcome.includes("whatsapp") || summary.startsWith("whatsapp:")) return "whatsapp";
-  if (outcome.includes("sms") || summary.startsWith("sms:")) return "sms";
-  if (outcome.includes("email") || summary.startsWith("email:")) return "email";
-
-  // Website live chat predates per-channel tagging, it tags itself via the
-  // edge-function source and a "live_chat" outcome instead of metadata.channel.
-  if (String(meta.source ?? "") === "wisecall-live-chat") return "chat";
-  if (outcome.startsWith("live_chat")) return "chat";
-  return "phone";
+  return channelFromLog(row);
 }
 
 function duration(started: string | null, finished: string | null): string {
@@ -350,7 +337,9 @@ function duration(started: string | null, finished: string | null): string {
 
 // Returns the call logs for every agent this user owns. Scoped two ways: we
 // resolve the user's owned profile ids first, then only fetch logs for those ids.
-export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
+// When profileId is set (admin Login as / agent-locked session), fail closed:
+// that agent only if owned, otherwise an empty inbox — never the global feed.
+export async function getCallLogsForUser(userId: string, profileId?: string): Promise<CallLog[]> {
   const supabase = getServiceSupabase();
   if (!supabase) throw new Error("Inbox data is not configured.");
 
@@ -363,7 +352,10 @@ export async function getCallLogsForUser(userId: string): Promise<CallLog[]> {
     throw new Error("Could not load inbox ownership.");
   }
 
-  const ids = (owned ?? []).map((row) => row.id as string);
+  const ids = scopedProfileIds(
+    (owned ?? []).map((row) => row.id as string),
+    profileId,
+  );
   if (ids.length === 0) return [];
 
   const { data, error } = await supabase
@@ -452,7 +444,7 @@ export async function getAllAgents(): Promise<Assistant[] | null> {
 export type AgentSmsNumber = { profileId: string; smsNumber: string };
 export type AgentWhatsappNumber = { profileId: string; whatsappNumber: string; displayName?: string };
 
-async function getProfileIdsForUser(userId: string): Promise<string[]> {
+async function getProfileIdsForUser(userId: string, profileId?: string): Promise<string[]> {
   const supabase = getServiceSupabase();
   if (!supabase) throw new Error("Channel data is not configured.");
 
@@ -464,7 +456,10 @@ async function getProfileIdsForUser(userId: string): Promise<string[]> {
     console.error("getProfileIdsForUser failed:", error.message);
     throw new Error("Could not load channel ownership.");
   }
-  return (profiles ?? []).map((p) => p.id as string);
+  return scopedProfileIds(
+    (profiles ?? []).map((p) => p.id as string),
+    profileId,
+  );
 }
 
 export async function getSmsNumbersForProfiles(profileIds: string[]): Promise<AgentSmsNumber[]> {
@@ -518,14 +513,20 @@ export async function getWhatsappNumbersForProfiles(
 }
 
 // Returns the active SMS numbers assigned to the user's agents.
-export async function getSmsNumbersForUser(userId: string): Promise<AgentSmsNumber[]> {
-  const ids = await getProfileIdsForUser(userId);
+export async function getSmsNumbersForUser(
+  userId: string,
+  profileId?: string,
+): Promise<AgentSmsNumber[]> {
+  const ids = await getProfileIdsForUser(userId, profileId);
   return getSmsNumbersForProfiles(ids);
 }
 
 // Returns the active WhatsApp numbers assigned to the user's agents.
-export async function getWhatsappNumbersForUser(userId: string): Promise<AgentWhatsappNumber[]> {
-  const ids = await getProfileIdsForUser(userId);
+export async function getWhatsappNumbersForUser(
+  userId: string,
+  profileId?: string,
+): Promise<AgentWhatsappNumber[]> {
+  const ids = await getProfileIdsForUser(userId, profileId);
   return getWhatsappNumbersForProfiles(ids);
 }
 

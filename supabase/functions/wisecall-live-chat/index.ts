@@ -400,6 +400,7 @@ async function maybeSendLeadEmail(supabase: any, profile: any, chatLog: any, col
       metadata: {
         ...(chatLog.metadata || {}),
         collected,
+        channel: "chat",
         lead_email_sent: true,
         lead_email_sent_at: new Date().toISOString(),
         lead_email_reason: reason,
@@ -425,6 +426,7 @@ async function getOrCreateChatLog(supabase: any, profile: any, body: ChatRequest
   const callId = `chat_${crypto.randomUUID()}`;
   const metadata = {
     source: "wisecall-live-chat",
+    channel: "chat",
     profile_slug: profile.slug,
     profile_id: profile.id,
     page_url: body.page_url,
@@ -537,6 +539,7 @@ serve(async (req) => {
       metadata: {
         ...(chatLog.metadata || {}),
         collected,
+        channel: "chat",
         last_page_url: body.page_url || chatLog.metadata?.page_url,
         last_message_at: new Date().toISOString(),
       },

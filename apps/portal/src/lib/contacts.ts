@@ -1,4 +1,5 @@
 import { getServiceSupabase } from "@/lib/supabase";
+import { scopedProfileIds } from "@/lib/inbox-scope";
 
 export type Contact = {
   id: string;
@@ -56,7 +57,7 @@ function mapContact(row: ContactRow, agentName: string): Contact {
   };
 }
 
-export async function getContactsForUser(userId: string): Promise<Contact[]> {
+export async function getContactsForUser(userId: string, profileId?: string): Promise<Contact[]> {
   const supabase = getServiceSupabase();
   if (!supabase) throw new Error("Contact data is not configured.");
 
@@ -69,7 +70,10 @@ export async function getContactsForUser(userId: string): Promise<Contact[]> {
     throw new Error("Could not load contact ownership.");
   }
 
-  const profileIds = (profiles ?? []).map((p) => p.id as string);
+  const profileIds = scopedProfileIds(
+    (profiles ?? []).map((p) => p.id as string),
+    profileId,
+  );
   if (profileIds.length === 0) return [];
 
   const nameById: Record<string, string> = {};

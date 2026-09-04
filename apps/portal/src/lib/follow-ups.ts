@@ -1,4 +1,5 @@
 import { getServiceSupabase } from "@/lib/supabase";
+import { scopedProfileIds } from "@/lib/inbox-scope";
 
 export type FollowUpStatus = "open" | "done" | "snoozed";
 export type FollowUpSource = "ai" | "manual";
@@ -65,7 +66,7 @@ function mapFollowUp(row: FollowUpRow, agentName: string): FollowUp {
   };
 }
 
-export async function getFollowUpsForUser(userId: string): Promise<FollowUp[]> {
+export async function getFollowUpsForUser(userId: string, profileId?: string): Promise<FollowUp[]> {
   const supabase = getServiceSupabase();
   if (!supabase) throw new Error("Follow-up data is not configured.");
 
@@ -78,7 +79,10 @@ export async function getFollowUpsForUser(userId: string): Promise<FollowUp[]> {
     throw new Error("Could not load follow-up ownership.");
   }
 
-  const profileIds = (profiles ?? []).map((p) => p.id as string);
+  const profileIds = scopedProfileIds(
+    (profiles ?? []).map((p) => p.id as string),
+    profileId,
+  );
   if (profileIds.length === 0) return [];
 
   const nameById: Record<string, string> = {};

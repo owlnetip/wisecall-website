@@ -111,15 +111,15 @@ export default async function DashboardPage({
 
   const [agents, callLogs, contacts, trial, insights, smsNumbers, whatsappNumbers, followUps] =
     await Promise.all([
-    safe("Agents", getAgentsForUser(effectiveUserId), []),
-    safe("Inbox", getCallLogsForUser(effectiveUserId), []),
-    safe("Contacts", getContactsForUser(effectiveUserId), []),
+    safe("Agents", getAgentsForUser(effectiveUserId, impersonateAgentId), []),
+    safe("Inbox", getCallLogsForUser(effectiveUserId, impersonateAgentId), []),
+    safe("Contacts", getContactsForUser(effectiveUserId, impersonateAgentId), []),
     safe("Plan usage", getTrialUsage(effectiveUserId, billing), null),
     // Default range matches the AI Insights view's default ("Last 7 days").
     safe("Insights", getInsightsForUser(effectiveUserId, "7d", impersonateAgentId), emptyInsights("7d", false)),
-    safe("SMS", getSmsNumbersForUser(effectiveUserId), []),
-    safe("WhatsApp", getWhatsappNumbersForUser(effectiveUserId), []),
-    safe("Follow-ups", getFollowUpsForUser(effectiveUserId), []),
+    safe("SMS", getSmsNumbersForUser(effectiveUserId, impersonateAgentId), []),
+    safe("WhatsApp", getWhatsappNumbersForUser(effectiveUserId, impersonateAgentId), []),
+    safe("Follow-ups", getFollowUpsForUser(effectiveUserId, impersonateAgentId), []),
   ]);
 
   // Real per-agent call counts from the logs, matched on profile id.
@@ -155,12 +155,13 @@ export default async function DashboardPage({
   let scopedContacts = enrichedContacts;
   let scopedFollowUps = followUps;
   let scopedAgentId: string | undefined;
+  let agentLocked = false;
 
-  const agentScopeActive =
-    Boolean(impersonateAgentId) &&
-    enriched.some((agent) => agent.id === impersonateAgentId);
-
-  if (agentScopeActive && impersonateAgentId) {
+  // Agent cookie present: lock the workspace to that agent. Fail closed if the
+  // profile is missing or not owned — never fall back to the customer's global
+  // inbox (that was the OWL-30 bug).
+  if (impersonateAgentId) {
+    agentLocked = true;
     scopedAgentId = impersonateAgentId;
     scopedAgents = enriched.filter((agent) => agent.id === impersonateAgentId);
     scopedCallLogs = callLogs.filter((log) => log.profileId === impersonateAgentId);
@@ -211,6 +212,7 @@ export default async function DashboardPage({
       analysisEnabled={isAnalysisConfigured()}
       initialFollowUps={scopedFollowUps}
       initialSelectedAgentId={scopedAgentId}
+      agentLocked={agentLocked}
       initialView={initialView}
       setupWebsite={setupWebsite}
       openSetupWizard={openSetupWizard}

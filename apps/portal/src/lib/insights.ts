@@ -1,4 +1,5 @@
 import { getServiceSupabase } from "@/lib/supabase";
+import { scopedProfileIds } from "@/lib/inbox-scope";
 import type { CallAnalysis, Sentiment } from "@/lib/call-analysis";
 import { calculateConversionRate } from "@/lib/insight-metrics";
 
@@ -217,8 +218,7 @@ export async function getInsightsForUser(
   if (!supabase) throw new Error("Insight data is not configured.");
 
   const ownedIds = await ownedProfileIds(userId);
-  const ids =
-    profileId && ownedIds.includes(profileId) ? [profileId] : profileId ? [] : ownedIds;
+  const ids = scopedProfileIds(ownedIds, profileId);
   if (ids.length === 0) return emptyInsights(range, false);
 
   // Is there any call at all (across all time)? Lets the UI tell "brand new
