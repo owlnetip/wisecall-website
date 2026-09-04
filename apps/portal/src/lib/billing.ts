@@ -12,6 +12,7 @@ import {
   planLivechatIncluded,
   planSmsIncluded,
   planOverageRateGbp,
+  dealFromStripeMetadata,
 } from "@/lib/stripe";
 import { canStartNoCardTrial, isNoCardTrial, noCardTrialBillingRow } from "@/lib/trial";
 
@@ -43,6 +44,8 @@ export type Billing = {
   smsMonthlyAllowance: number;
   smsUsedPeriod: number;
   smsOveragePeriod: number;
+  includedAgents: number;
+  overageWaived: boolean;
 };
 
 type BillingRow = {
@@ -73,10 +76,12 @@ type BillingRow = {
   sms_monthly_allowance: number | null;
   sms_used_period: number | null;
   sms_overage_period: number | null;
+  included_agents: number | null;
+  overage_waived: boolean | null;
 };
 
 const BILLING_SELECT =
-  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end, whatsapp_monthly_allowance, whatsapp_used_period, whatsapp_overage_period, livechat_monthly_allowance, livechat_used_period, livechat_overage_period, sms_monthly_allowance, sms_used_period, sms_overage_period";
+  "user_id, stripe_customer_id, subscription_id, plan, status, trial_end, current_period_end, trial_call_cap, email_channel_enabled, email_channel_status, email_monthly_allowance, email_used_period, email_overage_period, email_period_end, calls_monthly_allowance, calls_used_period, calls_overage_period, calls_period_end, whatsapp_monthly_allowance, whatsapp_used_period, whatsapp_overage_period, livechat_monthly_allowance, livechat_used_period, livechat_overage_period, sms_monthly_allowance, sms_used_period, sms_overage_period, included_agents, overage_waived";
 
 function mapBilling(row: BillingRow): Billing {
   const plan = row.plan ?? null;
@@ -108,6 +113,8 @@ function mapBilling(row: BillingRow): Billing {
     smsMonthlyAllowance: row.sms_monthly_allowance ?? planSmsIncluded(plan),
     smsUsedPeriod: row.sms_used_period ?? 0,
     smsOveragePeriod: row.sms_overage_period ?? 0,
+    includedAgents: row.included_agents && row.included_agents > 0 ? row.included_agents : 1,
+    overageWaived: row.overage_waived === true,
   };
 }
 
@@ -229,14 +236,22 @@ export async function reconcileBillingFromStripe(
     const item = planSub.items?.data?.[0] as { current_period_end?: number } | undefined;
     const top = (planSub as unknown as { current_period_end?: number }).current_period_end;
     const periodEndSecs = item?.current_period_end ?? top;
+    const deal = dealFromStripeMetadata(planSub.metadata);
 
     await service.from("wisecall_billing").upsert(
       {
         user_id: userId,
         stripe_customer_id: customerId,
         subscription_id: planSub.id,
-        plan: planSub.metadata?.plan ?? billing?.plan ?? "professional",
+        plan: deal.plan || billing?.plan || "professional",
         status: planSub.status,
+        calls_monthly_allowance: deal.callsAllowance || undefined,
+        email_monthly_allowance: deal.emailAllowance || undefined,
+        whatsapp_monthly_allowance: deal.whatsappAllowance || undefined,
+        livechat_monthly_allowance: deal.livechatAllowance || undefined,
+        sms_monthly_allowance: deal.smsAllowance || undefined,
+        included_agents: deal.includedAgents,
+        overage_waived: deal.overageWaived,
         trial_end:
           typeof planSub.trial_end === "number"
             ? new Date(planSub.trial_end * 1000).toISOString()
@@ -345,7 +360,7 @@ export function getCallUsage(billing: Billing | null): CallUsage {
     used: billing?.callsUsedPeriod ?? 0,
     allowance: billing?.callsMonthlyAllowance ?? planCallsIncluded(plan),
     overage: billing?.callsOveragePeriod ?? 0,
-    overagePriceGbp: planOverageRateGbp(plan),
+    overagePriceGbp: billing?.overageWaived ? 0 : planOverageRateGbp(plan),
   };
 }
 

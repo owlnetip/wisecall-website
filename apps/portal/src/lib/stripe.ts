@@ -143,6 +143,55 @@ export function planOverageRateGbp(plan: string | null | undefined): number {
   return PLAN_OVERAGE_RATE_GBP[plan as PlanId] ?? 0.65;
 }
 
+export type SubscriptionDeal = {
+  plan: string;
+  callsAllowance: number;
+  emailAllowance: number;
+  whatsappAllowance: number;
+  livechatAllowance: number;
+  smsAllowance: number;
+  includedAgents: number;
+  overageWaived: boolean;
+};
+
+function metadataInt(
+  metadata: Stripe.Metadata | null | undefined,
+  key: string,
+): number | null {
+  const raw = metadata?.[key];
+  if (raw == null || raw === "") return null;
+  const value = Number.parseInt(raw, 10);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function metadataFlag(metadata: Stripe.Metadata | null | undefined, key: string): boolean {
+  const raw = (metadata?.[key] ?? "").trim().toLowerCase();
+  return raw === "true" || raw === "1" || raw === "yes";
+}
+
+// Sales-led / custom Stripe subscriptions (e.g. Home Cloud) store allowances on
+// the subscription metadata so they are not overwritten by catalogue defaults.
+export function dealFromStripeMetadata(
+  metadata: Stripe.Metadata | null | undefined,
+): SubscriptionDeal {
+  const plan = metadata?.plan || "professional";
+  const overageGbp = metadata?.overage_gbp;
+  const overageWaived =
+    metadataFlag(metadata, "overage_waived") || overageGbp === "0";
+  return {
+    plan,
+    callsAllowance: metadataInt(metadata, "calls_allowance") ?? planCallsIncluded(plan),
+    emailAllowance: metadataInt(metadata, "email_allowance") ?? planEmailIncluded(plan),
+    whatsappAllowance:
+      metadataInt(metadata, "whatsapp_allowance") ?? planWhatsappIncluded(plan),
+    livechatAllowance:
+      metadataInt(metadata, "livechat_allowance") ?? planLivechatIncluded(plan),
+    smsAllowance: metadataInt(metadata, "sms_allowance") ?? planSmsIncluded(plan),
+    includedAgents: metadataInt(metadata, "included_agents") ?? 1,
+    overageWaived,
+  };
+}
+
 const PLAN_PRICE: Record<PlanId, string> = {
   starter: STARTER_PRICE,
   professional: PROFESSIONAL_PRICE,
@@ -186,6 +235,8 @@ export function planDisplayName(plan: string | null | undefined): string {
       return "Pro (legacy)";
     case "payg":
       return "Pay As You Go (legacy)";
+    case "managed":
+      return "Managed";
     default:
       return plan ?? "a plan";
   }
