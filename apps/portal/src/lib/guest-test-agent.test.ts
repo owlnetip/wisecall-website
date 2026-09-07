@@ -69,6 +69,8 @@ test("insert row is Gemma, 24/7, with a routing key the edge can match", () => {
   assert.equal(metadata.source, GUEST_TEST_AGENT_SOURCE);
   assert.equal(metadata.guest_test, true);
   assert.equal(metadata.voice, "Gemma");
+  assert.equal(metadata.tts_model, "sonic-3.6");
+  assert.equal(metadata.tts_provider, "cartesia");
   assert.deepEqual(metadata.office_hours, ALWAYS_OPEN_OFFICE_HOURS);
   assert.equal(metadata.owner_id, undefined);
   assert.equal((metadata.knowledge_fields as Record<string, string>).openingHours, "Open all the time");

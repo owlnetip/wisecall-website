@@ -1,3 +1,4 @@
+import { newAgentTtsMetadata } from "./cartesia";
 import { DEFAULT_VOICE_ID } from "./voices";
 import type { ParsedWizardDraft } from "./wizard-draft";
 
@@ -96,6 +97,7 @@ export function buildGuestTestAgentInsert(
     industry: draft.industry,
     greeting: draft.greeting,
     voice: opts.voice.voiceName,
+    ...newAgentTtsMetadata(),
     tts_provider: opts.voice.ttsProvider,
     tts_voice_id: opts.voice.voiceId,
     knowledge: draft.knowledge,

@@ -34,6 +34,7 @@ import {
   CARTESIA_API_VERSION,
   cartesiaLanguageField,
   cartesiaTtsModelCandidates,
+  newAgentTtsMetadata,
   shouldRetryCartesiaModel,
 } from "@/lib/cartesia";
 import {
@@ -191,7 +192,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     learning_enabled: true,
     greeting: input.greeting ?? "",
     voice: voiceName,
-    tts_provider: ttsProvider,
+    ...newAgentTtsMetadata(),
     tts_voice_id: voiceId,
     knowledge: input.knowledge ?? "",
     knowledge_fields: input.knowledgeFields ?? {},

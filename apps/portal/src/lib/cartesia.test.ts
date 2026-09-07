@@ -8,6 +8,7 @@ import {
   cartesiaTtsModelCandidates,
   demoTtsMetadata,
   isWebsiteDemoAgent,
+  newAgentTtsMetadata,
   shouldRetryCartesiaModel,
 } from "./cartesia";
 
@@ -45,6 +46,13 @@ test("demo metadata is TTS-only", () => {
   assert.equal(meta.tts_provider, "cartesia");
   assert.equal(meta.stt_model, undefined);
   assert.equal(meta.tts_locale, undefined);
+});
+
+test("new portal agents stamp Sonic 3.6", () => {
+  const meta = newAgentTtsMetadata("");
+  assert.equal(meta.tts_model, "sonic-3.6");
+  assert.equal(meta.tts_provider, "cartesia");
+  assert.deepEqual(meta, demoTtsMetadata(""));
 });
 
 test("unknown-model HTTP statuses retry the fallback id", () => {
