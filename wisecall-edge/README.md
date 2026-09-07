@@ -38,6 +38,14 @@ Custom integration webhooks are configured per agent in the portal **Technical**
 
 ## Wiring into an existing handler
 
+## Transfers to mobile (Telnyx vs MOR SIP)
+
+Telnyx Call Control stays on the call after a mobile transfer and keeps recording, so hangup already has the full transcript.
+
+MOR SIP `REFER` drops the bridge from the media path, so live STT stops at the handoff. Enable **Record calls for this Device** on the WiseCall SIP user in MOR (Home Cloud / Source Investments use MOR SIP). Provisioning writes `webhook_url_for_call_end` to `wisecall-mor-call-end`, which fetches the MOR recording, transcribes the rest, merges it onto `wisecall_call_logs`, then sends the after-call email and AI summary.
+
+`finalizeCallSession()` defers those hangup side-effects when `metadata.routing.provider` is `mor_sip` and the outcome is a transfer (set `metadata.routing.record_after_transfer: false` to opt out). The telephony host can also call `attachPostTransferRecording()` if it already has the recording.
+
 If you already have a Telnyx / MOR call handler, import the session API:
 
 ```javascript
@@ -45,6 +53,7 @@ const {
   prepareCallSession,
   handleIntegrationToolCall,
   finalizeCallSession,
+  attachPostTransferRecording,
   mergeIntegrationTools,
 } = require("./lib/callSession");
 
@@ -62,8 +71,8 @@ const tools = mergeIntegrationTools(session, builtInTools);
 const integrationResult = await handleIntegrationToolCall(session, toolName, args);
 if (integrationResult) return integrationResult;
 
-// 4. On hangup:
-await finalizeCallSession(session, {
+// 4. On hangup (Telnyx: full transcript already. MOR transfer: may defer email/analysis):
+const hangup = await finalizeCallSession(session, {
   transcript,
   summary,
   outcome,
@@ -71,6 +80,8 @@ await finalizeCallSession(session, {
   startedAt,
   finishedAt,
 });
+// 5. Optional: if the host has the MOR recording itself, complete the Telnyx-equivalent path:
+// await attachPostTransferRecording({ callLogId: hangup.callLogId, recordingUrl, recordingTranscript });
 ```
 
 ## Portal reference copies

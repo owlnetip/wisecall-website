@@ -15,7 +15,14 @@ const {
 const { sendCallEmailSummary } = require("./emailSummary");
 const { triggerPortalAnalysis } = require("./portalWebhook");
 const { buildSystemPrompt } = require("../prompt");
-const { saveCallLog } = require("../saveCallLog");
+const { saveCallLog, updateCallLogTranscript } = require("../saveCallLog");
+const {
+  isMorSipProfile,
+  shouldDeferHangupSideEffects,
+  mergeLiveAndRecordingTranscript,
+  withAwaitingTransferMetadata,
+  withAttachedRecordingMetadata,
+} = require("./transferRecording");
 
 async function isCallAllowed(profileId) {
   const sb = getSupabase();
@@ -121,55 +128,8 @@ async function handleIntegrationToolCall(session, toolName, aiParams = {}) {
 /**
  * Run at hangup, persist the call log, update contact memory, fire after_call webhooks.
  */
-async function finalizeCallSession(
-  session,
-  { transcript, summary, outcome, callerName, startedAt, finishedAt, metadata },
-) {
-  const profile = session.profile;
-  const metadataProfile = profile.metadata || {};
-  const context = {
-    ...session.context,
-    transcript: transcript || "",
-    summary: summary || "",
-  };
-
-  const profileName =
-    profile.profile_name || profile.business_name || profile.clinic_name || "Agent";
-
-  const callLogId = await saveCallLog({
-    callId: session.context.callId,
-    profileId: session.context.profileId,
-    profileName,
-    callerId: session.context.callerId,
-    summary,
-    outcome,
-    transcript,
-    startedAt,
-    finishedAt,
-    metadata,
-  });
-
-  await upsertContact(session.context.profileId, {
-    phone: session.context.callerId,
-    name: callerName,
-    aiSummary: summary,
-    callLogId,
-  });
-
-  // Best-effort, don't block hangup on a slow customer endpoint.
-  runAfterCallWebhooks(metadataProfile, context).catch((err) => {
-    console.error("[callSession] after_call webhooks failed:", err.message);
-  });
-
-  // Best-effort, the standard customer summary email is independent of custom webhooks.
-  sendCallEmailSummary(profile, session.context, {
-    transcript,
-    summary,
-    outcome,
-    startedAt,
-    finishedAt,
-    metadata,
-  })
+function fireHangupSideEffects(profile, context, call, callLogId) {
+  sendCallEmailSummary(profile, context, call)
     .then((result) => {
       if (result?.skipped) return;
       if (result && !result.ok) {
@@ -187,14 +147,168 @@ async function finalizeCallSession(
   triggerPortalAnalysis(callLogId).catch((err) => {
     console.error("[callSession] portal analysis trigger failed:", err.message);
   });
+}
 
-  return { callLogId };
+async function finalizeCallSession(
+  session,
+  {
+    transcript,
+    summary,
+    outcome,
+    callerName,
+    startedAt,
+    finishedAt,
+    metadata,
+    recordingUrl,
+    recordingDurationSec,
+    sipCallId,
+    endpointId,
+  },
+) {
+  const profile = session.profile;
+  const metadataProfile = profile.metadata || {};
+  const context = {
+    ...session.context,
+    transcript: transcript || "",
+    summary: summary || "",
+  };
+
+  const profileName =
+    profile.profile_name || profile.business_name || profile.clinic_name || "Agent";
+  const deferTransferRecording = shouldDeferHangupSideEffects(profile, outcome);
+  const logMetadata = deferTransferRecording
+    ? withAwaitingTransferMetadata(metadata)
+    : { channel: "phone", ...(metadata || {}) };
+
+  const callLogId = await saveCallLog({
+    callId: session.context.callId,
+    profileId: session.context.profileId,
+    profileName,
+    callerId: session.context.callerId,
+    summary,
+    outcome,
+    transcript,
+    startedAt,
+    finishedAt,
+    metadata: logMetadata,
+    recordingUrl,
+    recordingDurationSec,
+    sipCallId,
+    pbxType: isMorSipProfile(profile) ? "mor" : undefined,
+    endpointId,
+  });
+
+  await upsertContact(session.context.profileId, {
+    phone: session.context.callerId,
+    name: callerName,
+    aiSummary: summary,
+    callLogId,
+  });
+
+  // Best-effort, don't block hangup on a slow customer endpoint.
+  runAfterCallWebhooks(metadataProfile, context).catch((err) => {
+    console.error("[callSession] after_call webhooks failed:", err.message);
+  });
+
+  // Telnyx already has the full recording at hangup. MOR SIP REFER ends the
+  // bridge first — wait for the PBX recording before email/analysis.
+  if (!deferTransferRecording) {
+    fireHangupSideEffects(
+      profile,
+      session.context,
+      { transcript, summary, outcome, startedAt, finishedAt, metadata: logMetadata },
+      callLogId,
+    );
+  }
+
+  return { callLogId, deferredPostTransfer: deferTransferRecording };
+}
+
+/**
+ * Telephony host / MOR call-end webhook: attach the post-transfer recording
+ * transcript (same outcome Telnyx already writes at hangup) and then fire the
+ * after-call email + AI summary.
+ */
+async function attachPostTransferRecording(opts) {
+  const sb = getSupabase();
+  const callLogId = opts?.callLogId;
+  if (!sb || !callLogId) return { ok: false, skipped: "missing_call_log" };
+
+  const { data: log, error } = await sb
+    .from("wisecall_call_logs")
+    .select(
+      "id, call_id, profile_id, profile_name, caller_id, summary, transcript, outcome, started_at, finished_at, metadata, recording_url",
+    )
+    .eq("id", callLogId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!log) return { ok: false, skipped: "missing_call" };
+
+  const mergedTranscript =
+    opts.mergedTranscript ||
+    mergeLiveAndRecordingTranscript(log.transcript, opts.recordingTranscript);
+  const metadata = withAttachedRecordingMetadata(log.metadata, {
+    mor_recording_id: opts.recordingId,
+    mor_uniqueid: opts.uniqueid,
+    recording_source: opts.recordingSource || "mor",
+  });
+
+  const updated = await updateCallLogTranscript(callLogId, {
+    transcript: mergedTranscript,
+    finishedAt: opts.finishedAt,
+    recordingUrl: opts.recordingUrl || log.recording_url,
+    recordingDurationSec: opts.recordingDurationSec,
+    sipCallId: opts.uniqueid,
+    metadata,
+  });
+  if (!updated) return { ok: false, error: "update_failed" };
+
+  let profile = opts.profile;
+  if (!profile && log.profile_id) {
+    const { data } = await sb
+      .from("wisecall_profiles")
+      .select("id, slug, profile_name, business_name, clinic_name, receptionist_name, metadata")
+      .eq("id", log.profile_id)
+      .maybeSingle();
+    profile = data;
+  }
+
+  if (profile) {
+    fireHangupSideEffects(
+      profile,
+      {
+        callId: log.call_id || sessionCallId(opts),
+        callerId: log.caller_id,
+        profileId: log.profile_id,
+      },
+      {
+        transcript: mergedTranscript,
+        summary: opts.summary || log.summary,
+        outcome: opts.outcome || log.outcome,
+        startedAt: log.started_at,
+        finishedAt: opts.finishedAt || log.finished_at,
+        metadata,
+      },
+      callLogId,
+    );
+  } else {
+    triggerPortalAnalysis(callLogId).catch((err) => {
+      console.error("[callSession] portal analysis trigger failed:", err.message);
+    });
+  }
+
+  return { ok: true, callLogId, transcript: mergedTranscript };
+}
+
+function sessionCallId(opts) {
+  return opts?.callId || "";
 }
 
 module.exports = {
   prepareCallSession,
   handleIntegrationToolCall,
   finalizeCallSession,
+  attachPostTransferRecording,
   mergeIntegrationTools,
   isCallAllowed,
 };

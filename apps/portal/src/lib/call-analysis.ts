@@ -426,6 +426,11 @@ export async function analyzeAndStoreCall(callId: string): Promise<CallAnalysis 
   if (error) throw new Error(`Could not load call ${callId}: ${error.message}`);
 
   const row = data as AnalyzableRow;
+  const meta =
+    row.metadata && typeof row.metadata === "object"
+      ? (row.metadata as Record<string, unknown>)
+      : {};
+  if (meta.awaiting_post_transfer_recording === true) return null;
   if (!row.transcript || row.transcript.trim().length < 10) return null;
 
   const analysis = await analyzeTranscript({
