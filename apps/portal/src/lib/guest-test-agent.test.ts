@@ -78,6 +78,19 @@ test("insert row is Gemma, 24/7, with a routing key the edge can match", () => {
   assert.equal(isGuestTestAgentMetadata({ source: "portal_create" }), false);
 });
 
+test("guest test ElevenLabs voices do not inherit a Cartesia model id", () => {
+  assert.ok(draft);
+  const row = buildGuestTestAgentInsert(draft, {
+    slug: "guest-northwind-dental-abc12345",
+    routingNumber: guestRoutingNumber("abc12345"),
+    voice: { ttsProvider: "elevenlabs", voiceId: "el-1", voiceName: "Jane" },
+  });
+  const metadata = row.metadata as Record<string, unknown>;
+  assert.equal(metadata.tts_provider, "elevenlabs");
+  assert.equal(metadata.tts_model, undefined);
+  assert.equal(metadata.voice, "Jane");
+});
+
 test("callback body uses the guest slug and routing number, never Ava", () => {
   const body = guestTestCallbackBody({
     phone: "+447700900123",

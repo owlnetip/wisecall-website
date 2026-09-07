@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   CARTESIA_SONIC_36_FALLBACK_MODEL_ID,
   CARTESIA_SONIC_36_MODEL_ID,
+  agentTtsMetadataForProvider,
   cartesiaLanguageField,
   cartesiaPreferredModelId,
   cartesiaTtsModelCandidates,
@@ -53,6 +54,12 @@ test("new portal agents stamp Sonic 3.6", () => {
   assert.equal(meta.tts_model, "sonic-3.6");
   assert.equal(meta.tts_provider, "cartesia");
   assert.deepEqual(meta, demoTtsMetadata(""));
+});
+
+test("ElevenLabs voices keep their provider and skip the Cartesia model stamp", () => {
+  const meta = agentTtsMetadataForProvider("elevenlabs", "");
+  assert.equal(meta.tts_provider, "elevenlabs");
+  assert.equal(meta.tts_model, undefined);
 });
 
 test("unknown-model HTTP statuses retry the fallback id", () => {

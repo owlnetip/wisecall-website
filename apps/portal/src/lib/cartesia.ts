@@ -62,6 +62,25 @@ export function isWebsiteDemoAgent(opts: {
 }
 
 /**
+ * TTS metadata for a chosen engine. Cartesia agents get Sonic 3.6 so the
+ * live path no longer falls back to 3.5. ElevenLabs (and any other engine)
+ * keeps its provider and is not given a Cartesia model id.
+ */
+export function agentTtsMetadataForProvider(
+  ttsProvider: string,
+  envModel = process.env.CARTESIA_MODEL,
+): Record<string, string> {
+  const provider = (ttsProvider || "cartesia").trim() || "cartesia";
+  if (provider !== "cartesia") {
+    return { tts_provider: provider };
+  }
+  return {
+    tts_provider: "cartesia",
+    tts_model: cartesiaPreferredModelId(envModel),
+  };
+}
+
+/**
  * Stamp on every new portal / guest-test agent so the live path reads
  * Sonic 3.6 from metadata.tts_model. Existing agents without this key stay
  * on Sonic 3.5 unless they are the website demo.
@@ -69,10 +88,7 @@ export function isWebsiteDemoAgent(opts: {
 export function newAgentTtsMetadata(
   envModel = process.env.CARTESIA_MODEL,
 ): Record<string, string> {
-  return {
-    tts_provider: "cartesia",
-    tts_model: cartesiaPreferredModelId(envModel),
-  };
+  return agentTtsMetadataForProvider("cartesia", envModel);
 }
 
 /** Demo-only TTS hint. Same ids as newAgentTtsMetadata; does not switch STT. */
