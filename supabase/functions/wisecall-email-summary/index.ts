@@ -15,6 +15,7 @@ import {
   callSummaryRecipients,
   type TransferHint,
 } from "../_shared/notification-recipients.ts";
+import { shouldResendSummaryEmailAfterTransferRecording } from "../_shared/mor-transfer-recording.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -163,7 +164,8 @@ serve(async (req) => {
 
   if (
     logMeta.summary_email_sent === true &&
-    (!actionItems.length || logMeta.summary_email_included_next_actions === true)
+    (!actionItems.length || logMeta.summary_email_included_next_actions === true) &&
+    !shouldResendSummaryEmailAfterTransferRecording(logMeta)
   ) {
     return json({ ok: true, skipped: "already_sent" });
   }
