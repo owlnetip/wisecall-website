@@ -13,6 +13,8 @@ import {
 } from './seo-content.mjs';
 
 const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/?signup=1&redirect=/billing';
+const TRY_PAGE_URL = '/try';
+const DEMO_PHONE_TEL = 'tel:+441135222277';
 
 const out = new URL('../', import.meta.url);
 const publicOut = new URL('../public/', import.meta.url);
@@ -87,7 +89,7 @@ function breadcrumbSchema(items) {
   };
 }
 
-function layout(page, body, schemas = []) {
+function layout(page, body, schemas = [], { headerCtaHref = TRIAL_SIGNUP_URL, headerCtaLabel = 'Try it now' } = {}) {
   return `<!DOCTYPE html>
 <html lang="en-GB">
 <head>
@@ -131,7 +133,7 @@ function layout(page, body, schemas = []) {
   ${schemas.map(jsonLd).join('\n  ')}
 </head>
 <body class="page-bg min-h-screen overflow-x-hidden">
-${header()}
+${header({ ctaHref: headerCtaHref, ctaLabel: headerCtaLabel })}
 <main>
 ${body}
 </main>
@@ -156,7 +158,7 @@ ${footer()}
 </html>`;
 }
 
-function header() {
+function header({ ctaHref = TRIAL_SIGNUP_URL, ctaLabel = 'Try it now' } = {}) {
   return `<header class="sticky top-0 z-50 backdrop-blur-md bg-[#172929]/82 border-b border-[#7de8eb]/10 relative">
   <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
     <a href="/" class="flex items-center gap-3 text-white font-bold text-lg no-underline min-w-0"><img src="/owl-logo.png" alt="WiseCall" class="h-9 w-auto flex-shrink-0"><span class="truncate">WiseCall</span></a>
@@ -170,7 +172,7 @@ function header() {
       <a href="/blog/missed-calls-cost-uk-businesses/" class="hover:text-[#7de8eb]">Resources</a>
     </div>
     <div class="flex items-center gap-2 flex-shrink-0">
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary hidden sm:inline-flex px-4 py-2.5 text-sm">Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+      <a href="${ctaHref}" class="btn btn-primary hidden sm:inline-flex px-4 py-2.5 text-sm">${esc(ctaLabel)} <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
       <button id="mobileMenuToggle" type="button" aria-label="Open menu" aria-expanded="false" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
         <i data-lucide="menu" class="w-5 h-5"></i>
       </button>
@@ -185,7 +187,7 @@ function header() {
       <a href="/compare/ai-receptionist-uk-comparison/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Compare</a>
       <a href="/resources/missed-call-calculator/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Calculator</a>
       <a href="/blog/missed-calls-cost-uk-businesses/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Resources</a>
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary mt-3 justify-center px-5 py-3 text-sm">Try it now <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+      <a href="${ctaHref}" class="btn btn-primary mt-3 justify-center px-5 py-3 text-sm">${esc(ctaLabel)} <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
     </div>
   </div>
 </header>`;
@@ -662,7 +664,7 @@ function renderComparison() {
         'Answers in your business name, asks the right questions, books or routes the next step, then sends your team a proper summary. Same knowledge on email, WhatsApp, live chat and SMS.',
         'You do not need a phone system. We give you a number, or we connect the one you have. Calls and data stay in the UK. Dental can book eligible appointments into Dentally. It never gives clinical advice.',
         '20 inbound AI calls to try it, no card. 30-day rolling, or 15% off yearly.',
-        'Skip us if you only want the cheapest unlimited minutes and you do not care about the phone stack.',
+        'Skip us if you only want the cheapest unlimited minutes and you do not care about the phone system.',
       ],
     },
     {
@@ -732,8 +734,8 @@ function renderComparison() {
       <p class="text-xl md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
       <p class="text-lg text-white/68 leading-relaxed max-w-3xl mb-9">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
       <div class="flex flex-col sm:flex-row gap-4">
-        <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary px-8 py-4">Try 20 free calls <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
-        <a href="/try" class="btn btn-secondary px-8 py-4">Call the live demo</a>
+        <a href="${TRY_PAGE_URL}" class="btn btn-primary px-8 py-4">Call Ava <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
+        <a href="${DEMO_PHONE_TEL}" class="btn btn-secondary px-8 py-4">+44 113 522 2277</a>
       </div>
     </div>
     <div class="card-strong p-7">
@@ -800,8 +802,8 @@ function renderComparison() {
     <h2 class="text-4xl md:text-5xl font-black mb-5 text-center">Try it</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-center">Call the live demo, or start 20 inbound AI calls with no card. Most businesses are live within a week. 30-day rolling. Cancel before the next month.</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-      <a href="/try" class="btn btn-secondary px-8 py-4">Call the live demo</a>
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary px-8 py-4">Try 20 free calls</a>
+      <a href="${TRY_PAGE_URL}" class="btn btn-primary px-8 py-4">Call Ava</a>
+      <a href="${DEMO_PHONE_TEL}" class="btn btn-secondary px-8 py-4">+44 113 522 2277</a>
     </div>
     <form id="demoCallbackForm" class="max-w-md mx-auto" novalidate>
       <div class="flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 focus-within:border-[#7de8eb]/70">
@@ -811,9 +813,15 @@ function renderComparison() {
       </div>
       <p id="demoCallbackStatus" class="hidden text-white/55 text-sm mt-3 text-center" aria-live="polite"></p>
     </form>
+    <p class="text-white/55 text-sm text-center mt-4">
+      Prefer to dial in?
+      <a href="${DEMO_PHONE_TEL}" class="text-[#7de8eb] underline underline-offset-2 hover:text-white">+44 113 522 2277</a>
+      or
+      <a href="${DEMO_PHONE_TEL}" class="text-[#7de8eb] underline underline-offset-2 hover:text-white">0113 522 2277</a>.
+    </p>
     <p class="text-white/55 text-sm text-center mt-8">
       ${[
-        { href: '/try', label: 'Try' },
+        { href: TRY_PAGE_URL, label: 'Try' },
         { href: '/pricing/', label: 'Pricing' },
         { href: '/dental', label: 'Dental' },
         { href: '/trades', label: 'Trades' },
@@ -894,7 +902,7 @@ ${relatedLinks([
       { name: 'Best AI receptionist UK 2026', path: page.path },
     ]),
     faqSchema(faqsForSchema),
-  ]);
+  ], { headerCtaHref: TRY_PAGE_URL, headerCtaLabel: 'Call Ava' });
 }
 
 function renderComparisonPage(comparison) {
