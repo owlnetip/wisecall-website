@@ -287,14 +287,14 @@ export const ukAiReceptionistComparison = {
   title: 'Best AI Receptionist UK 2026: Prices Compared | WiseCall',
   description:
     'Published UK prices for WiseCall, Fonio, Hey Jodie, whoza, IONOS and Moneypenny. Checked 3 September 2026.',
-  h1: 'Which AI receptionist is worth paying for?',
+  h1: 'Which is the best AI receptionist in the UK in 2026?',
   heroLead:
-    'Published prices from each company’s site, checked 3 September 2026. WiseCall excl. VAT. Fonio in euros.',
+    'Published UK prices from each company’s site, checked 3 September 2026. WiseCall excl. VAT. Fonio in euros.',
   heroSub:
-    'Six options UK service businesses actually shortlist. The table is the comparison — the notes below say who each one suits.',
+    'Six options UK service businesses actually shortlist. The table is the comparison. The notes below say who each one suits.',
   quickTake: [
     'Hey Jodie: cheapest unlimited minutes from £49. Bookings and transfers need Professional (£99).',
-    'IONOS: cheapest metered starter at £39 excl. VAT — 30 calls, then 49p each.',
+    'IONOS: cheapest metered starter at £39 excl. VAT for 30 calls, then 49p each.',
     'Need UK data, a number included, and the same agent on phone plus email and WhatsApp? That cuts the list quickly.',
   ],
   checked: '3 September 2026',
@@ -436,7 +436,7 @@ export const ukAiReceptionistComparison = {
     },
     {
       question: 'Do I need a phone system?',
-      answer: 'Not with WiseCall — a number is included. Already on a PBX? Connect that instead.',
+      answer: 'Not with WiseCall. A number is included. Already on a PBX? Connect that instead.',
     },
     {
       question: 'Can I keep my number?',

@@ -662,7 +662,7 @@ function renderComparison() {
       title: 'WiseCall',
       paragraphs: [
         'Answers in your business name, asks the right questions, books or routes the next step, then sends your team a summary. Same knowledge on email, WhatsApp, live chat and SMS.',
-        'Number included — no separate phone supplier. Calls and data stay in the UK. Dental can book eligible appointments into Dentally. Never gives clinical advice.',
+        'Number included. No separate phone supplier. Calls and data stay in the UK. Dental can book eligible appointments into Dentally. Never gives clinical advice.',
         '20 inbound AI calls to try it, no card. £99/mo on 30-day rolling, or £84.15/mo billed yearly.',
         'Skip us if you only want the cheapest unlimited minutes and do not care where calls are hosted or whether you need another phone system.',
       ],
@@ -678,14 +678,14 @@ function renderComparison() {
       title: 'Fonio',
       paragraphs: [
         'Austrian company, strong in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds SIP and outbound campaigns. Data in Nuremberg. Invoice in euros.',
-        'Skip Fonio if you want a UK product with GBP billing and UK data residency — compare the Fonio column in the table above.',
+        'Skip Fonio if you want a UK product with GBP billing and UK data residency. Compare the Fonio column in the table above.',
       ],
     },
     {
       title: 'whoza',
       paragraphs: [
         'For plumbers, heating engineers and builders. £59 a month for 10 captured jobs. You pay for work, not wrong numbers.',
-        'Skip whoza if you are not a trade on the tools — they are not aiming at dental or legal.',
+        'Skip whoza if you are not a trade on the tools. They are not aiming at dental or legal.',
       ],
     },
     {
@@ -698,7 +698,7 @@ function renderComparison() {
     {
       title: 'Moneypenny',
       paragraphs: [
-        'The name most UK firms know. AI receptionist plus human answering. No published price — quote only.',
+        'The name most UK firms know. AI receptionist plus human answering. No published price. Quote only.',
         'Skip Moneypenny if you want a published monthly price and a fully automated first line.',
       ],
     },
@@ -787,7 +787,7 @@ function renderComparison() {
 <section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto card-strong p-10 md:p-14">
     <h2 class="text-4xl md:text-5xl font-black mb-5 text-center">Hear it on a real call</h2>
-    <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-center">Call the live demo, or start 20 inbound AI calls with no card. Most businesses are live within a week. 30-day rolling — cancel before the next month.</p>
+    <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-center">Call the live demo, or start 20 inbound AI calls with no card. Most businesses are live within a week. 30-day rolling. Cancel before the next month.</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
       <a href="${TRY_PAGE_URL}" class="btn btn-primary px-8 py-4">Call Ava</a>
       <a href="${DEMO_PHONE_TEL}" class="btn btn-secondary px-8 py-4">+44 113 522 2277</a>
@@ -886,7 +886,7 @@ ${relatedLinks([
     breadcrumbSchema([
       { name: 'Home', path: '/' },
       { name: 'Compare', path: '/compare/' },
-      { name: 'AI receptionist comparison', path: page.path },
+      { name: 'Best AI receptionist UK 2026', path: page.path },
     ]),
     faqSchema(faqsForSchema),
   ], { headerCtaHref: TRY_PAGE_URL, headerCtaLabel: 'Call Ava' });
