@@ -661,43 +661,45 @@ function renderComparison() {
     {
       title: 'WiseCall',
       paragraphs: [
-        'Answers in your business name, asks the right questions, books or routes the next step, then sends your team a proper summary. Same knowledge on email, WhatsApp, live chat and SMS.',
-        'You do not need a phone system. We give you a number, or we connect the one you have. Calls and data stay in the UK. Dental can book eligible appointments into Dentally. It never gives clinical advice.',
-        '20 inbound AI calls to try it, no card. 30-day rolling, or 15% off yearly.',
-        'Skip us if you only want the cheapest unlimited minutes and you do not care about the phone system.',
+        'Answers in your business name, asks the right questions, books or routes the next step, then sends your team a summary. Same knowledge on email, WhatsApp, live chat and SMS.',
+        'Number included. No separate phone supplier. Calls and data stay in the UK. Dental can book eligible appointments into Dentally. Never gives clinical advice.',
+        '20 inbound AI calls to try it, no card. £99/mo on 30-day rolling, or £84.15/mo billed yearly.',
+        'Skip us if you only want the cheapest unlimited minutes and do not care where calls are hosted or whether you need another phone system.',
       ],
     },
     {
       title: 'Hey Jodie',
       paragraphs: [
-        '£49, £99 or £199. Unlimited minutes. 7 days free. Keep your number. Clean offer. Basic does not book or transfer.',
-        'Skip Jodie if you need WhatsApp and email on the same agent, or a UK number of your own rather than call forwarding.',
+        '£49, £99 or £199. Unlimited minutes. Seven days free, no card. Forward the number you already have. Basic does not book or transfer.',
+        'Skip Jodie if you need WhatsApp and email on the same agent, or your own UK number rather than call forwarding.',
       ],
     },
     {
       title: 'Fonio',
       paragraphs: [
-        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds SIP and outbound campaigns. 30-day money-back. Hosted in Germany.',
-        'Fine if you are happy paying in euros and keeping data in the EU. Less fine if you wanted a UK receptionist product with a pound invoice.',
+        'Austrian company, strong in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds SIP and outbound campaigns. Data in Nuremberg. Invoice in euros.',
+        'Skip Fonio if you want a UK product with GBP billing and UK data residency. Compare the Fonio column in the table above.',
       ],
     },
     {
       title: 'whoza',
       paragraphs: [
-        'For plumbers, heating engineers and builders. £59 a month for 10 jobs. You pay for work captured, not spam calls. Honest for someone on the tools.',
-        'Not for a dental practice or a law firm. They are not trying to be.',
+        'For plumbers, heating engineers and builders. £59 a month for 10 captured jobs. You pay for work, not wrong numbers.',
+        'Skip whoza if you are not a trade on the tools. They are not aiming at dental or legal.',
       ],
     },
     {
       title: 'IONOS',
       paragraphs: [
-        '£39, £69 or £99 excl. VAT on their UK page today, billed by call count, 30-day money-back. Fine as a cheap add-on if you already use IONOS. It is not a front desk with booking rules and a dedicated number.',
+        '£39, £69 or £99 excl. VAT on their UK page, billed by call count, 30-day money-back. Fine as a cheap add-on if you already use IONOS.',
+        'Skip IONOS if you need a front desk with booking rules and a dedicated number.',
       ],
     },
     {
       title: 'Moneypenny',
       paragraphs: [
-        'Everyone in the UK has heard of them. They have an AI receptionist now. The site still sends you to a quote. If the caller has to reach a person, start there.',
+        'The name most UK firms know. AI receptionist plus human answering. No published price. Quote only.',
+        'Skip Moneypenny if you want a published monthly price and a fully automated first line.',
       ],
     },
   ];
@@ -730,38 +732,27 @@ function renderComparison() {
   <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-center">
     <div>
       <div class="eyebrow mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>Comparison</div>
-      <h1 class="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-7">Best AI receptionist UK <span class="text-[#7de8eb]">2026</span></h1>
-      <p class="text-xl md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
-      <p class="text-lg text-white/68 leading-relaxed max-w-3xl mb-9">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
+      <h1 class="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-7">${esc(data.h1)}</h1>
+      <p class="text-xl md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6">${esc(data.heroLead)}</p>
+      <p class="text-lg text-white/68 leading-relaxed max-w-3xl mb-9">${esc(data.heroSub)}</p>
       <div class="flex flex-col sm:flex-row gap-4">
         <a href="${TRY_PAGE_URL}" class="btn btn-primary px-8 py-4">Call Ava <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
         <a href="${DEMO_PHONE_TEL}" class="btn btn-secondary px-8 py-4">+44 113 522 2277</a>
       </div>
     </div>
     <div class="card-strong p-7">
-      <p class="text-white/78 text-xl leading-relaxed">WiseCall is in the table. We are not pretending otherwise.</p>
-    </div>
-  </div>
-</section>
-<section class="px-6 py-20">
-  <div class="max-w-4xl mx-auto">
-    <div class="eyebrow mb-6"><i data-lucide="list-checks" class="w-4 h-4"></i>Quick take</div>
-    <h2 class="text-4xl md:text-5xl font-black mb-8">Quick take</h2>
-    <div class="space-y-5 text-lg text-white/72 leading-relaxed">
-      <p>Hey Jodie is the cheapest unlimited-minutes plan, from £49 a month. Bookings and transfers are not on Basic.</p>
-      <p>IONOS is the cheapest metered starter: £39 a month excl. VAT for 30 calls, then 49p a call.</p>
-      <p>whoza is for UK trades, from £59 a month, billed around captured jobs.</p>
-      <p>Moneypenny is the one with a human behind the AI. They do not publish a price.</p>
-      <p>Fonio is a European product. Solo is €99 a month (€84 if you pay annually) for 1,000 minutes. Servers are in Nuremberg.</p>
-      <p>WiseCall starts at £99 a month on 30-day rolling, or £84.15 if you pay annually. UK hosting, a number included, and the same agent on phone, email, WhatsApp, live chat and SMS. 20 inbound AI calls to try it, no card.</p>
-      <p>If the only thing you care about is the lowest headline price, we are not the cheapest. If you care where the calls live and whether you need a separate phone system, we are the one built for that.</p>
+      <p class="text-white/55 text-sm font-bold uppercase tracking-wide mb-4">In 30 seconds</p>
+      <div class="space-y-4 text-white/78 leading-relaxed">
+        ${data.quickTake.map((line) => `<p>${esc(line)}</p>`).join('')}
+      </div>
     </div>
   </div>
 </section>
 <section class="px-6 py-20" id="prices">
   <div class="max-w-7xl mx-auto">
     <div class="eyebrow mb-6"><i data-lucide="table" class="w-4 h-4"></i>Prices</div>
-    <h2 class="text-4xl md:text-5xl font-black mb-8">Prices</h2>
+    <h2 class="text-4xl md:text-5xl font-black mb-5">Published prices</h2>
+    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mb-8">Every figure is from the vendor’s public pricing page. Scroll horizontally on mobile.</p>
     ${comparisonTable(data.columns, data.rows, { firstHeader: '' })}
     <p class="text-white/55 text-sm leading-relaxed mt-5">Sources:
       ${data.sources.map((source, index) => `${index ? ', ' : ''}${sourceAnchor(source.name, source.href)}`).join('')}
@@ -770,6 +761,11 @@ function renderComparison() {
 </section>
 <section class="px-6 py-20">
   <div class="max-w-4xl mx-auto space-y-5">
+    <div class="mb-2">
+      <div class="eyebrow mb-6"><i data-lucide="users" class="w-4 h-4"></i>Who each one suits</div>
+      <h2 class="text-4xl md:text-5xl font-black mb-3">Who each one suits</h2>
+      <p class="text-lg text-white/68 leading-relaxed">Short notes on fit. Prices are in the table above.</p>
+    </div>
     ${writeUps.map((item) => `<article class="card p-7">
       <h2 class="text-2xl font-bold mb-4">${esc(item.title)}</h2>
       <div class="space-y-4">${item.paragraphs.map((text) => `<p class="text-white/68 leading-relaxed">${esc(text)}</p>`).join('')}</div>
@@ -784,22 +780,13 @@ function renderComparison() {
       ${checks.map((text, index) => `<li class="card p-6 flex gap-4"><span class="text-[#7de8eb] font-black text-2xl leading-none">${index + 1}</span><p class="text-white/72 leading-relaxed">${esc(text)}</p></li>`).join('')}
     </ol>
     <div class="card-strong p-7 mt-8">
-      <p class="text-white/80 leading-relaxed">Ours: UK, phone system included, same agent across channels, 30-day rolling, published GBP price.</p>
+      <p class="text-white/80 leading-relaxed">WiseCall: UK hosting, number included, same agent across channels, 30-day rolling, published GBP price.</p>
     </div>
-  </div>
-</section>
-<section class="px-6 py-20">
-  <div class="max-w-7xl mx-auto">
-    <div class="eyebrow mb-6"><i data-lucide="git-compare" class="w-4 h-4"></i>WiseCall and Fonio</div>
-    <h2 class="text-4xl md:text-5xl font-black mb-5">WiseCall and Fonio</h2>
-    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mb-8">Fonio is the well-funded European AI phone assistant. WiseCall is the UK one.</p>
-    ${comparisonTable(data.fonioColumns.slice(1), data.fonioRows, { firstHeader: data.fonioColumns[0], minClass: 'compare-table-sm' })}
-    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number, whose data, and whose invoice.</p>
   </div>
 </section>
 <section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto card-strong p-10 md:p-14">
-    <h2 class="text-4xl md:text-5xl font-black mb-5 text-center">Try it</h2>
+    <h2 class="text-4xl md:text-5xl font-black mb-5 text-center">Hear it on a real call</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-center">Call the live demo, or start 20 inbound AI calls with no card. Most businesses are live within a week. 30-day rolling. Cancel before the next month.</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
       <a href="${TRY_PAGE_URL}" class="btn btn-primary px-8 py-4">Call Ava</a>
