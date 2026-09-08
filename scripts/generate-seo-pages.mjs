@@ -238,7 +238,7 @@ const DEFAULT_HERO_PANEL = {
   items: ['Answers in your business name', 'Qualifies the caller’s intent', 'Captures structured details', 'Books, routes or escalates', 'Sends summaries and transcripts'],
 };
 
-function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls', panel = DEFAULT_HERO_PANEL }) {
+function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls', secondaryHref = '/resources/missed-call-calculator/', primaryHref = TRIAL_SIGNUP_URL, panel = DEFAULT_HERO_PANEL }) {
   return `<section class="px-6 py-20 md:py-28">
   <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-center">
     <div>
@@ -246,8 +246,8 @@ function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Mi
       <h1 class="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-7">${h1}</h1>
       <p class="text-xl md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-9">${esc(lead)}</p>
       <div class="flex flex-col sm:flex-row gap-4">
-        <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary px-8 py-4">${esc(cta)} <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
-        <a href="/resources/missed-call-calculator/" class="btn btn-secondary px-8 py-4">${esc(secondary)}</a>
+        <a href="${primaryHref}" class="btn btn-primary px-8 py-4">${esc(cta)} <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
+        <a href="${secondaryHref}" class="btn btn-secondary px-8 py-4">${esc(secondary)}</a>
       </div>
     </div>
     <div class="card-strong p-7">
@@ -283,14 +283,14 @@ function faqSection(faqs, title = 'Common Questions') {
 </section>`;
 }
 
-function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.') {
+function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', { primaryHref = TRIAL_SIGNUP_URL, primaryLabel = 'Try it now', secondaryHref = '/how-it-works/', secondaryLabel = 'See how WiseCall works' } = {}) {
   return `<section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto text-center card-strong p-10 md:p-14">
     <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8">${esc(text)}</p>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary px-8 py-4">Try it now</a>
-      <a href="/how-it-works/" class="btn btn-secondary px-8 py-4">See how WiseCall works</a>
+      <a href="${primaryHref}" class="btn btn-primary px-8 py-4">${esc(primaryLabel)}</a>
+      <a href="${secondaryHref}" class="btn btn-secondary px-8 py-4">${esc(secondaryLabel)}</a>
     </div>
   </div>
 </section>`;
@@ -566,7 +566,7 @@ function renderPricing() {
     description: 'WiseCall AI receptionist pricing for UK businesses: Starter £99, Professional £199 and Business £399 per month on 30-day rolling, or save 15% annually.',
     path: '/pricing/',
   };
-  const body = `${hero({ eyebrow: 'Pricing', h1: 'One AI front desk.', lead: '30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.', cta: 'Try 20 free calls', panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
+  const body = `${hero({ eyebrow: 'Pricing', h1: 'One AI front desk.', lead: '30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.', cta: 'Call Ava', primaryHref: TRY_PAGE_URL, secondary: '+44 113 522 2277', secondaryHref: DEMO_PHONE_TEL, panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
 <style>
   .billing-toggle { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px; background: rgba(255,255,255,.08); }
   .billing-toggle button { border: 0; border-radius: 999px; padding: .45rem 1.15rem; font-size: .875rem; font-weight: 600; background: transparent; color: rgba(255,255,255,.62); cursor: pointer; }
@@ -581,7 +581,7 @@ function renderPricing() {
     </div>
     <span class="billing-save-chip">Save 15%</span>
   </div>
-  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${pricingPlans.map((plan) => `<div class="card-strong p-7 relative">${plan.popular ? '<span class="absolute -top-3 left-7 px-3 py-1 rounded-full bg-[#7de8eb] text-[#0f1f1f] text-xs font-bold">Most Popular</span>' : ''}<h2 class="text-2xl font-bold mb-3">${esc(plan.name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(plan.tagline)}</p><div class="mb-5" data-plan-price data-monthly="${esc(plan.monthly)}" data-annual="${esc(plan.annual)}" data-year="${esc(plan.year)}"><span class="text-4xl font-black" data-price-amount>£${esc(plan.annual)}</span><span class="text-white/60">/month</span> <span data-price-save class="billing-save-chip">Save 15%</span><div class="text-white/50 text-sm mt-1" data-price-note>£${esc(plan.year)}/year · billed annually · excl. VAT</div></div><ul class="space-y-2 text-white/70 mb-6">${[plan.calls, ...plan.included, 'AI receptionist, 24/7', 'Call summaries and transcripts', 'Appointment booking', 'Call transfers and routing'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul><a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3">Try 20 free calls</a></div>`).join('')}</div>
+  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">${pricingPlans.map((plan) => `<div class="card-strong p-7 relative">${plan.popular ? '<span class="absolute -top-3 left-7 px-3 py-1 rounded-full bg-[#7de8eb] text-[#0f1f1f] text-xs font-bold">Most Popular</span>' : ''}<h2 class="text-2xl font-bold mb-3">${esc(plan.name)}</h2><p class="text-white/68 leading-relaxed mb-5">${esc(plan.tagline)}</p><div class="mb-5" data-plan-price data-monthly="${esc(plan.monthly)}" data-annual="${esc(plan.annual)}" data-year="${esc(plan.year)}"><span class="text-4xl font-black" data-price-amount>£${esc(plan.annual)}</span><span class="text-white/60">/month</span> <span data-price-save class="billing-save-chip">Save 15%</span><div class="text-white/50 text-sm mt-1" data-price-note>£${esc(plan.year)}/year · billed annually · excl. VAT</div></div><ul class="space-y-2 text-white/70 mb-6">${[plan.calls, ...plan.included, 'AI receptionist, 24/7', 'Call summaries and transcripts', 'Appointment booking', 'Call transfers and routing'].map((item) => `<li class="flex gap-2"><i data-lucide="check" class="text-[#7de8eb] mt-1"></i><span>${esc(item)}</span></li>`).join('')}</ul><a href="${TRY_PAGE_URL}" class="btn btn-primary w-full text-center py-3">Call Ava</a></div>`).join('')}</div>
   <p class="text-center text-white/60 text-sm mt-10">750+ calls · custom · <a href="/#contact" class="text-[#7de8eb] underline underline-offset-2">Talk to us</a></p>
 </section>
 ${faqSection([
@@ -595,7 +595,7 @@ ${relatedLinks([
   { path: '/compare/wisecall-vs-voicemail/', title: 'WiseCall vs voicemail', text: 'See what changes when WiseCall answers instead of a recorded message.' },
   { path: '/resources/missed-call-calculator/', title: 'Calculate missed call value', text: 'Estimate the opportunity cost of unanswered calls before choosing a plan.' },
 ])}
-${ctaBlock('Need help choosing a plan?', 'Book a free 15-minute demo and we will recommend a plan based on your current call volume.')}
+${ctaBlock('Need help choosing a plan?', 'Call the live demo to hear WiseCall in action, or dial in on 0113 522 2277. 20 free inbound AI calls with no card.', { primaryHref: TRY_PAGE_URL, primaryLabel: 'Call Ava', secondaryHref: DEMO_PHONE_TEL, secondaryLabel: '+44 113 522 2277' })}
 <script>
 (function () {
   const buttons = document.querySelectorAll('[data-billing]');
@@ -621,7 +621,7 @@ ${ctaBlock('Need help choosing a plan?', 'Book a free 15-minute demo and we will
   buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.billing)));
 })();
 </script>`;
-  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Pricing', path: page.path }])]);
+  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Pricing', path: page.path }])], { headerCtaHref: TRY_PAGE_URL, headerCtaLabel: 'Call Ava' });
 }
 
 function sourceAnchor(name, href) {
