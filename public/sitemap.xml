@@ -85,6 +85,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://wisecall.io/compare/wisecall-vs-fonio/</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://wisecall.io/resources/missed-call-calculator/</loc>
     <lastmod>2026-07-01</lastmod>
     <changefreq>monthly</changefreq>

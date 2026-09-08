@@ -16,6 +16,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - AI receptionist UK comparison: https://wisecall.io/compare/ai-receptionist-uk-comparison/
 - WiseCall vs Voicemail: https://wisecall.io/compare/wisecall-vs-voicemail/
 - WiseCall vs Answering service: https://wisecall.io/compare/wisecall-vs-answering-service/
+- WiseCall vs Fonio: https://wisecall.io/compare/wisecall-vs-fonio/
 - Missed call calculator: https://wisecall.io/resources/missed-call-calculator/
 - Call transcript guide: https://wisecall.io/resources/call-transcript-guide/
 - Missed calls guide: https://wisecall.io/blog/missed-calls-cost-uk-businesses/
