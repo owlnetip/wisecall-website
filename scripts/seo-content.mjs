@@ -287,7 +287,16 @@ export const ukAiReceptionistComparison = {
   title: 'Best AI Receptionist UK 2026: Prices Compared | WiseCall',
   description:
     'Published UK prices for WiseCall, Fonio, Hey Jodie, whoza, IONOS and Moneypenny. Checked 3 September 2026.',
-  h1: 'Best AI receptionist UK 2026',
+  h1: 'Which AI receptionist is worth paying for?',
+  heroLead:
+    'Published prices from each company’s site, checked 3 September 2026. WiseCall excl. VAT. Fonio in euros.',
+  heroSub:
+    'Six options UK service businesses actually shortlist. The table is the comparison — the notes below say who each one suits.',
+  quickTake: [
+    'Hey Jodie: cheapest unlimited minutes from £49. Bookings and transfers need Professional (£99).',
+    'IONOS: cheapest metered starter at £39 excl. VAT — 30 calls, then 49p each.',
+    'Need UK data, a number included, and the same agent on phone plus email and WhatsApp? That cuts the list quickly.',
+  ],
   checked: '3 September 2026',
   sources: [
     { name: 'WiseCall', href: 'https://wisecall.io/pricing/' },
@@ -413,29 +422,29 @@ export const ukAiReceptionistComparison = {
     {
       question: 'What is the best AI receptionist for UK businesses in 2026?',
       answer:
-        'Depends what you need. Jodie if you want the cheapest unlimited minutes. whoza if you are a trade and want jobs in WhatsApp. Moneypenny if you need a human. WiseCall if you want UK-hosted calls, a number included, and the same agent on phone, email, WhatsApp, live chat and SMS.',
+        'Depends what you optimise for. Hey Jodie for the cheapest unlimited minutes. whoza for UK trades billing on captured jobs. Moneypenny when a human has to answer. WiseCall when you want UK hosting, a number included, and one agent on phone, email, WhatsApp, live chat and SMS.',
     },
     {
       question: 'Is an AI receptionist better than voicemail?',
-      answer: 'Yes, if you lose work when people hang up. Most callers do not leave a message.',
+      answer: 'Yes, if missed calls cost you work. Most callers hang up rather than leave a message.',
       link: { href: '/compare/wisecall-vs-voicemail/', label: 'WiseCall vs voicemail' },
     },
     {
       question: 'Is it cheaper than a human answering service?',
-      answer: 'Usually, and you can see the bill in advance. Human services quote, and often charge by the minute.',
+      answer: 'Usually, with a published monthly price instead of a quote and per-minute billing.',
       link: { href: '/compare/wisecall-vs-answering-service/', label: 'WiseCall vs answering service' },
     },
     {
       question: 'Do I need a phone system?',
-      answer: 'Not with WiseCall. A number is included. Already got a PBX? Connect that instead.',
+      answer: 'Not with WiseCall — a number is included. Already on a PBX? Connect that instead.',
     },
     {
       question: 'Can I keep my number?',
-      answer: 'Usually, by porting or forwarding. We confirm when we set you up.',
+      answer: 'Usually, by porting or forwarding. We confirm the route when we set you up.',
     },
     {
       question: 'Where is WiseCall data stored?',
-      answer: 'UK. UK carrier connectivity. No clinical advice. If a person is needed, it escalates.',
+      answer: 'UK. No clinical advice. Escalates to a person when your rules say so.',
     },
   ],
 };
