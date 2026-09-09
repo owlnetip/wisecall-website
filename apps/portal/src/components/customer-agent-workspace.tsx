@@ -5397,11 +5397,16 @@ function parseChannelThread(body: string): TranscriptTurn[] {
   return turns;
 }
 
+function isToolLogLine(text: string): boolean {
+  const trimmed = text.trim();
+  return /^\s*\[function_(?:request|response)\]/i.test(trimmed) || /^\s*\{[\s\S]*\}\s*$/.test(trimmed);
+}
+
 function parseLineTranscript(body: string): TranscriptTurn[] {
   const turns: TranscriptTurn[] = [];
   for (const line of body.split(/\n/)) {
     const lineText = line.trim();
-    if (!lineText) continue;
+    if (!lineText || isToolLogLine(lineText)) continue;
     const parsed = parseSpeakerSegment(lineText);
     if (!parsed) continue;
     const hasExplicitLabel =

@@ -8,7 +8,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   buildPostCallEmailHtml,
   buildPostCallEmailText,
+  callerNameFromSources,
+  extraDetailsFromAnalysis,
   portalNextActions,
+  postCallEmailSubject,
 } from "../_shared/conversation-email.ts";
 import {
   asEmailList,
@@ -110,7 +113,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
   let profileQuery = supabase
     .from("wisecall_profiles")
-    .select("id, slug, profile_name, business_name, clinic_name, metadata");
+    .select("id, slug, profile_name, business_name, clinic_name, receptionist_name, metadata");
   profileQuery = profileId
     ? profileQuery.eq("id", profileId)
     : profileQuery.eq("slug", profileSlug);
@@ -128,17 +131,19 @@ serve(async (req) => {
         transcript: string | null;
         outcome: string | null;
         started_at: string | null;
+        finished_at: string | null;
         profile_name: string | null;
         metadata: Record<string, unknown> | null;
         ai_insight_summary: string | null;
         ai_analysis_json: unknown;
+        contact_id: string | null;
       }
     | null = null;
   if (callId) {
     const { data } = await supabase
       .from("wisecall_call_logs")
       .select(
-        "id, summary, transcript, outcome, started_at, profile_name, metadata, ai_insight_summary, ai_analysis_json",
+        "id, summary, transcript, outcome, started_at, finished_at, profile_name, metadata, ai_insight_summary, ai_analysis_json, contact_id",
       )
       .eq("call_id", callId)
       .maybeSingle();
@@ -146,6 +151,15 @@ serve(async (req) => {
   }
 
   const logMeta = isPlainObject(callLog?.metadata) ? callLog.metadata : {};
+  let contactName = "";
+  if (callLog?.contact_id) {
+    const { data: contact } = await supabase
+      .from("wisecall_contacts")
+      .select("name")
+      .eq("id", callLog.contact_id)
+      .maybeSingle();
+    contactName = String(contact?.name || "");
+  }
   let followUpTitles: string[] = [];
   if (callLog?.id) {
     const { data: followUps } = await supabase
@@ -184,21 +198,52 @@ serve(async (req) => {
     profile.clinic_name ||
     profile.profile_name ||
     "Your business";
+  const collected = isPlainObject(logMeta.collected)
+    ? logMeta.collected
+    : isPlainObject(session.collected)
+      ? session.collected
+      : {};
+  const callerName = callerNameFromSources({
+    callerName: contactName,
+    analysisJson: callLog?.ai_analysis_json,
+    summary,
+    transcript,
+    collected,
+  });
+  const details = extraDetailsFromAnalysis(callLog?.ai_analysis_json);
+  const company =
+    details.company ||
+    (typeof collected.company === "string" ? collected.company : "") ||
+    (typeof collected.contact_company === "string" ? collected.contact_company : "");
+  const durationRaw = extra.duration_seconds ?? collected.duration_seconds;
+  const durationSeconds =
+    typeof durationRaw === "number"
+      ? durationRaw
+      : typeof durationRaw === "string" && durationRaw.trim()
+        ? Number(durationRaw)
+        : null;
   const emailInput = {
     businessName,
     callerId,
+    callerName,
+    company,
     summary,
     transcript,
     outcome: outcome || callLog?.outcome || "Conversation recorded",
     startedAt: startedAt || callLog?.started_at || null,
+    finishedAt: callLog?.finished_at || null,
+    durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : null,
+    urgency: details.urgency,
     actionItems,
-    agentName: callLog?.profile_name || profile.profile_name || "WiseCall",
+    agentName:
+      profile.receptionist_name ||
+      callLog?.profile_name ||
+      profile.profile_name ||
+      "WiseCall",
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);
-  const subject = actionItems.length
-    ? `Follow-up needed · ${callerId} · ${businessName}`
-    : `Message from ${callerId} · ${businessName}`;
+  const subject = postCallEmailSubject(emailInput);
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
