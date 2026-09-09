@@ -1,5 +1,5 @@
 import { dashboardSetupPath, parseSetupWebsite } from "./setup-website";
-import { TRIAL_CALL_CAP } from "./stripe";
+import { TRIAL_CALL_CAP } from "./stripe-plans";
 
 // Self-serve path used by homepage "Try it now" / Facebook ads: 20 inbound AI
 // calls with no card. Distinct from the sales-led 7-day Stripe pilot on /billing.
