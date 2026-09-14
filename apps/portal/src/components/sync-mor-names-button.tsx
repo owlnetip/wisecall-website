@@ -31,6 +31,7 @@ export function SyncMorNamesButton() {
         type="button"
         onClick={() => void onClick()}
         disabled={busy}
+        aria-label="Rename MOR users to match WiseCall agent names"
         className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold text-[#94b4b2] transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
       >
         <Tag className="h-5 w-5 flex-shrink-0" />
