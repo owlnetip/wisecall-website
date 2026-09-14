@@ -14,6 +14,8 @@ Deno.test("post-call html matches portal follow-up wording", () => {
   const html = buildPostCallEmailHtml({
     businessName: "Excel Telecom",
     callerId: "07825395792",
+    callerName: "Luke",
+    company: "Northwind Ltd",
     summary: "Caller Luke asked for a callback about broadband.",
     transcript: "user: please call me back",
     outcome: "Caller ended",
@@ -23,6 +25,8 @@ Deno.test("post-call html matches portal follow-up wording", () => {
   if (!html.includes("Follow-up needed")) throw new Error("missing Follow-up needed");
   if (!html.includes("Call Luke back about broadband")) throw new Error("missing action item");
   if (!html.includes("What happened")) throw new Error("missing What happened");
+  if (!html.includes("Northwind Ltd")) throw new Error("missing company");
+  if (!html.includes("Luke (Northwind Ltd)")) throw new Error("missing named caller");
   assertEquals(nextStepLabel(["Call Luke back about broadband"]), "1 follow-up needed");
 });
 
