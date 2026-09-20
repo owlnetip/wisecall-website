@@ -18,6 +18,9 @@ const DEMO_PHONE_TEL = 'tel:+441135222277';
 // Hand-crafted page at compare/wisecall-vs-fonio/index.html. Do not add this
 // slug to comparisonPages or generate() will overwrite the craft copy.
 const FONIO_COMPARE_PATH = '/compare/wisecall-vs-fonio/';
+// Hand-crafted page at trades/plumbers/index.html. Do not generate this
+// path or generate() will overwrite the craft copy.
+const PLUMBERS_PATH = '/trades/plumbers/';
 
 const out = new URL('../', import.meta.url);
 const publicOut = new URL('../public/', import.meta.url);
@@ -1148,6 +1151,7 @@ function allRoutes() {
     '/industries/',
     ...industries.map((industry) => industryPath(industry)),
     '/trades',
+    PLUMBERS_PATH,
     '/compare/ai-receptionist-uk-comparison/',
     ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
     FONIO_COMPARE_PATH,
@@ -1190,6 +1194,8 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Dental practices: ${site.url}/dental
 - Legal and professional services: ${site.url}/legal
 - Estate agents: ${site.url}/property
+- Trades and field service: ${site.url}/trades
+- AI receptionist for plumbers: ${site.url}${PLUMBERS_PATH}
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
 ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
 - WiseCall vs Fonio: ${site.url}${FONIO_COMPARE_PATH}
