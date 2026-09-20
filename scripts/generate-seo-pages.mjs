@@ -15,6 +15,9 @@ import {
 const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/?signup=1&redirect=/billing';
 const TRY_PAGE_URL = '/try';
 const DEMO_PHONE_TEL = 'tel:+441135222277';
+// Hand-crafted page at compare/wisecall-vs-fonio/index.html. Do not add this
+// slug to comparisonPages or generate() will overwrite the craft copy.
+const FONIO_COMPARE_PATH = '/compare/wisecall-vs-fonio/';
 
 const out = new URL('../', import.meta.url);
 const publicOut = new URL('../public/', import.meta.url);
@@ -207,6 +210,7 @@ function footer() {
         <li><a href="/pricing/" class="hover:text-[#7de8eb]">WiseCall pricing</a></li>
         <li><a href="/integrations/" class="hover:text-[#7de8eb]">WiseCall integrations</a></li>
         <li><a href="/compare/ai-receptionist-uk-comparison/" class="hover:text-[#7de8eb]">AI receptionist UK comparison</a></li>
+        <li><a href="${FONIO_COMPARE_PATH}" class="hover:text-[#7de8eb]">WiseCall vs Fonio</a></li>
         <li><a href="/resources/missed-call-calculator/" class="hover:text-[#7de8eb]">Missed call calculator</a></li>
       </ul>
     </div>
@@ -593,6 +597,7 @@ ${faqSection([
 ${relatedLinks([
   { path: '/compare/wisecall-vs-answering-service/', title: 'WiseCall vs answering service', text: 'See the cost and coverage difference against a traditional answering service.' },
   { path: '/compare/wisecall-vs-voicemail/', title: 'WiseCall vs voicemail', text: 'See what changes when WiseCall answers instead of a recorded message.' },
+  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'UK hosting, phone line and trial compared to the Austrian AI assistant.' },
   { path: '/resources/missed-call-calculator/', title: 'Calculate missed call value', text: 'Estimate the opportunity cost of unanswered calls before choosing a plan.' },
 ])}
 ${ctaBlock('Need help choosing a plan?', 'Call the live demo to hear WiseCall in action, or dial in on 0113 522 2277. 20 free inbound AI calls with no card.', { primaryHref: TRY_PAGE_URL, primaryLabel: 'Call Ava', secondaryHref: DEMO_PHONE_TEL, secondaryLabel: '+44 113 522 2277' })}
@@ -794,7 +799,7 @@ function renderComparison() {
     <h2 class="text-4xl md:text-5xl font-black mb-5">WiseCall and Fonio</h2>
     <p class="text-lg text-white/72 leading-relaxed max-w-3xl mb-8">Fonio is the well-funded European AI phone assistant. WiseCall is the UK one.</p>
     ${comparisonTable(data.fonioColumns.slice(1), data.fonioRows, { firstHeader: data.fonioColumns[0], minClass: 'compare-table-sm' })}
-    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number, whose data, and whose invoice.</p>
+    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number, whose data, and whose invoice. ${sourceAnchor('Read the full WiseCall vs Fonio comparison', FONIO_COMPARE_PATH)}.</p>
   </div>
 </section>
 <section id="demo" class="px-6 py-20">
@@ -835,6 +840,7 @@ ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
   ...comparisonPages.map((c) => ({ path: `/compare/${c.slug}/`, title: `WiseCall vs ${c.subject}`, text: `A focused comparison against ${c.subject.toLowerCase()}.` })),
+  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'Head-to-head on hosting, phone line, trial and price.' },
 ])}
 <p class="max-w-7xl mx-auto px-6 pb-10 text-white/45 text-sm leading-relaxed">Prices last checked ${esc(data.checked)}. If someone changes a plan, update this table the same day.</p>
 <script>
@@ -1144,6 +1150,7 @@ function allRoutes() {
     '/trades',
     '/compare/ai-receptionist-uk-comparison/',
     ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
+    FONIO_COMPARE_PATH,
     '/resources/missed-call-calculator/',
     '/resources/call-transcript-guide/',
     '/blog/missed-calls-cost-uk-businesses/',
@@ -1185,6 +1192,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Estate agents: ${site.url}/property
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
 ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
+- WiseCall vs Fonio: ${site.url}${FONIO_COMPARE_PATH}
 - Missed call calculator: ${site.url}/resources/missed-call-calculator/
 - Call transcript guide: ${site.url}/resources/call-transcript-guide/
 - Missed calls guide: ${site.url}/blog/missed-calls-cost-uk-businesses/
