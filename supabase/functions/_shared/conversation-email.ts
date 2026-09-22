@@ -34,6 +34,46 @@ export function portalNextActions(input: {
   return nextActionsFromFollowUpTitles(input.followUpTitles);
 }
 
+/**
+ * Runtime state names such as bridge_closed or deepgram_closed are engineering
+ * vocabulary and must never reach a customer's inbox. Free-text outcomes the
+ * model writes ("Message taken for Matt Savage") are already readable and pass
+ * through untouched.
+ */
+const OUTCOME_LABELS: Record<string, string> = {
+  caller_stop: "Caller ended the call",
+  caller_hangup: "Caller ended the call",
+  caller_disconnected: "Caller ended the call",
+  remote_hangup: "Caller ended the call",
+  // Who hung up is not knowable from these, so they stay neutral.
+  bridge_closed: "Call ended",
+  deepgram_closed: "Call ended",
+  live_chat_closed: "Chat ended",
+  live_chat: "Web chat",
+  no_answer: "No answer",
+  completed: "Call completed",
+  transferred: "Transferred to the team",
+  transfer_to_mobile_completed: "Transferred to the team",
+  sms_sent: "Information sent by SMS",
+  message_taken: "Message taken",
+};
+
+export function outcomeLabel(raw: string | null | undefined): string {
+  const value = String(raw ?? "").trim();
+  if (!value) return "Conversation recorded";
+
+  const known = OUTCOME_LABELS[value.toLowerCase().replace(/\s+/g, "_")];
+  if (known) return known;
+
+  // An unmapped internal code still must not go out as raw snake_case.
+  if (/^[a-z0-9]+(?:_[a-z0-9]+)+$/.test(value)) {
+    const words = value.replace(/_/g, " ");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+
+  return value;
+}
+
 export function nextStepLabel(actionItems: string[]): string {
   if (!actionItems.length) return "No follow-up needed";
   return `${actionItems.length} follow-up${actionItems.length === 1 ? "" : "s"} needed`;
@@ -106,7 +146,7 @@ function followUpBlockHtml(actionItems: string[]): string {
 
 export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const when = formatWhen(input.startedAt);
-  const outcome = input.outcome.trim();
+  const outcome = outcomeLabel(input.outcome);
   const agentName = (input.agentName || "WiseCall").trim() || "WiseCall";
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
   const summary = input.summary.trim();
@@ -138,7 +178,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
         <tr>
           <td style="padding:12px 14px;border-right:1px solid #d7e4e3;width:33%;vertical-align:top;">
             <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Outcome</p>
-            <p style="margin:0;font-size:14px;font-weight:800;">${escapeEmailHtml(outcome || "Conversation recorded")}</p>
+            <p style="margin:0;font-size:14px;font-weight:800;">${escapeEmailHtml(outcome)}</p>
           </td>
           <td style="padding:12px 14px;border-right:1px solid #d7e4e3;width:33%;vertical-align:top;">
             <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Next step</p>
@@ -182,7 +222,7 @@ export function buildPostCallEmailText(input: PostCallEmailInput): string {
     callbackNumber ? `Call back: ${callbackNumber}` : "",
     showCallingLine ? `Calling line: ${callerId}` : "",
     company ? `Company: ${company}` : "",
-    input.outcome.trim() ? `Outcome: ${input.outcome.trim()}` : "",
+    input.outcome.trim() ? `Outcome: ${outcomeLabel(input.outcome)}` : "",
     `Next step: ${nextStepLabel(actionItems)}`,
   ].filter(Boolean);
 
