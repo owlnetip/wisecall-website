@@ -57,7 +57,30 @@ export type PostCallEmailInput = {
   startedAt?: string | null;
   actionItems: string[];
   agentName?: string;
+  /** Caller details read back out of the conversation; all optional. */
+  callerName?: string | null;
+  company?: string | null;
+  /** Number the caller gave on the call, which is often not the calling line. */
+  callbackNumber?: string | null;
+  urgency?: string | null;
 };
+
+const URGENCY_COLOURS: Record<string, string> = {
+  emergency: "#b42318",
+  urgent: "#b54708",
+};
+
+function digitsOnly(value: string): string {
+  const digits = String(value || "").replace(/\D/g, "");
+  // Compare on the national part so +447… and 07… match.
+  return digits.length > 9 ? digits.slice(-9) : digits;
+}
+
+function detailRowHtml(label: string, value: string, colour?: string): string {
+  if (!value.trim()) return "";
+  const valueStyle = colour ? ` style="color:${colour};font-weight:800;"` : "";
+  return `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">${escapeEmailHtml(label)}</td><td${valueStyle}>${escapeEmailHtml(value)}</td></tr>`;
+}
 
 function formatWhen(startedAt?: string | null): string {
   if (!startedAt) return "";
@@ -88,14 +111,28 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
   const summary = input.summary.trim();
   const transcript = input.transcript.trim();
+  const callerName = (input.callerName || "").trim();
+  const company = (input.company || "").trim();
+  const callbackNumber = (input.callbackNumber || "").trim();
+  const callerId = (input.callerId || "").trim();
+  const urgency = (input.urgency || "").trim().toLowerCase();
+  // Name leads when we have one; the calling line then gets its own row, since
+  // a diverted call presents the forwarding number rather than the caller's.
+  const callerLine = callerName || callerId || "Unknown";
+  const sameNumber = digitsOnly(callbackNumber) === digitsOnly(callerId);
+  const showCallingLine = Boolean(callerId) && callerLine !== callerId && !sameNumber;
 
   return `
     <div style="font-family:system-ui,-apple-system,sans-serif;color:#172929;max-width:640px;">
       <h2 style="margin:0 0 8px;font-size:20px;">New message for ${escapeEmailHtml(input.businessName)}</h2>
       <p style="margin:0 0 16px;color:#4a5c5b;">A caller left a message with your WiseCall assistant.</p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
-        <tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">Caller</td><td>${escapeEmailHtml(input.callerId || "Unknown")}</td></tr>
-        ${when ? `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;">When</td><td>${escapeEmailHtml(when)}</td></tr>` : ""}
+        ${detailRowHtml("Caller", callerLine)}
+        ${detailRowHtml("Call back", callbackNumber)}
+        ${showCallingLine ? detailRowHtml("Calling line", callerId) : ""}
+        ${detailRowHtml("Company", company)}
+        ${when ? detailRowHtml("When", when) : ""}
+        ${URGENCY_COLOURS[urgency] ? detailRowHtml("Priority", urgency === "emergency" ? "Emergency" : "Urgent", URGENCY_COLOURS[urgency]) : ""}
       </table>
       <table style="width:100%;border-collapse:collapse;margin:0 0 18px;background:#f7fafa;border:1px solid #d7e4e3;border-radius:10px;">
         <tr>
@@ -130,9 +167,21 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
 
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const callerName = (input.callerName || "").trim();
+  const callbackNumber = (input.callbackNumber || "").trim();
+  const company = (input.company || "").trim();
+  const callerId = (input.callerId || "").trim();
+  const callerLine = callerName || callerId || "Unknown";
+  const showCallingLine =
+    Boolean(callerId) &&
+    callerLine !== callerId &&
+    digitsOnly(callbackNumber) !== digitsOnly(callerId);
   const blocks = [
     `New message for ${input.businessName}`,
-    `Caller: ${input.callerId || "Unknown"}`,
+    `Caller: ${callerLine}`,
+    callbackNumber ? `Call back: ${callbackNumber}` : "",
+    showCallingLine ? `Calling line: ${callerId}` : "",
+    company ? `Company: ${company}` : "",
     input.outcome.trim() ? `Outcome: ${input.outcome.trim()}` : "",
     `Next step: ${nextStepLabel(actionItems)}`,
   ].filter(Boolean);
