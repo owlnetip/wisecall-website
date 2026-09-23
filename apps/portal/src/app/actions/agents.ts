@@ -155,7 +155,8 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
   if (!user) return { ok: false, error: "Not signed in." };
 
   // Billing gate: customers must be trialing/active to create an agent.
-  if (!isAdmin(user) && !hasActiveAccess(await getBillingForUser(user.id))) {
+  const billing = await getBillingForUser(user.id);
+  if (!isAdmin(user) && !hasActiveAccess(billing)) {
     return { ok: false, error: "Start your free trial first." };
   }
 
@@ -169,11 +170,12 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     .not("telnyx_number", "is", null);
   if (numberReadError) return { ok: false, error: numberReadError.message };
 
-  const hasIncludedNumber = (existingNumberedAgents ?? []).some((row) => {
+  const numberedCount = (existingNumberedAgents ?? []).filter((row) => {
     const number = String(row.telnyx_number ?? "").trim();
-    return number.startsWith("+");
-  });
-  const shouldAssignIncludedNumber = !hasIncludedNumber;
+    return number.length > 0;
+  }).length;
+  const includedAgents = Math.max(1, billing?.includedAgents ?? 1);
+  const shouldAssignIncludedNumber = numberedCount < includedAgents;
 
   const base = slugify(`${input.name}-${input.businessName}`) || "agent";
   const slug = `${base}-${crypto.randomUUID().slice(0, 8)}`;
@@ -250,9 +252,9 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
 
   let routing: CreateResult["routing"] = { provider: null, number: "", status: "unprovisioned" };
 
-  if (process.env.WISECALL_ROUTING_PROVIDER === "mor_sip") {
-    // MOR path: every new agent gets its own DDI from the MOR pool. No Telnyx
-    // involvement, existing Telnyx agents are completely untouched.
+  if (process.env.WISECALL_ROUTING_PROVIDER === "mor_sip" && shouldAssignIncludedNumber) {
+    // MOR path: included DDIs come from the MOR pool. Extra agents beyond
+    // included_agents stay in setup until another number is provisioned.
     try {
       const config = getSupabaseConfig();
       if (config) {

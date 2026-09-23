@@ -6,10 +6,7 @@ import {
   isEmailChannelSubscription,
   EMAIL_INCLUDED_REPLIES,
   VAT_RATE,
-  planCallsIncluded,
-  planEmailIncluded,
-  planLivechatIncluded,
-  planWhatsappIncluded,
+  dealFromStripeMetadata,
   planOverageRateGbp,
 } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
@@ -118,7 +115,8 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
 
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
   const notificationPhone = await fetchStripeCustomerPhone(getStripe(), customerId);
-  const plan = sub.metadata?.plan ?? "professional";
+  const deal = dealFromStripeMetadata(sub.metadata);
+  const plan = deal.plan;
   const newPeriodEnd = periodEnd(sub);
   const planActive = sub.status === "active" || sub.status === "trialing";
 
@@ -140,17 +138,19 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
       status: sub.status,
       trial_end: unixToIso(sub.trial_end),
       current_period_end: newPeriodEnd,
-      // Bundled channel allowances (single-platform model).
-      calls_monthly_allowance: planCallsIncluded(plan) || undefined,
+      // Bundled channel allowances. Custom deals (Home Cloud, managed) set
+      // explicit metadata so catalogue defaults are not applied.
+      calls_monthly_allowance: deal.callsAllowance || undefined,
       calls_period_end: newPeriodEnd,
-      // AI email is bundled into every plan. Enable it for any active/trialing
-      // plan so the email-inbound gate passes, and set the per-plan allowance.
       email_channel_enabled: planActive ? true : false,
       email_channel_status: planActive ? "active" : sub.status,
-      email_monthly_allowance: planEmailIncluded(plan) || undefined,
-      whatsapp_monthly_allowance: planWhatsappIncluded(plan) || undefined,
+      email_monthly_allowance: deal.emailAllowance || undefined,
+      whatsapp_monthly_allowance: deal.whatsappAllowance || undefined,
       whatsapp_period_end: newPeriodEnd,
-      livechat_monthly_allowance: planLivechatIncluded(plan) || undefined,
+      livechat_monthly_allowance: deal.livechatAllowance || undefined,
+      sms_monthly_allowance: deal.smsAllowance || undefined,
+      included_agents: deal.includedAgents,
+      overage_waived: deal.overageWaived,
       ...(periodChanged
         ? {
             calls_used_period: 0,
@@ -311,9 +311,12 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice) {
   // Look up their call overage for the closing period
   const { data: billing } = await service
     .from("wisecall_billing")
-    .select("user_id, plan, calls_overage_period")
+    .select("user_id, plan, calls_overage_period, overage_waived")
     .eq("stripe_customer_id", customerId)
     .maybeSingle();
+
+  if (billing?.overage_waived === true) return;
+  if (dealFromStripeMetadata(sub.metadata).overageWaived) return;
 
   const overageCount = (billing?.calls_overage_period as number | null) ?? 0;
   if (overageCount <= 0) return;

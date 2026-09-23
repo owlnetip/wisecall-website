@@ -5,6 +5,7 @@ import {
   PLAN_ANNUAL_MONTHLY_GBP,
   PLAN_ANNUAL_PENCE,
   PLAN_MONTHLY_GBP,
+  dealFromStripeMetadata,
   isBillingInterval,
   lineItemsForPlan,
 } from "./stripe";
@@ -33,4 +34,43 @@ test("isBillingInterval accepts month and year only", () => {
   assert.equal(isBillingInterval("month"), true);
   assert.equal(isBillingInterval("year"), true);
   assert.equal(isBillingInterval("week"), false);
+});
+
+test("dealFromStripeMetadata uses catalogue defaults when metadata is empty", () => {
+  const deal = dealFromStripeMetadata({ plan: "business" });
+  assert.equal(deal.callsAllowance, 750);
+  assert.equal(deal.emailAllowance, 2000);
+  assert.equal(deal.whatsappAllowance, 2000);
+  assert.equal(deal.livechatAllowance, 2000);
+  assert.equal(deal.smsAllowance, 2000);
+  assert.equal(deal.includedAgents, 1);
+  assert.equal(deal.overageWaived, false);
+});
+
+test("dealFromStripeMetadata honours Home Cloud custom allowances and two shared agents", () => {
+  const deal = dealFromStripeMetadata({
+    plan: "business",
+    deal: "home_cloud",
+    calls_allowance: "750",
+    email_allowance: "2000",
+    whatsapp_allowance: "2500",
+    livechat_allowance: "1000",
+    sms_allowance: "750",
+    included_agents: "2",
+    overage_waived: "true",
+    overage_gbp: "0",
+  });
+  assert.equal(deal.plan, "business");
+  assert.equal(deal.callsAllowance, 750);
+  assert.equal(deal.whatsappAllowance, 2500);
+  assert.equal(deal.livechatAllowance, 1000);
+  assert.equal(deal.smsAllowance, 750);
+  assert.equal(deal.includedAgents, 2);
+  assert.equal(deal.overageWaived, true);
+});
+
+test("dealFromStripeMetadata treats overage_gbp 0 as waived", () => {
+  const deal = dealFromStripeMetadata({ plan: "managed", calls_allowance: "30", overage_gbp: "0" });
+  assert.equal(deal.callsAllowance, 30);
+  assert.equal(deal.overageWaived, true);
 });
