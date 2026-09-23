@@ -63,6 +63,25 @@ export async function POST(request: Request) {
   }
   const completedCallId = callId;
 
+  const serviceForGate = getServiceSupabase();
+  if (serviceForGate) {
+    const { data: gate } = await serviceForGate
+      .from("wisecall_call_logs")
+      .select("metadata")
+      .eq("id", completedCallId)
+      .maybeSingle();
+    const metadata =
+      gate?.metadata && typeof gate.metadata === "object"
+        ? (gate.metadata as Record<string, unknown>)
+        : {};
+    if (metadata.awaiting_post_transfer_recording === true) {
+      return NextResponse.json({
+        ok: true,
+        skipped: "awaiting_post_transfer_recording",
+      });
+    }
+  }
+
   const sendSummaryEmail = () =>
     sendPostCallEmailForLog(completedCallId).catch((error) => {
       console.error(

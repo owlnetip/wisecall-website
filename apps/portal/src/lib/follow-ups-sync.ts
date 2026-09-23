@@ -181,9 +181,15 @@ export async function sendPostCallEmailForLog(
   }
 
   const metadata = isPlainObject(log.metadata) ? log.metadata : {};
+  const attachedAt = Date.parse(String(metadata.post_transfer_recording_attached_at || ""));
+  const sentAt = Date.parse(String(metadata.summary_email_sent_at || ""));
+  const resendAfterTransferRecording = Boolean(
+    attachedAt && (!sentAt || attachedAt > sentAt),
+  );
   if (
     metadata.summary_email_sent === true &&
-    (!actionItems.length || metadata.summary_email_included_next_actions === true)
+    (!actionItems.length || metadata.summary_email_included_next_actions === true) &&
+    !resendAfterTransferRecording
   ) {
     return { ok: true, skipped: "already_sent" };
   }

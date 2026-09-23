@@ -238,6 +238,73 @@ async function syncMorDevicePassword(options: {
   return usernameForHash;
 }
 
+async function syncMorDeviceTransferRecording(options: {
+  morApiUrl: string;
+  resellerUsername: string;
+  reseller: {
+    password: string;
+    apiKey: string;
+    uniqueHash: string;
+  };
+  morUserId: string;
+  morDeviceId: string;
+  webhookUrl: string;
+}): Promise<void> {
+  const { morApiUrl, resellerUsername, reseller, morUserId, morDeviceId, webhookUrl } = options;
+  if (!webhookUrl) return;
+
+  const deviceHash = reseller.uniqueHash || (await sha1(`${morUserId}${reseller.apiKey}`));
+  const devicesParams = new URLSearchParams({
+    u: resellerUsername,
+    hash: deviceHash,
+    user_id: morUserId,
+    show_hidden_devices: "0",
+  });
+  if (reseller.password) devicesParams.set("p", reseller.password);
+
+  const devicesXml = await morGet(
+    `${morApiUrl}/billing/api/devices_get?${devicesParams.toString()}`,
+  );
+  const block = morDeviceBlock(devicesXml, morDeviceId);
+  if (!block) {
+    console.warn("⚠️ MOR transfer recording: device was not found for webhook update");
+    return;
+  }
+
+  const usernameForHash = xmlTag(block, "username") || "";
+  const authentication = xmlTag(block, "authentication") || "0";
+  const host = xmlTag(block, "ipaddr") || xmlTag(block, "host") || "dynamic";
+  const port = xmlTag(block, "port") || "5060";
+  const updateHash = await sha1(
+    `${morDeviceId}${authentication}${usernameForHash}${host}${port}${reseller.apiKey}`,
+  );
+
+  const updateParams = new URLSearchParams({
+    u: resellerUsername,
+    device: morDeviceId,
+    authentication,
+    username: usernameForHash,
+    host,
+    port,
+    hash: updateHash,
+    webhook_url_for_call_end: webhookUrl,
+    // Best-effort: MOR's documented device_update list does not include the
+    // GUI "Record calls for this Device" toggle. Harmless if ignored.
+    record: "1",
+    record_calls: "1",
+  });
+  if (reseller.password) updateParams.set("p", reseller.password);
+
+  const updateXml = await morGet(
+    `${morApiUrl}/billing/api/device_update?${updateParams.toString()}`,
+  );
+  console.log("MOR device_update transfer-recording response:", updateXml.slice(0, 200));
+  const updateErr = morResponseError(updateXml);
+  if (updateErr) {
+    console.warn(`⚠️ MOR device_update transfer-recording: ${updateErr}`);
+  }
+}
+
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -333,7 +400,7 @@ serve(async (req) => {
 
     const { data: existingSip } = await supabase
       .from("wisecall_sip_endpoints")
-      .select("sip_username, sip_password, mor_device_id")
+      .select("sip_username, sip_password, mor_device_id, transport, metadata")
       .eq("profile_id", profile_id)
       .maybeSingle();
 
@@ -491,6 +558,29 @@ serve(async (req) => {
       sipPassword,
     });
     console.log(`✅ MOR SIP password synced for device ${morDeviceId}`);
+
+    const webhookToken = (
+      Deno.env.get("WISECALL_MOR_CALL_END_SECRET") ||
+      Deno.env.get("WISECALL_WEBHOOK_SECRET") ||
+      Deno.env.get("WISECALL_PROVISION_SECRET") ||
+      ""
+    ).trim();
+    const callEndWebhookUrl = webhookToken
+      ? `${SUPABASE_URL.replace(/\/+$/, "")}/functions/v1/wisecall-mor-call-end?token=${encodeURIComponent(webhookToken)}`
+      : "";
+    if (callEndWebhookUrl) {
+      await syncMorDeviceTransferRecording({
+        morApiUrl: MOR_API_URL,
+        resellerUsername,
+        reseller,
+        morUserId,
+        morDeviceId,
+        webhookUrl: callEndWebhookUrl,
+      });
+      console.log("✅ MOR SIP call-end webhook set for post-transfer recording");
+    } else {
+      console.warn("⚠️ No webhook secret; MOR call-end webhook was not written onto the SIP device");
+    }
 
     const apiSecret = MOR_API_SECRET.trim();
     const staleDidProfileId = "00000000-0000-0000-0000-000000000000";
@@ -703,6 +793,10 @@ serve(async (req) => {
     const morTransport = String(existingSip?.transport || "udp").toLowerCase();
     const morSignalingPort = morTransport === "tls" ? 5061 : 5060;
     const morSipProxy = `${MOR_SIP_HOST}:${morSignalingPort}`;
+    const existingSipMetadata =
+      existingSip?.metadata && typeof existingSip.metadata === "object"
+        ? (existingSip.metadata as Record<string, unknown>)
+        : {};
     const sipEndpointRow: Record<string, unknown> = {
       profile_id,
       pbx_type: "mor",
@@ -712,6 +806,11 @@ serve(async (req) => {
       sip_proxy: morSipProxy,
       is_enabled: true,
       mor_device_id: morDeviceId,
+      metadata: {
+        ...existingSipMetadata,
+        record_after_transfer: true,
+        call_end_webhook: callEndWebhookUrl || existingSipMetadata.call_end_webhook || null,
+      },
     };
     // Keep transport if the customer already switched to TLS/TCP in the portal —
     // reprovisioning must not silently reset them back to UDP.
@@ -741,6 +840,7 @@ serve(async (req) => {
       sipDomain: MOR_SIP_HOST,
       morUserId,
       morDeviceId,
+      record_after_transfer: true,
     };
 
     const { error: profileErr } = await supabase
