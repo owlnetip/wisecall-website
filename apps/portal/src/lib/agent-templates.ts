@@ -1244,6 +1244,9 @@ const insurance: AgentTemplate = {
   ],
 };
 
+// Generic care and nursing homes. Oaklands Manor is a separate call plan
+// (Anne, Autumn / Summer / Spring, and the home's own extensions) in
+// oaklands-manor-agent.ts — do not fold that home back into this template.
 const careHome: AgentTemplate = {
   id: "care_home",
   label: "Care home & home care",
