@@ -128,8 +128,8 @@
       ".launcher svg{width:28px;height:28px}" +
       ".launcher.has-logo{width:auto;height:64px;padding:0 16px;border-radius:999px;background:#fff;border:1px solid rgba(18,58,75,.12)}" +
       ".launcher.has-logo img{height:32px;width:auto;max-width:168px;display:block}" +
-      ".hdr .av.logo{width:auto;height:auto;border-radius:10px;background:#fff;padding:4px 8px}" +
-      ".hdr .av.logo img{height:22px;width:auto;max-width:140px;display:block}" +
+      ".hdr .av.logo{width:auto;height:auto;border-radius:10px;background:#fff;padding:5px 10px}" +
+      ".hdr .av.logo img{height:28px;width:auto;max-width:180px;display:block}" +
       ".panel{position:fixed;bottom:92px;" +
       SIDE +
       ":20px;width:374px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.32);display:flex;flex-direction:column;overflow:hidden}" +
@@ -179,14 +179,19 @@
       '" aria-label="Open chat">' +
       launcherInner +
       "</button>" +
-      '<div class="panel hidden" role="dialog" aria-label="Chat">' +
+      '<div class="panel hidden" role="dialog" aria-label="' +
+      esc(cfg.title || "Chat") +
+      '">' +
       '<div class="hdr">' +
       avatar +
-      '<div><div class="t">' +
-      esc(cfg.title) +
-      '</div><div class="s">' +
-      esc(cfg.assistant_name) +
-      '</div></div><button class="x" aria-label="Close">&times;</button></div>' +
+      (logo
+        ? ""
+        : '<div><div class="t">' +
+          esc(cfg.title) +
+          '</div><div class="s">' +
+          esc(cfg.assistant_name) +
+          "</div></div>") +
+      '<button class="x" aria-label="Close">&times;</button></div>' +
       '<div class="body"></div>' +
       '<div class="foot"><input type="text" placeholder="Type your message…" aria-label="Message"/><button class="send">Send</button></div>' +
       '<div class="pb">Powered by <a href="https://wisecall.io" target="_blank" rel="noopener">WiseCall</a></div>' +
