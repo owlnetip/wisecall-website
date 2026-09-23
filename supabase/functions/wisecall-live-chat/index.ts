@@ -42,6 +42,25 @@ function normaliseText(value: unknown): string {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function httpsUrl(value: unknown): string | null {
+  const raw = String(value || "").trim();
+  if (!/^https:\/\//i.test(raw)) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:") return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+function cssFontFamily(value: unknown): string | null {
+  const raw = String(value || "").trim();
+  if (!raw || raw.length > 160) return null;
+  if (!/^[\w\s,'"().-]+$/.test(raw)) return null;
+  return raw;
+}
+
 function asEmailList(value: unknown): string[] {
   if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
   if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
@@ -484,6 +503,9 @@ serve(async (req) => {
           `Hi, I am ${profile.receptionist_name || "WiseCall"}. How can I help today?`,
         accent_color: profile.metadata?.chat_accent_color || "#7de8eb",
         background_color: profile.metadata?.chat_background_color || "#172929",
+        logo_url: httpsUrl(profile.metadata?.chat_logo_url),
+        font_family: cssFontFamily(profile.metadata?.chat_font_family),
+        font_stylesheet: httpsUrl(profile.metadata?.chat_font_stylesheet),
       });
     }
 
