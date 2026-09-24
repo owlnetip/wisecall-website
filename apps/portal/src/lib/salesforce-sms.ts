@@ -26,6 +26,8 @@ export type SalesforceSmsRecord = {
   ownerId: string | null;
   ownerName: string | null;
   ownerEmail: string | null;
+  /** Person Account shown in Salesforce; id remains its Contact for Task.WhoId. */
+  personAccountId?: string;
 };
 
 export type ReplyRouteConfirmation = {
@@ -118,9 +120,10 @@ export function buildPhoneSosl(digits: string): string {
     throw new Error("Salesforce phone lookup requires an 8 to 15 digit number");
   }
   return [
-    `FIND {${digits}} IN PHONE FIELDS RETURNING`,
+    `FIND {${digits}${digits.startsWith("44") ? ` OR 0${digits.slice(2)} OR 00${digits}` : ""}} IN PHONE FIELDS RETURNING`,
     "Contact(Id,Name,Phone,MobilePhone,HomePhone,OtherPhone,OwnerId,Owner.Name,Owner.Email),",
-    "Lead(Id,Name,Phone,MobilePhone,OwnerId,Owner.Name,Owner.Email WHERE IsConverted = false)",
+    "Lead(Id,Name,Phone,MobilePhone,OwnerId,Owner.Name,Owner.Email WHERE IsConverted = false),",
+    "Account(Id,Name,Phone,IsPersonAccount,PersonContactId,OwnerId,Owner.Name,Owner.Email WHERE IsPersonAccount = true)",
   ].join(" ");
 }
 
@@ -156,8 +159,12 @@ export function parseSalesforceSearchRecords(
     if (!entry || typeof entry !== "object") continue;
     const row = entry as Record<string, unknown>;
     const attributes = row.attributes as { type?: unknown } | undefined;
-    const objectType = attributes?.type === "Lead" || attributes?.type === "Contact" ? attributes.type : null;
-    const id = asString(row.Id);
+    const isPersonAccount = attributes?.type === "Account" && row.IsPersonAccount === true;
+    const objectType = isPersonAccount ? "Contact" : attributes?.type === "Lead" || attributes?.type === "Contact" ? attributes.type : null;
+    const id = asString(isPersonAccount ? row.PersonContactId : row.Id);
+    if (isPersonAccount && phoneFields(row).some(phone => canonicalSmsDigits(phone) === destinationDigits) && (!id || !/^003[a-zA-Z0-9]{12}(?:[a-zA-Z0-9]{3})?$/.test(id))) {
+      throw new Error("Matching Person Account has no accessible linked Contact. Nothing was sent.");
+    }
     if (!objectType || !id || seen.has(id) || !SALESFORCE_ID.test(id)) continue;
     const owner = row.Owner && typeof row.Owner === "object" ? (row.Owner as Record<string, unknown>) : null;
     const record: SalesforceSmsRecord = {
@@ -168,6 +175,7 @@ export function parseSalesforceSearchRecords(
       ownerId: asString(row.OwnerId),
       ownerName: asString(owner?.Name),
       ownerEmail: asString(owner?.Email),
+      ...(isPersonAccount ? { personAccountId: asString(row.Id) || undefined } : {}),
     };
     if (!recordMatchesNumber(record, destinationDigits)) continue;
     seen.add(id);

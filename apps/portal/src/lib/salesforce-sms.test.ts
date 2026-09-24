@@ -73,7 +73,7 @@ test("normalises UK local, 00, and bare country-code numbers to the same digits"
 
 test("builds a digit-only Salesforce phone lookup", () => {
   const sosl = buildPhoneSosl("447700900123");
-  assert.match(sosl, /FIND \{447700900123\} IN PHONE FIELDS/);
+  assert.match(sosl, /FIND \{447700900123 OR 07700900123 OR 00447700900123\} IN PHONE FIELDS/);
   assert.match(sosl, /IsConverted = false/);
   assert.throws(() => buildPhoneSosl("07700 900123"), /8 to 15 digit/);
 });

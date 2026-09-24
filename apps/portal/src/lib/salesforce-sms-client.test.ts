@@ -69,7 +69,7 @@ test("number lookup queries Salesforce phone fields and drops non-matches", asyn
       });
     },
   });
-  assert.match(sosl, /FIND \{447700900123\} IN PHONE FIELDS/);
+  assert.match(sosl, /FIND \{447700900123 OR 07700900123 OR 00447700900123\} IN PHONE FIELDS/);
   assert.deepEqual(matches.map((match) => match.name), ["Ada Lovelace"]);
 });
 
