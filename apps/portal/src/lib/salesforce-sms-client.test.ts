@@ -4,7 +4,6 @@ import {
   createSalesforceSmsTask,
   requestSalesforceToken,
   resetSalesforceTokenCache,
-  sendVonageSms,
 } from "./salesforce-sms-client";
 import { lookupSalesforceByPhone } from "./salesforce-sms-client";
 import type { SalesforceSmsEnv, SalesforceSmsRecord } from "./salesforce-sms";
@@ -98,50 +97,6 @@ test("reply tasks are assigned to the confirmed recipient on the confirmed recor
   assert.equal(task.Subject, "SMS reply");
   assert.match(String(task.Description), /Yes Thursday works/);
   assert.equal(result.taskId, "00T000000000001AAA");
-});
-
-test("Vonage send uses the SMS phone number and surfaces provider errors", async () => {
-  let posted: Record<string, unknown> = {};
-  const sent = await sendVonageSms({
-    apiKey: "key",
-    apiSecret: "secret",
-    from: "+447700900000",
-    to: "+447700900123",
-    text: "Hello",
-    fetchImpl: async (_url, init) => {
-      posted = JSON.parse(String(init?.body || "{}"));
-      return jsonResponse({ messages: [{ status: "0", "message-id": "abc" }] });
-    },
-  });
-  assert.equal(sent.messageId, "abc");
-  assert.equal(posted.from, "447700900000");
-  assert.equal(posted.to, "447700900123");
-
-  await assert.rejects(
-    () =>
-      sendVonageSms({
-        apiKey: "key",
-        apiSecret: "secret",
-        from: "WiseCall",
-        to: "+447700900123",
-        text: "Hello",
-        fetchImpl: async () => jsonResponse({ messages: [{ status: "0", "message-id": "nope" }] }),
-      }),
-    /phone number/,
-  );
-
-  await assert.rejects(
-    () =>
-      sendVonageSms({
-        apiKey: "key",
-        apiSecret: "secret",
-        from: "447700900000",
-        to: "447700900123",
-        text: "Hello",
-        fetchImpl: async () => jsonResponse({ messages: [{ status: "1", "error-text": "Missing from param" }] }),
-      }),
-    /Missing from param/,
-  );
 });
 
 function jsonResponse(body: unknown, status = 200) {

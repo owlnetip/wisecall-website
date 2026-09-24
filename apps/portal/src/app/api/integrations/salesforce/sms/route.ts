@@ -4,8 +4,8 @@ import {
   createSalesforceSmsTask,
   getSalesforceAccess,
   lookupSalesforceByPhone,
-  sendVonageSms,
 } from "@/lib/salesforce-sms-client";
+import { sendViaAgentSms, smsRequestId } from "@/lib/salesforce-sms-transport";
 import {
   canonicalSmsDigits,
   decideSalesforceSms,
@@ -132,29 +132,25 @@ export async function POST(request: Request) {
     return json({ ok: false, error: "This agent is not enabled for Salesforce SMS." }, 403);
   }
 
-  const apiKey = process.env.VONAGE_API_KEY?.trim() || "";
-  const apiSecret = process.env.VONAGE_API_SECRET?.trim() || "";
-  if (!apiKey || !apiSecret) {
-    return json({ ok: false, error: "Vonage credentials are not configured." }, 503);
-  }
-
   const supabase = getServiceSupabase();
   if (!supabase) return json({ ok: false, error: "Server not configured." }, 503);
 
   try {
     const access = await getSalesforceAccess(setup.config);
+    const requestId = smsRequestId(parsed.value.profileId, parsed.value.idempotencyKey);
     const deps: SalesforceSmsDeps = {
       lookup: (digits) => lookupSalesforceByPhone({ access, digits }),
       loadBinding: (profileId, phoneDigits) => loadSmsBinding(supabase, profileId, phoneDigits),
       saveBinding: (binding) => saveSmsBinding(supabase, binding),
       findSent: (profileId, idempotencyKey) => findSentSms(supabase, profileId, idempotencyKey),
       saveMessage: (row) => saveSmsMessage(supabase, { ...row, direction: "outbound" }),
-      sendSms: ({ from, to, text }) => sendVonageSms({ apiKey, apiSecret, from, to, text }),
+      sendSms: ({ from, to, text }) => sendViaAgentSms({
+        invoke: (name, options) => supabase.functions.invoke(name, options),
+        profileId: parsed.value.profileId, requestId, from, to, text,
+      }),
       logSalesforceTask: (input) => createSalesforceSmsTask({ access, ...input }),
-      recordUsage: async (profileId) => {
-        const { error } = await supabase.rpc("wisecall_record_sms_message", { p_profile_id: profileId });
-        if (error) console.error("[salesforce-sms] usage", error.message);
-      },
+      // The existing edge sender records usage once; do not bill again here.
+      recordUsage: async () => {},
       resolveFromNumber: (profileId, requestedFrom) => resolveAgentSmsNumber(supabase, profileId, requestedFrom),
     };
     const result = await executeSalesforceOutbound(parsed.value, deps);

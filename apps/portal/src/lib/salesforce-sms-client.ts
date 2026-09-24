@@ -136,38 +136,3 @@ function salesforceErrorMessage(payload: unknown, fallback: string): string {
   }
   return fallback;
 }
-
-export async function sendVonageSms(input: {
-  apiKey: string;
-  apiSecret: string;
-  from: string;
-  to: string;
-  text: string;
-  fetchImpl?: FetchLike;
-}): Promise<{ messageId: string | null }> {
-  const fetchImpl = input.fetchImpl ?? fetch;
-  const from = input.from.replace(/\D/g, "");
-  const to = input.to.replace(/\D/g, "");
-  if (!/^\d{8,15}$/.test(from)) {
-    throw new Error("SMS sender must be the phone number, not a name.");
-  }
-  const response = await fetchImpl("https://rest.nexmo.com/sms/json", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      api_key: input.apiKey,
-      api_secret: input.apiSecret,
-      from,
-      to,
-      text: input.text,
-    }),
-    signal: AbortSignal.timeout(8000),
-  });
-  const payload = await response.json().catch(() => ({}));
-  const message = payload?.messages?.[0];
-  if (!response.ok || message?.status !== "0") {
-    const errorText = typeof message?.["error-text"] === "string" ? message["error-text"] : "Vonage send failed.";
-    throw new Error(errorText);
-  }
-  return { messageId: typeof message["message-id"] === "string" ? message["message-id"] : null };
-}
