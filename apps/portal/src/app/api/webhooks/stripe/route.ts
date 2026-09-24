@@ -131,6 +131,16 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
   const prevPeriodEnd = (existing?.calls_period_end as string | null) ?? null;
   const periodChanged = Boolean(newPeriodEnd && prevPeriodEnd && newPeriodEnd !== prevPeriodEnd);
 
+  // Bill the closing period's overage before the reset below zeroes it.
+  const stripe = getStripe();
+  if (periodChanged && stripe && customerId) {
+    await claimAndBillCallOverage(stripe, service, {
+      userId,
+      customerId,
+      subscriptionId: sub.id,
+    });
+  }
+
   await service.from("wisecall_billing").upsert(
     {
       user_id: userId,
@@ -308,11 +318,41 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice) {
     : (invoice.customer as { id?: string } | null)?.id;
   if (!customerId) return;
 
-  // Look up their call overage for the closing period
   const { data: billing } = await service
     .from("wisecall_billing")
-    .select("user_id, plan, calls_overage_period")
+    .select("user_id")
     .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  if (!billing?.user_id) return;
+
+  // Stripe only accepts new items on a draft invoice (renewals sit as a draft
+  // for ~1h). A first invoice is finalised immediately and has no overage anyway.
+  if (invoice.status !== "draft") return;
+
+  await claimAndBillCallOverage(stripe, service, {
+    userId: billing.user_id as string,
+    customerId,
+    subscriptionId: subId,
+    invoiceId: invoice.id,
+  });
+}
+
+type ServiceClient = NonNullable<ReturnType<typeof getServiceSupabase>>;
+
+// Bills the call overage accrued so far exactly once. Called from invoice.created
+// AND from the period-change reset in upsertPlanSubscription, because Stripe
+// doesn't order those events: if the reset landed first it used to zero the
+// counter before the invoice read it, and the overage was never charged.
+// Whichever runs first claims the count (compare-and-set to 0); the other sees 0.
+async function claimAndBillCallOverage(
+  stripe: Stripe,
+  service: ServiceClient,
+  opts: { userId: string; customerId: string; subscriptionId?: string | null; invoiceId?: string },
+): Promise<void> {
+  const { data: billing } = await service
+    .from("wisecall_billing")
+    .select("plan, calls_overage_period")
+    .eq("user_id", opts.userId)
     .maybeSingle();
 
   const overageCount = (billing?.calls_overage_period as number | null) ?? 0;
@@ -323,19 +363,56 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice) {
   const amountPence = Math.round(overageCount * rateGbp * 100);
   if (amountPence <= 0) return;
 
+  const { data: claimed } = await service
+    .from("wisecall_billing")
+    .update({ calls_overage_period: 0, updated_at: new Date().toISOString() })
+    .eq("user_id", opts.userId)
+    .eq("calls_overage_period", overageCount)
+    .select("user_id");
+  if (!claimed?.length) {
+    console.log(`stripe webhook: call overage for user ${opts.userId} already claimed or changed`);
+    return;
+  }
+
+  // From the reset path there's no invoice id: attach to the renewal draft if
+  // Stripe already made it, otherwise leave it pending for the next invoice.
+  let invoiceId = opts.invoiceId;
+  if (!invoiceId && opts.subscriptionId) {
+    try {
+      const drafts = await stripe.invoices.list({
+        subscription: opts.subscriptionId,
+        status: "draft",
+        limit: 1,
+      });
+      invoiceId = drafts.data[0]?.id;
+    } catch {
+      invoiceId = undefined;
+    }
+  }
+
   try {
     await stripe.invoiceItems.create({
-      customer: customerId,
-      invoice: invoice.id,
+      customer: opts.customerId,
+      ...(invoiceId ? { invoice: invoiceId } : {}),
       amount: amountPence,
       currency: "gbp",
       description: `AI call overage, ${overageCount} call${overageCount === 1 ? "" : "s"} @ £${rateGbp.toFixed(2)} each`,
       tax_rates: [VAT_RATE],
     });
     console.log(
-      `stripe webhook: added call overage item, ${overageCount} calls @ £${rateGbp} = £${(amountPence / 100).toFixed(2)} for user ${billing?.user_id}`,
+      `stripe webhook: added call overage item, ${overageCount} calls @ £${rateGbp} = £${(amountPence / 100).toFixed(2)} for user ${opts.userId} (${invoiceId ?? "pending"})`,
     );
   } catch (err) {
+    // Put the claimed count back so the next event can bill it.
+    const { data: now } = await service
+      .from("wisecall_billing")
+      .select("calls_overage_period")
+      .eq("user_id", opts.userId)
+      .maybeSingle();
+    await service
+      .from("wisecall_billing")
+      .update({ calls_overage_period: ((now?.calls_overage_period as number | null) ?? 0) + overageCount })
+      .eq("user_id", opts.userId);
     console.error(
       "stripe webhook: failed to add overage invoice item",
       err instanceof Error ? err.message : err,
