@@ -365,7 +365,7 @@ export const ukAiReceptionistComparison = {
       'Phone line',
       'Included. Dedicated number, or plug in your PBX.',
       'Forward the number you already have.',
-      'Fonio number, or SIP on Team and up',
+      'Fonio number, or bring your own on Team and up',
       'Forward. Summaries to WhatsApp',
       'Forwarding, by plan',
       'Your number. Human and AI products',
@@ -404,7 +404,7 @@ export const ukAiReceptionistComparison = {
     ['From', '£99/mo rolling', '€99/mo Solo'],
     ['Try it', '20 free inbound AI calls', '30-day money-back'],
     ['Hosting', 'UK', 'Nuremberg'],
-    ['Phone', 'Included or your PBX', 'Fonio number or SIP on Team and up'],
+    ['Phone', 'Included or your PBX', 'Fonio number, or bring your own numbers on Team and up'],
     ['Channels', 'Phone, email, WhatsApp, live chat, SMS', 'Phone first, WhatsApp separate'],
     ['Dental', 'Dentally, no clinical advice', 'Generic calendar, EU GDPR'],
     ['Invoice', 'GBP excl. VAT', 'Euros'],
@@ -435,7 +435,7 @@ export const ukAiReceptionistComparison = {
     },
     {
       question: 'Where is WiseCall data stored?',
-      answer: 'UK. UK carrier connectivity. No clinical advice. If a person is needed, it escalates.',
+      answer: 'UK. No clinical advice. If a person is needed, it escalates.',
     },
   ],
 };
@@ -444,13 +444,14 @@ export const comparisonPages = [
   {
     slug: 'wisecall-vs-voicemail',
     keyword: 'voicemail alternative',
-    title: 'WiseCall vs Voicemail | AI Receptionist Alternative to Voicemail UK',
+    title: 'AI Receptionist vs Voicemail UK | WiseCall',
     description:
       'Most callers hang up rather than leave a voicemail. See what changes for a UK business when WiseCall answers instead of a recorded message.',
     eyebrow: 'Comparison',
     h1: 'WiseCall vs <span class="text-[#7de8eb]">Voicemail</span>',
     lead: 'Voicemail depends on the caller leaving a message and someone finding time to listen to it. WiseCall answers the call.',
     subject: 'Voicemail',
+    label: 'WiseCall vs Voicemail',
     columns: ['What happens', 'WiseCall', 'Voicemail'],
     rows: [
       ['When the phone isn’t answered', 'WiseCall answers immediately, every time', 'The caller hears a recorded message and has to leave one'],
@@ -472,13 +473,14 @@ export const comparisonPages = [
   {
     slug: 'wisecall-vs-answering-service',
     keyword: 'AI receptionist vs answering service',
-    title: 'WiseCall vs Answering Service | AI Receptionist vs Human Call Answering UK',
+    title: 'AI Receptionist vs Answering Service UK | WiseCall',
     description:
       'Compare WiseCall’s AI receptionist with traditional human answering services on availability, cost, consistency and the detail captured on every call.',
     eyebrow: 'Comparison',
     h1: 'WiseCall vs <span class="text-[#7de8eb]">Answering Service</span>',
     lead: 'Traditional answering services take a message. WiseCall answers, asks the right questions, and hands your team a structured summary.',
     subject: 'Answering service',
+    label: 'WiseCall vs Answering Service',
     columns: ['What matters', 'WiseCall', 'Traditional answering service'],
     rows: [
       ['Availability', '24/7, no shift gaps', 'Usually business hours, or evenings and weekends at a premium'],

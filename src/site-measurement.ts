@@ -103,8 +103,11 @@ function hostIs(host: string, name: string): boolean {
   return host === name || host.endsWith(`.${name}`);
 }
 
+const YANDEX_HOSTS = ['yandex.ru', 'yandex.com', 'yandex.com.tr', 'yandex.by', 'yandex.kz', 'ya.ru'];
+
 export function isYandexHost(host: string): boolean {
-  return /(^|\.)yandex\./i.test(host);
+  const value = host.toLowerCase();
+  return YANDEX_HOSTS.some((name) => value === name || value.endsWith(`.${name}`));
 }
 
 export function isOtherSearchHost(host: string): boolean {
@@ -154,7 +157,12 @@ export function classifyVisit({
     src = 'paid_google';
   } else if (fbclid || META_SOURCES.has(sourceLower)) {
     src = 'paid_meta';
-  } else if (msclkid || (paidMedium && sourceLower === 'bing')) {
+  } else if (
+    msclkid ||
+    (paidMedium && sourceLower === 'bing') ||
+    sourceLower === 'microsoft' ||
+    sourceLower === 'bingads'
+  ) {
     src = 'paid_other';
   } else {
     const host = referrerHost(referrer);

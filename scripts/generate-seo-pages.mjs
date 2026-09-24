@@ -335,15 +335,18 @@ function faqSection(faqs, title = 'Common Questions') {
 </section>`;
 }
 
-function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', { primaryHref = TRIAL_SETUP_URL, primaryLabel = 'Try it now', secondaryHref = '/how-it-works/', secondaryLabel = 'See how WiseCall works' } = {}) {
+function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', options) {
+  const actions = options
+    ? `<div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="${options.primaryHref ?? TRIAL_SETUP_URL}" class="btn btn-primary px-8 py-4">${esc(options.primaryLabel ?? 'Try it now')}</a>
+      <a href="${options.secondaryHref ?? '/how-it-works/'}" class="btn btn-secondary px-8 py-4">${esc(options.secondaryLabel ?? 'See how WiseCall works')}</a>
+    </div>`
+    : trialPair('footer', { center: true });
   return `<section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto text-center card-strong p-10 md:p-14">
     <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8">${esc(text)}</p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="${primaryHref}" class="btn btn-primary px-8 py-4">${esc(primaryLabel)}</a>
-      <a href="${secondaryHref}" class="btn btn-secondary px-8 py-4">${esc(secondaryLabel)}</a>
-    </div>
+    ${actions}
   </div>
 </section>`;
 }
@@ -546,7 +549,7 @@ ${trustStrip()}
 ${industries.map((industry) => `<a href="${industryPath(industry)}" class="card p-7 block hover:border-[#7de8eb]/40"><h2 class="text-2xl font-bold mb-3">${esc(industry.name)}</h2><p class="text-white/65 leading-relaxed">${esc(industry.description)}</p><span class="inline-flex mt-5 text-[#7de8eb] font-bold">View ${esc(industry.keyword)}</span></a>`).join('')}
 </div></section>
 <section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these. Get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
-${ctaBlock('Don’t see your industry?', 'Book a demo and we will show you how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
+${ctaBlock('Don’t see your industry?', 'Try 20 calls free, no card, or call Ava and hear how a call is handled. A demo can still show how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: page.path }])]);
 }
 
@@ -571,7 +574,7 @@ ${relatedLinks([
   { path: '/legal', title: 'Legal intake example', text: 'See how WiseCall supports law firm intake.' },
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the plan structure and what is included.' },
 ])}
-${ctaBlock('Want to hear how WiseCall would answer your calls?', 'Book a demo and we will walk through your current call flow.')}`;
+${ctaBlock('Want to hear how WiseCall would answer your calls?', 'Try 20 calls free, no card, or call Ava and hear a real answer. A demo can still walk through your current call flow.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'How It Works', path: page.path }]), {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
@@ -729,7 +732,7 @@ function renderComparison() {
     {
       title: 'Fonio',
       paragraphs: [
-        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds SIP and outbound campaigns. 30-day money-back. Hosted in Germany.',
+        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds bring-your-own numbers and outbound campaigns. 30-day money-back. Hosted in Germany.',
         'Fine if you are happy paying in euros and keeping data in the EU. Less fine if you wanted a UK receptionist product with a pound invoice.',
       ],
     },
@@ -951,6 +954,10 @@ ${relatedLinks([
   ], { headerCtaHref: TRY_PAGE_URL, headerCtaLabel: 'Call Ava' });
 }
 
+function comparisonNavLabel(comparison) {
+  return comparison.label || `WiseCall vs ${comparison.subject}`;
+}
+
 function renderComparisonPage(comparison) {
   const page = {
     title: comparison.title,
@@ -963,14 +970,14 @@ function renderComparisonPage(comparison) {
   const body = `${hero({ eyebrow: comparison.eyebrow, h1: comparison.h1, lead: comparison.lead, trialPair: true, panel: comparisonHeroPanel })}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto overflow-x-auto card p-3"><table class="w-full text-left text-sm"><thead><tr class="text-[#7de8eb]">${comparison.columns.map((col) => `<th class="p-4">${esc(col)}</th>`).join('')}</tr></thead><tbody>${comparison.rows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell) => `<td class="p-4 text-white/72">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
 ${hearAvaLine(hear[0], hear[1])}
-${faqSection(comparison.faqs, `${page.title.split('|')[0].trim()} Questions`)}
+${faqSection(comparison.faqs, `${comparisonNavLabel(comparison)} Questions`)}
 ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'AI receptionist UK comparison', text: 'See the broader comparison against human reception and voicemail.' },
 ])}
 ${trialEnd(comparison.ctaTitle, comparison.ctaText)}`;
-  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: page.title.split('|')[0].trim(), path: page.path }]), faqSchema(comparison.faqs)], { headerCtaHref: TRIAL_SETUP_URL, headerCtaLabel: 'Try 20 calls free' });
+  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: comparisonNavLabel(comparison), path: page.path }]), faqSchema(comparison.faqs)], { headerCtaHref: TRIAL_SETUP_URL, headerCtaLabel: 'Try 20 calls free' });
 }
 
 function renderCalculator() {
@@ -982,7 +989,7 @@ function renderCalculator() {
   const body = `${hero({ eyebrow: 'Resource', h1: 'Missed Call <span class="text-[#7de8eb]">Calculator</span>', lead: 'Estimate the potential monthly opportunity from calls your business does not answer. Use your own inputs and treat the result as a planning estimate.', panel: { title: 'What the calculator estimates', items: ['Missed calls per month', 'Missed new enquiries', 'Monthly value at risk', 'Annual value at risk', 'Industry presets you can adjust'] } })}
 ${missedCallCalculatorBlock()}
 ${relatedLinks(industries.map((industry) => ({ path: industryPath(industry), title: industry.keyword, text: `See how missed call recovery applies to ${industry.name.toLowerCase()}.` })))}
-${ctaBlock('Want help reducing missed calls?', 'Book a demo and see how WiseCall can answer, summarise and route calls for your team.')}`;
+${ctaBlock('Want help reducing missed calls?', 'Try 20 calls free, no card, or call Ava and hear a call answered. A demo can still show how WiseCall answers, summarises and routes calls for your team.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Resources', path: '/resources/' }, { name: 'Missed Call Calculator', path: page.path }])]);
 }
 
@@ -1007,7 +1014,7 @@ ${relatedLinks([
   { path: '/dental', title: 'Dental integrations', text: 'See dental practice workflow examples.' },
   { path: '/legal', title: 'Legal intake systems', text: 'See law firm intake workflow examples.' },
 ])}
-${ctaBlock('Want WiseCall connected to your workflow?', 'Book a demo and we will map your current systems, handover points and routing needs.')}`;
+${ctaBlock('Want WiseCall connected to your workflow?', 'Try 20 calls free, no card, or call Ava. A demo can still map your current systems, handover points and routing needs.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Integrations', path: page.path }]), faqSchema([
     { question: 'Can WiseCall integrate with our existing CRM?', answer: 'WiseCall can send structured call summaries and caller details into CRM and workflow systems where suitable integration routes are available. The exact setup depends on the CRM, available APIs and the level of automation required.' },
     { question: 'Can WiseCall update calendars?', answer: 'WiseCall can support calendar-led workflows such as callback windows and booking requests where the business has a clear availability process. Live booking depends on the calendar or diary system and the permissions available.' },
@@ -1017,7 +1024,7 @@ ${ctaBlock('Want WiseCall connected to your workflow?', 'Book a demo and we will
 
 function renderCaseStudies() {
   const page = {
-    title: 'WiseCall in Action | Example AI Call Handling for UK Businesses',
+    title: 'AI Receptionist Examples for UK Businesses | WiseCall',
     description:
       'See how WiseCall handles calls for UK service businesses: anonymised example calls, the summaries your team receives, and the safeguards behind every call.',
     path: '/case-studies/',
@@ -1089,7 +1096,7 @@ ${relatedLinks([
   { path: '/dental', title: 'Dental FAQs', text: 'See an example of self-contained vertical FAQs.' },
   { path: '/blog/missed-calls-cost-uk-businesses/', title: 'Missed call article', text: 'Use research-led content while transcript data matures.' },
 ])}
-${ctaBlock('Need help turning calls into useful content?', 'Book a demo and we can explain what WiseCall captures and how it can support future reporting.')}`;
+${ctaBlock('Need help turning calls into useful content?', 'Try 20 calls free, no card, or call Ava to hear what gets captured. A demo can still explain how that supports your reporting.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Resources', path: '/resources/' }, { name: 'Call Transcript Guide', path: page.path }]), faqSchema(faqs)]);
 }
 
@@ -1122,7 +1129,7 @@ ${relatedLinks([
   { path: '/legal', title: 'Missed legal enquiries', text: 'See how WiseCall supports law firm intake.' },
   { path: '/property', title: 'Missed property enquiries', text: 'See how WiseCall supports estate agency branches.' },
 ])}
-${ctaBlock('Turn missed calls into structured enquiries', 'Book a demo to see how WiseCall can capture and route caller details for your business.')}`;
+${ctaBlock('Turn missed calls into structured enquiries', 'Try 20 calls free, no card, or call Ava and hear her take the details. A demo can still show how WiseCall captures and routes caller details for your business.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog/' }, { name: post.title, path: page.path }]), faqSchema(faqs), {
     '@context': 'https://schema.org',
     '@type': 'Article',
