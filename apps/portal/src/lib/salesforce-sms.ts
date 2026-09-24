@@ -618,7 +618,7 @@ export async function executeSalesforceOutbound(
   const sender = await deps.resolveFromNumber(request.profileId, request.from ?? null);
   if (!sender.ok) {
     return {
-      httpStatus: 409,
+      httpStatus: 422,
       body: {
         ok: false,
         status: "sms_number_required",
@@ -641,10 +641,7 @@ export async function executeSalesforceOutbound(
   }
   const from = `+${fromDigits}`;
 
-  const sent = await deps.sendSms({ from, to: phone, text: request.text });
-
   let bindingId: string | null = null;
-  let bindingError: string | null = null;
   try {
     const saved = await deps.saveBinding({
       profileId: request.profileId,
@@ -656,9 +653,15 @@ export async function executeSalesforceOutbound(
       confirmedCandidateIds: decision.candidateIds,
     });
     bindingId = saved.id;
-  } catch (error) {
-    bindingError = error instanceof Error ? error.message : "Could not store the Salesforce mapping.";
+  } catch {
+    // Never send until an immediate reply is guaranteed to have a human route.
+    return {
+      httpStatus: 503,
+      body: { ok: false, status: "binding_unavailable", message: "Reply routing could not be saved. No SMS was sent." },
+    };
   }
+
+  const sent = await deps.sendSms({ from, to: phone, text: request.text });
 
   let task: { taskId: string | null; error: string | null } = { taskId: null, error: null };
   try {
@@ -689,7 +692,6 @@ export async function executeSalesforceOutbound(
     confirmed_candidate_ids: decision.candidateIds,
     salesforce_task_id: task.taskId,
     ...(task.error ? { salesforce_task_error: task.error } : {}),
-    ...(bindingError ? { binding_error: bindingError } : {}),
   };
 
   try {

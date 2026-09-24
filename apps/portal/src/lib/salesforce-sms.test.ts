@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   buildPhoneSosl,
@@ -288,6 +289,32 @@ test("a confirmed send goes out once and stores the mapping and recipient", asyn
   );
   assert.equal(replay.body.idempotent_replay, true);
   assert.equal(deps.sends.length, 1);
+});
+
+test("reply mapping is persisted before the SMS can be sent", async () => {
+  const deps = fakeDeps({ matches: [contact()] });
+  const order: string[] = [];
+  deps.saveBinding = async () => { order.push("binding"); return { id: "binding-1" }; };
+  deps.sendSms = async () => { order.push("send"); return { messageId: "sms-1" }; };
+  const result = await executeSalesforceOutbound({ profileId: PROFILE, to: PHONE, text: "Hello", confirmReplyRoute: { type: "owner" } }, deps);
+  assert.equal(result.httpStatus, 200);
+  assert.deepEqual(order, ["binding", "send"]);
+});
+
+test("failed reply mapping prevents any SMS or Task", async () => {
+  const deps = fakeDeps({ matches: [contact()] });
+  deps.saveBinding = async () => { throw new Error("database unavailable"); };
+  const result = await executeSalesforceOutbound({ profileId: PROFILE, to: PHONE, text: "Hello", confirmReplyRoute: { type: "owner" } }, deps);
+  assert.equal(result.httpStatus, 503);
+  assert.equal(result.body.status, "binding_unavailable");
+  assert.equal(deps.sends.length, 0);
+  assert.equal(deps.tasks.length, 0);
+});
+
+test("inbound lookup failure cannot fall through to the AI receptionist", () => {
+  const source = readFileSync(new URL("../../../../supabase/functions/wisecall-sms-inbound/index.ts", import.meta.url), "utf8");
+  assert.match(source, /salesforce binding lookup:[\s\S]*?throw new Error\("Salesforce binding lookup unavailable"\)/);
+  assert.match(source, /salesforce route:[\s\S]*?return new Response\("Reply routing temporarily unavailable", \{ status: 503 \}\)/);
 });
 
 test("parse accepts the Salesforce flow payload and rejects a missing reply type", () => {

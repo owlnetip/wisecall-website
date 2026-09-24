@@ -96,7 +96,7 @@ async function routeConfirmedSalesforceReply(opts: {
     .maybeSingle();
   if (error) {
     console.error("[wisecall-sms-inbound] salesforce binding lookup:", error.message);
-    return false;
+    throw new Error("Salesforce binding lookup unavailable");
   }
   if (!binding) return false;
 
@@ -295,6 +295,8 @@ Deno.serve(async (req) => {
       if (salesforceRouted) return ok();
     } catch (e) {
       console.error("[wisecall-sms-inbound] salesforce route:", (e as Error).message);
+      // Unknown routing state must never fall through to the AI receptionist.
+      return new Response("Reply routing temporarily unavailable", { status: 503 });
     }
 
     const ownerId = (profile.metadata as Record<string, string> | null)?.owner_id;
