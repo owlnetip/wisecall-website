@@ -48,6 +48,124 @@ function normaliseE164(value: string): string {
   return digits.startsWith("+") ? value.replace(/\s+/g, "") : `+${digits}`;
 }
 
+// Keep in sync with normaliseSmsDestination / canonicalSmsDigits in
+// apps/portal/src/lib/salesforce-sms.ts. Bindings are stored as those digits.
+function canonicalSmsDigits(raw: string): string {
+  let number = String(raw || "").trim().replace(/[\s().-]/g, "");
+  if (!number) return "";
+  if (number.startsWith("00")) number = `+${number.slice(2)}`;
+  if (number.startsWith("+")) {
+    const digits = number.slice(1).replace(/\D/g, "");
+    return /^\d{8,15}$/.test(digits) ? digits : "";
+  }
+  const digits = number.replace(/\D/g, "");
+  if (/^0\d{9,10}$/.test(digits)) return `44${digits.slice(1)}`;
+  if (/^\d{8,15}$/.test(digits)) return digits;
+  return "";
+}
+
+function portalBaseUrl(): string {
+  const raw = (
+    Deno.env.get("WISECALL_PORTAL_URL") ||
+    Deno.env.get("PORTAL_URL") ||
+    Deno.env.get("PORTAL_DOMAIN") ||
+    Deno.env.get("SITE_URL") ||
+    ""
+  ).trim().replace(/\/+$/, "");
+  if (!raw) return "";
+  return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+}
+
+// Confirmed Salesforce threads reply to the confirmed recipient. The AI
+// receptionist does not answer those messages, including when delivery fails.
+async function routeConfirmedSalesforceReply(opts: {
+  supabase: ReturnType<typeof createClient>;
+  profileId: string;
+  fromNumber: string;
+  body: string;
+  messageId: string;
+}): Promise<boolean> {
+  const digits = canonicalSmsDigits(opts.fromNumber);
+  if (!digits) return false;
+
+  const { data: binding, error } = await opts.supabase
+    .from("wisecall_salesforce_sms_bindings")
+    .select("id, phone_digits, salesforce_record_id")
+    .eq("profile_id", opts.profileId)
+    .eq("phone_digits", digits)
+    .maybeSingle();
+  if (error) {
+    console.error("[wisecall-sms-inbound] salesforce binding lookup:", error.message);
+    return false;
+  }
+  if (!binding) return false;
+
+  const secret = Deno.env.get("WISECALL_SALESFORCE_SMS_SECRET") || "";
+  const portal = portalBaseUrl();
+  if (!secret || !portal) {
+    console.error("[wisecall-sms-inbound] salesforce reply not delivered: portal or secret missing");
+    await recordUndeliveredSalesforceReply(opts, digits, binding.id, binding.salesforce_record_id, "portal_not_configured");
+    return true;
+  }
+
+  try {
+    const res = await fetch(`${portal}/api/integrations/salesforce/sms/inbound`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-wisecall-salesforce-secret": secret,
+      },
+      body: JSON.stringify({
+        profile_id: opts.profileId,
+        from: opts.fromNumber,
+        text: opts.body,
+        message_id: opts.messageId || null,
+      }),
+    });
+    const detail = await res.text().catch(() => "");
+    let routed = false;
+    try {
+      routed = JSON.parse(detail)?.routed === true;
+    } catch {
+      routed = false;
+    }
+    if (!res.ok) {
+      console.error("[wisecall-sms-inbound] salesforce reply route:", res.status, detail.slice(0, 300));
+      if (!routed) {
+        await recordUndeliveredSalesforceReply(opts, digits, binding.id, binding.salesforce_record_id, detail.slice(0, 300) || `http_${res.status}`);
+      }
+    }
+  } catch (err) {
+    console.error("[wisecall-sms-inbound] salesforce reply route:", (err as Error).message);
+    await recordUndeliveredSalesforceReply(opts, digits, binding.id, binding.salesforce_record_id, (err as Error).message);
+  }
+  return true;
+}
+
+async function recordUndeliveredSalesforceReply(
+  opts: { supabase: ReturnType<typeof createClient>; profileId: string; body: string; messageId: string },
+  digits: string,
+  bindingId: string,
+  recordId: string | null,
+  error: string,
+) {
+  const { error: insertError } = await opts.supabase.from("wisecall_salesforce_sms_messages").insert({
+    profile_id: opts.profileId,
+    binding_id: bindingId,
+    direction: "inbound",
+    phone_digits: digits,
+    body: opts.body,
+    status: "route_failed",
+    salesforce_record_id: recordId,
+    provider: "salesforce",
+    provider_message_id: opts.messageId || null,
+    detail: { error },
+  });
+  if (insertError) {
+    console.error("[wisecall-sms-inbound] salesforce reply log:", insertError.message);
+  }
+}
+
 async function callClaude(systemPrompt: string, userMessage: string): Promise<string> {
   const key = Deno.env.get("CLAUDE_API_WISECASE");
   if (!key) throw new Error("CLAUDE_API_WISECASE not configured");
@@ -165,6 +283,19 @@ Deno.serve(async (req) => {
       .eq("id", smsRow.profile_id)
       .maybeSingle();
     if (!profile) return ok();
+
+    try {
+      const salesforceRouted = await routeConfirmedSalesforceReply({
+        supabase,
+        profileId: profile.id,
+        fromNumber: fromRaw,
+        body,
+        messageId,
+      });
+      if (salesforceRouted) return ok();
+    } catch (e) {
+      console.error("[wisecall-sms-inbound] salesforce route:", (e as Error).message);
+    }
 
     const ownerId = (profile.metadata as Record<string, string> | null)?.owner_id;
     if (!ownerId) return ok();
