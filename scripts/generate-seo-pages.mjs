@@ -24,6 +24,9 @@ const PLUMBERS_PATH = '/trades/plumbers/';
 // Hand-crafted page at trades/electricians/index.html. Do not generate this
 // path or generate() will overwrite the craft copy.
 const ELECTRICIANS_PATH = '/trades/electricians/';
+// Hand-crafted page at trades/roofers/index.html. Do not generate this
+// path or generate() will overwrite the craft copy.
+const ROOFERS_PATH = '/trades/roofers/';
 // Root pages trades.html, dental.html, legal.html and property.html are also
 // hand-crafted. industry.legacyPath keeps generate() from writing over them.
 
@@ -647,7 +650,7 @@ ${faqSection([
 ${relatedLinks([
   { path: '/compare/wisecall-vs-answering-service/', title: 'WiseCall vs answering service', text: 'See the cost and coverage difference against a traditional answering service.' },
   { path: '/compare/wisecall-vs-voicemail/', title: 'WiseCall vs voicemail', text: 'See what changes when WiseCall answers instead of a recorded message.' },
-  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'UK hosting, phone line and trial compared to the Austrian AI assistant.' },
+  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'Phone line and trial compared to the Austrian AI assistant.' },
   { path: '/resources/missed-call-calculator/', title: 'Calculate missed call value', text: 'Estimate the opportunity cost of unanswered calls before choosing a plan.' },
 ])}
 ${ctaBlock('Need help choosing a plan?', 'Call the live demo to hear WiseCall in action, or dial in on 0113 522 2277. 20 free inbound AI calls with no card.', { primaryHref: TRY_PAGE_URL, primaryLabel: 'Call Ava', secondaryHref: DEMO_PHONE_TEL, secondaryLabel: '+44 113 522 2277' })}
@@ -717,7 +720,7 @@ function renderComparison() {
       title: 'WiseCall',
       paragraphs: [
         'Answers in your business name, asks the right questions, books or routes the next step, then sends your team a proper summary. Same knowledge on email, WhatsApp, live chat and SMS.',
-        'You do not need a phone system. We give you a number, or we connect the one you have. Calls and data stay in the UK. Dental can book eligible appointments into Dentally. It never gives clinical advice.',
+        'You do not need a phone system. We give you a number, or we connect the one you have. Dental can book eligible appointments into Dentally. It never gives clinical advice.',
         '20 inbound AI calls to try it, no card. 30-day rolling, or 15% off yearly.',
         'Skip us if you only want the cheapest unlimited minutes and you do not care about the phone system.',
       ],
@@ -732,8 +735,8 @@ function renderComparison() {
     {
       title: 'Fonio',
       paragraphs: [
-        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds bring-your-own numbers and outbound campaigns. 30-day money-back. Hosted in Germany.',
-        'Fine if you are happy paying in euros and keeping data in the EU. Less fine if you wanted a UK receptionist product with a pound invoice.',
+        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds bring-your-own numbers and outbound campaigns. 30-day money-back.',
+        'Fine if you are happy paying in euros. Less fine if you wanted a UK receptionist product with a pound invoice.',
       ],
     },
     {
@@ -757,7 +760,7 @@ function renderComparison() {
     },
   ];
   const checks = [
-    'Where is the call data. UK, EU, or they do not say. For dental, care and legal this is a real question, not a slogan.',
+    'Is a number included. For dental, care and legal this is a real question, not a slogan.',
     'Do you also need a phone system. Forwarding a mobile is fine until you want overflow, a ported number, or routing to mobiles without a second supplier.',
     'What happens on email and WhatsApp. Most of these products only answer the phone. Your customers do not only ring.',
     'Is the price a cap or a meter. Unlimited minutes, per-minute extras, per-call extras and per-job billing feel very different at 80 calls a week.',
@@ -804,9 +807,9 @@ function renderComparison() {
       <p>IONOS is the cheapest metered starter: £39 a month excl. VAT for 30 calls, then 49p a call.</p>
       <p>whoza is for UK trades, from £59 a month, billed around captured jobs.</p>
       <p>Moneypenny is the one with a human behind the AI. They do not publish a price.</p>
-      <p>Fonio is a European product. Solo is €99 a month (€84 if you pay annually) for 1,000 minutes. Servers are in Nuremberg.</p>
-      <p>WiseCall starts at £99 a month on 30-day rolling, or £84.15 if you pay annually. UK hosting, a number included, and the same agent on phone, email, WhatsApp, live chat and SMS. 20 inbound AI calls to try it, no card. You can <a href="${TRY_PAGE_URL}" class="text-[#7de8eb] underline underline-offset-2 hover:text-white">hear Ava answer a real call</a> before you decide.</p>
-      <p>If the only thing you care about is the lowest headline price, we are not the cheapest. If you care where the calls live and whether you need a separate phone system, we are the one built for that.</p>
+      <p>Fonio is a European product. Solo is €99 a month (€84 if you pay annually) for 1,000 minutes.</p>
+      <p>WiseCall starts at £99 a month on 30-day rolling, or £84.15 if you pay annually. A number is included, and the same agent is on phone, email, WhatsApp, live chat and SMS. 20 inbound AI calls to try it, no card. You can <a href="${TRY_PAGE_URL}" class="text-[#7de8eb] underline underline-offset-2 hover:text-white">hear Ava answer a real call</a> before you decide.</p>
+      <p>If the only thing you care about is the lowest headline price, we are not the cheapest. If you care whether a number is included and whether you need a separate phone system, we are the one built for that.</p>
     </div>
   </div>
 </section>
@@ -836,7 +839,7 @@ function renderComparison() {
       ${checks.map((text, index) => `<li class="card p-6 flex gap-4"><span class="text-[#7de8eb] font-black text-2xl leading-none">${index + 1}</span><p class="text-white/72 leading-relaxed">${esc(text)}</p></li>`).join('')}
     </ol>
     <div class="card-strong p-7 mt-8">
-      <p class="text-white/80 leading-relaxed">Ours: UK, phone system included, same agent across channels, 30-day rolling, published GBP price.</p>
+      <p class="text-white/80 leading-relaxed">Ours: phone system included, same agent across channels, 30-day rolling, published GBP price.</p>
     </div>
   </div>
 </section>
@@ -846,7 +849,7 @@ function renderComparison() {
     <h2 class="text-4xl md:text-5xl font-black mb-5">WiseCall and Fonio</h2>
     <p class="text-lg text-white/72 leading-relaxed max-w-3xl mb-8">Fonio is the well-funded European AI phone assistant. WiseCall is the UK one.</p>
     ${comparisonTable(data.fonioColumns.slice(1), data.fonioRows, { firstHeader: data.fonioColumns[0], minClass: 'compare-table-sm' })}
-    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number, whose data, and whose invoice. ${sourceAnchor('Read the full WiseCall vs Fonio comparison', FONIO_COMPARE_PATH)}.</p>
+    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number and whose invoice. ${sourceAnchor('Read the full WiseCall vs Fonio comparison', FONIO_COMPARE_PATH)}.</p>
   </div>
 </section>
 <section id="demo" class="px-6 py-20">
@@ -883,7 +886,7 @@ ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
   ...comparisonPages.map((c) => ({ path: `/compare/${c.slug}/`, title: `WiseCall vs ${c.subject}`, text: `A focused comparison against ${c.subject.toLowerCase()}.` })),
-  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'Head-to-head on hosting, phone line, trial and price.' },
+  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'Head-to-head on phone line, trial and price.' },
 ])}
 <p class="max-w-7xl mx-auto px-6 pb-10 text-white/45 text-sm leading-relaxed">Prices last checked ${esc(data.checked)}. If someone changes a plan, update this table the same day.</p>
 <script>
@@ -1050,7 +1053,7 @@ ${trustStrip()}
   <h2 class="text-4xl md:text-5xl font-black mb-10">Proof is more than testimonials</h2>
   <div class="grid md:grid-cols-4 gap-4">${[
     ['UK-based setup and support', 'Onboarding and support from a UK team that knows the product, not an offshore script.'],
-    ['GDPR-aware data handling', 'Structured, purposeful data capture on UK-based infrastructure, with access controls per team member.'],
+    ['GDPR-aware data handling', 'Structured, purposeful data capture, with access controls per team member.'],
     ['Human fallback', 'Every call has a clear next step. When a person is needed, WiseCall routes, books a callback or escalates.'],
     ['Full audit trail', 'Every AI-handled call is logged with a summary, timestamp, duration and outcome you can review.'],
   ].map(([title, text]) => `<div class="card p-6"><h3 class="font-bold text-lg mb-3">${esc(title)}</h3><p class="text-white/62 text-sm leading-relaxed">${esc(text)}</p></div>`).join('')}</div>
@@ -1201,6 +1204,7 @@ function allRoutes() {
     '/trades',
     PLUMBERS_PATH,
     ELECTRICIANS_PATH,
+    ROOFERS_PATH,
     '/compare/ai-receptionist-uk-comparison/',
     ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
     FONIO_COMPARE_PATH,
@@ -1246,6 +1250,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Trades and field service: ${site.url}/trades
 - AI receptionist for plumbers: ${site.url}${PLUMBERS_PATH}
 - AI receptionist for electricians: ${site.url}${ELECTRICIANS_PATH}
+- AI receptionist for roofers: ${site.url}${ROOFERS_PATH}
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
 ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
 - WiseCall vs Fonio: ${site.url}${FONIO_COMPARE_PATH}
@@ -1261,13 +1266,14 @@ ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${
 - WiseCall is useful for missed call recovery, out-of-hours call handling, overflow cover, structured caller summaries and team routing.
 - WiseCall can be used for out-of-hours cover, overflow cover, or full-time AI call handling.
 - WiseCall serves UK service businesses including dental practices, law firms, estate agents, trades and care providers.
-- WiseCall handles data in a GDPR-aware way on UK-based infrastructure, with call examples published only in anonymised form.
+- WiseCall handles data in a GDPR-aware way, with call examples published only in anonymised form.
 `;
 }
 
 const HAND_CRAFTED_PAGES = new Set([
   'trades/plumbers/index.html',
   'trades/electricians/index.html',
+  'trades/roofers/index.html',
 ]);
 
 async function write(path, content) {
