@@ -16,6 +16,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { buildMemoryBlock, loadContactContext, triggerPortalAnalysis } from "../_shared/contact-memory.ts";
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { tryHandleViewingReply } from "../_shared/viewing-confirm.ts";
+import { postSalesforceCallback } from "../_shared/salesforce-sms-callback.ts";
 
 const CLAUDE_MODEL = "claude-opus-4-8";
 
@@ -109,31 +110,15 @@ async function routeConfirmedSalesforceReply(opts: {
   }
 
   try {
-    const res = await fetch(`${portal}/api/integrations/salesforce/sms/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-wisecall-salesforce-secret": secret,
-      },
-      body: JSON.stringify({
-        profile_id: opts.profileId,
-        from: opts.fromNumber,
-        text: opts.body,
-        message_id: opts.messageId || null,
-      }),
+    const result = await postSalesforceCallback(portal, secret, {
+      profile_id: opts.profileId,
+      from: opts.fromNumber,
+      text: opts.body,
+      message_id: opts.messageId || null,
     });
-    const detail = await res.text().catch(() => "");
-    let routed = false;
-    try {
-      routed = JSON.parse(detail)?.routed === true;
-    } catch {
-      routed = false;
-    }
-    if (!res.ok) {
-      console.error("[wisecall-sms-inbound] salesforce reply route:", res.status, detail.slice(0, 300));
-      if (!routed) {
-        await recordUndeliveredSalesforceReply(opts, digits, binding.id, binding.salesforce_record_id, detail.slice(0, 300) || `http_${res.status}`);
-      }
+    if (!result.delivered) {
+      console.error("[wisecall-sms-inbound] salesforce reply delivery unconfirmed:", result.status);
+      await recordUndeliveredSalesforceReply(opts, digits, binding.id, binding.salesforce_record_id, `delivery_unconfirmed_http_${result.status}`);
     }
   } catch (err) {
     console.error("[wisecall-sms-inbound] salesforce reply route:", (err as Error).message);
