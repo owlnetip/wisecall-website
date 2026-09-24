@@ -49,5 +49,8 @@ Task creation is not idempotent after an uncertain network result.
 - Portal TypeScript check passes.
 - Apex tests are supplied but not executed; Salesforce compilation/LWC UI validation,
   credential setup, permissions, action placement and handset test remain outstanding.
-- Deployment tooling was blocked by the Codex approval service usage limit; do not
-  work around that approval failure through another execution path.
+- The approval-service usage limit was resolved after credits were added.
+- The patched live Supabase inbound function was deployed successfully and its
+  no-message GET health check returned HTTP 200. No live SMS was sent.
+- Salesforce CLI installation/admin authentication and sandbox validation remain
+  pending; the Salesforce action and its Named Credential are not installed yet.
