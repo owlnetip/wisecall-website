@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
-const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/?signup=1&redirect=/billing';
+const TRIAL_SETUP_URL = 'https://app.wisecall.io/setup?trial=calls';
 
 const MOBILE_CSS = `    .mobile-menu { transform: translateY(-100%); opacity: 0; visibility: hidden; pointer-events: none; transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.2s ease, visibility 0s linear 0.35s; }
     .mobile-menu.open { transform: translateY(0); opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }`;
@@ -18,7 +18,7 @@ const HEADER = `<header class="sticky top-0 z-50 backdrop-blur-md bg-[#172929]/8
       <a href="/blog/missed-calls-cost-uk-businesses/" class="hover:text-[#7de8eb]">Resources</a>
     </div>
     <div class="flex items-center gap-2 flex-shrink-0">
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary hidden sm:inline-flex px-4 py-2.5 text-sm">Start Free Trial <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+      <a href="${TRIAL_SETUP_URL}" class="btn btn-primary hidden sm:inline-flex px-4 py-2.5 text-sm">Start Free Trial <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
       <button id="mobileMenuToggle" type="button" aria-label="Open menu" aria-expanded="false" class="md:hidden w-10 h-10 rounded-lg border border-[#7de8eb]/25 text-white/80 flex items-center justify-center hover:bg-white/5 transition-colors">
         <i data-lucide="menu" class="w-5 h-5"></i>
       </button>
@@ -33,7 +33,7 @@ const HEADER = `<header class="sticky top-0 z-50 backdrop-blur-md bg-[#172929]/8
       <a href="/compare/ai-receptionist-uk-comparison/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Compare</a>
       <a href="/resources/missed-call-calculator/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Calculator</a>
       <a href="/blog/missed-calls-cost-uk-businesses/" class="py-2.5 text-base hover:text-[#7de8eb] transition-colors">Resources</a>
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary mt-3 justify-center px-5 py-3 text-sm">Start Free Trial <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+      <a href="${TRIAL_SETUP_URL}" class="btn btn-primary mt-3 justify-center px-5 py-3 text-sm">Start Free Trial <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
     </div>
   </div>
 </header>`;
