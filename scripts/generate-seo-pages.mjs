@@ -12,7 +12,6 @@ import {
   trustSignals,
 } from './seo-content.mjs';
 
-const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/?signup=1&redirect=/billing';
 const TRIAL_SETUP_URL = 'https://app.wisecall.io/setup?trial=calls';
 const TRY_PAGE_URL = '/try';
 const DEMO_PHONE_TEL = 'tel:+441135222277';
@@ -98,7 +97,7 @@ function breadcrumbSchema(items) {
   };
 }
 
-function layout(page, body, schemas = [], { headerCtaHref = TRIAL_SIGNUP_URL, headerCtaLabel = 'Try it now' } = {}) {
+function layout(page, body, schemas = [], { headerCtaHref = TRIAL_SETUP_URL, headerCtaLabel = 'Try it now' } = {}) {
   return `<!DOCTYPE html>
 <html lang="en-GB">
 <head>
@@ -167,7 +166,7 @@ ${footer()}
 </html>`;
 }
 
-function header({ ctaHref = TRIAL_SIGNUP_URL, ctaLabel = 'Try it now' } = {}) {
+function header({ ctaHref = TRIAL_SETUP_URL, ctaLabel = 'Try it now' } = {}) {
   return `<header class="sticky top-0 z-50 backdrop-blur-md bg-[#172929]/82 border-b border-[#7de8eb]/10 relative">
   <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
     <a href="/" class="flex items-center gap-3 text-white font-bold text-lg no-underline min-w-0"><img src="/owl-logo.png" alt="WiseCall" class="h-9 w-auto flex-shrink-0"><span class="truncate">WiseCall</span></a>
@@ -270,7 +269,7 @@ const DEFAULT_HERO_PANEL = {
   items: ['Answers in your business name', 'Qualifies the caller’s intent', 'Captures structured details', 'Books, routes or escalates', 'Sends summaries and transcripts'],
 };
 
-function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls', secondaryHref = '/resources/missed-call-calculator/', primaryHref = TRIAL_SIGNUP_URL, panel = DEFAULT_HERO_PANEL, trialPair: useTrialPair = false }) {
+function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls', secondaryHref = '/resources/missed-call-calculator/', primaryHref = TRIAL_SETUP_URL, panel = DEFAULT_HERO_PANEL, trialPair: useTrialPair = false }) {
   if (useTrialPair) {
     return `<section class="px-6 pt-8 pb-14 md:py-28">
   <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-start lg:items-center">
@@ -333,7 +332,7 @@ function faqSection(faqs, title = 'Common Questions') {
 </section>`;
 }
 
-function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', { primaryHref = TRIAL_SIGNUP_URL, primaryLabel = 'Try it now', secondaryHref = '/how-it-works/', secondaryLabel = 'See how WiseCall works' } = {}) {
+function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', { primaryHref = TRIAL_SETUP_URL, primaryLabel = 'Try it now', secondaryHref = '/how-it-works/', secondaryLabel = 'See how WiseCall works' } = {}) {
   return `<section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto text-center card-strong p-10 md:p-14">
     <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
@@ -409,7 +408,7 @@ function missedCallCalculatorBlock(presetKey = 'general') {
         </div>
       </div>
       <p class="text-white/40 text-xs mt-4 leading-relaxed">Estimates only, based on the figures you enter. Actual results depend on your call patterns, enquiry mix and follow-up.</p>
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3.5 mt-5">Stop the leak — try WiseCall now</a>
+      <a href="${TRIAL_SETUP_URL}" class="btn btn-primary w-full text-center py-3.5 mt-5">Stop the leak. Try WiseCall now.</a>
       <script>
       (function () {
         const presets = ${JSON.stringify(calculatorPresets)};
@@ -543,7 +542,7 @@ ${trustStrip()}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">
 ${industries.map((industry) => `<a href="${industryPath(industry)}" class="card p-7 block hover:border-[#7de8eb]/40"><h2 class="text-2xl font-bold mb-3">${esc(industry.name)}</h2><p class="text-white/65 leading-relaxed">${esc(industry.description)}</p><span class="inline-flex mt-5 text-[#7de8eb] font-bold">View ${esc(industry.keyword)}</span></a>`).join('')}
 </div></section>
-<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these — get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
+<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these. Get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
 ${ctaBlock('Don’t see your industry?', 'Book a demo and we will show you how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: page.path }])]);
 }

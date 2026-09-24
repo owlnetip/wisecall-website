@@ -13,6 +13,7 @@ export const ATTRIBUTION_KEY = 'wisecall_ft';
 export const SOURCES = [
   'paid_google',
   'paid_meta',
+  'paid_other',
   'organic_google',
   'organic_bing',
   'organic_other',
@@ -34,7 +35,8 @@ export type CtaPosition = 'hero' | 'inline' | 'footer' | 'sticky';
 
 const POSITIONS = new Set<CtaPosition>(['hero', 'inline', 'footer', 'sticky']);
 const PAID_MEDIUMS = new Set(['cpc', 'ppc', 'paid']);
-const META_SOURCES = new Set(['facebook', 'instagram', 'meta']);
+const GOOGLE_ADS_SOURCES = new Set(['google_ads', 'adwords']);
+const META_SOURCES = new Set(['facebook', 'instagram', 'meta', 'fb', 'ig']);
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign'] as const;
 
 type TrackFn = (
@@ -74,6 +76,11 @@ export function isGoogleHost(host: string): boolean {
   return /(^|\.)google\./i.test(host);
 }
 
+// Search only. mail.google.com, docs.google.com and other product hosts are referrals.
+export function isGoogleSearchHost(host: string): boolean {
+  return /^(www\.)?google\.[a-z]{2,3}(?:\.[a-z]{2})?$/i.test(host);
+}
+
 export function isBingHost(host: string): boolean {
   return host === 'bing.com' || host.endsWith('.bing.com');
 }
@@ -82,12 +89,19 @@ function hostIs(host: string, name: string): boolean {
   return host === name || host.endsWith(`.${name}`);
 }
 
+export function isYandexHost(host: string): boolean {
+  return /(^|\.)yandex\./i.test(host);
+}
+
 export function isOtherSearchHost(host: string): boolean {
   return (
     hostIs(host, 'duckduckgo.com') ||
     hostIs(host, 'yahoo.com') ||
     hostIs(host, 'yahoo.co.uk') ||
-    hostIs(host, 'ecosia.org')
+    hostIs(host, 'ecosia.org') ||
+    hostIs(host, 'search.brave.com') ||
+    hostIs(host, 'startpage.com') ||
+    isYandexHost(host)
   );
 }
 
@@ -109,17 +123,29 @@ export function classifyVisit({
   const sourceLower = utmSource.toLowerCase();
   const mediumLower = utmMedium.toLowerCase();
   const gclid = (params.get('gclid') || '').trim();
+  const gbraid = (params.get('gbraid') || '').trim();
+  const wbraid = (params.get('wbraid') || '').trim();
   const fbclid = (params.get('fbclid') || '').trim();
+  const msclkid = (params.get('msclkid') || '').trim();
+  const paidMedium = PAID_MEDIUMS.has(mediumLower);
 
   let src: Source;
-  if (gclid || (PAID_MEDIUMS.has(mediumLower) && sourceLower === 'google')) {
+  if (
+    gclid ||
+    gbraid ||
+    wbraid ||
+    (paidMedium && sourceLower === 'google') ||
+    GOOGLE_ADS_SOURCES.has(sourceLower)
+  ) {
     src = 'paid_google';
   } else if (fbclid || META_SOURCES.has(sourceLower)) {
     src = 'paid_meta';
+  } else if (msclkid || (paidMedium && sourceLower === 'bing')) {
+    src = 'paid_other';
   } else {
     const host = referrerHost(referrer);
     if (!host || isInternalHost(host, pageHost)) src = 'direct';
-    else if (isGoogleHost(host)) src = 'organic_google';
+    else if (isGoogleSearchHost(host)) src = 'organic_google';
     else if (isBingHost(host)) src = 'organic_bing';
     else if (isOtherSearchHost(host)) src = 'organic_other';
     else src = 'referral';

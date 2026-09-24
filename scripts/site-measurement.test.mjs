@@ -54,6 +54,64 @@ test('gclid beats fbclid', () => {
   assert.equal(classifyVisit({ search: '?fbclid=1&gclid=2' }).src, 'paid_google');
 });
 
+test('gbraid is paid google even with a google referrer', () => {
+  const result = classifyVisit({
+    search: '?gbraid=x',
+    referrer: 'https://www.google.co.uk/search?q=wisecall',
+    pageHost: 'wisecall.io',
+  });
+  assert.equal(result.src, 'paid_google');
+  assert.equal(JSON.stringify(result).includes('gbraid'), false);
+});
+
+test('wbraid is paid google with no referrer', () => {
+  const result = classifyVisit({ search: '?wbraid=x', referrer: '' });
+  assert.equal(result.src, 'paid_google');
+  assert.equal(JSON.stringify(result).includes('wbraid'), false);
+});
+
+test('google ads and adwords sources are paid google', () => {
+  assert.equal(classifyVisit({ search: '?utm_source=google_ads' }).src, 'paid_google');
+  assert.equal(classifyVisit({ search: '?utm_source=Google_Ads' }).src, 'paid_google');
+  assert.equal(classifyVisit({ search: '?utm_source=ADWORDS' }).src, 'paid_google');
+  assert.equal(classifyVisit({ search: '?utm_source=adwords', referrer: 'https://www.bing.com/' }).src, 'paid_google');
+});
+
+test('fb and ig sources are paid meta', () => {
+  assert.equal(classifyVisit({ search: '?utm_source=fb' }).src, 'paid_meta');
+  assert.equal(classifyVisit({ search: '?utm_source=FB' }).src, 'paid_meta');
+  assert.equal(classifyVisit({ search: '?utm_source=ig' }).src, 'paid_meta');
+  assert.equal(classifyVisit({ search: '?utm_source=IG', referrer: 'https://www.google.co.uk/' }).src, 'paid_meta');
+});
+
+test('microsoft click ids and bing paid mediums are paid other, not organic bing', () => {
+  assert.equal(
+    classifyVisit({ search: '?msclkid=x', referrer: 'https://www.bing.com/search?q=wisecall' }).src,
+    'paid_other',
+  );
+  assert.equal(classifyVisit({ search: '?utm_source=bing&utm_medium=cpc' }).src, 'paid_other');
+  assert.equal(classifyVisit({ search: '?utm_source=Bing&utm_medium=PPC', referrer: 'https://www.bing.com/' }).src, 'paid_other');
+  assert.equal(classifyVisit({ search: '?utm_source=bing&utm_medium=paid' }).src, 'paid_other');
+  assert.equal(classifyVisit({ referrer: 'https://www.bing.com/search?q=x' }).src, 'organic_bing');
+  assert.equal(classifyVisit({ search: '?utm_source=bing', referrer: 'https://www.bing.com/' }).src, 'organic_bing');
+});
+
+test('brave yandex and startpage are organic other', () => {
+  assert.equal(classifyVisit({ referrer: 'https://search.brave.com/search?q=ai' }).src, 'organic_other');
+  assert.equal(classifyVisit({ referrer: 'https://yandex.ru/search/?text=ai' }).src, 'organic_other');
+  assert.equal(classifyVisit({ referrer: 'https://www.yandex.com/search/?text=ai' }).src, 'organic_other');
+  assert.equal(classifyVisit({ referrer: 'https://www.startpage.com/sp/search' }).src, 'organic_other');
+});
+
+test('google product hosts are referral, not organic google', () => {
+  assert.equal(classifyVisit({ referrer: 'https://mail.google.com/mail/u/0/' }).src, 'referral');
+  assert.equal(classifyVisit({ referrer: 'https://docs.google.com/document/d/abc' }).src, 'referral');
+  assert.equal(
+    classifyVisit({ referrer: 'https://www.google.co.uk/search?q=ai', pageHost: 'wisecall.io' }).src,
+    'organic_google',
+  );
+});
+
 test('organic referrers', () => {
   assert.equal(
     classifyVisit({ referrer: 'https://www.google.co.uk/search?q=ai', pageHost: 'wisecall.io' }).src,
@@ -166,6 +224,14 @@ test('trades copy does not sell a 7-day pilot', () => {
   const html = readFileSync('trades.html', 'utf8');
   const visible = html.slice(0, html.indexOf('<script'));
   assert.equal(/pilot|7-day|7 days/i.test(visible), false);
+});
+
+test('care homes calculator uses the trial link without an em dash', () => {
+  const html = readFileSync('industries/care-homes/index.html', 'utf8');
+  assert.match(html, /Stop the leak\. Try WiseCall now\./);
+  assert.match(html, /href="https:\/\/app\.wisecall\.io\/setup\?trial=calls"/);
+  assert.equal(html.includes('signup=1'), false);
+  assert.equal(html.includes('Stop the leak —'), false);
 });
 
 test('trades visible copy has no em or en dash', () => {
