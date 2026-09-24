@@ -94,7 +94,9 @@ test("reply tasks are assigned to the confirmed recipient on the confirmed recor
   });
   assert.equal(task.WhoId, "003000000000001AAA");
   assert.equal(task.OwnerId, "005000000000002AAA");
-  assert.equal(task.Subject, "SMS reply");
+  assert.equal(task.Subject, "SMS received: Yes Thursday works");
+  assert.equal(task.Status, "Completed");
+  assert.match(String(task.Description), /^SMS received from \+447700900123/);
   assert.match(String(task.Description), /Yes Thursday works/);
   assert.equal(result.taskId, "00T000000000001AAA");
 });
