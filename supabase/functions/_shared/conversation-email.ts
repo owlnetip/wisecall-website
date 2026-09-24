@@ -34,6 +34,46 @@ export function portalNextActions(input: {
   return nextActionsFromFollowUpTitles(input.followUpTitles);
 }
 
+/**
+ * Runtime state names such as bridge_closed or deepgram_closed are engineering
+ * vocabulary and must never reach a customer's inbox. Free-text outcomes the
+ * model writes ("Message taken for Matt Savage") are already readable and pass
+ * through untouched.
+ */
+const OUTCOME_LABELS: Record<string, string> = {
+  caller_stop: "Caller ended the call",
+  caller_hangup: "Caller ended the call",
+  caller_disconnected: "Caller ended the call",
+  remote_hangup: "Caller ended the call",
+  // Who hung up is not knowable from these, so they stay neutral.
+  bridge_closed: "Call ended",
+  deepgram_closed: "Call ended",
+  live_chat_closed: "Chat ended",
+  live_chat: "Web chat",
+  no_answer: "No answer",
+  completed: "Call completed",
+  transferred: "Transferred to the team",
+  transfer_to_mobile_completed: "Transferred to the team",
+  sms_sent: "Information sent by SMS",
+  message_taken: "Message taken",
+};
+
+export function outcomeLabel(raw: string | null | undefined): string {
+  const value = String(raw ?? "").trim();
+  if (!value) return "Conversation recorded";
+
+  const known = OUTCOME_LABELS[value.toLowerCase().replace(/\s+/g, "_")];
+  if (known) return known;
+
+  // An unmapped internal code still must not go out as raw snake_case.
+  if (/^[a-z0-9]+(?:_[a-z0-9]+)+$/.test(value)) {
+    const words = value.replace(/_/g, " ");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+
+  return value;
+}
+
 export function nextStepLabel(actionItems: string[]): string {
   if (!actionItems.length) return "No follow-up needed";
   return `${actionItems.length} follow-up${actionItems.length === 1 ? "" : "s"} needed`;
@@ -57,7 +97,30 @@ export type PostCallEmailInput = {
   startedAt?: string | null;
   actionItems: string[];
   agentName?: string;
+  /** Caller details read back out of the conversation; all optional. */
+  callerName?: string | null;
+  company?: string | null;
+  /** Number the caller gave on the call, which is often not the calling line. */
+  callbackNumber?: string | null;
+  urgency?: string | null;
 };
+
+const URGENCY_COLOURS: Record<string, string> = {
+  emergency: "#b42318",
+  urgent: "#b54708",
+};
+
+function digitsOnly(value: string): string {
+  const digits = String(value || "").replace(/\D/g, "");
+  // Compare on the national part so +447… and 07… match.
+  return digits.length > 9 ? digits.slice(-9) : digits;
+}
+
+function detailRowHtml(label: string, value: string, colour?: string): string {
+  if (!value.trim()) return "";
+  const valueStyle = colour ? ` style="color:${colour};font-weight:800;"` : "";
+  return `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">${escapeEmailHtml(label)}</td><td${valueStyle}>${escapeEmailHtml(value)}</td></tr>`;
+}
 
 function formatWhen(startedAt?: string | null): string {
   if (!startedAt) return "";
@@ -83,25 +146,39 @@ function followUpBlockHtml(actionItems: string[]): string {
 
 export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const when = formatWhen(input.startedAt);
-  const outcome = input.outcome.trim();
+  const outcome = outcomeLabel(input.outcome);
   const agentName = (input.agentName || "WiseCall").trim() || "WiseCall";
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
   const summary = input.summary.trim();
   const transcript = input.transcript.trim();
+  const callerName = (input.callerName || "").trim();
+  const company = (input.company || "").trim();
+  const callbackNumber = (input.callbackNumber || "").trim();
+  const callerId = (input.callerId || "").trim();
+  const urgency = (input.urgency || "").trim().toLowerCase();
+  // Name leads when we have one; the calling line then gets its own row, since
+  // a diverted call presents the forwarding number rather than the caller's.
+  const callerLine = callerName || callerId || "Unknown";
+  const sameNumber = digitsOnly(callbackNumber) === digitsOnly(callerId);
+  const showCallingLine = Boolean(callerId) && callerLine !== callerId && !sameNumber;
 
   return `
     <div style="font-family:system-ui,-apple-system,sans-serif;color:#172929;max-width:640px;">
       <h2 style="margin:0 0 8px;font-size:20px;">New message for ${escapeEmailHtml(input.businessName)}</h2>
       <p style="margin:0 0 16px;color:#4a5c5b;">A caller left a message with your WiseCall assistant.</p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
-        <tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">Caller</td><td>${escapeEmailHtml(input.callerId || "Unknown")}</td></tr>
-        ${when ? `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;">When</td><td>${escapeEmailHtml(when)}</td></tr>` : ""}
+        ${detailRowHtml("Caller", callerLine)}
+        ${detailRowHtml("Call back", callbackNumber)}
+        ${showCallingLine ? detailRowHtml("Calling line", callerId) : ""}
+        ${detailRowHtml("Company", company)}
+        ${when ? detailRowHtml("When", when) : ""}
+        ${URGENCY_COLOURS[urgency] ? detailRowHtml("Priority", urgency === "emergency" ? "Emergency" : "Urgent", URGENCY_COLOURS[urgency]) : ""}
       </table>
       <table style="width:100%;border-collapse:collapse;margin:0 0 18px;background:#f7fafa;border:1px solid #d7e4e3;border-radius:10px;">
         <tr>
           <td style="padding:12px 14px;border-right:1px solid #d7e4e3;width:33%;vertical-align:top;">
             <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Outcome</p>
-            <p style="margin:0;font-size:14px;font-weight:800;">${escapeEmailHtml(outcome || "Conversation recorded")}</p>
+            <p style="margin:0;font-size:14px;font-weight:800;">${escapeEmailHtml(outcome)}</p>
           </td>
           <td style="padding:12px 14px;border-right:1px solid #d7e4e3;width:33%;vertical-align:top;">
             <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Next step</p>
@@ -130,10 +207,22 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
 
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const callerName = (input.callerName || "").trim();
+  const callbackNumber = (input.callbackNumber || "").trim();
+  const company = (input.company || "").trim();
+  const callerId = (input.callerId || "").trim();
+  const callerLine = callerName || callerId || "Unknown";
+  const showCallingLine =
+    Boolean(callerId) &&
+    callerLine !== callerId &&
+    digitsOnly(callbackNumber) !== digitsOnly(callerId);
   const blocks = [
     `New message for ${input.businessName}`,
-    `Caller: ${input.callerId || "Unknown"}`,
-    input.outcome.trim() ? `Outcome: ${input.outcome.trim()}` : "",
+    `Caller: ${callerLine}`,
+    callbackNumber ? `Call back: ${callbackNumber}` : "",
+    showCallingLine ? `Calling line: ${callerId}` : "",
+    company ? `Company: ${company}` : "",
+    input.outcome.trim() ? `Outcome: ${outcomeLabel(input.outcome)}` : "",
     `Next step: ${nextStepLabel(actionItems)}`,
   ].filter(Boolean);
 

@@ -3,6 +3,7 @@ import {
   buildPostCallEmailHtml,
   nextActionsFromAnalysisJson,
   nextStepLabel,
+  outcomeLabel,
 } from "./conversation-email.ts";
 
 Deno.test("does not invent next actions when analysis stored none", () => {
@@ -37,4 +38,18 @@ Deno.test("omits the follow-up list when none exist", () => {
   });
   if (!html.includes("No follow-up needed")) throw new Error("missing none label");
   if (html.includes("<ul")) throw new Error("should omit follow-up list");
+});
+
+Deno.test("never leaks a runtime state name into a customer's inbox", () => {
+  assertEquals(outcomeLabel("bridge_closed"), "Call ended");
+  assertEquals(outcomeLabel("deepgram_closed"), "Call ended");
+  assertEquals(outcomeLabel("caller_stop"), "Caller ended the call");
+  assertEquals(outcomeLabel("transfer_to_mobile_completed"), "Transferred to the team");
+  assertEquals(outcomeLabel("sms_sent"), "Information sent by SMS");
+  assertEquals(outcomeLabel(""), "Conversation recorded");
+  // Prose the model wrote is already readable and passes through.
+  assertEquals(outcomeLabel("Message taken for Matt Savage"), "Message taken for Matt Savage");
+  assertEquals(outcomeLabel("SMS replied"), "SMS replied");
+  // An outcome we have never seen still must not arrive as snake_case.
+  assertEquals(outcomeLabel("media_socket_reset"), "Media socket reset");
 });
