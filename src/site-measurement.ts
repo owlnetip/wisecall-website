@@ -181,6 +181,30 @@ export function buildTrialUrl(href: string, attribution: Attribution, base = 'ht
   return url.toString();
 }
 
+export function isCallAvaTryHref(href: string, base = 'https://wisecall.io'): boolean {
+  try {
+    const url = new URL(href, base);
+    const path = url.pathname.replace(/\/+$/, '') || '/';
+    if (path !== '/try') return false;
+    const host = url.hostname.toLowerCase();
+    const pageHost = new URL(base).hostname.toLowerCase();
+    if (!host) return true;
+    if (pageHost && (host === pageHost || host.endsWith(`.${pageHost}`))) return true;
+    if (host === 'wisecall.io' || host.endsWith('.wisecall.io')) return true;
+    if (host === 'localhost' || host.endsWith('.localhost') || host === '127.0.0.1') return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export function isCallAvaClick(href: string, label = '', base = 'https://wisecall.io'): boolean {
+  if (isAvaTelHref(href)) return true;
+  if (!isCallAvaTryHref(href, base)) return false;
+  const text = label.replace(/\s+/g, ' ').trim().toLowerCase();
+  return text === 'call ava' || text.startsWith('call ava:') || text.startsWith('call ava ');
+}
+
 export function isAvaTelHref(href: string): boolean {
   if (!href || !/^tel:/i.test(href)) return false;
   let digits = href.replace(/^tel:/i, '').split(/[?;]/)[0] || '';
@@ -262,7 +286,7 @@ export function initSiteMeasurement(options: { track?: TrackFn } = {}): Attribut
       safeTrack(track, 'trial_cta_click', { page, position, src });
       return;
     }
-    if (isAvaTelHref(href)) {
+    if (isCallAvaClick(href, anchor.textContent || '', base)) {
       safeTrack(track, 'call_ava_click', { page, position, src });
     }
   }

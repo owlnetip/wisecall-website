@@ -5,6 +5,8 @@ import {
   buildTrialUrl,
   classifyVisit,
   isAvaTelHref,
+  isCallAvaClick,
+  isCallAvaTryHref,
   isTrialSetupHref,
   parseAttribution,
 } from '../src/site-measurement.ts';
@@ -114,6 +116,18 @@ test('ava telephone numbers', () => {
   assert.equal(isAvaTelHref('https://wisecall.io'), false);
 });
 
+test('call ava tracks the try page label and the telephone link', () => {
+  assert.equal(isCallAvaTryHref('/try'), true);
+  assert.equal(isCallAvaTryHref('/try/'), true);
+  assert.equal(isCallAvaTryHref('https://wisecall.io/try'), true);
+  assert.equal(isCallAvaTryHref('https://example.com/try'), false);
+  assert.equal(isCallAvaClick('/try', 'Call Ava'), true);
+  assert.equal(isCallAvaClick('/try', 'Call Ava: 0113 522 2277'), true);
+  assert.equal(isCallAvaClick('/try', 'hear Ava answer a real call'), false);
+  assert.equal(isCallAvaClick('tel:+441135222277', 'Call the number'), true);
+  assert.equal(isCallAvaClick('tel:+441135222278', 'Call Ava'), false);
+});
+
 test('stored attribution rejects junk', () => {
   assert.equal(parseAttribution(null), null);
   assert.equal(parseAttribution('{"src":"nope","lp":"/"}'), null);
@@ -143,7 +157,15 @@ test('html keeps a plain trial href for no-js', () => {
     assert.match(html, /href="https:\/\/app\.wisecall\.io\/setup\?trial=calls"/, file);
     assert.equal(html.includes('setup?trial=calls&src='), false, file);
     assert.equal(html.includes('app.wisecall.io/?signup=1&redirect=/billing'), false, file);
+    assert.equal(/href="tel:[^"]*" data-cta-position=/.test(html), false, file);
+    assert.match(html, /href="\/try" data-cta-position="hero"/, file);
   }
+});
+
+test('trades copy does not sell a 7-day pilot', () => {
+  const html = readFileSync('trades.html', 'utf8');
+  const visible = html.slice(0, html.indexOf('<script'));
+  assert.equal(/pilot|7-day|7 days/i.test(visible), false);
 });
 
 test('trades visible copy has no em or en dash', () => {

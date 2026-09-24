@@ -524,13 +524,16 @@
 
       <p class="motion text-center text-white/55 mt-10" data-anim="fade-up" style="transition-delay:0.2s">Same knowledge base. Same routing rules. Same summaries. Less admin for every enquiry.</p>
 
-      <div class="motion flex flex-col sm:flex-row justify-center gap-4 mt-8" data-anim="fade-up" style="transition-delay:0.22s">
-        <a href="#live-demo" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-lg shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]">
-          Try the demo agent <i data-lucide="arrow-right" class="w-5 h-5"></i>
-        </a>
-        <a href="/integrations/" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-lg backdrop-blur-sm hover:bg-white/10">
-          See integrations
-        </a>
+      <div class="motion flex flex-col items-center gap-4 mt-8" data-anim="fade-up" style="transition-delay:0.22s">
+        <div class="flex flex-col sm:flex-row justify-center gap-3">
+          <a href="https://app.wisecall.io/setup?trial=calls" data-cta-position="inline" class="mbtn inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-base shadow-[0_0_30px_rgba(125,232,235,0.3)] hover:shadow-[0_0_50px_rgba(125,232,235,0.5)]">
+            Try 20 calls free
+          </a>
+          <a href="/try" data-cta-position="inline" class="mbtn inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-base backdrop-blur-sm hover:bg-white/10">
+            Call Ava: 0113 522 2277
+          </a>
+        </div>
+        <a href="/integrations/" class="text-sm text-[#7de8eb] hover:text-white">See integrations</a>
       </div>
     </div>
   </section>
@@ -1220,7 +1223,7 @@
       <div class="motion text-center mb-14" data-anim="fade-up">
         <span class="text-sm text-[#7de8eb] font-semibold">FAQ</span>
         <h2 class="text-4xl md:text-5xl font-bold text-white mt-2 mb-4">Frequently asked questions</h2>
-        <p class="text-white/60">If your question is not covered here, book a demo and we will walk you through it.</p>
+        <p class="text-white/60">If your question is not covered here, try 20 free inbound calls, no card, or call Ava on 0113 522 2277.</p>
       </div>
 
       <div class="motion flex flex-col gap-3" data-anim="fade-up" style="transition-delay:0.05s">
@@ -1330,15 +1333,16 @@
     <div class="relative z-10 max-w-3xl mx-auto text-center">
       <div class="motion" data-anim="fade-up">
         <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">Ready to see WiseCall in action?</h2>
-        <p class="text-xl text-white/70 mb-10 leading-relaxed">Book a demo and we will recommend the right plan based on your current call volumes and team setup. Most businesses are up and running within a week.</p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <a href="/try" class="mbtn inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-full font-bold text-lg shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]">
-            Call Ava <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        <p class="text-xl text-white/70 mb-10 leading-relaxed">Try 20 free inbound calls, no card. Most businesses are up and running within a week.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="https://app.wisecall.io/setup?trial=calls" data-cta-position="footer" class="mbtn inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#7de8eb] to-[#5dbfc2] text-[#172929] rounded-lg font-bold text-base shadow-[0_0_34px_rgba(125,232,235,0.35)] hover:shadow-[0_0_50px_rgba(125,232,235,0.52)]">
+            Try 20 calls free
           </a>
-          <a href="#" class="contact-link inline-flex items-center justify-center gap-2 px-8 py-4 text-white/80 font-semibold text-lg hover:text-[#7de8eb]" data-inquiry="Demo Request">
-            Book a demo
+          <a href="/try" data-cta-position="footer" class="mbtn inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/5 text-white border border-[#7de8eb]/25 rounded-lg font-semibold text-base backdrop-blur-sm hover:bg-white/10">
+            Call Ava: 0113 522 2277
           </a>
         </div>
+        <a href="#" class="contact-link inline-block mt-4 text-sm text-white/55 hover:text-[#7de8eb]" data-inquiry="Demo Request">Book a demo</a>
       </div>
     </div>
   </section>
@@ -1745,11 +1749,11 @@
 
   <!-- Mobile sticky CTA bar: appears after scrolling past the hero -->
   <div id="mobileStickyCta" class="fixed bottom-0 inset-x-0 z-40 lg:hidden translate-y-full transition-transform duration-300 bg-[#0f1f1f]/95 backdrop-blur-md border-t border-[#7de8eb]/20 px-4 pt-3 flex gap-3" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));">
-    <a href="tel:+441135222277" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[#7de8eb] px-4 py-3 text-[#172929] font-bold text-sm">
-      <i data-lucide="phone-call" class="w-4 h-4 shrink-0"></i> Call the demo
+    <a href="https://app.wisecall.io/setup?trial=calls" data-cta-position="sticky" class="flex-1 inline-flex items-center justify-center text-center rounded-lg bg-[#7de8eb] px-3 py-3 text-[#172929] font-bold text-sm leading-tight">
+      Try 20 calls free
     </a>
-    <a href="/try" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 border border-[#7de8eb]/30 text-white font-semibold text-sm px-4 py-3">
-      Call Ava
+    <a href="/try" data-cta-position="sticky" class="flex-1 inline-flex items-center justify-center text-center rounded-lg bg-white/10 border border-[#7de8eb]/30 text-white font-semibold text-xs leading-tight px-3 py-3">
+      Call Ava: 0113 522 2277
     </a>
   </div>
   <script>

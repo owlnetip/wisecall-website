@@ -247,7 +247,7 @@ function trialPair(position, { center = false } = {}) {
   const justify = center ? ' justify-center' : '';
   return `<div class="flex flex-col sm:flex-row gap-3 sm:gap-4${justify}">
     <a href="${TRIAL_SETUP_URL}" data-cta-position="${position}" class="btn btn-primary px-6 py-3.5 sm:px-8 sm:py-4 text-center">Try 20 calls free</a>
-    <a href="${DEMO_PHONE_TEL}" data-cta-position="${position}" class="btn btn-secondary px-6 py-3.5 sm:px-8 sm:py-4 text-center">Call Ava: 0113 522 2277</a>
+    <a href="${TRY_PAGE_URL}" data-cta-position="${position}" class="btn btn-secondary px-6 py-3.5 sm:px-8 sm:py-4 text-center">Call Ava: 0113 522 2277</a>
   </div>`;
 }
 
@@ -488,8 +488,7 @@ function renderIndustryPage(industry) {
     eyebrow: industry.keyword,
     h1: `${esc(industry.h1)} <span class="text-[#7de8eb]">for UK businesses</span>`,
     lead: industry.heroLead,
-    cta: 'Start a 7-day pilot',
-    secondary: 'Calculate missed calls',
+    trialPair: true,
     panel: { title: `What WiseCall handles for ${industry.name.toLowerCase()}`, items: industry.features.slice(0, 5) },
   })}
 ${trustStrip()}
@@ -529,7 +528,7 @@ ${relatedLinks([
   { path: '/how-it-works/', title: 'How WiseCall handles a call', text: 'Understand the call flow, routing and summaries.' },
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'AI receptionist UK comparison', text: 'Compare WiseCall with common alternatives.' },
 ])}
-${ctaBlock(`Ready to capture more ${industry.leadType.replace(/y$/, 'ies')}?`, `Book a free demo and see how WiseCall can support your ${industry.singular}.`)}`;
+${trialEnd(`Ready to capture more ${industry.leadType.replace(/y$/, 'ies')}?`, `Try 20 free inbound calls, no card, and see how WiseCall can support your ${industry.singular}.`)}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: '/industries/' }, { name: industry.name, path: page.path }]), faqSchema(faqs)]);
 }
 
@@ -1052,7 +1051,7 @@ ${relatedLinks([
   { path: '/resources/missed-call-calculator/', title: 'Missed call calculator', text: 'Estimate what unanswered calls could be costing you.' },
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'Comparison page', text: 'See how AI call answering compares to the alternatives.' },
 ])}
-${ctaBlock('Want to hear it handle your calls?', 'Start a 7-day pilot or book a demo, and see the summaries WiseCall would send your team.')}`;
+${trialEnd('Want to hear it handle your calls?', 'Try 20 free inbound calls, no card, and see the summaries WiseCall would send your team.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'WiseCall in Action', path: page.path }])]);
 }
 
