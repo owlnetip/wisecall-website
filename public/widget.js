@@ -34,6 +34,22 @@
     greeting: "Hi! How can I help today?",
     accent_color: "#7de8eb",
     background_color: "#172929",
+    logo_url: "",
+    font_family: "",
+    font_stylesheet: "",
+  };
+
+  // Per-agent brand presets. The live-chat config overrides these when it
+  // returns logo_url / font_family, so a metadata change does not need a
+  // widget release. BetterMove's wordmark is Lexend (their heading face).
+  var BRAND = {
+    "bettermove-assistant-bettermove-4a19c75d": {
+      logo_url:
+        "https://www.bettermove.co.uk/wp-content/themes/cb-bettermove2023/img/bm-logo-2026.svg",
+      font_family: "Lexend, system-ui, sans-serif",
+      font_stylesheet:
+        "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap",
+    },
   };
   var sessionId = null;
   var messages = []; // {role:'user'|'assistant', content}
@@ -46,6 +62,25 @@
     "position:fixed;bottom:0;" + SIDE + ":0;z-index:2147483000;width:0;height:0;";
   document.body.appendChild(host);
   var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
+
+  function safeHttps(url) {
+    var raw = String(url || "").trim();
+    if (!/^https:\/\//i.test(raw)) return "";
+    try {
+      var u = new URL(raw);
+      if (u.protocol !== "https:") return "";
+      return u.href.replace(/["']/g, "");
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function safeFontFamily(value) {
+    var s = String(value || "").trim();
+    if (!s || s.length > 160) return "";
+    if (!/^[\w\s,'"().-]+$/.test(s)) return "";
+    return s;
+  }
 
   function textColorFor(bg) {
     // Pick readable text colour for the accent button.
@@ -64,10 +99,24 @@
     var accent = cfg.accent_color || "#7de8eb";
     var bg = cfg.background_color || "#172929";
     var onAccent = textColorFor(accent);
+    var logo = safeHttps(cfg.logo_url);
+    var font =
+      safeFontFamily(cfg.font_family) ||
+      "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+    var fontCss = safeHttps(cfg.font_stylesheet);
+    var launcherInner = logo
+      ? '<img src="' + esc(logo) + '" alt=""/>'
+      : '<svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var avatar = logo
+      ? '<div class="av logo"><img src="' + esc(logo) + '" alt=""/></div>'
+      : '<div class="av">' + (cfg.assistant_name || "A").charAt(0).toUpperCase() + "</div>";
     root.innerHTML =
       "<style>" +
+      (fontCss ? "@import url('" + fontCss + "');" : "") +
       ":host{all:initial}" +
-      "*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}" +
+      "*{box-sizing:border-box;font-family:" +
+      font +
+      "}" +
       ".launcher{position:fixed;bottom:20px;" +
       SIDE +
       ":20px;width:60px;height:60px;border-radius:50%;background:" +
@@ -77,6 +126,10 @@
       ";border:none;cursor:pointer;box-shadow:0 8px 28px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;transition:transform .15s}" +
       ".launcher:hover{transform:scale(1.06)}" +
       ".launcher svg{width:28px;height:28px}" +
+      ".launcher.has-logo{width:auto;height:64px;padding:0 16px;border-radius:999px;background:#fff;border:1px solid rgba(18,58,75,.12)}" +
+      ".launcher.has-logo img{height:32px;width:auto;max-width:168px;display:block}" +
+      ".hdr .av.logo{width:auto;height:auto;border-radius:10px;background:#fff;padding:5px 10px}" +
+      ".hdr .av.logo img{height:28px;width:auto;max-width:180px;display:block}" +
       ".panel{position:fixed;bottom:92px;" +
       SIDE +
       ":20px;width:374px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.32);display:flex;flex-direction:column;overflow:hidden}" +
@@ -121,17 +174,24 @@
       SIDE +
       ":0;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0}}" +
       "</style>" +
-      '<button class="launcher" aria-label="Open chat">' +
-      '<svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '<button class="launcher' +
+      (logo ? " has-logo" : "") +
+      '" aria-label="Open chat">' +
+      launcherInner +
       "</button>" +
-      '<div class="panel hidden" role="dialog" aria-label="Chat">' +
-      '<div class="hdr"><div class="av">' +
-      (cfg.assistant_name || "A").charAt(0).toUpperCase() +
-      '</div><div><div class="t">' +
-      esc(cfg.title) +
-      '</div><div class="s">' +
-      esc(cfg.assistant_name) +
-      '</div></div><button class="x" aria-label="Close">&times;</button></div>' +
+      '<div class="panel hidden" role="dialog" aria-label="' +
+      esc(cfg.title || "Chat") +
+      '">' +
+      '<div class="hdr">' +
+      avatar +
+      (logo
+        ? ""
+        : '<div><div class="t">' +
+          esc(cfg.title) +
+          '</div><div class="s">' +
+          esc(cfg.assistant_name) +
+          "</div></div>") +
+      '<button class="x" aria-label="Close">&times;</button></div>' +
       '<div class="body"></div>' +
       '<div class="foot"><input type="text" placeholder="Type your message…" aria-label="Message"/><button class="send">Send</button></div>' +
       '<div class="pb">Powered by <a href="https://wisecall.io" target="_blank" rel="noopener">WiseCall</a></div>' +
@@ -242,20 +302,31 @@
       });
   }
 
+  function applyBranding(data) {
+    var preset = BRAND[SLUG] || {};
+    var remote = data && !data.error ? data : {};
+    if (remote.title) cfg.title = remote.title;
+    if (remote.assistant_name) cfg.assistant_name = remote.assistant_name;
+    if (remote.greeting) cfg.greeting = remote.greeting;
+    if (remote.accent_color) cfg.accent_color = remote.accent_color;
+    if (remote.background_color) cfg.background_color = remote.background_color;
+    cfg.logo_url = remote.logo_url || preset.logo_url || "";
+    cfg.font_family = remote.font_family || preset.font_family || "";
+    cfg.font_stylesheet = remote.font_stylesheet || preset.font_stylesheet || "";
+    // Optional embed overrides, used by the local preview.
+    if (script.getAttribute("data-logo")) cfg.logo_url = script.getAttribute("data-logo");
+    if (script.getAttribute("data-font")) cfg.font_family = script.getAttribute("data-font");
+    if (script.getAttribute("data-font-css")) cfg.font_stylesheet = script.getAttribute("data-font-css");
+  }
+
   // Fetch theming/greeting, then render.
   fetch(BASE + "?profile_slug=" + encodeURIComponent(SLUG))
     .then(function (r) {
       return r.json();
     })
-    .then(function (data) {
-      if (data && !data.error) {
-        cfg.title = data.title || cfg.title;
-        cfg.assistant_name = data.assistant_name || cfg.assistant_name;
-        cfg.greeting = data.greeting || cfg.greeting;
-        cfg.accent_color = data.accent_color || cfg.accent_color;
-        cfg.background_color = data.background_color || cfg.background_color;
-      }
+    .then(applyBranding)
+    .catch(function () {
+      applyBranding(null);
     })
-    .catch(function () {})
     .then(render);
 })();
