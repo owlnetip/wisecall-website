@@ -5,7 +5,7 @@ import {
   requestSalesforceToken,
   resetSalesforceTokenCache,
 } from "./salesforce-sms-client";
-import { lookupSalesforceByPhone } from "./salesforce-sms-client";
+import { lookupSalesforceByPhone, sendSalesforceReplyNotification } from "./salesforce-sms-client";
 import type { SalesforceSmsEnv, SalesforceSmsRecord } from "./salesforce-sms";
 
 const config: SalesforceSmsEnv = {
@@ -107,3 +107,36 @@ function jsonResponse(body: unknown, status = 200) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+test("reply notification targets the record and the routed user", async () => {
+  const calls: Array<{ url: string; body: unknown }> = [];
+  const result = await sendSalesforceReplyNotification({
+    access: { instanceUrl: "https://example.my.salesforce.com", accessToken: "tok" } as never,
+    recipientId: "005000000000002AAA",
+    targetId: "001000000000009AAA",
+    recordName: "Jane Smith",
+    text: "Yes   Thursday works",
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), body: init?.body ? JSON.parse(String(init.body)) : null });
+      if (String(url).includes("/query")) return jsonResponse({ records: [{ Id: "0MLxx0000000001" }] });
+      return jsonResponse([{ isSuccess: true }]);
+    },
+  });
+  assert.equal(result.sent, true);
+  const input = (calls[1].body as { inputs: Array<Record<string, unknown>> }).inputs[0];
+  assert.equal(input.customNotifTypeId, "0MLxx0000000001");
+  assert.deepEqual(input.recipientIds, ["005000000000002AAA"]);
+  assert.equal(input.targetId, "001000000000009AAA");
+  assert.equal(input.title, "SMS reply from Jane Smith");
+  assert.equal(input.body, "Yes Thursday works");
+});
+
+test("reply notification failure is reported, not thrown", async () => {
+  const result = await sendSalesforceReplyNotification({
+    access: { instanceUrl: "https://example.my.salesforce.com", accessToken: "tok" } as never,
+    recipientId: "005", targetId: "003", recordName: "X", text: "hi",
+    fetchImpl: async () => { throw new Error("network down"); },
+  });
+  assert.equal(result.sent, false);
+  assert.equal(result.error, "network down");
+});

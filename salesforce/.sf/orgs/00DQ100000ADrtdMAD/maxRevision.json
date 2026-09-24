@@ -1,6 +1,6 @@
 {
     "fileVersion": 0,
-    "serverMaxRevisionCounter": 25176,
+    "serverMaxRevisionCounter": 25185,
     "sourceMembers": {
         "SiteDotCom__Form1": {
             "memberType": "SiteDotCom",
@@ -46,7 +46,7 @@
         },
         "FlexiPage__Lead_Record_Page_Vendor": {
             "memberType": "FlexiPage",
-            "serverRevisionCounter": 25097,
+            "serverRevisionCounter": 25179,
             "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
@@ -880,7 +880,7 @@
         },
         "FlexiPage__Company_Account_Record_Page": {
             "memberType": "FlexiPage",
-            "serverRevisionCounter": 16096,
+            "serverRevisionCounter": 25181,
             "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
@@ -1546,7 +1546,7 @@
         },
         "FlexiPage__Contact_Record_Page_Three_Column": {
             "memberType": "FlexiPage",
-            "serverRevisionCounter": 23718,
+            "serverRevisionCounter": 25177,
             "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
@@ -1768,7 +1768,7 @@
         },
         "FlexiPage__Person_Account_Record_Page": {
             "memberType": "FlexiPage",
-            "serverRevisionCounter": 24244,
+            "serverRevisionCounter": 25180,
             "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
@@ -1798,7 +1798,7 @@
         },
         "FlexiPage__Lead_Record_Page_Buyer": {
             "memberType": "FlexiPage",
-            "serverRevisionCounter": 25038,
+            "serverRevisionCounter": 25178,
             "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
@@ -2572,8 +2572,14 @@
         },
         "NamedCredential__WiseCall_SMS": {
             "memberType": "NamedCredential",
-            "serverRevisionCounter": 25175,
+            "serverRevisionCounter": 25184,
             "lastRetrievedFromServer": 25175,
+            "isNameObsolete": false
+        },
+        "CustomNotificationType__WiseCall_SMS_Reply": {
+            "memberType": "CustomNotificationType",
+            "serverRevisionCounter": 25185,
+            "lastRetrievedFromServer": 25185,
             "isNameObsolete": false
         }
     }

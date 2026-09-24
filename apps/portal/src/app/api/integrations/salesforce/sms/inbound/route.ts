@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
-import { createSalesforceSmsTask, getSalesforceAccess } from "@/lib/salesforce-sms-client";
+import { createSalesforceSmsTask, getSalesforceAccess, sendSalesforceReplyNotification } from "@/lib/salesforce-sms-client";
 import {
   canonicalSmsDigits,
   normaliseSmsDestination,
@@ -117,12 +117,23 @@ export async function POST(request: Request) {
       direction: "inbound",
     });
 
+    const notification = task.taskId
+      ? await sendSalesforceReplyNotification({
+          access,
+          recipientId: plan.binding.replyRoute.recipientId,
+          targetId: record.personAccountId || record.id,
+          recordName: record.name,
+          text,
+        })
+      : null;
+
     const { error: logError } = await supabase.from("wisecall_salesforce_sms_messages").update({
         status: task.taskId ? "routed" : "route_failed",
         salesforce_task_id: task.taskId,
         detail: {
           reply_recipient_id: plan.binding.replyRoute.recipientId,
           ...(task.error ? { error: task.error } : {}),
+          ...(notification ? { notified: notification.sent, ...(notification.error ? { notify_error: notification.error } : {}) } : {}),
         },
       }).eq("id", reservation.id);
     if (logError) throw new Error("Inbound Task outcome could not be stored; reconcile before retrying");
