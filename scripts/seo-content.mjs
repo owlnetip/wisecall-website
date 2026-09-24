@@ -464,10 +464,10 @@ export const comparisonPages = [
       { question: 'Is an AI receptionist better than voicemail?', answer: 'For most UK businesses, yes. An AI receptionist answers immediately, asks questions and captures structured details, while voicemail depends on the caller being willing to leave a message and someone finding time to act on it.' },
       { question: 'Do people actually leave voicemails?', answer: 'Far fewer than businesses expect. Most callers who reach voicemail simply hang up and either try again later, call a competitor, or give up. WiseCall answers before that decision has to be made.' },
       { question: 'Will callers know they are talking to AI?', answer: 'WiseCall answers in your business name and can be configured to be upfront about being an AI assistant if you want it to be. The priority is a fast, useful answer rather than pretending to be something it is not.' },
-      { question: 'What happens if WiseCall cannot help with a call?', answer: 'WiseCall follows your business-approved escalation rules — it can offer a callback, take a detailed message, or route urgent calls to a human, so a call that voicemail would have lost still gets a proper next step.' },
+      { question: 'What happens if WiseCall cannot help with a call?', answer: 'WiseCall follows your business-approved escalation rules. It can offer a callback, take a detailed message, or route urgent calls to a human, so a call that voicemail would have lost still gets a proper next step.' },
     ],
     ctaTitle: 'Stop losing callers to voicemail',
-    ctaText: 'Start a 7-day pilot and see what WiseCall would have captured from the calls voicemail is currently losing.',
+    ctaText: 'See what WiseCall would have captured from the calls a recorded message is currently losing. 20 inbound calls, no card.',
   },
   {
     slug: 'wisecall-vs-answering-service',
@@ -490,13 +490,13 @@ export const comparisonPages = [
       ['Genuinely complex calls', 'Escalates to your team rather than improvising', 'A live human voice, which can be an advantage for nuanced conversations'],
     ],
     faqs: [
-      { question: 'Is an AI receptionist as good as a human answering service?', answer: 'For structured, repeatable calls — enquiries, bookings, out-of-hours messages — WiseCall is faster, more consistent and captures more usable detail. For a genuinely nuanced or sensitive conversation, a human is still better; WiseCall is built to recognise that and escalate rather than improvise.' },
+      { question: 'Is an AI receptionist as good as a human answering service?', answer: 'For structured, repeatable calls, such as enquiries, bookings and out-of-hours messages, WiseCall is faster, more consistent and captures more usable detail. For a genuinely nuanced or sensitive conversation, a human is still better. WiseCall is built to recognise that and escalate rather than improvise.' },
       { question: 'What happens with a call WiseCall cannot handle?', answer: 'WiseCall follows business-approved escalation rules: it can transfer to a person, offer a callback, or take a detailed message and flag it as urgent, so difficult calls still get a proper next step instead of a generic message.' },
       { question: 'Is WiseCall cheaper than an answering service?', answer: 'WiseCall plans are a fixed monthly price with a clear call allowance, which is usually more predictable than per-minute or per-call answering service billing, especially once call volume grows.' },
       { question: 'Can WiseCall sound like our business, not a generic AI voice?', answer: 'Yes. WiseCall answers in your business name using a greeting and call rules you approve, rather than a shared generic script used across many unrelated businesses.' },
     ],
     ctaTitle: 'Try it on real calls before you decide',
-    ctaText: 'Start a 7-day pilot and compare what WiseCall captures against your current answering service, side by side.',
+    ctaText: 'Compare what WiseCall captures against your current answering service. 20 inbound calls, no card.',
   },
 ];
 
