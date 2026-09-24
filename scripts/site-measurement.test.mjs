@@ -238,6 +238,7 @@ test('html keeps a plain trial href for no-js', () => {
     'property.html',
     'trades/plumbers/index.html',
     'trades/electricians/index.html',
+    'trades/roofers/index.html',
     'compare/wisecall-vs-fonio/index.html',
     'compare/ai-receptionist-uk-comparison/index.html',
     'compare/wisecall-vs-voicemail/index.html',

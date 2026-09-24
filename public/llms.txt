@@ -16,6 +16,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Trades and field service: https://wisecall.io/trades
 - AI receptionist for plumbers: https://wisecall.io/trades/plumbers/
 - AI receptionist for electricians: https://wisecall.io/trades/electricians/
+- AI receptionist for roofers: https://wisecall.io/trades/roofers/
 - AI receptionist UK comparison: https://wisecall.io/compare/ai-receptionist-uk-comparison/
 - WiseCall vs Voicemail: https://wisecall.io/compare/wisecall-vs-voicemail/
 - WiseCall vs Answering service: https://wisecall.io/compare/wisecall-vs-answering-service/
