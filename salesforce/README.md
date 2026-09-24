@@ -1,4 +1,4 @@
-# BetterMove sandbox SMS action — deployment pending
+# BetterMove sandbox SMS action
 
 Separate WiseCall action for Contact, unconverted Lead and Person Account. This
 package contains no ActiveCampaign changes and no existing layout changes.
@@ -54,3 +54,15 @@ Task creation is not idempotent after an uncertain network result.
   no-message GET health check returned HTTP 200. No live SMS was sent.
 - Salesforce CLI installation/admin authentication and sandbox validation remain
   pending; the Salesforce action and its Named Credential are not installed yet.
+
+## Status (25 Sep 2026)
+
+- Deployed to the dev sandbox: Apex + LWC + quick actions + `WiseCall_SMS_Send`
+  permission set (assigned to Luke), External Credential `WiseCall_SMS_Auth`
+  (named principal `WiseCallPortal`) and Named Credential `WiseCall_SMS` →
+  `https://app.wisecall.io` (production portal, no preview bypass).
+- The shared secret is set on the principal via the Connect API, in Vercel
+  (wisecall-portal production) and in Supabase `WISECALL_SALESFORCE_SMS_SECRET`
+  (plain value). Rotate all three together.
+- Portal production env points `SALESFORCE_*` at this sandbox and enables only
+  the BetterMove profile.
