@@ -21,6 +21,9 @@ const FONIO_COMPARE_PATH = '/compare/wisecall-vs-fonio/';
 // Hand-crafted page at trades/plumbers/index.html. Do not generate this
 // path or generate() will overwrite the craft copy.
 const PLUMBERS_PATH = '/trades/plumbers/';
+// Hand-crafted page at trades/electricians/index.html. Do not generate this
+// path or generate() will overwrite the craft copy.
+const ELECTRICIANS_PATH = '/trades/electricians/';
 // Root pages trades.html, dental.html, legal.html and property.html are also
 // hand-crafted. industry.legacyPath keeps generate() from writing over them.
 
@@ -276,8 +279,8 @@ function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Mi
     <div class="flex flex-col">
       <div class="eyebrow mb-4 md:mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>${esc(eyebrow)}</div>
       <h1 class="text-4xl md:text-7xl font-black leading-tight tracking-tight mb-5 md:mb-7">${h1}</h1>
-      <div class="order-3 md:order-4 mb-6 md:mb-0">${trialPair('hero')}</div>
-      <p class="order-4 md:order-3 text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-0 md:mb-9">${esc(lead)}</p>
+      <p class="text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6 md:mb-9">${esc(lead)}</p>
+      <div class="mb-0">${trialPair('hero')}</div>
     </div>
     <div class="card-strong p-7">
       <h2 class="text-2xl font-bold mb-5">${esc(panel.title)}</h2>
@@ -780,9 +783,9 @@ function renderComparison() {
     <div class="flex flex-col">
       <div class="eyebrow mb-4 md:mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>Comparison</div>
       <h1 class="text-4xl md:text-7xl font-black leading-tight tracking-tight mb-5 md:mb-7">Best AI receptionist UK <span class="text-[#7de8eb]">2026</span></h1>
-      <div class="order-3 md:order-5 mb-6 md:mb-0">${trialPair('hero')}</div>
-      <p class="order-4 md:order-3 text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-4 md:mb-6">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
-      <p class="order-5 md:order-4 text-lg text-white/68 leading-relaxed max-w-3xl mb-0 md:mb-9">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
+      <p class="text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6 md:mb-9">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
+      <div class="mb-6 md:mb-8">${trialPair('hero')}</div>
+      <p class="text-lg text-white/68 leading-relaxed max-w-3xl mb-0">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
     </div>
     <div class="card-strong p-7">
       <p class="text-white/78 text-xl leading-relaxed">WiseCall is in the table. We are not pretending otherwise.</p>
@@ -1190,6 +1193,7 @@ function allRoutes() {
     ...industries.map((industry) => industryPath(industry)),
     '/trades',
     PLUMBERS_PATH,
+    ELECTRICIANS_PATH,
     '/compare/ai-receptionist-uk-comparison/',
     ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
     FONIO_COMPARE_PATH,
@@ -1234,6 +1238,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Estate agents: ${site.url}/property
 - Trades and field service: ${site.url}/trades
 - AI receptionist for plumbers: ${site.url}${PLUMBERS_PATH}
+- AI receptionist for electricians: ${site.url}${ELECTRICIANS_PATH}
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
 ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
 - WiseCall vs Fonio: ${site.url}${FONIO_COMPARE_PATH}
@@ -1253,7 +1258,15 @@ ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${
 `;
 }
 
+const HAND_CRAFTED_PAGES = new Set([
+  'trades/plumbers/index.html',
+  'trades/electricians/index.html',
+]);
+
 async function write(path, content) {
+  if (HAND_CRAFTED_PAGES.has(path)) {
+    throw new Error(`Refusing to overwrite hand-crafted page ${path}`);
+  }
   const file = new URL(path, out);
   await mkdir(new URL('.', file), { recursive: true });
   await writeFile(file, content);
