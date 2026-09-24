@@ -140,3 +140,54 @@ function salesforceErrorMessage(payload: unknown, fallback: string): string {
   }
   return fallback;
 }
+
+const REPLY_NOTIFICATION_TYPE = "WiseCall_SMS_Reply";
+let replyNotificationTypeId: string | null = null;
+
+// Bell notification to whoever replies are routed to, so a text logged as a
+// completed activity still gets seen. Best effort: never fails the reply.
+export async function sendSalesforceReplyNotification(input: {
+  access: SalesforceAccess;
+  recipientId: string;
+  targetId: string;
+  recordName: string;
+  text: string;
+  fetchImpl?: FetchLike;
+}): Promise<{ sent: boolean; error: string | null }> {
+  const fetchImpl = input.fetchImpl ?? fetch;
+  const base = `${input.access.instanceUrl}/services/data/v61.0`;
+  const headers = { Authorization: `Bearer ${input.access.accessToken}`, "Content-Type": "application/json" };
+  try {
+    if (!replyNotificationTypeId) {
+      const q = encodeURIComponent(`SELECT Id FROM CustomNotificationType WHERE DeveloperName = '${REPLY_NOTIFICATION_TYPE}'`);
+      // Integration users cannot query this type via the data API, only Tooling.
+      const res = await fetchImpl(`${base}/tooling/query?q=${q}`, { headers, signal: AbortSignal.timeout(8000) });
+      const payload = await res.json().catch(() => ({}));
+      const id = payload?.records?.[0]?.Id;
+      if (!res.ok || typeof id !== "string") return { sent: false, error: "Reply notification type not found in Salesforce." };
+      replyNotificationTypeId = id;
+    }
+    const snippet = input.text.replace(/\s+/g, " ").trim();
+    const res = await fetchImpl(`${base}/actions/standard/customNotificationAction`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        inputs: [{
+          customNotifTypeId: replyNotificationTypeId,
+          recipientIds: [input.recipientId],
+          title: `SMS reply from ${input.recordName}`.slice(0, 250),
+          body: (snippet.length > 300 ? `${snippet.slice(0, 299)}…` : snippet) || "(empty message)",
+          targetId: input.targetId,
+        }],
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    const payload = await res.json().catch(() => null);
+    const ok = res.ok && Array.isArray(payload) && payload[0]?.isSuccess === true;
+    return ok
+      ? { sent: true, error: null }
+      : { sent: false, error: salesforceErrorMessage(Array.isArray(payload) ? payload[0]?.errors : payload, "Salesforce notification failed.") };
+  } catch (error) {
+    return { sent: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
