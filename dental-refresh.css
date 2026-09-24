@@ -18,19 +18,6 @@
   height: 190px;
 }
 
-section.light .dentally-cta {
-  color: #ffffff !important;
-  background: #172929 !important;
-  border: 1px solid #172929 !important;
-  box-shadow: none !important;
-}
-
-section.light .dentally-cta:hover {
-  color: #172929 !important;
-  background: #7de8eb !important;
-  border-color: #7de8eb !important;
-}
-
 section.light .dental-flow-card {
   color: #ffffff !important;
   background: #102e2e !important;

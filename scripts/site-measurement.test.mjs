@@ -94,13 +94,21 @@ test('microsoft click ids and bing paid mediums are paid other, not organic bing
   assert.equal(classifyVisit({ search: '?utm_source=bing&utm_medium=paid' }).src, 'paid_other');
   assert.equal(classifyVisit({ referrer: 'https://www.bing.com/search?q=x' }).src, 'organic_bing');
   assert.equal(classifyVisit({ search: '?utm_source=bing', referrer: 'https://www.bing.com/' }).src, 'organic_bing');
+  assert.equal(classifyVisit({ search: '?utm_source=microsoft' }).src, 'paid_other');
+  assert.equal(classifyVisit({ search: '?utm_source=BingAds', referrer: 'https://www.bing.com/' }).src, 'paid_other');
 });
 
 test('brave yandex and startpage are organic other', () => {
   assert.equal(classifyVisit({ referrer: 'https://search.brave.com/search?q=ai' }).src, 'organic_other');
   assert.equal(classifyVisit({ referrer: 'https://yandex.ru/search/?text=ai' }).src, 'organic_other');
   assert.equal(classifyVisit({ referrer: 'https://www.yandex.com/search/?text=ai' }).src, 'organic_other');
+  assert.equal(classifyVisit({ referrer: 'https://yandex.com.tr/search/?text=ai' }).src, 'organic_other');
+  assert.equal(classifyVisit({ referrer: 'https://yandex.by/search/?text=ai' }).src, 'organic_other');
+  assert.equal(classifyVisit({ referrer: 'https://www.yandex.kz/search/?text=ai' }).src, 'organic_other');
+  assert.equal(classifyVisit({ referrer: 'https://ya.ru/search/?text=ai' }).src, 'organic_other');
   assert.equal(classifyVisit({ referrer: 'https://www.startpage.com/sp/search' }).src, 'organic_other');
+  assert.equal(classifyVisit({ referrer: 'https://not-yandex.example/search' }).src, 'referral');
+  assert.equal(classifyVisit({ referrer: 'https://yandex.example.com/search' }).src, 'referral');
 });
 
 test('google product hosts are referral, not organic google', () => {

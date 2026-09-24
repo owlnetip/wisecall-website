@@ -444,7 +444,7 @@ export const comparisonPages = [
   {
     slug: 'wisecall-vs-voicemail',
     keyword: 'voicemail alternative',
-    title: 'WiseCall vs Voicemail | AI Receptionist Alternative to Voicemail UK',
+    title: 'AI Receptionist vs Voicemail UK | WiseCall',
     description:
       'Most callers hang up rather than leave a voicemail. See what changes for a UK business when WiseCall answers instead of a recorded message.',
     eyebrow: 'Comparison',
@@ -472,7 +472,7 @@ export const comparisonPages = [
   {
     slug: 'wisecall-vs-answering-service',
     keyword: 'AI receptionist vs answering service',
-    title: 'WiseCall vs Answering Service | AI Receptionist vs Human Call Answering UK',
+    title: 'AI Receptionist vs Answering Service UK | WiseCall',
     description:
       'Compare WiseCall’s AI receptionist with traditional human answering services on availability, cost, consistency and the detail captured on every call.',
     eyebrow: 'Comparison',
