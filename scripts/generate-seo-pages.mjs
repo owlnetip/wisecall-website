@@ -335,15 +335,18 @@ function faqSection(faqs, title = 'Common Questions') {
 </section>`;
 }
 
-function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', { primaryHref = TRIAL_SETUP_URL, primaryLabel = 'Try it now', secondaryHref = '/how-it-works/', secondaryLabel = 'See how WiseCall works' } = {}) {
+function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', options) {
+  const actions = options
+    ? `<div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="${options.primaryHref ?? TRIAL_SETUP_URL}" class="btn btn-primary px-8 py-4">${esc(options.primaryLabel ?? 'Try it now')}</a>
+      <a href="${options.secondaryHref ?? '/how-it-works/'}" class="btn btn-secondary px-8 py-4">${esc(options.secondaryLabel ?? 'See how WiseCall works')}</a>
+    </div>`
+    : trialPair('footer', { center: true });
   return `<section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto text-center card-strong p-10 md:p-14">
     <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8">${esc(text)}</p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="${primaryHref}" class="btn btn-primary px-8 py-4">${esc(primaryLabel)}</a>
-      <a href="${secondaryHref}" class="btn btn-secondary px-8 py-4">${esc(secondaryLabel)}</a>
-    </div>
+    ${actions}
   </div>
 </section>`;
 }
@@ -546,7 +549,7 @@ ${trustStrip()}
 ${industries.map((industry) => `<a href="${industryPath(industry)}" class="card p-7 block hover:border-[#7de8eb]/40"><h2 class="text-2xl font-bold mb-3">${esc(industry.name)}</h2><p class="text-white/65 leading-relaxed">${esc(industry.description)}</p><span class="inline-flex mt-5 text-[#7de8eb] font-bold">View ${esc(industry.keyword)}</span></a>`).join('')}
 </div></section>
 <section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these. Get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
-${ctaBlock('Don\'t see your industry?', 'Try 20 calls free, no card, or call Ava and hear how a call is handled. A demo can still show how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
+${ctaBlock('Don’t see your industry?', 'Try 20 calls free, no card, or call Ava and hear how a call is handled. A demo can still show how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: page.path }])]);
 }
 
@@ -729,7 +732,7 @@ function renderComparison() {
     {
       title: 'Fonio',
       paragraphs: [
-        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds SIP and outbound campaigns. 30-day money-back. Hosted in Germany.',
+        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds bring-your-own numbers and outbound campaigns. 30-day money-back. Hosted in Germany.',
         'Fine if you are happy paying in euros and keeping data in the EU. Less fine if you wanted a UK receptionist product with a pound invoice.',
       ],
     },
@@ -951,6 +954,10 @@ ${relatedLinks([
   ], { headerCtaHref: TRY_PAGE_URL, headerCtaLabel: 'Call Ava' });
 }
 
+function comparisonNavLabel(comparison) {
+  return comparison.label || `WiseCall vs ${comparison.subject}`;
+}
+
 function renderComparisonPage(comparison) {
   const page = {
     title: comparison.title,
@@ -963,14 +970,14 @@ function renderComparisonPage(comparison) {
   const body = `${hero({ eyebrow: comparison.eyebrow, h1: comparison.h1, lead: comparison.lead, trialPair: true, panel: comparisonHeroPanel })}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto overflow-x-auto card p-3"><table class="w-full text-left text-sm"><thead><tr class="text-[#7de8eb]">${comparison.columns.map((col) => `<th class="p-4">${esc(col)}</th>`).join('')}</tr></thead><tbody>${comparison.rows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell) => `<td class="p-4 text-white/72">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
 ${hearAvaLine(hear[0], hear[1])}
-${faqSection(comparison.faqs, `${comparison.slug === 'wisecall-vs-answering-service' ? 'WiseCall vs Answering Service' : 'WiseCall vs Voicemail'} Questions`)}
+${faqSection(comparison.faqs, `${comparisonNavLabel(comparison)} Questions`)}
 ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'AI receptionist UK comparison', text: 'See the broader comparison against human reception and voicemail.' },
 ])}
 ${trialEnd(comparison.ctaTitle, comparison.ctaText)}`;
-  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: comparison.slug === 'wisecall-vs-answering-service' ? 'WiseCall vs Answering Service' : 'WiseCall vs Voicemail', path: page.path }]), faqSchema(comparison.faqs)], { headerCtaHref: TRIAL_SETUP_URL, headerCtaLabel: 'Try 20 calls free' });
+  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: comparisonNavLabel(comparison), path: page.path }]), faqSchema(comparison.faqs)], { headerCtaHref: TRIAL_SETUP_URL, headerCtaLabel: 'Try 20 calls free' });
 }
 
 function renderCalculator() {
