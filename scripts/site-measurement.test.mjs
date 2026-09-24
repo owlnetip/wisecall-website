@@ -112,6 +112,30 @@ test('google product hosts are referral, not organic google', () => {
   );
 });
 
+test('google app news and images are organic google', () => {
+  assert.equal(
+    classifyVisit({ referrer: 'android-app://com.google.android.googlequicksearchbox' }).src,
+    'organic_google',
+  );
+  assert.equal(
+    classifyVisit({ referrer: 'android-app://com.google.android.googlequicksearchbox/https/www.google.com' }).src,
+    'organic_google',
+  );
+  assert.equal(
+    classifyVisit({ referrer: 'android-app://com.google.android.googlequicksearchbox/https/www.google.com/search?q=ai' }).src,
+    'organic_google',
+  );
+  assert.equal(classifyVisit({ referrer: 'https://news.google.com/' }).src, 'organic_google');
+  assert.equal(classifyVisit({ referrer: 'https://news.google.co.uk/articles/abc' }).src, 'organic_google');
+  assert.equal(classifyVisit({ referrer: 'https://news.google.com.au/' }).src, 'organic_google');
+  assert.equal(classifyVisit({ referrer: 'https://images.google.com/' }).src, 'organic_google');
+  assert.equal(classifyVisit({ referrer: 'https://images.google.co.uk/search?q=ai' }).src, 'organic_google');
+  assert.equal(classifyVisit({ referrer: 'https://images.google.com.au/' }).src, 'organic_google');
+  assert.equal(classifyVisit({ referrer: 'https://mail.google.com/mail/u/0/' }).src, 'referral');
+  assert.equal(classifyVisit({ referrer: 'https://docs.google.com/document/d/abc' }).src, 'referral');
+  assert.equal(classifyVisit({ referrer: 'android-app://com.google.android.gm' }).src, 'referral');
+});
+
 test('organic referrers', () => {
   assert.equal(
     classifyVisit({ referrer: 'https://www.google.co.uk/search?q=ai', pageHost: 'wisecall.io' }).src,

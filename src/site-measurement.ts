@@ -76,9 +76,23 @@ export function isGoogleHost(host: string): boolean {
   return /(^|\.)google\./i.test(host);
 }
 
-// Search only. mail.google.com, docs.google.com and other product hosts are referrals.
+// Search, News, and Images. mail.google.com, docs.google.com and other product hosts are referrals.
 export function isGoogleSearchHost(host: string): boolean {
   return /^(www\.)?google\.[a-z]{2,3}(?:\.[a-z]{2})?$/i.test(host);
+}
+
+export function isGoogleNewsOrImagesHost(host: string): boolean {
+  return /^(news|images)\.google\.[a-z]{2,3}(?:\.[a-z]{2})?$/i.test(host);
+}
+
+// Android Google app search. The referrer is not an https host.
+const GOOGLE_QUICKSEARCH_APP = 'android-app://com.google.android.googlequicksearchbox';
+
+export function isGoogleQuickSearchApp(referrer: string): boolean {
+  const value = referrer.trim().toLowerCase();
+  if (!value.startsWith(GOOGLE_QUICKSEARCH_APP)) return false;
+  const next = value.charAt(GOOGLE_QUICKSEARCH_APP.length);
+  return next === '' || next === '/' || next === '?' || next === '#';
 }
 
 export function isBingHost(host: string): boolean {
@@ -144,8 +158,9 @@ export function classifyVisit({
     src = 'paid_other';
   } else {
     const host = referrerHost(referrer);
-    if (!host || isInternalHost(host, pageHost)) src = 'direct';
-    else if (isGoogleSearchHost(host)) src = 'organic_google';
+    if (isGoogleQuickSearchApp(referrer)) src = 'organic_google';
+    else if (!host || isInternalHost(host, pageHost)) src = 'direct';
+    else if (isGoogleSearchHost(host) || isGoogleNewsOrImagesHost(host)) src = 'organic_google';
     else if (isBingHost(host)) src = 'organic_bing';
     else if (isOtherSearchHost(host)) src = 'organic_other';
     else src = 'referral';
