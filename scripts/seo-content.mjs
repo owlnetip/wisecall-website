@@ -360,7 +360,6 @@ export const ukAiReceptionistComparison = {
       'Usually quoted with a term',
     ],
     ['Currency', 'GBP', 'GBP', 'Euros', 'GBP (not VAT registered)', 'GBP excl. VAT', 'GBP, quote'],
-    ['Where data sits', 'UK', 'UK company (Mayfair)', 'Nuremberg, Germany', 'Scotland', 'EU / IONOS', 'UK'],
     [
       'Phone line',
       'Included. Dedicated number, or plug in your PBX.',
@@ -403,7 +402,6 @@ export const ukAiReceptionistComparison = {
     ['Home market', 'UK', 'Austria/Germany, UK launch in 2026'],
     ['From', '£99/mo rolling', '€99/mo Solo'],
     ['Try it', '20 free inbound AI calls', '30-day money-back'],
-    ['Hosting', 'UK', 'Nuremberg'],
     ['Phone', 'Included or your PBX', 'Fonio number, or bring your own numbers on Team and up'],
     ['Channels', 'Phone, email, WhatsApp, live chat, SMS', 'Phone first, WhatsApp separate'],
     ['Dental', 'Dentally, no clinical advice', 'Generic calendar, EU GDPR'],
@@ -413,7 +411,7 @@ export const ukAiReceptionistComparison = {
     {
       question: 'What is the best AI receptionist for UK businesses in 2026?',
       answer:
-        'Depends what you need. Jodie if you want the cheapest unlimited minutes. whoza if you are a trade and want jobs in WhatsApp. Moneypenny if you need a human. WiseCall if you want UK-hosted calls, a number included, and the same agent on phone, email, WhatsApp, live chat and SMS.',
+        'Depends what you need. Jodie if you want the cheapest unlimited minutes. whoza if you are a trade and want jobs in WhatsApp. Moneypenny if you need a human. WiseCall if you want a number included, billed in pounds, and the same agent on phone, email, WhatsApp, live chat and SMS.',
     },
     {
       question: 'Is an AI receptionist better than voicemail?',
