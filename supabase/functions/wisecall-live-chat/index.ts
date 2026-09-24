@@ -8,6 +8,7 @@ import {
 } from "../_shared/contact-memory.ts";
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
+import { extractChatName } from "../_shared/chat-contact-name.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -147,9 +148,7 @@ function isPlausibleContactName(value: string): boolean {
 function extractContactData(text: string) {
   const email = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
   const phone = text.match(/(?:\+44|0)\s?[\d\s().-]{9,}/)?.[0]?.replace(/[^\d+]/g, "");
-  const name = text.match(/\b(?:my name is|this is|i am|i'm)\s+([a-z][a-z' -]{1,60})/i)?.[1]
-    ?.replace(/[.,;:!?]+$/g, "")
-    .trim();
+  const name = extractChatName(text);
 
   return compactObject({
     contact_email: email,
