@@ -279,8 +279,8 @@ function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Mi
     <div class="flex flex-col">
       <div class="eyebrow mb-4 md:mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>${esc(eyebrow)}</div>
       <h1 class="text-4xl md:text-7xl font-black leading-tight tracking-tight mb-5 md:mb-7">${h1}</h1>
-      <div class="order-3 md:order-4 mb-6 md:mb-0">${trialPair('hero')}</div>
-      <p class="order-4 md:order-3 text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-0 md:mb-9">${esc(lead)}</p>
+      <p class="text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6 md:mb-9">${esc(lead)}</p>
+      <div class="mb-0">${trialPair('hero')}</div>
     </div>
     <div class="card-strong p-7">
       <h2 class="text-2xl font-bold mb-5">${esc(panel.title)}</h2>
@@ -783,9 +783,9 @@ function renderComparison() {
     <div class="flex flex-col">
       <div class="eyebrow mb-4 md:mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>Comparison</div>
       <h1 class="text-4xl md:text-7xl font-black leading-tight tracking-tight mb-5 md:mb-7">Best AI receptionist UK <span class="text-[#7de8eb]">2026</span></h1>
-      <div class="order-3 md:order-5 mb-6 md:mb-0">${trialPair('hero')}</div>
-      <p class="order-4 md:order-3 text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-4 md:mb-6">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
-      <p class="order-5 md:order-4 text-lg text-white/68 leading-relaxed max-w-3xl mb-0 md:mb-9">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
+      <p class="text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6 md:mb-9">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
+      <div class="mb-6 md:mb-8">${trialPair('hero')}</div>
+      <p class="text-lg text-white/68 leading-relaxed max-w-3xl mb-0">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
     </div>
     <div class="card-strong p-7">
       <p class="text-white/78 text-xl leading-relaxed">WiseCall is in the table. We are not pretending otherwise.</p>
