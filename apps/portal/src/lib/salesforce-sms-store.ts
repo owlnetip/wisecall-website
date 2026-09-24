@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ResolvedReplyRoute, SalesforceObjectType, StoredSmsBinding } from "@/lib/salesforce-sms";
+import {
+  numericSenderDigits,
+  type ResolvedReplyRoute,
+  type SalesforceObjectType,
+  type StoredSmsBinding,
+} from "@/lib/salesforce-sms";
 
 type BindingRow = {
   id: string;
@@ -146,16 +151,42 @@ export async function saveSmsMessage(
 export async function resolveAgentSmsNumber(
   supabase: SupabaseClient,
   profileId: string,
-): Promise<string | null> {
+  requestedFrom?: string | null,
+): Promise<{ ok: true; from: string } | { ok: false; message: string }> {
   const { data, error } = await supabase
     .from("wisecall_sms_numbers")
     .select("sms_number")
     .eq("profile_id", profileId)
     .eq("status", "active")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  const number = typeof data?.sms_number === "string" ? data.sms_number.trim() : "";
-  return number || null;
+
+  const numbers = (data || [])
+    .map((row) => (typeof row.sms_number === "string" ? row.sms_number.trim() : ""))
+    .map((value) => numericSenderDigits(value))
+    .filter((digits): digits is string => Boolean(digits));
+
+  if (requestedFrom) {
+    const wanted = numericSenderDigits(requestedFrom);
+    if (!wanted || !numbers.includes(wanted)) {
+      return {
+        ok: false,
+        message:
+          "That number is not an active SMS number on this agent. The message is sent from that phone number, not the WiseCall name.",
+      };
+    }
+    return { ok: true, from: `+${wanted}` };
+  }
+
+  if (numbers.length === 1) return { ok: true, from: `+${numbers[0]}` };
+  if (numbers.length === 0) {
+    return {
+      ok: false,
+      message: "This agent has no SMS phone number. Add the number the message should come from before sending.",
+    };
+  }
+  return {
+    ok: false,
+    message: "This agent has more than one SMS number. Pass from with the phone number the message should come from.",
+  };
 }

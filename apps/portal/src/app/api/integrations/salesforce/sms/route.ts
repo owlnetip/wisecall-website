@@ -155,7 +155,7 @@ export async function POST(request: Request) {
         const { error } = await supabase.rpc("wisecall_record_sms_message", { p_profile_id: profileId });
         if (error) console.error("[salesforce-sms] usage", error.message);
       },
-      resolveFromNumber: (profileId) => resolveAgentSmsNumber(supabase, profileId),
+      resolveFromNumber: (profileId, requestedFrom) => resolveAgentSmsNumber(supabase, profileId, requestedFrom),
     };
     const result = await executeSalesforceOutbound(parsed.value, deps);
     return json(result.body, result.httpStatus);

@@ -268,6 +268,7 @@ test("a confirmed send goes out once and stores the mapping and recipient", asyn
   assert.equal(result.body.status, "sent");
   assert.equal(result.body.provider, "vonage");
   assert.equal(deps.sends.length, 1);
+  assert.equal(deps.sends[0].from, "+447700900000");
   assert.equal(deps.sends[0].to, PHONE);
   assert.equal(deps.savedBindings[0].salesforceRecordId, "003000000000001AAA");
   assert.equal(deps.savedBindings[0].replyRoute.recipientId, OWNER);
@@ -307,6 +308,16 @@ test("parse accepts the Salesforce flow payload and rejects a missing reply type
 
   const bad = parseOutboundSmsBody({ profile_id: PROFILE, to: PHONE, text: "Hi", confirm_reply_route: { type: "queue" } });
   assert.equal(bad.ok, false);
+
+  const namedSender = parseOutboundSmsBody({ profile_id: PROFILE, to: PHONE, text: "Hi", from: "WiseCall" });
+  assert.equal(namedSender.ok, false);
+  if (namedSender.ok) return;
+  assert.match(namedSender.error, /phone number/);
+
+  const numberedSender = parseOutboundSmsBody({ profile_id: PROFILE, to: PHONE, text: "Hi", from: "07700900000" });
+  assert.equal(numberedSender.ok, true);
+  if (!numberedSender.ok) return;
+  assert.equal(numberedSender.value.from, "+447700900000");
 });
 
 test("Salesforce SMS stays disabled until the staging secret, agent, and org are set", () => {
@@ -366,7 +377,7 @@ function fakeDeps(options: {
       return { taskId: "00T000000000001AAA", error: null };
     },
     recordUsage: async () => undefined,
-    resolveFromNumber: async () => "+447700900000",
+    resolveFromNumber: async () => ({ ok: true as const, from: "+447700900000" }),
   };
   return deps;
 }

@@ -72,10 +72,18 @@ export type OutboundSmsRequest = {
   profileId: string;
   to: string;
   text: string;
+  /** Phone number the handset should see. Never a name such as WiseCall. */
+  from?: string | null;
   confirmRecordId?: string | null;
   confirmReplyRoute?: ReplyRouteConfirmation | null;
   idempotencyKey?: string | null;
 };
+
+/** Digits Vonage will display as the sender. A name is not a sender. */
+export function numericSenderDigits(raw: string): string | null {
+  const digits = canonicalSmsDigits(raw);
+  return /^\d{8,15}$/.test(digits) ? digits : null;
+}
 
 export function normaliseSmsDestination(raw: string): string | null {
   let number = String(raw || "").trim().replace(/[\s().-]/g, "");
@@ -405,6 +413,18 @@ export function parseOutboundSmsBody(payload: unknown, idempotencyHeader?: strin
   if (!text) return { ok: false, error: "text is required." };
   if (text.length > 1000) return { ok: false, error: "text must be 1000 characters or fewer." };
 
+  const fromRaw = asString(body.from) || asString(body.sms_from) || asString(body.sender);
+  let from: string | null = null;
+  if (fromRaw) {
+    from = normaliseSmsDestination(fromRaw);
+    if (!from || !numericSenderDigits(fromRaw)) {
+      return {
+        ok: false,
+        error: "from must be the SMS phone number. Messages are not sent from the WiseCall name.",
+      };
+    }
+  }
+
   const confirmRecordId = asString(body.confirm_record_id) || asString(body.confirmRecordId);
   const routeRaw = body.confirm_reply_route ?? body.confirmReplyRoute;
   let confirmReplyRoute: ReplyRouteConfirmation | null = null;
@@ -435,6 +455,7 @@ export function parseOutboundSmsBody(payload: unknown, idempotencyHeader?: strin
       profileId: profileId.toLowerCase(),
       to,
       text,
+      from,
       confirmRecordId,
       confirmReplyRoute,
       idempotencyKey,
@@ -554,7 +575,10 @@ export type SalesforceSmsDeps = {
     direction: "outbound" | "inbound";
   }) => Promise<{ taskId: string | null; error: string | null }>;
   recordUsage: (profileId: string) => Promise<void>;
-  resolveFromNumber: (profileId: string) => Promise<string | null>;
+  resolveFromNumber: (
+    profileId: string,
+    requestedFrom: string | null,
+  ) => Promise<{ ok: true; from: string } | { ok: false; message: string }>;
 };
 
 export type OutboundExecution =
@@ -591,18 +615,31 @@ export async function executeSalesforceOutbound(
     return heldDecisionResponse(decision, phone);
   }
 
-  const from = await deps.resolveFromNumber(request.profileId);
-  if (!from) {
+  const sender = await deps.resolveFromNumber(request.profileId, request.from ?? null);
+  if (!sender.ok) {
     return {
       httpStatus: 409,
       body: {
         ok: false,
         status: "sms_number_required",
         phone,
-        message: "Provision a Vonage SMS number for this agent before sending. Nothing was sent.",
+        message: sender.message,
       },
     };
   }
+  const fromDigits = numericSenderDigits(sender.from);
+  if (!fromDigits) {
+    return {
+      httpStatus: 422,
+      body: {
+        ok: false,
+        status: "invalid",
+        phone,
+        message: "The SMS sender must be a phone number. Messages are not sent from the WiseCall name.",
+      },
+    };
+  }
+  const from = `+${fromDigits}`;
 
   const sent = await deps.sendSms({ from, to: phone, text: request.text });
 
