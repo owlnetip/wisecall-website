@@ -103,7 +103,11 @@ export async function createSalesforceSmsTask(input: {
   fetchImpl?: FetchLike;
 }): Promise<{ taskId: string | null; error: string | null }> {
   const fetchImpl = input.fetchImpl ?? fetch;
-  const subject = input.direction === "inbound" ? "SMS reply" : "SMS sent";
+  // Logged like a 3CX call: a completed activity in the timeline history, with
+  // the message itself in the title so the conversation reads down the record.
+  const label = input.direction === "inbound" ? "SMS received" : "SMS sent";
+  const snippet = input.text.replace(/\s+/g, " ").trim();
+  const subject = `${label}: ${snippet.length > 80 ? `${snippet.slice(0, 79)}…` : snippet}`;
   const response = await fetchImpl(`${input.access.instanceUrl}/services/data/v61.0/sobjects/Task`, {
     method: "POST",
     headers: {
@@ -112,10 +116,10 @@ export async function createSalesforceSmsTask(input: {
     },
     body: JSON.stringify({
       Subject: subject,
-      Description: `${subject} with ${input.phone}\n\n${input.text}`.slice(0, 30000),
+      Description: `${label} ${input.direction === "inbound" ? "from" : "to"} ${input.phone}\n\n${input.text}`.slice(0, 30000),
       WhoId: input.record.id,
       OwnerId: input.replyRoute.recipientId,
-      Status: "Not Started",
+      Status: "Completed",
       Priority: "Normal",
       ActivityDate: new Date().toISOString().slice(0, 10),
     }),
