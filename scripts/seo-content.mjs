@@ -431,10 +431,6 @@ export const ukAiReceptionistComparison = {
       question: 'Can I keep my number?',
       answer: 'Usually, by porting or forwarding. We confirm when we set you up.',
     },
-    {
-      question: 'Where is WiseCall data stored?',
-      answer: 'UK. No clinical advice. If a person is needed, it escalates.',
-    },
   ],
 };
 

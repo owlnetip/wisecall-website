@@ -760,7 +760,7 @@ function renderComparison() {
     },
   ];
   const checks = [
-    'Where is the call data. UK, EU, or they do not say. For dental, care and legal this is a real question, not a slogan.',
+    'Is a number included. For dental, care and legal this is a real question, not a slogan.',
     'Do you also need a phone system. Forwarding a mobile is fine until you want overflow, a ported number, or routing to mobiles without a second supplier.',
     'What happens on email and WhatsApp. Most of these products only answer the phone. Your customers do not only ring.',
     'Is the price a cap or a meter. Unlimited minutes, per-minute extras, per-call extras and per-job billing feel very different at 80 calls a week.',
@@ -839,7 +839,7 @@ function renderComparison() {
       ${checks.map((text, index) => `<li class="card p-6 flex gap-4"><span class="text-[#7de8eb] font-black text-2xl leading-none">${index + 1}</span><p class="text-white/72 leading-relaxed">${esc(text)}</p></li>`).join('')}
     </ol>
     <div class="card-strong p-7 mt-8">
-      <p class="text-white/80 leading-relaxed">Ours: UK, phone system included, same agent across channels, 30-day rolling, published GBP price.</p>
+      <p class="text-white/80 leading-relaxed">Ours: phone system included, same agent across channels, 30-day rolling, published GBP price.</p>
     </div>
   </div>
 </section>
@@ -849,7 +849,7 @@ function renderComparison() {
     <h2 class="text-4xl md:text-5xl font-black mb-5">WiseCall and Fonio</h2>
     <p class="text-lg text-white/72 leading-relaxed max-w-3xl mb-8">Fonio is the well-funded European AI phone assistant. WiseCall is the UK one.</p>
     ${comparisonTable(data.fonioColumns.slice(1), data.fonioRows, { firstHeader: data.fonioColumns[0], minClass: 'compare-table-sm' })}
-    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number, whose data, and whose invoice. ${sourceAnchor('Read the full WiseCall vs Fonio comparison', FONIO_COMPARE_PATH)}.</p>
+    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number and whose invoice. ${sourceAnchor('Read the full WiseCall vs Fonio comparison', FONIO_COMPARE_PATH)}.</p>
   </div>
 </section>
 <section id="demo" class="px-6 py-20">
