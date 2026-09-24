@@ -360,12 +360,11 @@ export const ukAiReceptionistComparison = {
       'Usually quoted with a term',
     ],
     ['Currency', 'GBP', 'GBP', 'Euros', 'GBP (not VAT registered)', 'GBP excl. VAT', 'GBP, quote'],
-    ['Where data sits', 'UK', 'UK company (Mayfair)', 'Nuremberg, Germany', 'Scotland', 'EU / IONOS', 'UK'],
     [
       'Phone line',
       'Included. Dedicated number, or plug in your PBX.',
       'Forward the number you already have.',
-      'Fonio number, or SIP on Team and up',
+      'Fonio number, or bring your own on Team and up',
       'Forward. Summaries to WhatsApp',
       'Forwarding, by plan',
       'Your number. Human and AI products',
@@ -403,8 +402,7 @@ export const ukAiReceptionistComparison = {
     ['Home market', 'UK', 'Austria/Germany, UK launch in 2026'],
     ['From', '£99/mo rolling', '€99/mo Solo'],
     ['Try it', '20 free inbound AI calls', '30-day money-back'],
-    ['Hosting', 'UK', 'Nuremberg'],
-    ['Phone', 'Included or your PBX', 'Fonio number or SIP on Team and up'],
+    ['Phone', 'Included or your PBX', 'Fonio number, or bring your own numbers on Team and up'],
     ['Channels', 'Phone, email, WhatsApp, live chat, SMS', 'Phone first, WhatsApp separate'],
     ['Dental', 'Dentally, no clinical advice', 'Generic calendar, EU GDPR'],
     ['Invoice', 'GBP excl. VAT', 'Euros'],
@@ -413,7 +411,7 @@ export const ukAiReceptionistComparison = {
     {
       question: 'What is the best AI receptionist for UK businesses in 2026?',
       answer:
-        'Depends what you need. Jodie if you want the cheapest unlimited minutes. whoza if you are a trade and want jobs in WhatsApp. Moneypenny if you need a human. WiseCall if you want UK-hosted calls, a number included, and the same agent on phone, email, WhatsApp, live chat and SMS.',
+        'Depends what you need. Jodie if you want the cheapest unlimited minutes. whoza if you are a trade and want jobs in WhatsApp. Moneypenny if you need a human. WiseCall if you want a number included, billed in pounds, and the same agent on phone, email, WhatsApp, live chat and SMS.',
     },
     {
       question: 'Is an AI receptionist better than voicemail?',
@@ -433,10 +431,6 @@ export const ukAiReceptionistComparison = {
       question: 'Can I keep my number?',
       answer: 'Usually, by porting or forwarding. We confirm when we set you up.',
     },
-    {
-      question: 'Where is WiseCall data stored?',
-      answer: 'UK. UK carrier connectivity. No clinical advice. If a person is needed, it escalates.',
-    },
   ],
 };
 
@@ -444,13 +438,14 @@ export const comparisonPages = [
   {
     slug: 'wisecall-vs-voicemail',
     keyword: 'voicemail alternative',
-    title: 'WiseCall vs Voicemail | AI Receptionist Alternative to Voicemail UK',
+    title: 'AI Receptionist vs Voicemail UK | WiseCall',
     description:
       'Most callers hang up rather than leave a voicemail. See what changes for a UK business when WiseCall answers instead of a recorded message.',
     eyebrow: 'Comparison',
     h1: 'WiseCall vs <span class="text-[#7de8eb]">Voicemail</span>',
     lead: 'Voicemail depends on the caller leaving a message and someone finding time to listen to it. WiseCall answers the call.',
     subject: 'Voicemail',
+    label: 'WiseCall vs Voicemail',
     columns: ['What happens', 'WiseCall', 'Voicemail'],
     rows: [
       ['When the phone isn’t answered', 'WiseCall answers immediately, every time', 'The caller hears a recorded message and has to leave one'],
@@ -464,21 +459,22 @@ export const comparisonPages = [
       { question: 'Is an AI receptionist better than voicemail?', answer: 'For most UK businesses, yes. An AI receptionist answers immediately, asks questions and captures structured details, while voicemail depends on the caller being willing to leave a message and someone finding time to act on it.' },
       { question: 'Do people actually leave voicemails?', answer: 'Far fewer than businesses expect. Most callers who reach voicemail simply hang up and either try again later, call a competitor, or give up. WiseCall answers before that decision has to be made.' },
       { question: 'Will callers know they are talking to AI?', answer: 'WiseCall answers in your business name and can be configured to be upfront about being an AI assistant if you want it to be. The priority is a fast, useful answer rather than pretending to be something it is not.' },
-      { question: 'What happens if WiseCall cannot help with a call?', answer: 'WiseCall follows your business-approved escalation rules — it can offer a callback, take a detailed message, or route urgent calls to a human, so a call that voicemail would have lost still gets a proper next step.' },
+      { question: 'What happens if WiseCall cannot help with a call?', answer: 'WiseCall follows your business-approved escalation rules. It can offer a callback, take a detailed message, or route urgent calls to a human, so a call that voicemail would have lost still gets a proper next step.' },
     ],
     ctaTitle: 'Stop losing callers to voicemail',
-    ctaText: 'Start a 7-day pilot and see what WiseCall would have captured from the calls voicemail is currently losing.',
+    ctaText: 'See what WiseCall would have captured from the calls a recorded message is currently losing. 20 inbound calls, no card.',
   },
   {
     slug: 'wisecall-vs-answering-service',
     keyword: 'AI receptionist vs answering service',
-    title: 'WiseCall vs Answering Service | AI Receptionist vs Human Call Answering UK',
+    title: 'AI Receptionist vs Answering Service UK | WiseCall',
     description:
       'Compare WiseCall’s AI receptionist with traditional human answering services on availability, cost, consistency and the detail captured on every call.',
     eyebrow: 'Comparison',
     h1: 'WiseCall vs <span class="text-[#7de8eb]">Answering Service</span>',
     lead: 'Traditional answering services take a message. WiseCall answers, asks the right questions, and hands your team a structured summary.',
     subject: 'Answering service',
+    label: 'WiseCall vs Answering Service',
     columns: ['What matters', 'WiseCall', 'Traditional answering service'],
     rows: [
       ['Availability', '24/7, no shift gaps', 'Usually business hours, or evenings and weekends at a premium'],
@@ -490,13 +486,13 @@ export const comparisonPages = [
       ['Genuinely complex calls', 'Escalates to your team rather than improvising', 'A live human voice, which can be an advantage for nuanced conversations'],
     ],
     faqs: [
-      { question: 'Is an AI receptionist as good as a human answering service?', answer: 'For structured, repeatable calls — enquiries, bookings, out-of-hours messages — WiseCall is faster, more consistent and captures more usable detail. For a genuinely nuanced or sensitive conversation, a human is still better; WiseCall is built to recognise that and escalate rather than improvise.' },
+      { question: 'Is an AI receptionist as good as a human answering service?', answer: 'For structured, repeatable calls, such as enquiries, bookings and out-of-hours messages, WiseCall is faster, more consistent and captures more usable detail. For a genuinely nuanced or sensitive conversation, a human is still better. WiseCall is built to recognise that and escalate rather than improvise.' },
       { question: 'What happens with a call WiseCall cannot handle?', answer: 'WiseCall follows business-approved escalation rules: it can transfer to a person, offer a callback, or take a detailed message and flag it as urgent, so difficult calls still get a proper next step instead of a generic message.' },
       { question: 'Is WiseCall cheaper than an answering service?', answer: 'WiseCall plans are a fixed monthly price with a clear call allowance, which is usually more predictable than per-minute or per-call answering service billing, especially once call volume grows.' },
       { question: 'Can WiseCall sound like our business, not a generic AI voice?', answer: 'Yes. WiseCall answers in your business name using a greeting and call rules you approve, rather than a shared generic script used across many unrelated businesses.' },
     ],
     ctaTitle: 'Try it on real calls before you decide',
-    ctaText: 'Start a 7-day pilot and compare what WiseCall captures against your current answering service, side by side.',
+    ctaText: 'Compare what WiseCall captures against your current answering service. 20 inbound calls, no card.',
   },
 ];
 

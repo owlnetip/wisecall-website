@@ -133,6 +133,20 @@ export async function sendActionItemsEmail(input: {
   }
 }
 
+export async function hasRealtimeEmailRule(profileId: string): Promise<boolean> {
+  const supabase = getServiceSupabase();
+  if (!supabase) return false;
+  const { data } = await supabase
+    .from("wisecall_webhook_rules")
+    .select("id")
+    .eq("profile_id", profileId)
+    .eq("event_key", "after_call")
+    .eq("enabled", true)
+    .ilike("url", "%wisecall-email-summary%")
+    .limit(1);
+  return Boolean(data?.length);
+}
+
 /**
  * After-call team email using the same next actions the portal inbox shows.
  * Live chat already emails on capture; only send again if follow-ups exist.
@@ -178,6 +192,14 @@ export async function sendPostCallEmailForLog(
 
   if (isLiveChatLog(log) && !actionItems.length) {
     return { ok: true, skipped: "live_chat_no_follow_ups" };
+  }
+
+  // Agents with an after_call rule pointing at wisecall-email-summary already
+  // get their team email from the runtime the moment the call ends. That fn
+  // runs before the call log exists, so it can't mark summary_email_sent, and
+  // without this check every analysis (live or backfill) would email twice.
+  if (await hasRealtimeEmailRule(log.profile_id)) {
+    return { ok: true, skipped: "realtime_email_rule" };
   }
 
   const metadata = isPlainObject(log.metadata) ? log.metadata : {};

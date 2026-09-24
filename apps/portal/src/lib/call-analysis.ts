@@ -1,6 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getServiceSupabase } from "@/lib/supabase";
-import { sendPostCallEmailForLog, syncFollowUpsFromAnalysis } from "@/lib/follow-ups-sync";
+import {
+  isLiveChatLog,
+  sendPostCallEmailForLog,
+  syncFollowUpsFromAnalysis,
+} from "@/lib/follow-ups-sync";
 import { syncEnquiryFromAnalysis } from "@/lib/enquiries-sync";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -498,6 +502,69 @@ export async function backfillAnalysisForUser(
     } catch (err) {
       errors += 1;
       console.error(`backfill analyse failed for ${row.id}:`, (err as Error).message);
+    }
+  }
+
+  return { analysed, remaining: Math.max(0, rows.length - batch.length), errors };
+}
+
+const NON_CALL_OUTCOMES = new Set(["sms_sent", "sms_failed", "SMS replied", "live_chat"]);
+
+// Safety net for the runtime's call-completed trigger: picks up phone calls
+// that ended a few minutes ago and still have no analysis (trigger failed, or
+// the box hasn't got it), so the team email isn't left waiting for someone to
+// open the portal. Deliberately bounded to a recent window so it never works
+// through old history and emails a customer about last month's calls.
+export async function analyseMissedRecentCalls(opts: {
+  minAgeMs?: number;
+  maxAgeMs?: number;
+  limit?: number;
+} = {}): Promise<BackfillResult> {
+  const supabase = getServiceSupabase();
+  if (!supabase) throw new Error("Supabase is not configured.");
+  if (!isAnalysisConfigured()) {
+    return { analysed: 0, remaining: 0, errors: 0 };
+  }
+
+  const now = Date.now();
+  const newest = new Date(now - (opts.minAgeMs ?? 3 * 60_000)).toISOString();
+  const oldest = new Date(now - (opts.maxAgeMs ?? 2 * 60 * 60_000)).toISOString();
+  const limit = opts.limit ?? 5;
+
+  const { data, error } = await supabase
+    .from("wisecall_call_logs")
+    .select(ANALYZABLE_SELECT)
+    .is("analysed_at", null)
+    .not("transcript", "is", null)
+    .not("profile_id", "is", null)
+    .gte("created_at", oldest)
+    .lte("created_at", newest)
+    .order("created_at", { ascending: true })
+    .limit(50);
+  if (error) throw new Error(`Could not list missed calls: ${error.message}`);
+
+  const rows = (data as AnalyzableRow[]).filter(
+    (r) =>
+      (r.transcript ?? "").trim().length >= 10 &&
+      !NON_CALL_OUTCOMES.has(r.outcome ?? "") &&
+      !isLiveChatLog(r),
+  );
+  const batch = rows.slice(0, limit);
+
+  let analysed = 0;
+  let errors = 0;
+  for (const row of batch) {
+    try {
+      const analysis = await analyzeTranscript({
+        transcript: row.transcript ?? "",
+        summary: row.summary ?? undefined,
+        businessName: row.profile_name ?? undefined,
+      });
+      await persistAnalysis(row.id, row, analysis);
+      analysed += 1;
+    } catch (err) {
+      errors += 1;
+      console.error(`missed-call catch-up failed for ${row.id}:`, (err as Error).message);
     }
   }
 
