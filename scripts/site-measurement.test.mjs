@@ -229,6 +229,7 @@ test('html keeps a plain trial href for no-js', () => {
     'legal.html',
     'property.html',
     'trades/plumbers/index.html',
+    'trades/electricians/index.html',
     'compare/wisecall-vs-fonio/index.html',
     'compare/ai-receptionist-uk-comparison/index.html',
     'compare/wisecall-vs-voicemail/index.html',
@@ -263,4 +264,28 @@ test('trades visible copy has no em or en dash', () => {
   const body = html.slice(html.indexOf('<body'));
   assert.equal(/[—–]/.test(body), false);
   assert.equal(/[—–]/.test(html.slice(0, html.indexOf('<body'))), false);
+});
+
+test('electricians page marks hero, inline and footer pairs and keeps FAQ JSON in sync', () => {
+  const html = readFileSync('trades/electricians/index.html', 'utf8');
+  assert.equal(/[—–]/.test(html), false);
+  for (const position of ['hero', 'inline', 'footer']) {
+    assert.match(
+      html,
+      new RegExp(`href="https://app\\.wisecall\\.io/setup\\?trial=calls" data-cta-position="${position}"`),
+      position,
+    );
+    assert.match(html, new RegExp(`href="/try" data-cta-position="${position}"[\\s\\S]*Call Ava: 0113 522 2277`), position);
+  }
+  assert.equal(html.includes('book a demo') || html.includes('Book a demo'), false);
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((match) =>
+    JSON.parse(match[1]),
+  );
+  const faq = blocks.find((block) => block['@type'] === 'FAQPage');
+  assert.ok(faq);
+  assert.equal(faq.mainEntity.length, 6);
+  for (const item of faq.mainEntity) {
+    assert.ok(html.includes(item.name), item.name);
+    assert.ok(html.includes(item.acceptedAnswer.text), item.name);
+  }
 });

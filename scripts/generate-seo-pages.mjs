@@ -21,6 +21,9 @@ const FONIO_COMPARE_PATH = '/compare/wisecall-vs-fonio/';
 // Hand-crafted page at trades/plumbers/index.html. Do not generate this
 // path or generate() will overwrite the craft copy.
 const PLUMBERS_PATH = '/trades/plumbers/';
+// Hand-crafted page at trades/electricians/index.html. Do not generate this
+// path or generate() will overwrite the craft copy.
+const ELECTRICIANS_PATH = '/trades/electricians/';
 // Root pages trades.html, dental.html, legal.html and property.html are also
 // hand-crafted. industry.legacyPath keeps generate() from writing over them.
 
@@ -1190,6 +1193,7 @@ function allRoutes() {
     ...industries.map((industry) => industryPath(industry)),
     '/trades',
     PLUMBERS_PATH,
+    ELECTRICIANS_PATH,
     '/compare/ai-receptionist-uk-comparison/',
     ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
     FONIO_COMPARE_PATH,
@@ -1234,6 +1238,7 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Estate agents: ${site.url}/property
 - Trades and field service: ${site.url}/trades
 - AI receptionist for plumbers: ${site.url}${PLUMBERS_PATH}
+- AI receptionist for electricians: ${site.url}${ELECTRICIANS_PATH}
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
 ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
 - WiseCall vs Fonio: ${site.url}${FONIO_COMPARE_PATH}
@@ -1253,7 +1258,15 @@ ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${
 `;
 }
 
+const HAND_CRAFTED_PAGES = new Set([
+  'trades/plumbers/index.html',
+  'trades/electricians/index.html',
+]);
+
 async function write(path, content) {
+  if (HAND_CRAFTED_PAGES.has(path)) {
+    throw new Error(`Refusing to overwrite hand-crafted page ${path}`);
+  }
   const file = new URL(path, out);
   await mkdir(new URL('.', file), { recursive: true });
   await writeFile(file, content);
