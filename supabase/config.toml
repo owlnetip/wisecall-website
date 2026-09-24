@@ -70,3 +70,6 @@ verify_jwt = false
 # (Ava hangup signup) for guest Facebook test calls. Service-role only.
 [functions.wisecall-guest-hangup-sms]
 verify_jwt = false
+
+[functions.wisecall-send-sms]
+verify_jwt = false
