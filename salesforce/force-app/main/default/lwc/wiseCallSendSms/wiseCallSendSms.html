@@ -1,0 +1,16 @@
+<template>
+ <lightning-quick-action-panel header="Send WiseCall SMS">
+  <template lwc:if={context}>
+   <p>From: {context.sender}</p>
+   <lightning-combobox label="To: phone on this record" value={phone} options={phoneOptions} onchange={changePhone} disabled={inputDisabled}></lightning-combobox>
+   <lightning-button label="Check Salesforce match" onclick={check} disabled={inputDisabled}></lightning-button>
+   <lightning-textarea label="Message" value={message} onchange={changeMessage} maxlength="1000" disabled={inputDisabled} required></lightning-textarea>
+   <lightning-input type="checkbox" label={confirmationLabel} checked={confirmed} onchange={confirm} disabled={inputDisabled}></lightning-input>
+  </template>
+  <p role="status" class="slds-m-top_medium">{notice}</p>
+  <div slot="footer">
+   <lightning-button label="Close" onclick={close}></lightning-button>
+   <lightning-button variant="brand" label="Send SMS" onclick={submit} disabled={sendDisabled} class="slds-m-left_small"></lightning-button>
+  </div>
+ </lightning-quick-action-panel>
+</template>

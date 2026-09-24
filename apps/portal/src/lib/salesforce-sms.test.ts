@@ -313,8 +313,8 @@ test("failed reply mapping prevents any SMS or Task", async () => {
 
 test("inbound lookup failure cannot fall through to the AI receptionist", () => {
   const source = readFileSync(new URL("../../../../supabase/functions/wisecall-sms-inbound/index.ts", import.meta.url), "utf8");
-  assert.match(source, /salesforce binding lookup:[\s\S]*?throw new Error\("Salesforce binding lookup unavailable"\)/);
-  assert.match(source, /salesforce route:[\s\S]*?return new Response\("Reply routing temporarily unavailable", \{ status: 503 \}\)/);
+  assert.match(source, /if \(error\) throw new Error\("Salesforce binding lookup unavailable"\)/);
+  assert.ok(source.indexOf("if (salesforceRouted) return;") < source.indexOf("const viewing = await tryHandleViewingReply"));
 });
 
 test("parse accepts the Salesforce flow payload and rejects a missing reply type", () => {
