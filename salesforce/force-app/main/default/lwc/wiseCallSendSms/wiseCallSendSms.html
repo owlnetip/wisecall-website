@@ -1,5 +1,5 @@
 <template>
- <lightning-quick-action-panel header="Send WiseCall SMS">
+ <lightning-quick-action-panel header="Send SMS">
   <template lwc:if={context}>
    <p>From: {context.sender}</p>
    <lightning-combobox label="To: phone on this record" value={phone} options={phoneOptions} onchange={changePhone} disabled={inputDisabled}></lightning-combobox>

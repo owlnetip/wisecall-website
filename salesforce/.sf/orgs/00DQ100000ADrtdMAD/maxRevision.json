@@ -1,6 +1,6 @@
 {
     "fileVersion": 0,
-    "serverMaxRevisionCounter": 25185,
+    "serverMaxRevisionCounter": 25193,
     "sourceMembers": {
         "SiteDotCom__Form1": {
             "memberType": "SiteDotCom",
@@ -2452,7 +2452,7 @@
         },
         "PermissionSet__WiseCall_SMS_Sandbox": {
             "memberType": "PermissionSet",
-            "serverRevisionCounter": 25134,
+            "serverRevisionCounter": 25186,
             "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
@@ -2518,44 +2518,44 @@
         },
         "LightningComponentBundle__wiseCallSendSms": {
             "memberType": "LightningComponentBundle",
-            "serverRevisionCounter": 25170,
-            "lastRetrievedFromServer": 25170,
+            "serverRevisionCounter": 25187,
+            "lastRetrievedFromServer": 25187,
             "isNameObsolete": false
         },
         "LightningComponentResource__wiseCallSendSms/wiseCallSendSms.js-meta.xml": {
             "memberType": "LightningComponentResource",
-            "serverRevisionCounter": 25171,
-            "lastRetrievedFromServer": 25171,
+            "serverRevisionCounter": 25188,
+            "lastRetrievedFromServer": 25188,
             "isNameObsolete": false
         },
         "LightningComponentResource__wiseCallSendSms/wiseCallSendSms.js": {
             "memberType": "LightningComponentResource",
-            "serverRevisionCounter": 25172,
-            "lastRetrievedFromServer": 25172,
+            "serverRevisionCounter": 25189,
+            "lastRetrievedFromServer": 25189,
             "isNameObsolete": false
         },
         "LightningComponentResource__wiseCallSendSms/wiseCallSendSms.html": {
             "memberType": "LightningComponentResource",
-            "serverRevisionCounter": 25173,
-            "lastRetrievedFromServer": 25173,
+            "serverRevisionCounter": 25190,
+            "lastRetrievedFromServer": 25190,
             "isNameObsolete": false
         },
         "QuickAction__Account.WiseCall_Send_SMS": {
             "memberType": "QuickAction",
-            "serverRevisionCounter": 25162,
-            "lastRetrievedFromServer": 25162,
+            "serverRevisionCounter": 25191,
+            "lastRetrievedFromServer": 25191,
             "isNameObsolete": false
         },
         "QuickAction__Contact.WiseCall_Send_SMS": {
             "memberType": "QuickAction",
-            "serverRevisionCounter": 25163,
-            "lastRetrievedFromServer": 25163,
+            "serverRevisionCounter": 25192,
+            "lastRetrievedFromServer": 25192,
             "isNameObsolete": false
         },
         "QuickAction__Lead.WiseCall_Send_SMS": {
             "memberType": "QuickAction",
-            "serverRevisionCounter": 25164,
-            "lastRetrievedFromServer": 25164,
+            "serverRevisionCounter": 25193,
+            "lastRetrievedFromServer": 25193,
             "isNameObsolete": false
         },
         "PermissionSet__WiseCall_SMS_Send": {
