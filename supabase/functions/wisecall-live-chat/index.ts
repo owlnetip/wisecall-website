@@ -64,6 +64,13 @@ function cssFontFamily(value: unknown): string | null {
   return raw;
 }
 
+function launcherLabel(value: unknown): string | null {
+  const raw = String(value || "").replace(/\s+/g, " ").trim();
+  if (!raw || raw.length > 40) return null;
+  if (!/^[\w\s'’!?.-]+$/.test(raw)) return null;
+  return raw;
+}
+
 // Run work after the response without delaying the visitor's reply.
 function runInBackground(promise: Promise<unknown>) {
   const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
@@ -544,6 +551,7 @@ serve(async (req) => {
         logo_url: httpsUrl(profile.metadata?.chat_logo_url),
         font_family: cssFontFamily(profile.metadata?.chat_font_family),
         font_stylesheet: httpsUrl(profile.metadata?.chat_font_stylesheet),
+        launcher_label: launcherLabel(profile.metadata?.chat_launcher_label),
       });
     }
 
