@@ -81,6 +81,7 @@ import {
 import { DEMO_KB_TITLE_PREFIX } from "@/lib/demo-knowledge-base";
 import { DEFAULT_VOICE_ID, voiceOptions, type VoiceOption } from "@/lib/voices";
 import type { CallLog, CallChannel } from "@/lib/agents";
+import { customerFacingTranscript } from "@/lib/conversation-email";
 import { friendlyOutcome } from "@/lib/agents";
 import type { Contact } from "@/lib/contacts";
 import type { FollowUp } from "@/lib/follow-ups";
@@ -5397,11 +5398,16 @@ function parseChannelThread(body: string): TranscriptTurn[] {
   return turns;
 }
 
+function isToolLogLine(text: string): boolean {
+  const trimmed = text.trim();
+  return /^\s*\[function_(?:request|response)\]/i.test(trimmed) || /^\s*\{[\s\S]*\}\s*$/.test(trimmed);
+}
+
 function parseLineTranscript(body: string): TranscriptTurn[] {
   const turns: TranscriptTurn[] = [];
   for (const line of body.split(/\n/)) {
     const lineText = line.trim();
-    if (!lineText) continue;
+    if (!lineText || isToolLogLine(lineText)) continue;
     const parsed = parseSpeakerSegment(lineText);
     if (!parsed) continue;
     const hasExplicitLabel =
@@ -5436,7 +5442,7 @@ function parseParagraphTranscript(body: string): TranscriptTurn[] {
 // sections ("--- Their message ---"), or as labelled turns like "Customer (SMS):".
 // Normalise every format into caller/agent chat turns for the detail modal.
 function parseTranscript(raw: string): TranscriptTurn[] {
-  const text = raw.replace(/\r\n/g, "\n").trim();
+  const text = customerFacingTranscript(raw);
   if (!text) return [];
 
   // Email / SMS / WhatsApp single-exchange logs.

@@ -200,3 +200,57 @@ test("buildEmailSummaryPayload falls back to conversation history when transcrip
     "assistant: How can I help?\nuser: Please call me back.",
   );
 });
+
+test("buildEmailSummaryPayload strips runtime thinking notes from the transcript", () => {
+  const payload = buildEmailSummaryPayload(
+    { id: "p1", slug: "charles-garth", business_name: "Charles Garth" },
+    { callId: "call-1", callerId: "01543411855" },
+    {
+      summary: "Caller asked for the project managers.",
+      transcript: [
+        "assistant: How can I help today ?",
+        "user: Project managers, please.",
+        "[system] SLOW_THINK_REQUEST: We have now waited 5 seconds for a think response.",
+        "[system] SLOW_SPEAK_REQUEST: We have now waited 10 seconds for a speak response.",
+      ].join("\n"),
+      metadata: {},
+    },
+  );
+
+  assert.equal(
+    payload.extra.transcript,
+    "assistant: How can I help today ?\nuser: Project managers, please.",
+  );
+});
+
+test("buildEmailSummaryPayload ignores system history entries when building a transcript", () => {
+  const payload = buildEmailSummaryPayload(
+    { id: "p1", slug: "charles-garth" },
+    { callId: "call-1", callerId: "01543411855" },
+    {
+      summary: "Caller asked for the project managers.",
+      transcript: "",
+      metadata: {
+        history: [
+          { type: "conversation", role: "assistant", content: "How can I help?" },
+          { type: "conversation", role: "user", content: "Project managers, please." },
+          {
+            type: "conversation",
+            role: "system",
+            content: "[system] SLOW_THINK_REQUEST: We have now waited 5 seconds for a think response.",
+          },
+          {
+            type: "conversation",
+            role: "user",
+            content: "SLOW_SPEAK_REQUEST: We have now waited 5 seconds for a speak response.",
+          },
+        ],
+      },
+    },
+  );
+
+  assert.equal(
+    payload.extra.transcript,
+    "assistant: How can I help?\nuser: Project managers, please.",
+  );
+});

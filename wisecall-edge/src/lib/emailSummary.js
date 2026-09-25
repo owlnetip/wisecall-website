@@ -19,11 +19,31 @@ function getEmailSummaryUrl(env = process.env) {
   return `${supabaseUrl}${EMAIL_SUMMARY_PATH}`;
 }
 
+function isInternalTranscriptLine(line) {
+  const trimmed = String(line || "").trim();
+  if (!trimmed) return false;
+  if (/^(?:\[system\]|system\s*:|\[(?:thinking|think|internal|debug)\]|<(?:thinking|think)>)/i.test(trimmed)) {
+    return true;
+  }
+  return /\bSLOW_(?:THINK|SPEAK)_REQUEST\b/i.test(trimmed);
+}
+
+function customerFacingTranscript(transcript) {
+  return String(transcript || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .filter((line) => line.trim() === "" || !isInternalTranscriptLine(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function transcriptFromHistory(history) {
   if (!Array.isArray(history)) return "";
 
   return history
     .filter((entry) => entry?.type === "conversation" && entry.content)
+    .filter((entry) => entry.role !== "system" && !isInternalTranscriptLine(entry.content))
     .map((entry) => {
       const role = entry.role === "assistant" ? "assistant" : "user";
       return `${role}: ${entry.content}`;
@@ -34,7 +54,9 @@ function transcriptFromHistory(history) {
 function buildEmailSummaryPayload(profile, context, call) {
   const metadata = isPlainObject(call.metadata) ? call.metadata : {};
   const collected = isPlainObject(metadata.collected) ? metadata.collected : metadata;
-  const transcript = call.transcript || transcriptFromHistory(metadata.history);
+  const transcript = customerFacingTranscript(
+    call.transcript || transcriptFromHistory(metadata.history),
+  );
   const transferRouteKey =
     collected.transfer_route_key || metadata.transfer_route_key || call.transferRouteKey || "";
   const transferLabel =
