@@ -133,6 +133,25 @@ export async function sendActionItemsEmail(input: {
   }
 }
 
+function chatContactNumber(log: { call_id?: string | null; metadata?: unknown }): string | null {
+  if (!isLiveChatLog(log)) return null;
+  const meta = isPlainObject(log.metadata) ? log.metadata : {};
+  const collected = isPlainObject(meta.collected) ? meta.collected : {};
+  const phone = typeof collected.contact_phone === "string" ? collected.contact_phone.trim() : "";
+  const email = typeof collected.contact_email === "string" ? collected.contact_email.trim() : "";
+  return phone || email || null;
+}
+
+// Agents on "one email when the chat goes quiet" get that email even when the
+// analysis found no follow-ups: it is their only notification for the chat.
+async function emailsChatWhenIdle(profileId: string): Promise<boolean> {
+  const supabase = getServiceSupabase();
+  if (!supabase) return false;
+  const { data } = await supabase.from("wisecall_profiles").select("metadata").eq("id", profileId).maybeSingle();
+  const meta = (data?.metadata ?? {}) as Record<string, unknown>;
+  return meta.live_chat_email_when_idle === true;
+}
+
 export async function hasRealtimeEmailRule(profileId: string): Promise<boolean> {
   const supabase = getServiceSupabase();
   if (!supabase) return false;
@@ -190,7 +209,7 @@ export async function sendPostCallEmailForLog(
         followUpTitles: (followUpRows ?? []).map((row) => String(row.title || "")),
       });
 
-  if (isLiveChatLog(log) && !actionItems.length) {
+  if (isLiveChatLog(log) && !actionItems.length && !(await emailsChatWhenIdle(log.profile_id))) {
     return { ok: true, skipped: "live_chat_no_follow_ups" };
   }
 
@@ -224,7 +243,8 @@ export async function sendPostCallEmailForLog(
   const sent = await sendActionItemsEmail({
     callLogId,
     profileId: log.profile_id,
-    callerId: log.caller_id ?? "Unknown",
+    // Chats store the first detail given (often an email) as caller_id; show the phone.
+    callerId: chatContactNumber(log) || log.caller_id || "Unknown",
     actionItems,
     managerSummary: summary,
     transcript,
