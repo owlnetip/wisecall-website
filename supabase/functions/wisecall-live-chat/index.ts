@@ -61,6 +61,13 @@ function cssFontFamily(value: unknown): string | null {
   return raw;
 }
 
+function launcherLabel(value: unknown): string | null {
+  const raw = String(value || "").replace(/\s+/g, " ").trim();
+  if (!raw || raw.length > 40) return null;
+  if (!/^[\w\s'’!?.-]+$/.test(raw)) return null;
+  return raw;
+}
+
 function asEmailList(value: unknown): string[] {
   if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
   if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
@@ -506,6 +513,7 @@ serve(async (req) => {
         logo_url: httpsUrl(profile.metadata?.chat_logo_url),
         font_family: cssFontFamily(profile.metadata?.chat_font_family),
         font_stylesheet: httpsUrl(profile.metadata?.chat_font_stylesheet),
+        launcher_label: launcherLabel(profile.metadata?.chat_launcher_label),
       });
     }
 

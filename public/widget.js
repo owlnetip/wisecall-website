@@ -37,6 +37,7 @@
     logo_url: "",
     font_family: "",
     font_stylesheet: "",
+    launcher_label: "",
   };
 
   // Per-agent brand presets. The live-chat config overrides these when it
@@ -49,6 +50,7 @@
       font_family: "Lexend, system-ui, sans-serif",
       font_stylesheet:
         "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap",
+      launcher_label: "Chat with us",
     },
   };
   var sessionId = null;
@@ -82,6 +84,13 @@
     return s;
   }
 
+  function safeLabel(value) {
+    var s = String(value || "").replace(/\s+/g, " ").trim();
+    if (!s || s.length > 40) return "";
+    if (!/^[\w\s'’!?.-]+$/.test(s)) return "";
+    return s;
+  }
+
   function textColorFor(bg) {
     // Pick readable text colour for the accent button.
     try {
@@ -104,9 +113,15 @@
       safeFontFamily(cfg.font_family) ||
       "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
     var fontCss = safeHttps(cfg.font_stylesheet);
+    var label = safeLabel(cfg.launcher_label);
+    var chatIcon =
+      '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     var launcherInner = logo
-      ? '<img src="' + esc(logo) + '" alt=""/>'
-      : '<svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      ? '<img src="' +
+        esc(logo) +
+        '" alt=""/>' +
+        (label ? '<span class="launch-label">' + chatIcon + esc(label) + "</span>" : "")
+      : chatIcon;
     var avatar = logo
       ? '<div class="av logo"><img src="' + esc(logo) + '" alt=""/></div>'
       : '<div class="av">' + (cfg.assistant_name || "A").charAt(0).toUpperCase() + "</div>";
@@ -128,6 +143,10 @@
       ".launcher svg{width:28px;height:28px}" +
       ".launcher.has-logo{width:auto;height:64px;padding:0 16px;border-radius:999px;background:#fff;border:1px solid rgba(18,58,75,.12)}" +
       ".launcher.has-logo img{height:32px;width:auto;max-width:168px;display:block}" +
+      ".launcher.has-logo.has-label{gap:10px;height:56px;padding:0 16px 0 12px}" +
+      ".launcher.has-logo.has-label img{height:20px;max-width:112px}" +
+      ".launch-label{display:flex;align-items:center;gap:7px;padding-left:10px;border-left:1px solid rgba(18,58,75,.16);color:#123A4B;font-weight:700;font-size:14.5px;line-height:1;white-space:nowrap}" +
+      ".launcher .launch-label svg{width:18px;height:18px;color:#E07A6E}" +
       ".hdr .av.logo{width:auto;height:auto;border-radius:10px;background:#fff;padding:5px 10px}" +
       ".hdr .av.logo img{height:28px;width:auto;max-width:180px;display:block}" +
       ".panel{position:fixed;bottom:92px;" +
@@ -172,11 +191,18 @@
       ".hidden{display:none!important}" +
       "@media(max-width:480px){.panel{bottom:0;" +
       SIDE +
-      ":0;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0}}" +
+      ":0;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0}" +
+      ".launcher.has-logo.has-label{height:52px;padding:0 12px 0 10px}" +
+      ".launcher.has-logo.has-label img{height:16px;max-width:84px}" +
+      ".launch-label{font-size:13px;gap:6px;padding-left:8px}" +
+      ".launcher .launch-label svg{width:16px;height:16px}}" +
       "</style>" +
       '<button class="launcher' +
       (logo ? " has-logo" : "") +
-      '" aria-label="Open chat">' +
+      (label ? " has-label" : "") +
+      '" aria-label="' +
+      esc(label || "Open chat") +
+      '">' +
       launcherInner +
       "</button>" +
       '<div class="panel hidden" role="dialog" aria-label="' +
@@ -313,10 +339,12 @@
     cfg.logo_url = remote.logo_url || preset.logo_url || "";
     cfg.font_family = remote.font_family || preset.font_family || "";
     cfg.font_stylesheet = remote.font_stylesheet || preset.font_stylesheet || "";
+    cfg.launcher_label = remote.launcher_label || preset.launcher_label || "";
     // Optional embed overrides, used by the local preview.
     if (script.getAttribute("data-logo")) cfg.logo_url = script.getAttribute("data-logo");
     if (script.getAttribute("data-font")) cfg.font_family = script.getAttribute("data-font");
     if (script.getAttribute("data-font-css")) cfg.font_stylesheet = script.getAttribute("data-font-css");
+    if (script.getAttribute("data-launcher-label")) cfg.launcher_label = script.getAttribute("data-launcher-label");
   }
 
   // Fetch theming/greeting, then render.
