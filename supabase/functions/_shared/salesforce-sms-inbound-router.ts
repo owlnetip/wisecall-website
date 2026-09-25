@@ -1,4 +1,6 @@
-export type ReplyBinding = { id: string; salesforce_record_id: string };
+// id / salesforce_record_id are null when a reply arrives on a Salesforce-only
+// number from someone WiseCall has not texted yet: Salesforce matches by phone.
+export type ReplyBinding = { id: string | null; salesforce_record_id: string | null };
 
 export function replyPhoneDigits(raw: string): string {
   let number = raw.trim().replace(/[\s().-]/g, "");

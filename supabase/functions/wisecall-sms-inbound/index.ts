@@ -173,6 +173,16 @@ async function handleInbound(params: Record<string, unknown>): Promise<void> {
     return;
   }
 
+  // Replies on a Salesforce-only number (metadata.salesforce_sms.reply_numbers)
+  // always go to Salesforce, even from someone WiseCall has not texted yet.
+  const salesforceSms = (profile.metadata as Record<string, unknown> | null)?.salesforce_sms as
+    | { reply_numbers?: unknown }
+    | undefined;
+  const salesforceNumbers = Array.isArray(salesforceSms?.reply_numbers)
+    ? (salesforceSms?.reply_numbers as unknown[]).map((n) => String(n).replace(/\D/g, ""))
+    : [];
+  const isSalesforceNumber = salesforceNumbers.includes(String(replyFrom).replace(/\D/g, ""));
+
   // A confirmed human-owned SMS thread must never reach viewing or AI replies.
   const salesforceRouted = await routeConfirmedSalesforceReply({
     fromNumber: inbound.from,
@@ -181,12 +191,16 @@ async function handleInbound(params: Record<string, unknown>): Promise<void> {
         .select("id, salesforce_record_id").eq("profile_id", profile.id)
         .eq("phone_digits", digits).maybeSingle();
       if (error) throw new Error("Salesforce binding lookup unavailable");
-      return data;
+      if (data) return data;
+      return isSalesforceNumber ? { id: null, salesforce_record_id: null } : null;
     },
     deliver: () => postSalesforceCallback(
       Deno.env.get("WISECALL_PORTAL_URL") || "",
       Deno.env.get("WISECALL_SALESFORCE_SMS_SECRET") || "",
-      { profile_id: profile.id, from: inbound.from, text: inbound.text, message_id: inbound.messageId || null },
+      {
+        profile_id: profile.id, from: inbound.from, text: inbound.text, message_id: inbound.messageId || null,
+        salesforce_number: isSalesforceNumber,
+      },
     ),
     recordFailure: async (binding, digits, reason) => {
       const { error } = await supabase.from("wisecall_salesforce_sms_messages").insert({
