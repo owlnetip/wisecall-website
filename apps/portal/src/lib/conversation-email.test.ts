@@ -60,6 +60,8 @@ test("summary html includes follow-ups with the portal headings", () => {
   const html = buildPostCallEmailHtml({
     businessName: "Excel Telecom",
     callerId: "07825395792",
+    callerName: "Luke",
+    company: "Northwind Ltd",
     summary: "Caller Luke asked for a callback about broadband.",
     transcript: "user: please call me back",
     outcome: "Caller ended",
@@ -69,6 +71,8 @@ test("summary html includes follow-ups with the portal headings", () => {
   });
   assert.match(html, /Excel Telecom/);
   assert.match(html, /07825395792/);
+  assert.match(html, /Northwind Ltd/);
+  assert.match(html, /Luke \(Northwind Ltd\)/);
   assert.match(html, /Next step/);
   assert.match(html, /1 follow-up needed/);
   assert.match(html, /Follow-up needed/);
@@ -106,4 +110,19 @@ test("plain-text email includes the same next actions", () => {
   assert.match(text, /Follow-up needed:/);
   assert.match(text, /- Call Luke back about broadband/);
   assert.match(text, /What happened: Callback requested/);
+});
+
+test("email caller row includes company, not only the name", () => {
+  const text = buildPostCallEmailText({
+    businessName: "Excel Telecom",
+    callerId: "07825395792",
+    callerName: "Luke",
+    company: "Northwind Ltd",
+    summary: "Callback requested.",
+    transcript: "",
+    outcome: "Completed",
+    actionItems: [],
+  });
+  assert.match(text, /Caller: Luke \(Northwind Ltd\) · 07825395792/);
+  assert.match(text, /Company: Northwind Ltd/);
 });

@@ -1,7 +1,9 @@
-// wisecall-email-summary — hangup post-call team email.
+// wisecall-email-summary — hangup post-call team email + staff-alert SMS.
 //
-// Called from the voice runtime on every hangup. Portal may send again after
-// analysis with next actions; dedup is on the call log metadata.
+// Called from the voice runtime on every hangup. Portal may send the email
+// again after analysis with next actions; email/SMS dedup is on the call log
+// metadata. Staff mobiles come from metadata.staff_alert_sms, else notify
+// routing contacts, gated by wisecall_profiles.sms_enabled.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -15,6 +17,12 @@ import {
   callSummaryRecipients,
   type TransferHint,
 } from "../_shared/notification-recipients.ts";
+import { formatCallerDisplay, resolveCallerIdentity } from "../_shared/caller-identity.ts";
+import {
+  sendStaffAlertSms,
+  staffAlertFromIdentity,
+  staffAlertNumbers,
+} from "../_shared/staff-alert-sms.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -84,7 +92,6 @@ serve(async (req) => {
     "WiseCall <hello@wisecall.io>";
 
   if (!supabaseUrl || !serviceKey) return json({ error: "Supabase not configured" }, 500);
-  if (!resendKey) return json({ ok: false, skipped: "missing_resend" });
 
   let body: Record<string, unknown>;
   try {
@@ -110,7 +117,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
   let profileQuery = supabase
     .from("wisecall_profiles")
-    .select("id, slug, profile_name, business_name, clinic_name, metadata");
+    .select("id, slug, profile_name, business_name, clinic_name, sms_enabled, metadata");
   profileQuery = profileId
     ? profileQuery.eq("id", profileId)
     : profileQuery.eq("slug", profileSlug);
@@ -119,7 +126,7 @@ serve(async (req) => {
 
   const metadata = isPlainObject(profile.metadata) ? profile.metadata : {};
   const to = recipients(metadata, transferFromBody(body));
-  if (!to.length) return json({ ok: true, skipped: "no_recipients" });
+  const smsPhones = staffAlertNumbers(metadata, profile.sms_enabled);
 
   let callLog:
     | {
@@ -161,13 +168,6 @@ serve(async (req) => {
     followUpTitles,
   });
 
-  if (
-    logMeta.summary_email_sent === true &&
-    (!actionItems.length || logMeta.summary_email_included_next_actions === true)
-  ) {
-    return json({ ok: true, skipped: "already_sent" });
-  }
-
   const summary = (
     callLog?.ai_insight_summary ||
     payloadSummary ||
@@ -179,55 +179,114 @@ serve(async (req) => {
     return json({ ok: true, skipped: "no_content" });
   }
 
+  const collected = isPlainObject(session.collected) ? session.collected : {};
+  const identity = resolveCallerIdentity({
+    callerId,
+    collected,
+    analysis: callLog?.ai_analysis_json,
+    summary,
+    transcript,
+  });
+  const callerLabel = formatCallerDisplay(identity);
+
   const businessName =
     profile.business_name ||
     profile.clinic_name ||
     profile.profile_name ||
     "Your business";
-  const emailInput = {
-    businessName,
-    callerId,
-    summary,
-    transcript,
-    outcome: outcome || callLog?.outcome || "Conversation recorded",
-    startedAt: startedAt || callLog?.started_at || null,
-    actionItems,
-    agentName: callLog?.profile_name || profile.profile_name || "WiseCall",
-  };
-  const html = buildPostCallEmailHtml(emailInput);
-  const text = buildPostCallEmailText(emailInput);
-  const subject = actionItems.length
-    ? `Follow-up needed · ${callerId} · ${businessName}`
-    : `Message from ${callerId} · ${businessName}`;
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from, to, subject, html, text }),
-  });
+  const emailAlreadySent =
+    logMeta.summary_email_sent === true &&
+    (!actionItems.length || logMeta.summary_email_included_next_actions === true);
+  const smsAlreadySent = logMeta.summary_sms_sent === true;
 
-  if (!res.ok) {
-    console.error("wisecall-email-summary resend failed:", res.status, await res.text());
-    return json({ ok: false, error: "Send failed" }, 502);
+  let smsSent: string[] = Array.isArray(logMeta.summary_sms_to)
+    ? logMeta.summary_sms_to.filter((item): item is string => typeof item === "string")
+    : [];
+  let smsError: string | undefined;
+  if (smsPhones.length && !smsAlreadySent) {
+    const sms = await sendStaffAlertSms({
+      phones: smsPhones,
+      message: staffAlertFromIdentity(businessName, identity, summary, actionItems),
+      profileId: profile.id,
+      profileSlug: profile.slug || null,
+      callId: callId || callLog?.id || null,
+    });
+    smsSent = sms.sent;
+    smsError = sms.error;
   }
 
-  if (callLog?.id) {
-    await supabase
-      .from("wisecall_call_logs")
-      .update({
-        metadata: {
-          ...logMeta,
-          summary_email_sent: true,
-          summary_email_sent_at: new Date().toISOString(),
-          summary_email_to: to,
-          summary_email_included_next_actions: actionItems.length > 0,
-        },
-      })
-      .eq("id", callLog.id);
+  let emailSent = emailAlreadySent ? to.length : 0;
+  let emailError: string | undefined;
+  let emailSkipped: string | undefined;
+  if (emailAlreadySent) {
+    emailSkipped = "already_sent";
+  } else if (!to.length) {
+    emailSkipped = "no_recipients";
+  } else if (!resendKey) {
+    emailSkipped = "missing_resend";
+  } else {
+    const emailInput = {
+      businessName,
+      callerId,
+      callerName: identity.callerName,
+      company: identity.company,
+      summary,
+      transcript,
+      outcome: outcome || callLog?.outcome || "Conversation recorded",
+      startedAt: startedAt || callLog?.started_at || null,
+      actionItems,
+      agentName: callLog?.profile_name || profile.profile_name || "WiseCall",
+    };
+    const html = buildPostCallEmailHtml(emailInput);
+    const text = buildPostCallEmailText(emailInput);
+    const subject = actionItems.length
+      ? `Follow-up needed · ${callerLabel} · ${businessName}`
+      : `Message from ${callerLabel} · ${businessName}`;
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from, to, subject, html, text }),
+    });
+
+    if (!res.ok) {
+      emailError = "Send failed";
+      console.error("wisecall-email-summary resend failed:", res.status, await res.text());
+    } else {
+      emailSent = to.length;
+    }
   }
 
-  return json({ ok: true, sent: to.length, next_actions: actionItems.length });
+  const nextMeta: Record<string, unknown> = { ...logMeta };
+  if (emailSent && !emailAlreadySent) {
+    nextMeta.summary_email_sent = true;
+    nextMeta.summary_email_sent_at = new Date().toISOString();
+    nextMeta.summary_email_to = to;
+    nextMeta.summary_email_included_next_actions = actionItems.length > 0;
+  }
+  if (smsSent.length && !smsAlreadySent) {
+    nextMeta.summary_sms_sent = true;
+    nextMeta.summary_sms_sent_at = new Date().toISOString();
+    nextMeta.summary_sms_to = smsSent;
+  }
+  if (
+    callLog?.id &&
+    ((emailSent && !emailAlreadySent) || (smsSent.length && !smsAlreadySent))
+  ) {
+    await supabase.from("wisecall_call_logs").update({ metadata: nextMeta }).eq("id", callLog.id);
+  }
+
+  const ok = Boolean(emailSent || smsSent.length || emailSkipped === "already_sent");
+  return json({
+    ok,
+    sent: emailSent,
+    sms_sent: smsSent.length,
+    next_actions: actionItems.length,
+    skipped: emailSkipped,
+    error: emailError || smsError,
+  }, ok || emailSkipped ? 200 : 502);
 });

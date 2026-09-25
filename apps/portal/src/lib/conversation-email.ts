@@ -58,6 +58,8 @@ export function escapeEmailHtml(value: unknown): string {
 export type PostCallEmailInput = {
   businessName: string;
   callerId: string;
+  callerName?: string;
+  company?: string;
   summary: string;
   transcript: string;
   outcome: string;
@@ -65,6 +67,20 @@ export type PostCallEmailInput = {
   actionItems: string[];
   agentName?: string;
 };
+
+export function formatCallerDisplay(input: {
+  callerId: string;
+  callerName?: string;
+  company?: string;
+}): string {
+  const phone = (input.callerId || "Unknown").trim() || "Unknown";
+  const name = (input.callerName || "").trim();
+  const company = (input.company || "").trim();
+  if (name && company) return `${name} (${company}) · ${phone}`;
+  if (name) return `${name} · ${phone}`;
+  if (company) return `${company} · ${phone}`;
+  return phone;
+}
 
 function formatWhen(startedAt?: string | null): string {
   if (!startedAt) return "";
@@ -95,13 +111,16 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
   const summary = input.summary.trim();
   const transcript = input.transcript.trim();
+  const company = (input.company || "").trim();
+  const caller = formatCallerDisplay(input);
 
   return `
     <div style="font-family:system-ui,-apple-system,sans-serif;color:#172929;max-width:640px;">
       <h2 style="margin:0 0 8px;font-size:20px;">New message for ${escapeEmailHtml(input.businessName)}</h2>
       <p style="margin:0 0 16px;color:#4a5c5b;">A caller left a message with your WiseCall assistant.</p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
-        <tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">Caller</td><td>${escapeEmailHtml(input.callerId || "Unknown")}</td></tr>
+        <tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">Caller</td><td>${escapeEmailHtml(caller)}</td></tr>
+        ${company ? `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;">Company</td><td>${escapeEmailHtml(company)}</td></tr>` : ""}
         ${when ? `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;">When</td><td>${escapeEmailHtml(when)}</td></tr>` : ""}
       </table>
       <table style="width:100%;border-collapse:collapse;margin:0 0 18px;background:#f7fafa;border:1px solid #d7e4e3;border-radius:10px;">
@@ -137,9 +156,11 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
 
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
   const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const company = (input.company || "").trim();
   const blocks = [
     `New message for ${input.businessName}`,
-    `Caller: ${input.callerId || "Unknown"}`,
+    `Caller: ${formatCallerDisplay(input)}`,
+    company ? `Company: ${company}` : "",
     input.outcome.trim() ? `Outcome: ${input.outcome.trim()}` : "",
     `Next step: ${nextStepLabel(actionItems)}`,
   ].filter(Boolean);

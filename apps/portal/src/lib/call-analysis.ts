@@ -248,7 +248,8 @@ export async function analyzeTranscript(input: {
             },
             company: {
               type: "string",
-              description: "Company the caller said they are from, else empty string.",
+              description:
+                "Company the caller said they are from (their employer / trading name), else empty string. Never use the WiseCall client's business name here.",
             },
           },
           required: [
