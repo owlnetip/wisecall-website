@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
- <apiVersion>61.0</apiVersion><isExposed>true</isExposed><masterLabel>WiseCall Send SMS</masterLabel>
- <targets><target>lightning__RecordAction</target></targets>
- <targetConfigs><targetConfig targets="lightning__RecordAction"><actionType>ScreenAction</actionType></targetConfig></targetConfigs>
+ <apiVersion>61.0</apiVersion>
+ <isExposed>true</isExposed>
+ <masterLabel>WiseCall Send SMS</masterLabel>
+ <description>Send an SMS through WiseCall from a record, a Flow screen or another component. Replies come back to the record.</description>
+ <targets>
+  <target>lightning__RecordAction</target>
+  <target>lightning__FlowScreen</target>
+ </targets>
+ <targetConfigs>
+  <targetConfig targets="lightning__RecordAction"><actionType>ScreenAction</actionType></targetConfig>
+  <targetConfig targets="lightning__FlowScreen">
+   <property name="recordId" type="String" label="Record ID" description="Lead, Contact or Person Account id" role="inputOnly" required="true"/>
+   <property name="phone" type="String" label="Phone" description="Optional: preselect this number (must be on the record)"/>
+   <property name="message" type="String" label="Message" description="Optional: prefill or read back the message"/>
+   <property name="hideSendButton" type="Boolean" label="Hide Send button" description="Hide the button when a parent calls send() itself" role="inputOnly"/>
+   <property name="sent" type="Boolean" label="Sent" role="outputOnly"/>
+   <property name="result" type="String" label="Result message" role="outputOnly"/>
+  </targetConfig>
+ </targetConfigs>
 </LightningComponentBundle>
