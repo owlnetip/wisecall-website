@@ -1,13 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { agentSmsSend, verifiedServiceSmsAuth, type AgentSms } from "../_shared/agent-sms-send.ts";
 import { sendVonageSms, smsPhoneDigits } from "../_shared/vonage-messages.ts";
+import { smsStatusToken } from "../_shared/sms-status-token.ts";
 
 // Delivery receipts for agent (Salesforce) sends go to wisecall-sms-status.
-function smsStatusUrl(): string | undefined {
+async function smsStatusUrl(): Promise<string | undefined> {
   const base = (Deno.env.get("SUPABASE_URL") || "").replace(/\/+$/, "");
-  const token = Deno.env.get("WISECALL_SMS_STATUS_TOKEN") || "";
+  const token = await smsStatusToken();
   if (!base || !token) return undefined;
-  return `${base}/functions/v1/wisecall-sms-status?token=${encodeURIComponent(token)}`;
+  return `${base}/functions/v1/wisecall-sms-status?token=${token}`;
 }
 
 const corsHeaders = {
@@ -255,8 +256,8 @@ Deno.serve(async (req) => {
           }).eq("id", input.request_id);
           if (error) throw new Error("SMS result persistence failed");
         },
-        send: input => sendVonageSms(input, { key, secret }, fetch, {
-          statusUrl: smsStatusUrl(),
+        send: async input => sendVonageSms(input, { key, secret }, fetch, {
+          statusUrl: await smsStatusUrl(),
           clientRef: typeof body?.request_id === "string" ? body.request_id : undefined,
         }),
         usage: async profile => {

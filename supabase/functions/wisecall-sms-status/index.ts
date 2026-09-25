@@ -1,8 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { salesforceCallbackHeaders } from "../_shared/salesforce-sms-callback.ts";
+import { smsStatusToken } from "../_shared/sms-status-token.ts";
 
 // Vonage Messages API delivery-status webhook for agent (Salesforce) SMS.
-// Set per message by wisecall-send-sms (webhook_url + ?token=...).
+// Set per message by wisecall-send-sms (webhook_url + ?token=HMAC, see sms-status-token.ts).
 // Records the outcome in WiseCall and, for Salesforce sends, forwards it to the
 // portal, which updates the SMS Task in Salesforce. Always answers 200 so
 // Vonage doesn't retry a status we have already handled or chosen to ignore.
@@ -25,7 +26,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
   const url = new URL(req.url);
-  if (!tokenMatches(url.searchParams.get("token") || "", Deno.env.get("WISECALL_SMS_STATUS_TOKEN") || "")) {
+  if (!tokenMatches(url.searchParams.get("token") || "", await smsStatusToken())) {
     return new Response("Unauthorized", { status: 401 });
   }
 
