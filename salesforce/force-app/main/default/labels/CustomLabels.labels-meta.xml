@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
- <labels><fullName>WiseCall_SMS_Fallback_Email</fullName><language>en_US</language><protected>false</protected><shortDescription>Inbox for SMS replies with no matching record</shortDescription><value>luke@exceltelecom.co.uk</value></labels>
+ <labels><fullName>WiseCall_SMS_Fallback_Email</fullName><language>en_US</language><protected>false</protected><shortDescription>Inbox for SMS replies with no matching record</shortDescription><value>Rory@bettermove.co.uk</value></labels>
  <labels><fullName>WiseCall_SMS_Profile_Id</fullName><language>en_US</language><protected>false</protected><shortDescription>BetterMove WiseCall SMS agent</shortDescription><value>b3b2374c-ddc6-4e66-87a8-c60703ac89f9</value></labels>
  <labels><fullName>WiseCall_SMS_Sender</fullName><language>en_US</language><protected>false</protected><shortDescription>BetterMove numeric SMS sender</shortDescription><value>447451273985</value></labels>
 </CustomLabels>

@@ -1,6 +1,6 @@
 {
     "fileVersion": 0,
-    "serverMaxRevisionCounter": 25199,
+    "serverMaxRevisionCounter": 25213,
     "sourceMembers": {
         "SiteDotCom__Form1": {
             "memberType": "SiteDotCom",
@@ -2494,15 +2494,15 @@
         },
         "ApexClass__WiseCallSmsController": {
             "memberType": "ApexClass",
-            "serverRevisionCounter": 25154,
+            "serverRevisionCounter": 25202,
             "lastRetrievedFromServer": 25154,
             "isNameObsolete": false
         },
         "ApexClass__WiseCallSmsControllerTest": {
             "memberType": "ApexClass",
-            "serverRevisionCounter": 25155,
+            "serverRevisionCounter": 25200,
             "lastRetrievedFromServer": 25155,
-            "isNameObsolete": false
+            "isNameObsolete": true
         },
         "CustomLabel__WiseCall_SMS_Profile_Id": {
             "memberType": "CustomLabel",
@@ -2518,25 +2518,25 @@
         },
         "LightningComponentBundle__wiseCallSendSms": {
             "memberType": "LightningComponentBundle",
-            "serverRevisionCounter": 25187,
+            "serverRevisionCounter": 25208,
             "lastRetrievedFromServer": 25187,
             "isNameObsolete": false
         },
         "LightningComponentResource__wiseCallSendSms/wiseCallSendSms.js-meta.xml": {
             "memberType": "LightningComponentResource",
-            "serverRevisionCounter": 25188,
+            "serverRevisionCounter": 25209,
             "lastRetrievedFromServer": 25188,
             "isNameObsolete": false
         },
         "LightningComponentResource__wiseCallSendSms/wiseCallSendSms.js": {
             "memberType": "LightningComponentResource",
-            "serverRevisionCounter": 25189,
+            "serverRevisionCounter": 25210,
             "lastRetrievedFromServer": 25189,
             "isNameObsolete": false
         },
         "LightningComponentResource__wiseCallSendSms/wiseCallSendSms.html": {
             "memberType": "LightningComponentResource",
-            "serverRevisionCounter": 25190,
+            "serverRevisionCounter": 25211,
             "lastRetrievedFromServer": 25190,
             "isNameObsolete": false
         },
@@ -2580,6 +2580,48 @@
             "memberType": "CustomNotificationType",
             "serverRevisionCounter": 25185,
             "lastRetrievedFromServer": 25185,
+            "isNameObsolete": false
+        },
+        "ApexClass__WiseCallSms": {
+            "memberType": "ApexClass",
+            "serverRevisionCounter": 25201,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "ApexClass__WiseCallSmsReplyResource": {
+            "memberType": "ApexClass",
+            "serverRevisionCounter": 25203,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "ApexClass__WiseCallSmsReplyService": {
+            "memberType": "ApexClass",
+            "serverRevisionCounter": 25204,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "ApexClass__WiseCallSmsSendJob": {
+            "memberType": "ApexClass",
+            "serverRevisionCounter": 25205,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "ApexClass__WiseCallSmsTest": {
+            "memberType": "ApexClass",
+            "serverRevisionCounter": 25206,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "CustomLabel__WiseCall_SMS_Fallback_Email": {
+            "memberType": "CustomLabel",
+            "serverRevisionCounter": 25213,
+            "lastRetrievedFromServer": 25213,
+            "isNameObsolete": false
+        },
+        "PermissionSet__WiseCall_SMS_Integration": {
+            "memberType": "PermissionSet",
+            "serverRevisionCounter": 25212,
+            "lastRetrievedFromServer": null,
             "isNameObsolete": false
         }
     }
