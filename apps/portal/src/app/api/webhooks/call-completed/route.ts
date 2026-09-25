@@ -4,6 +4,9 @@ import { sendPostCallEmailForLog } from "@/lib/follow-ups-sync";
 import { sendGuestHangupSignupSms } from "@/lib/guest-hangup-sms";
 import { getServiceSupabase } from "@/lib/supabase";
 
+// Claude analysis + the team email can take 20s+; don't let the default cut it off.
+export const maxDuration = 120;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AFTER-CALL AI ANALYSIS TRIGGER
 //
@@ -111,7 +114,11 @@ export async function POST(request: Request) {
 
   // Record the call against the owner's monthly allowance (fire-and-forget, never
   // block the response on billing; a failure here is logged but doesn't fail the call).
+  // Off unless WISECALL_RECORD_CALL_USAGE=true: this route was never reached by the
+  // live runtimes, so turning it on would start billing call overage for the first
+  // time. That's a pricing decision, not a side effect of fixing email timing.
   void (async () => {
+    if (process.env.WISECALL_RECORD_CALL_USAGE !== "true") return;
     try {
       const service = getServiceSupabase();
       if (service) {

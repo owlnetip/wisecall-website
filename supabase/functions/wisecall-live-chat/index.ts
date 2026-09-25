@@ -7,11 +7,14 @@ import {
   triggerPortalAnalysis,
 } from "../_shared/contact-memory.ts";
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
+import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
+import { extractChatName } from "../_shared/chat-contact-name.ts";
 
 type ChatRequest = {
   session_id?: string;
   profile_slug?: string;
   message?: string;
+  end_session?: boolean;
   source?: "website" | "portal" | "api";
   page_url?: string;
   page_title?: string;
@@ -66,6 +69,13 @@ function launcherLabel(value: unknown): string | null {
   if (!raw || raw.length > 40) return null;
   if (!/^[\w\s'’!?.-]+$/.test(raw)) return null;
   return raw;
+}
+
+// Run work after the response without delaying the visitor's reply.
+function runInBackground(promise: Promise<unknown>) {
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+  if (runtime?.waitUntil) runtime.waitUntil(promise);
+  else void promise;
 }
 
 function asEmailList(value: unknown): string[] {
@@ -145,9 +155,7 @@ function isPlausibleContactName(value: string): boolean {
 function extractContactData(text: string) {
   const email = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
   const phone = text.match(/(?:\+44|0)\s?[\d\s().-]{9,}/)?.[0]?.replace(/[^\d+]/g, "");
-  const name = text.match(/\b(?:my name is|this is|i am|i'm)\s+([a-z][a-z' -]{1,60})/i)?.[1]
-    ?.replace(/[.,;:!?]+$/g, "")
-    .trim();
+  const name = extractChatName(text);
 
   return compactObject({
     contact_email: email,
@@ -189,10 +197,23 @@ function hasMeaningfulVisitorMessage(transcript: string): boolean {
   });
 }
 
-function leadEmailReason(metadata: Record<string, unknown>, collected: any, transcript: string) {
+function notifyOnCloseOnly(metadata: Record<string, unknown>): boolean {
+  return metadata.live_chat_notify_on_close === true;
+}
+
+function leadEmailReason(
+  metadata: Record<string, unknown>,
+  collected: any,
+  transcript: string,
+  options: { force?: boolean } = {},
+) {
+  if (!options.force && notifyOnCloseOnly(metadata)) return null;
   if (collected.contact_email || collected.contact_phone) return "contact_details";
   if (metadata.live_chat_notify_without_contact === false) return null;
   if (hasMeaningfulVisitorMessage(transcript)) return "meaningful_no_contact_chat";
+  if (options.force && parseTranscript(transcript).some((message) => message.role === "user")) {
+    return "session_closed";
+  }
   return null;
 }
 
@@ -238,6 +259,11 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
 
   if (profile?.system_prompt) {
     sections.push("", "Client operating instructions:", String(profile.system_prompt).trim());
+  }
+
+  // Chat-only instructions; system_prompt is shared with the phone agent.
+  if (typeof metadata.chat_instructions === "string" && metadata.chat_instructions.trim()) {
+    sections.push("", "Website chat instructions:", metadata.chat_instructions.trim());
   }
 
   if (qualificationQuestions) {
@@ -367,7 +393,11 @@ function fallbackReply(profile: any, collected: Record<string, unknown>) {
 
 function buildLeadEmailHtml(profile: any, chatLog: any, collected: any, transcript: string) {
   const businessName = profile?.business_name || profile?.profile_name || "WiseCall client";
-  const pageUrl = chatLog?.metadata?.page_url || "";
+  const pageUrl = chatLog?.metadata?.page_url || chatLog?.metadata?.last_page_url || "";
+  const school =
+    (chatLog?.metadata?.visitor_metadata as Record<string, unknown> | undefined)?.school ||
+    collected.school ||
+    "";
 
   return `
     <div style="margin:0;padding:24px;background:#172929;color:#ffffff;font-family:Arial,sans-serif;">
@@ -378,7 +408,8 @@ function buildLeadEmailHtml(profile: any, chatLog: any, collected: any, transcri
           <tr><td style="padding:8px 0;color:#7de8eb;font-weight:bold;">Name</td><td style="padding:8px 0;">${escapeHtml(collected.contact_name || "Unknown")}</td></tr>
           <tr><td style="padding:8px 0;color:#7de8eb;font-weight:bold;">Email</td><td style="padding:8px 0;">${escapeHtml(collected.contact_email || "Not provided")}</td></tr>
           <tr><td style="padding:8px 0;color:#7de8eb;font-weight:bold;">Phone</td><td style="padding:8px 0;">${escapeHtml(collected.contact_phone || "Not provided")}</td></tr>
-          <tr><td style="padding:8px 0;color:#7de8eb;font-weight:bold;">Page</td><td style="padding:8px 0;">${pageUrl ? `<a href="${escapeHtml(pageUrl)}" style="color:#7de8eb;">${escapeHtml(pageUrl)}</a>` : "Unknown"}</td></tr>
+          ${school ? `<tr><td style="padding:8px 0;color:#7de8eb;font-weight:bold;">School</td><td style="padding:8px 0;">${escapeHtml(String(school))}</td></tr>` : ""}
+          <tr><td style="padding:8px 0;color:#7de8eb;font-weight:bold;">Page</td><td style="padding:8px 0;">${pageUrl ? `<a href="${escapeHtml(String(pageUrl))}" style="color:#7de8eb;">${escapeHtml(String(pageUrl))}</a>` : "Unknown"}</td></tr>
         </table>
         <h2 style="margin:0 0 10px;color:#7de8eb;font-size:20px;">Transcript</h2>
         <pre style="white-space:pre-wrap;background:#0f2020;border:1px solid rgba(125,232,235,.35);border-radius:8px;padding:16px;color:#ffffff;font-family:Arial,sans-serif;line-height:1.45;">${escapeHtml(transcript)}</pre>
@@ -387,9 +418,16 @@ function buildLeadEmailHtml(profile: any, chatLog: any, collected: any, transcri
   `;
 }
 
-async function maybeSendLeadEmail(supabase: any, profile: any, chatLog: any, collected: any, transcript: string) {
+async function maybeSendLeadEmail(
+  supabase: any,
+  profile: any,
+  chatLog: any,
+  collected: any,
+  transcript: string,
+  options: { force?: boolean } = {},
+) {
   const metadata = profile?.metadata || {};
-  const reason = leadEmailReason(metadata, collected, transcript);
+  const reason = leadEmailReason(metadata, collected, transcript, options);
   if (!reason || chatLog?.metadata?.lead_email_sent) return false;
 
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -520,12 +558,80 @@ serve(async (req) => {
     if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
     const body = (await req.json()) as ChatRequest;
-    const message = normaliseText(body.message);
     const profileSlug = normaliseText(body.profile_slug || "the-home-cloud");
-    if (!message) return jsonResponse({ error: "message is required" }, 400);
-
     const profile = await loadProfile(supabase, profileSlug);
     if (!profile) return jsonResponse({ error: "Profile not found" }, 404);
+
+    if (body.end_session === true) {
+      const sessionId = normaliseText(body.session_id);
+      if (!sessionId) return jsonResponse({ error: "session_id is required to end a chat" }, 400);
+
+      const { data: chatLog, error: chatError } = await supabase
+        .from("wisecall_call_logs")
+        .select("*")
+        .eq("call_id", sessionId)
+        .maybeSingle();
+
+      if (chatError) throw new Error(chatError.message || JSON.stringify(chatError));
+      if (!chatLog) return jsonResponse({ error: "Chat session not found" }, 404);
+
+      const collected = {
+        ...(chatLog.metadata?.collected || {}),
+        ...compactObject({
+          contact_name: body.visitor_name,
+          contact_email: body.visitor_email,
+          contact_phone: body.visitor_phone,
+          school: body.metadata?.school,
+        }),
+      };
+
+      const transcript = String(chatLog.transcript || "");
+      const finishedAt = new Date().toISOString();
+      const { data: updatedLog, error: updateError } = await supabase
+        .from("wisecall_call_logs")
+        .update({
+          outcome: "live_chat_closed",
+          finished_at: finishedAt,
+          metadata: {
+            ...(chatLog.metadata || {}),
+            collected,
+            visitor_metadata: {
+              ...(chatLog.metadata?.visitor_metadata || {}),
+              ...(body.metadata || {}),
+            },
+            last_page_url: body.page_url || chatLog.metadata?.page_url,
+            closed_at: finishedAt,
+          },
+        })
+        .eq("call_id", sessionId)
+        .select("*")
+        .single();
+
+      if (updateError) throw new Error(updateError.message || JSON.stringify(updateError));
+
+      const emailSent = await maybeSendLeadEmail(
+        supabase,
+        profile,
+        updatedLog,
+        collected,
+        transcript,
+        { force: true },
+      );
+
+      if (updatedLog.id && emailSent) {
+        void triggerPortalAnalysis(updatedLog.id as string);
+      }
+      runInBackground(syncChatLogToSalesforce(supabase, profile, sessionId));
+
+      return jsonResponse({
+        session_id: sessionId,
+        enquiry: emailSent ? { email_sent: true } : null,
+        status: "live_chat_closed",
+      });
+    }
+
+    const message = normaliseText(body.message);
+    if (!message) return jsonResponse({ error: "message is required" }, 400);
 
     const extracted = {
       ...(body.session_id ? {} : {}),
@@ -625,6 +731,9 @@ serve(async (req) => {
 
     if (chatLog.id && (emailSent || collected.contact_email || collected.contact_phone)) {
       void triggerPortalAnalysis(chatLog.id as string);
+    }
+    if (collected.contact_email || collected.contact_phone) {
+      runInBackground(syncChatLogToSalesforce(supabase, profile, chatLog.call_id as string));
     }
 
     return jsonResponse({

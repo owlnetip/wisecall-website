@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomNotificationType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customNotifTypeName>WiseCall SMS reply</customNotifTypeName>
+    <description>Bell alert to the Salesforce user a WiseCall SMS thread's replies are routed to.</description>
+    <desktop>true</desktop>
+    <masterLabel>WiseCall SMS reply</masterLabel>
+    <mobile>true</mobile>
+</CustomNotificationType>

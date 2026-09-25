@@ -12,7 +12,7 @@ import {
   trustSignals,
 } from './seo-content.mjs';
 
-const TRIAL_SIGNUP_URL = 'https://app.wisecall.io/?signup=1&redirect=/billing';
+const TRIAL_SETUP_URL = 'https://app.wisecall.io/setup?trial=calls';
 const TRY_PAGE_URL = '/try';
 const DEMO_PHONE_TEL = 'tel:+441135222277';
 // Hand-crafted page at compare/wisecall-vs-fonio/index.html. Do not add this
@@ -21,6 +21,14 @@ const FONIO_COMPARE_PATH = '/compare/wisecall-vs-fonio/';
 // Hand-crafted page at trades/plumbers/index.html. Do not generate this
 // path or generate() will overwrite the craft copy.
 const PLUMBERS_PATH = '/trades/plumbers/';
+// Hand-crafted page at trades/electricians/index.html. Do not generate this
+// path or generate() will overwrite the craft copy.
+const ELECTRICIANS_PATH = '/trades/electricians/';
+// Hand-crafted page at trades/roofers/index.html. Do not generate this
+// path or generate() will overwrite the craft copy.
+const ROOFERS_PATH = '/trades/roofers/';
+// Root pages trades.html, dental.html, legal.html and property.html are also
+// hand-crafted. industry.legacyPath keeps generate() from writing over them.
 
 const out = new URL('../', import.meta.url);
 const publicOut = new URL('../public/', import.meta.url);
@@ -95,7 +103,7 @@ function breadcrumbSchema(items) {
   };
 }
 
-function layout(page, body, schemas = [], { headerCtaHref = TRIAL_SIGNUP_URL, headerCtaLabel = 'Try it now' } = {}) {
+function layout(page, body, schemas = [], { headerCtaHref = TRIAL_SETUP_URL, headerCtaLabel = 'Try it now' } = {}) {
   return `<!DOCTYPE html>
 <html lang="en-GB">
 <head>
@@ -164,7 +172,7 @@ ${footer()}
 </html>`;
 }
 
-function header({ ctaHref = TRIAL_SIGNUP_URL, ctaLabel = 'Try it now' } = {}) {
+function header({ ctaHref = TRIAL_SETUP_URL, ctaLabel = 'Try it now' } = {}) {
   return `<header class="sticky top-0 z-50 backdrop-blur-md bg-[#172929]/82 border-b border-[#7de8eb]/10 relative">
   <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
     <a href="/" class="flex items-center gap-3 text-white font-bold text-lg no-underline min-w-0"><img src="/owl-logo.png" alt="WiseCall" class="h-9 w-auto flex-shrink-0"><span class="truncate">WiseCall</span></a>
@@ -237,15 +245,55 @@ function footer() {
 
 const comparisonHeroPanel = {
   title: 'Why businesses switch',
-  items: ['Answers instantly, 24/7', 'Captures structured details, not messages', 'Summary and next step after every call', 'Routes and escalates urgent calls', 'Test it on real calls in a 7-day pilot'],
+  items: ['Answers instantly, 24/7', 'Captures structured details, not messages', 'Summary and next step after every call', 'Routes and escalates urgent calls', '20 free inbound calls, no card'],
 };
+
+function trialPair(position, { center = false } = {}) {
+  const justify = center ? ' justify-center' : '';
+  return `<div class="flex flex-col sm:flex-row gap-3 sm:gap-4${justify}">
+    <a href="${TRIAL_SETUP_URL}" data-cta-position="${position}" class="btn btn-primary px-6 py-3.5 sm:px-8 sm:py-4 text-center">Try 20 calls free</a>
+    <a href="${TRY_PAGE_URL}" data-cta-position="${position}" class="btn btn-secondary px-6 py-3.5 sm:px-8 sm:py-4 text-center">Call Ava: 0113 522 2277</a>
+  </div>`;
+}
+
+function hearAvaLine(before, after) {
+  return `<p class="px-6 pb-4 max-w-3xl mx-auto text-lg text-white/72 leading-relaxed">${esc(before)} <a href="${TRY_PAGE_URL}" class="text-[#7de8eb] underline underline-offset-2 hover:text-white">hear Ava answer a real call</a>${esc(after)}</p>`;
+}
+
+function trialEnd(title, text) {
+  return `<section id="demo" class="px-6 py-20">
+  <div class="max-w-5xl mx-auto text-center card-strong p-10 md:p-14">
+    <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
+    <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8">${esc(text)}</p>
+    ${trialPair('footer', { center: true })}
+  </div>
+</section>`;
+}
 
 const DEFAULT_HERO_PANEL = {
   title: 'What WiseCall does on every call',
   items: ['Answers in your business name', 'Qualifies the caller’s intent', 'Captures structured details', 'Books, routes or escalates', 'Sends summaries and transcripts'],
 };
 
-function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls', secondaryHref = '/resources/missed-call-calculator/', primaryHref = TRIAL_SIGNUP_URL, panel = DEFAULT_HERO_PANEL }) {
+function hero({ eyebrow, h1, lead, cta = 'Try it now', secondary = 'Calculate Missed Calls', secondaryHref = '/resources/missed-call-calculator/', primaryHref = TRIAL_SETUP_URL, panel = DEFAULT_HERO_PANEL, trialPair: useTrialPair = false }) {
+  if (useTrialPair) {
+    return `<section class="px-6 pt-8 pb-14 md:py-28">
+  <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-start lg:items-center">
+    <div class="flex flex-col">
+      <div class="eyebrow mb-4 md:mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>${esc(eyebrow)}</div>
+      <h1 class="text-4xl md:text-7xl font-black leading-tight tracking-tight mb-5 md:mb-7">${h1}</h1>
+      <p class="text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6 md:mb-9">${esc(lead)}</p>
+      <div class="mb-0">${trialPair('hero')}</div>
+    </div>
+    <div class="card-strong p-7">
+      <h2 class="text-2xl font-bold mb-5">${esc(panel.title)}</h2>
+      <div class="grid gap-4">
+        ${panel.items.map((item) => `<div class="flex gap-3 text-white/78"><i data-lucide="check-circle-2" class="w-5 h-5 text-[#7de8eb] flex-shrink-0 mt-1"></i><span>${esc(item)}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>
+</section>`;
+  }
   return `<section class="px-6 py-20 md:py-28">
   <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-center">
     <div>
@@ -290,15 +338,18 @@ function faqSection(faqs, title = 'Common Questions') {
 </section>`;
 }
 
-function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', { primaryHref = TRIAL_SIGNUP_URL, primaryLabel = 'Try it now', secondaryHref = '/how-it-works/', secondaryLabel = 'See how WiseCall works' } = {}) {
+function ctaBlock(title = 'Ready to stop missing calls?', text = 'Book a free demo and we will show how WiseCall can fit your call flow, team and current phone setup.', options) {
+  const actions = options
+    ? `<div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="${options.primaryHref ?? TRIAL_SETUP_URL}" class="btn btn-primary px-8 py-4">${esc(options.primaryLabel ?? 'Try it now')}</a>
+      <a href="${options.secondaryHref ?? '/how-it-works/'}" class="btn btn-secondary px-8 py-4">${esc(options.secondaryLabel ?? 'See how WiseCall works')}</a>
+    </div>`
+    : trialPair('footer', { center: true });
   return `<section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto text-center card-strong p-10 md:p-14">
     <h2 class="text-4xl md:text-5xl font-black mb-5">${esc(title)}</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8">${esc(text)}</p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="${primaryHref}" class="btn btn-primary px-8 py-4">${esc(primaryLabel)}</a>
-      <a href="${secondaryHref}" class="btn btn-secondary px-8 py-4">${esc(secondaryLabel)}</a>
-    </div>
+    ${actions}
   </div>
 </section>`;
 }
@@ -366,7 +417,7 @@ function missedCallCalculatorBlock(presetKey = 'general') {
         </div>
       </div>
       <p class="text-white/40 text-xs mt-4 leading-relaxed">Estimates only, based on the figures you enter. Actual results depend on your call patterns, enquiry mix and follow-up.</p>
-      <a href="${TRIAL_SIGNUP_URL}" class="btn btn-primary w-full text-center py-3.5 mt-5">Stop the leak — try WiseCall now</a>
+      <a href="${TRIAL_SETUP_URL}" class="btn btn-primary w-full text-center py-3.5 mt-5">Stop the leak. Try WiseCall now.</a>
       <script>
       (function () {
         const presets = ${JSON.stringify(calculatorPresets)};
@@ -445,8 +496,7 @@ function renderIndustryPage(industry) {
     eyebrow: industry.keyword,
     h1: `${esc(industry.h1)} <span class="text-[#7de8eb]">for UK businesses</span>`,
     lead: industry.heroLead,
-    cta: 'Start a 7-day pilot',
-    secondary: 'Calculate missed calls',
+    trialPair: true,
     panel: { title: `What WiseCall handles for ${industry.name.toLowerCase()}`, items: industry.features.slice(0, 5) },
   })}
 ${trustStrip()}
@@ -486,7 +536,7 @@ ${relatedLinks([
   { path: '/how-it-works/', title: 'How WiseCall handles a call', text: 'Understand the call flow, routing and summaries.' },
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'AI receptionist UK comparison', text: 'Compare WiseCall with common alternatives.' },
 ])}
-${ctaBlock(`Ready to capture more ${industry.leadType.replace(/y$/, 'ies')}?`, `Book a free demo and see how WiseCall can support your ${industry.singular}.`)}`;
+${trialEnd(`Ready to capture more ${industry.leadType.replace(/y$/, 'ies')}?`, `Try 20 free inbound calls, no card, and see how WiseCall can support your ${industry.singular}.`)}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: '/industries/' }, { name: industry.name, path: page.path }]), faqSchema(faqs)]);
 }
 
@@ -501,8 +551,8 @@ ${trustStrip()}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-5">
 ${industries.map((industry) => `<a href="${industryPath(industry)}" class="card p-7 block hover:border-[#7de8eb]/40"><h2 class="text-2xl font-bold mb-3">${esc(industry.name)}</h2><p class="text-white/65 leading-relaxed">${esc(industry.description)}</p><span class="inline-flex mt-5 text-[#7de8eb] font-bold">View ${esc(industry.keyword)}</span></a>`).join('')}
 </div></section>
-<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these — get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
-${ctaBlock('Don’t see your industry?', 'Book a demo and we will show you how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
+<section class="px-6 py-20 bg-white/[.025]"><div class="max-w-7xl mx-auto"><h2 class="text-4xl font-black mb-6">More industries coming soon</h2><p class="text-white/68 mb-6">WiseCall also supports sectors including these. Get in touch and we will tailor call handling to your business.</p><div class="flex flex-wrap gap-3">${futureIndustries.map((slug) => `<span class="px-4 py-2 rounded-full border border-[#7de8eb]/20 text-white/70">${esc(slug.replaceAll('-', ' '))}</span>`).join('')}</div></div></section>
+${ctaBlock('Don’t see your industry?', 'Try 20 calls free, no card, or call Ava and hear how a call is handled. A demo can still show how WiseCall adapts to your call flow, intake questions and escalation rules.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Industries', path: page.path }])]);
 }
 
@@ -527,7 +577,7 @@ ${relatedLinks([
   { path: '/legal', title: 'Legal intake example', text: 'See how WiseCall supports law firm intake.' },
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the plan structure and what is included.' },
 ])}
-${ctaBlock('Want to hear how WiseCall would answer your calls?', 'Book a demo and we will walk through your current call flow.')}`;
+${ctaBlock('Want to hear how WiseCall would answer your calls?', 'Try 20 calls free, no card, or call Ava and hear a real answer. A demo can still walk through your current call flow.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'How It Works', path: page.path }]), {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
@@ -600,7 +650,7 @@ ${faqSection([
 ${relatedLinks([
   { path: '/compare/wisecall-vs-answering-service/', title: 'WiseCall vs answering service', text: 'See the cost and coverage difference against a traditional answering service.' },
   { path: '/compare/wisecall-vs-voicemail/', title: 'WiseCall vs voicemail', text: 'See what changes when WiseCall answers instead of a recorded message.' },
-  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'UK hosting, phone line and trial compared to the Austrian AI assistant.' },
+  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'Phone line and trial compared to the Austrian AI assistant.' },
   { path: '/resources/missed-call-calculator/', title: 'Calculate missed call value', text: 'Estimate the opportunity cost of unanswered calls before choosing a plan.' },
 ])}
 ${ctaBlock('Need help choosing a plan?', 'Call the live demo to hear WiseCall in action, or dial in on 0113 522 2277. 20 free inbound AI calls with no card.', { primaryHref: TRY_PAGE_URL, primaryLabel: 'Call Ava', secondaryHref: DEMO_PHONE_TEL, secondaryLabel: '+44 113 522 2277' })}
@@ -670,7 +720,7 @@ function renderComparison() {
       title: 'WiseCall',
       paragraphs: [
         'Answers in your business name, asks the right questions, books or routes the next step, then sends your team a proper summary. Same knowledge on email, WhatsApp, live chat and SMS.',
-        'You do not need a phone system. We give you a number, or we connect the one you have. Calls and data stay in the UK. Dental can book eligible appointments into Dentally. It never gives clinical advice.',
+        'You do not need a phone system. We give you a number, or we connect the one you have. Dental can book eligible appointments into Dentally. It never gives clinical advice.',
         '20 inbound AI calls to try it, no card. 30-day rolling, or 15% off yearly.',
         'Skip us if you only want the cheapest unlimited minutes and you do not care about the phone system.',
       ],
@@ -685,8 +735,8 @@ function renderComparison() {
     {
       title: 'Fonio',
       paragraphs: [
-        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds SIP and outbound campaigns. 30-day money-back. Hosted in Germany.',
-        'Fine if you are happy paying in euros and keeping data in the EU. Less fine if you wanted a UK receptionist product with a pound invoice.',
+        'Austrian company, big in Germany and Austria, now hiring in London. Solo is €99 a month for 1,000 minutes. Team adds bring-your-own numbers and outbound campaigns. 30-day money-back.',
+        'Fine if you are happy paying in euros. Less fine if you wanted a UK receptionist product with a pound invoice.',
       ],
     },
     {
@@ -710,7 +760,7 @@ function renderComparison() {
     },
   ];
   const checks = [
-    'Where is the call data. UK, EU, or they do not say. For dental, care and legal this is a real question, not a slogan.',
+    'Is a number included. For dental, care and legal this is a real question, not a slogan.',
     'Do you also need a phone system. Forwarding a mobile is fine until you want overflow, a ported number, or routing to mobiles without a second supplier.',
     'What happens on email and WhatsApp. Most of these products only answer the phone. Your customers do not only ring.',
     'Is the price a cap or a meter. Unlimited minutes, per-minute extras, per-call extras and per-job billing feel very different at 80 calls a week.',
@@ -734,17 +784,14 @@ function renderComparison() {
     }
     .demo-phone-input::placeholder { color: rgba(255,255,255,0.48); }
   </style>
-<section class="px-6 py-20 md:py-28">
-  <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-center">
-    <div>
-      <div class="eyebrow mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>Comparison</div>
-      <h1 class="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-7">Best AI receptionist UK <span class="text-[#7de8eb]">2026</span></h1>
-      <p class="text-xl md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
-      <p class="text-lg text-white/68 leading-relaxed max-w-3xl mb-9">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
-      <div class="flex flex-col sm:flex-row gap-4">
-        <a href="${TRY_PAGE_URL}" class="btn btn-primary px-8 py-4">Call Ava <i data-lucide="arrow-right" class="w-5 h-5"></i></a>
-        <a href="${DEMO_PHONE_TEL}" class="btn btn-secondary px-8 py-4">+44 113 522 2277</a>
-      </div>
+<section class="px-6 pt-8 pb-14 md:py-28">
+  <div class="max-w-7xl mx-auto grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-start lg:items-center">
+    <div class="flex flex-col">
+      <div class="eyebrow mb-4 md:mb-7"><i data-lucide="sparkles" class="w-4 h-4"></i>Comparison</div>
+      <h1 class="text-4xl md:text-7xl font-black leading-tight tracking-tight mb-5 md:mb-7">Best AI receptionist UK <span class="text-[#7de8eb]">2026</span></h1>
+      <p class="text-lg md:text-2xl text-white/72 leading-relaxed max-w-3xl mb-6 md:mb-9">${esc("Prices taken from each company's public pricing page on 3 September 2026. WiseCall prices exclude VAT. Fonio bills in euros, so we left it in euros.")}</p>
+      <div class="mb-6 md:mb-8">${trialPair('hero')}</div>
+      <p class="text-lg text-white/68 leading-relaxed max-w-3xl mb-0">${esc('Search "AI receptionist UK" and you get a pile of roundups written by the people in them. This is just the published prices, and what you actually get.')}</p>
     </div>
     <div class="card-strong p-7">
       <p class="text-white/78 text-xl leading-relaxed">WiseCall is in the table. We are not pretending otherwise.</p>
@@ -760,9 +807,9 @@ function renderComparison() {
       <p>IONOS is the cheapest metered starter: £39 a month excl. VAT for 30 calls, then 49p a call.</p>
       <p>whoza is for UK trades, from £59 a month, billed around captured jobs.</p>
       <p>Moneypenny is the one with a human behind the AI. They do not publish a price.</p>
-      <p>Fonio is a European product. Solo is €99 a month (€84 if you pay annually) for 1,000 minutes. Servers are in Nuremberg.</p>
-      <p>WiseCall starts at £99 a month on 30-day rolling, or £84.15 if you pay annually. UK hosting, a number included, and the same agent on phone, email, WhatsApp, live chat and SMS. 20 inbound AI calls to try it, no card.</p>
-      <p>If the only thing you care about is the lowest headline price, we are not the cheapest. If you care where the calls live and whether you need a separate phone system, we are the one built for that.</p>
+      <p>Fonio is a European product. Solo is €99 a month (€84 if you pay annually) for 1,000 minutes.</p>
+      <p>WiseCall starts at £99 a month on 30-day rolling, or £84.15 if you pay annually. A number is included, and the same agent is on phone, email, WhatsApp, live chat and SMS. 20 inbound AI calls to try it, no card. You can <a href="${TRY_PAGE_URL}" class="text-[#7de8eb] underline underline-offset-2 hover:text-white">hear Ava answer a real call</a> before you decide.</p>
+      <p>If the only thing you care about is the lowest headline price, we are not the cheapest. If you care whether a number is included and whether you need a separate phone system, we are the one built for that.</p>
     </div>
   </div>
 </section>
@@ -792,7 +839,7 @@ function renderComparison() {
       ${checks.map((text, index) => `<li class="card p-6 flex gap-4"><span class="text-[#7de8eb] font-black text-2xl leading-none">${index + 1}</span><p class="text-white/72 leading-relaxed">${esc(text)}</p></li>`).join('')}
     </ol>
     <div class="card-strong p-7 mt-8">
-      <p class="text-white/80 leading-relaxed">Ours: UK, phone system included, same agent across channels, 30-day rolling, published GBP price.</p>
+      <p class="text-white/80 leading-relaxed">Ours: phone system included, same agent across channels, 30-day rolling, published GBP price.</p>
     </div>
   </div>
 </section>
@@ -802,17 +849,14 @@ function renderComparison() {
     <h2 class="text-4xl md:text-5xl font-black mb-5">WiseCall and Fonio</h2>
     <p class="text-lg text-white/72 leading-relaxed max-w-3xl mb-8">Fonio is the well-funded European AI phone assistant. WiseCall is the UK one.</p>
     ${comparisonTable(data.fonioColumns.slice(1), data.fonioRows, { firstHeader: data.fonioColumns[0], minClass: 'compare-table-sm' })}
-    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number, whose data, and whose invoice. ${sourceAnchor('Read the full WiseCall vs Fonio comparison', FONIO_COMPARE_PATH)}.</p>
+    <p class="text-lg text-white/72 leading-relaxed max-w-3xl mt-8">If you are a UK practice choosing between the two, it is whose number and whose invoice. ${sourceAnchor('Read the full WiseCall vs Fonio comparison', FONIO_COMPARE_PATH)}.</p>
   </div>
 </section>
 <section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto card-strong p-10 md:p-14">
     <h2 class="text-4xl md:text-5xl font-black mb-5 text-center">Try it</h2>
     <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-center">Call the live demo, or start 20 inbound AI calls with no card. Most businesses are live within a week. 30-day rolling. Cancel before the next month.</p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-      <a href="${TRY_PAGE_URL}" class="btn btn-primary px-8 py-4">Call Ava</a>
-      <a href="${DEMO_PHONE_TEL}" class="btn btn-secondary px-8 py-4">+44 113 522 2277</a>
-    </div>
+    <div class="mb-8">${trialPair('footer', { center: true })}</div>
     <form id="demoCallbackForm" class="max-w-md mx-auto" novalidate>
       <div class="flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 focus-within:border-[#7de8eb]/70">
         <i data-lucide="phone" class="w-5 h-5 text-[#7de8eb] flex-shrink-0"></i>
@@ -829,7 +873,6 @@ function renderComparison() {
     </p>
     <p class="text-white/55 text-sm text-center mt-8">
       ${[
-        { href: TRY_PAGE_URL, label: 'Try' },
         { href: '/pricing/', label: 'Pricing' },
         { href: '/dental', label: 'Dental' },
         { href: '/trades', label: 'Trades' },
@@ -843,7 +886,7 @@ ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
   ...comparisonPages.map((c) => ({ path: `/compare/${c.slug}/`, title: `WiseCall vs ${c.subject}`, text: `A focused comparison against ${c.subject.toLowerCase()}.` })),
-  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'Head-to-head on hosting, phone line, trial and price.' },
+  { path: FONIO_COMPARE_PATH, title: 'WiseCall vs Fonio', text: 'Head-to-head on phone line, trial and price.' },
 ])}
 <p class="max-w-7xl mx-auto px-6 pb-10 text-white/45 text-sm leading-relaxed">Prices last checked ${esc(data.checked)}. If someone changes a plan, update this table the same day.</p>
 <script>
@@ -914,22 +957,30 @@ ${relatedLinks([
   ], { headerCtaHref: TRY_PAGE_URL, headerCtaLabel: 'Call Ava' });
 }
 
+function comparisonNavLabel(comparison) {
+  return comparison.label || `WiseCall vs ${comparison.subject}`;
+}
+
 function renderComparisonPage(comparison) {
   const page = {
     title: comparison.title,
     description: comparison.description,
     path: `/compare/${comparison.slug}/`,
   };
-  const body = `${hero({ eyebrow: comparison.eyebrow, h1: comparison.h1, lead: comparison.lead, cta: 'Start a 7-day pilot', panel: comparisonHeroPanel })}
+  const hear = comparison.slug === 'wisecall-vs-voicemail'
+    ? ['Most people hang up on a recorded message. You can', ' before you change the line.']
+    : ['Before you pick on price alone, you can', '.'];
+  const body = `${hero({ eyebrow: comparison.eyebrow, h1: comparison.h1, lead: comparison.lead, trialPair: true, panel: comparisonHeroPanel })}
 <section class="px-6 py-20"><div class="max-w-7xl mx-auto overflow-x-auto card p-3"><table class="w-full text-left text-sm"><thead><tr class="text-[#7de8eb]">${comparison.columns.map((col) => `<th class="p-4">${esc(col)}</th>`).join('')}</tr></thead><tbody>${comparison.rows.map((row) => `<tr class="border-t border-[#7de8eb]/10">${row.map((cell) => `<td class="p-4 text-white/72">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
-${faqSection(comparison.faqs, `${page.title.split('|')[0].trim()} Questions`)}
+${hearAvaLine(hear[0], hear[1])}
+${faqSection(comparison.faqs, `${comparisonNavLabel(comparison)} Questions`)}
 ${relatedLinks([
   { path: '/pricing/', title: 'WiseCall pricing', text: 'Understand the WiseCall plan structure.' },
   { path: '/how-it-works/', title: 'How WiseCall works', text: 'See the call flow behind the comparison.' },
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'AI receptionist UK comparison', text: 'See the broader comparison against human reception and voicemail.' },
 ])}
-${ctaBlock(comparison.ctaTitle, comparison.ctaText)}`;
-  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: page.title.split('|')[0].trim(), path: page.path }]), faqSchema(comparison.faqs)]);
+${trialEnd(comparison.ctaTitle, comparison.ctaText)}`;
+  return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare/' }, { name: comparisonNavLabel(comparison), path: page.path }]), faqSchema(comparison.faqs)], { headerCtaHref: TRIAL_SETUP_URL, headerCtaLabel: 'Try 20 calls free' });
 }
 
 function renderCalculator() {
@@ -941,7 +992,7 @@ function renderCalculator() {
   const body = `${hero({ eyebrow: 'Resource', h1: 'Missed Call <span class="text-[#7de8eb]">Calculator</span>', lead: 'Estimate the potential monthly opportunity from calls your business does not answer. Use your own inputs and treat the result as a planning estimate.', panel: { title: 'What the calculator estimates', items: ['Missed calls per month', 'Missed new enquiries', 'Monthly value at risk', 'Annual value at risk', 'Industry presets you can adjust'] } })}
 ${missedCallCalculatorBlock()}
 ${relatedLinks(industries.map((industry) => ({ path: industryPath(industry), title: industry.keyword, text: `See how missed call recovery applies to ${industry.name.toLowerCase()}.` })))}
-${ctaBlock('Want help reducing missed calls?', 'Book a demo and see how WiseCall can answer, summarise and route calls for your team.')}`;
+${ctaBlock('Want help reducing missed calls?', 'Try 20 calls free, no card, or call Ava and hear a call answered. A demo can still show how WiseCall answers, summarises and routes calls for your team.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Resources', path: '/resources/' }, { name: 'Missed Call Calculator', path: page.path }])]);
 }
 
@@ -966,7 +1017,7 @@ ${relatedLinks([
   { path: '/dental', title: 'Dental integrations', text: 'See dental practice workflow examples.' },
   { path: '/legal', title: 'Legal intake systems', text: 'See law firm intake workflow examples.' },
 ])}
-${ctaBlock('Want WiseCall connected to your workflow?', 'Book a demo and we will map your current systems, handover points and routing needs.')}`;
+${ctaBlock('Want WiseCall connected to your workflow?', 'Try 20 calls free, no card, or call Ava. A demo can still map your current systems, handover points and routing needs.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Integrations', path: page.path }]), faqSchema([
     { question: 'Can WiseCall integrate with our existing CRM?', answer: 'WiseCall can send structured call summaries and caller details into CRM and workflow systems where suitable integration routes are available. The exact setup depends on the CRM, available APIs and the level of automation required.' },
     { question: 'Can WiseCall update calendars?', answer: 'WiseCall can support calendar-led workflows such as callback windows and booking requests where the business has a clear availability process. Live booking depends on the calendar or diary system and the permissions available.' },
@@ -976,7 +1027,7 @@ ${ctaBlock('Want WiseCall connected to your workflow?', 'Book a demo and we will
 
 function renderCaseStudies() {
   const page = {
-    title: 'WiseCall in Action | Example AI Call Handling for UK Businesses',
+    title: 'AI Receptionist Examples for UK Businesses | WiseCall',
     description:
       'See how WiseCall handles calls for UK service businesses: anonymised example calls, the summaries your team receives, and the safeguards behind every call.',
     path: '/case-studies/',
@@ -1002,7 +1053,7 @@ ${trustStrip()}
   <h2 class="text-4xl md:text-5xl font-black mb-10">Proof is more than testimonials</h2>
   <div class="grid md:grid-cols-4 gap-4">${[
     ['UK-based setup and support', 'Onboarding and support from a UK team that knows the product, not an offshore script.'],
-    ['GDPR-aware data handling', 'Structured, purposeful data capture on UK-based infrastructure, with access controls per team member.'],
+    ['GDPR-aware data handling', 'Structured, purposeful data capture, with access controls per team member.'],
     ['Human fallback', 'Every call has a clear next step. When a person is needed, WiseCall routes, books a callback or escalates.'],
     ['Full audit trail', 'Every AI-handled call is logged with a summary, timestamp, duration and outcome you can review.'],
   ].map(([title, text]) => `<div class="card p-6"><h3 class="font-bold text-lg mb-3">${esc(title)}</h3><p class="text-white/62 text-sm leading-relaxed">${esc(text)}</p></div>`).join('')}</div>
@@ -1012,7 +1063,7 @@ ${relatedLinks([
   { path: '/resources/missed-call-calculator/', title: 'Missed call calculator', text: 'Estimate what unanswered calls could be costing you.' },
   { path: '/compare/ai-receptionist-uk-comparison/', title: 'Comparison page', text: 'See how AI call answering compares to the alternatives.' },
 ])}
-${ctaBlock('Want to hear it handle your calls?', 'Start a 7-day pilot or book a demo, and see the summaries WiseCall would send your team.')}`;
+${trialEnd('Want to hear it handle your calls?', 'Try 20 free inbound calls, no card, and see the summaries WiseCall would send your team.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'WiseCall in Action', path: page.path }])]);
 }
 
@@ -1048,7 +1099,7 @@ ${relatedLinks([
   { path: '/dental', title: 'Dental FAQs', text: 'See an example of self-contained vertical FAQs.' },
   { path: '/blog/missed-calls-cost-uk-businesses/', title: 'Missed call article', text: 'Use research-led content while transcript data matures.' },
 ])}
-${ctaBlock('Need help turning calls into useful content?', 'Book a demo and we can explain what WiseCall captures and how it can support future reporting.')}`;
+${ctaBlock('Need help turning calls into useful content?', 'Try 20 calls free, no card, or call Ava to hear what gets captured. A demo can still explain how that supports your reporting.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Resources', path: '/resources/' }, { name: 'Call Transcript Guide', path: page.path }]), faqSchema(faqs)]);
 }
 
@@ -1081,7 +1132,7 @@ ${relatedLinks([
   { path: '/legal', title: 'Missed legal enquiries', text: 'See how WiseCall supports law firm intake.' },
   { path: '/property', title: 'Missed property enquiries', text: 'See how WiseCall supports estate agency branches.' },
 ])}
-${ctaBlock('Turn missed calls into structured enquiries', 'Book a demo to see how WiseCall can capture and route caller details for your business.')}`;
+${ctaBlock('Turn missed calls into structured enquiries', 'Try 20 calls free, no card, or call Ava and hear her take the details. A demo can still show how WiseCall captures and routes caller details for your business.')}`;
   return layout(page, body, [organisationSchema(), webPageSchema(page), breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog/' }, { name: post.title, path: page.path }]), faqSchema(faqs), {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -1152,6 +1203,8 @@ function allRoutes() {
     ...industries.map((industry) => industryPath(industry)),
     '/trades',
     PLUMBERS_PATH,
+    ELECTRICIANS_PATH,
+    ROOFERS_PATH,
     '/compare/ai-receptionist-uk-comparison/',
     ...comparisonPages.map((comparison) => `/compare/${comparison.slug}/`),
     FONIO_COMPARE_PATH,
@@ -1196,6 +1249,8 @@ WiseCall is an AI receptionist and AI voice agent platform for UK businesses. It
 - Estate agents: ${site.url}/property
 - Trades and field service: ${site.url}/trades
 - AI receptionist for plumbers: ${site.url}${PLUMBERS_PATH}
+- AI receptionist for electricians: ${site.url}${ELECTRICIANS_PATH}
+- AI receptionist for roofers: ${site.url}${ROOFERS_PATH}
 - AI receptionist UK comparison: ${site.url}/compare/ai-receptionist-uk-comparison/
 ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${c.slug}/`).join('\n')}
 - WiseCall vs Fonio: ${site.url}${FONIO_COMPARE_PATH}
@@ -1211,11 +1266,20 @@ ${comparisonPages.map((c) => `- WiseCall vs ${c.subject}: ${site.url}/compare/${
 - WiseCall is useful for missed call recovery, out-of-hours call handling, overflow cover, structured caller summaries and team routing.
 - WiseCall can be used for out-of-hours cover, overflow cover, or full-time AI call handling.
 - WiseCall serves UK service businesses including dental practices, law firms, estate agents, trades and care providers.
-- WiseCall handles data in a GDPR-aware way on UK-based infrastructure, with call examples published only in anonymised form.
+- WiseCall handles data in a GDPR-aware way, with call examples published only in anonymised form.
 `;
 }
 
+const HAND_CRAFTED_PAGES = new Set([
+  'trades/plumbers/index.html',
+  'trades/electricians/index.html',
+  'trades/roofers/index.html',
+]);
+
 async function write(path, content) {
+  if (HAND_CRAFTED_PAGES.has(path)) {
+    throw new Error(`Refusing to overwrite hand-crafted page ${path}`);
+  }
   const file = new URL(path, out);
   await mkdir(new URL('.', file), { recursive: true });
   await writeFile(file, content);
