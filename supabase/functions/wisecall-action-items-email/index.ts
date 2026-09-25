@@ -1,10 +1,16 @@
+// Template: ./conversation-email.ts is this function's own copy (the deployed
+// v67 layout). _shared/conversation-email.ts has since diverged for
+// wisecall-email-summary, so they are kept apart deliberately.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   buildPostCallEmailHtml,
   buildPostCallEmailText,
+  callerNameFromSources,
+  extraDetailsFromAnalysis,
   portalNextActions,
-} from "../_shared/conversation-email.ts";
+  postCallEmailSubject,
+} from "./conversation-email.ts";
 import {
   asEmailList,
   callSummaryRecipients,
@@ -26,6 +32,17 @@ function recipients(metadata: Record<string, unknown>): string[] {
   const configured = callSummaryRecipients(metadata);
   if (configured.length) return configured;
   return asEmailList(Deno.env.get("WISECALL_EMAIL_TO") || "info@owlnet.io");
+}
+
+const ENQUIRY_LABELS: Record<string, string> = { seller: "Seller", buyer: "Buyer", general: "General enquiry" };
+
+// Website-chat enquiry routing: metadata.chat_enquiry_routing = { seller: [...], buyer: [...], general: [...] }.
+// Returns null when the type has no inbox configured (fall back to the usual recipients).
+function routedRecipients(metadata: Record<string, unknown>, enquiryType: string): string[] | null {
+  const routing = metadata.chat_enquiry_routing;
+  if (!enquiryType || !routing || typeof routing !== "object" || Array.isArray(routing)) return null;
+  const list = asEmailList((routing as Record<string, unknown>)[enquiryType]);
+  return list.length ? list : null;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -71,13 +88,14 @@ serve(async (req) => {
   const bodyOutcome = typeof body.outcome === "string" ? body.outcome : "";
   const startedAt = typeof body.started_at === "string" ? body.started_at : "";
   const agentName = typeof body.agent_name === "string" ? body.agent_name : "";
+  const bodyCallerName = typeof body.caller_name === "string" ? body.caller_name : "";
 
   if (!profileId) return json({ ok: true, skipped: "missing_profile" });
 
   const supabase = createClient(supabaseUrl, serviceKey);
   const { data: profile } = await supabase
     .from("wisecall_profiles")
-    .select("profile_name, business_name, clinic_name, metadata")
+    .select("profile_name, business_name, clinic_name, receptionist_name, metadata")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -85,8 +103,7 @@ serve(async (req) => {
 
   const businessName =
     profile.business_name || profile.clinic_name || profile.profile_name || "Your business";
-  const to = recipients((profile.metadata as Record<string, unknown>) ?? {});
-  if (!to.length) return json({ ok: true, skipped: "no_recipients" });
+  const profileMeta = (profile.metadata as Record<string, unknown>) ?? {};
 
   let analysisJson: unknown = null;
   let followUpTitles: string[] = [];
@@ -94,14 +111,16 @@ serve(async (req) => {
   let logTranscript = "";
   let logOutcome = "";
   let logStartedAt = "";
+  let logFinishedAt = "";
   let logAgentName = "";
   let logMeta: Record<string, unknown> = {};
+  let contactName = "";
 
   if (callLogId) {
     const { data: log } = await supabase
       .from("wisecall_call_logs")
       .select(
-        "id, summary, transcript, outcome, started_at, profile_name, metadata, ai_insight_summary, ai_analysis_json",
+        "id, summary, transcript, outcome, started_at, finished_at, profile_name, metadata, ai_insight_summary, ai_analysis_json, contact_id",
       )
       .eq("id", callLogId)
       .maybeSingle();
@@ -111,8 +130,17 @@ serve(async (req) => {
       logTranscript = String(log.transcript || "");
       logOutcome = String(log.outcome || "");
       logStartedAt = String(log.started_at || "");
+      logFinishedAt = String(log.finished_at || "");
       logAgentName = String(log.profile_name || "");
       logMeta = isPlainObject(log.metadata) ? log.metadata : {};
+      if (log.contact_id) {
+        const { data: contact } = await supabase
+          .from("wisecall_contacts")
+          .select("name")
+          .eq("id", log.contact_id)
+          .maybeSingle();
+        contactName = String(contact?.name || "");
+      }
     }
     const { data: followUps } = await supabase
       .from("wisecall_follow_ups")
@@ -126,7 +154,13 @@ serve(async (req) => {
     ? bodyItems.slice(0, 5)
     : portalNextActions({ analysisJson, followUpTitles });
 
-  const summary = (managerSummary || logSummary).trim();
+  const collectedForRouting = isPlainObject(logMeta.collected) ? logMeta.collected : {};
+  const enquiryType = typeof collectedForRouting.enquiry_type === "string" ? collectedForRouting.enquiry_type : "";
+  const to = routedRecipients(profileMeta, enquiryType) ?? recipients(profileMeta);
+  if (!to.length) return json({ ok: true, skipped: "no_recipients" });
+  const enquiryLabel = ENQUIRY_LABELS[enquiryType] || "";
+  const baseSummary = (managerSummary || logSummary).trim();
+  const summary = enquiryLabel ? `Enquiry type: ${enquiryLabel}. ${baseSummary}`.trim() : baseSummary;
   const transcript = (bodyTranscript || logTranscript).trim();
   const outcome = (bodyOutcome || logOutcome).trim();
   if (summary.length < 3 && transcript.length < 10 && !actionItems.length) {
@@ -140,21 +174,40 @@ serve(async (req) => {
     return json({ ok: true, skipped: "already_sent" });
   }
 
+  const collected = isPlainObject(logMeta.collected) ? logMeta.collected : {};
+  const callerName = callerNameFromSources({
+    callerName: bodyCallerName || contactName,
+    analysisJson,
+    summary,
+    transcript,
+    collected,
+  });
+  const details = extraDetailsFromAnalysis(analysisJson);
+  const company =
+    details.company ||
+    (typeof collected.company === "string" ? collected.company : "") ||
+    (typeof collected.contact_company === "string" ? collected.contact_company : "");
   const emailInput = {
     businessName,
     callerId,
+    callerName,
+    company,
     summary,
     transcript,
     outcome: outcome || "Conversation recorded",
     startedAt: startedAt || logStartedAt || null,
+    finishedAt: logFinishedAt || null,
+    urgency: details.urgency,
     actionItems,
-    agentName: agentName || logAgentName || "WiseCall",
+    agentName:
+      profile.receptionist_name ||
+      agentName ||
+      logAgentName ||
+      "WiseCall",
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);
-  const subject = actionItems.length
-    ? `Follow-up needed · ${callerId} · ${businessName}`
-    : `Message from ${callerId} · ${businessName}`;
+  const subject = postCallEmailSubject(emailInput);
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
