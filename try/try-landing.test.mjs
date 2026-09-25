@@ -15,7 +15,6 @@ test("Facebook /try is one-tap Call Ava, not paste-your-website", () => {
   assert.match(html, /id="call-ava"/);
   assert.match(html, /href="tel:\+441135222277"/);
   assert.match(html, />Call Ava</);
-  assert.match(html, /\+44 113 522 2277/);
   assert.match(html, /0113 522 2277/);
   assert.doesNotMatch(html, /id="website"/);
   assert.doesNotMatch(html, /name="website"/);
@@ -31,6 +30,20 @@ test("Call Ava is the first tap and the number field is secondary", () => {
   assert.match(html, /Or enter your number and we’ll call you/);
   assert.match(html, /id="phone"/);
   assert.doesNotMatch(html, /\sautofocus\b/);
+  assert.match(html, /id="call-me"[^>]*type="submit"|type="submit"[^>]*id="call-me"/);
+});
+
+test("campaign links lead with the callback form, ads keep Call Ava first", () => {
+  assert.match(html, /\.campaign \.callback \{ order: 1; \}/);
+  assert.match(html, /\.campaign \.dial \{ order: 3; \}/);
+  assert.match(html, /if \(trySource\(\) !== "facebook_try" && idle\) idle\.classList\.add\("campaign"\)/);
+  assert.match(html, /Enter your mobile and Ava will call you/);
+});
+
+test("page stays simple: no email box, no steps list, no em dashes", () => {
+  assert.doesNotMatch(html, /id="email"/);
+  assert.doesNotMatch(html, /class="steps"/);
+  assert.doesNotMatch(html, /\u2014/);
 });
 
 test("valid UK mobile still auto-calls the existing Ava demo", () => {
@@ -53,16 +66,17 @@ test("website draft is a small secondary path, not the first step", () => {
 test("callback confirmation stays hidden until Ava rings them", () => {
   assert.match(html, /\[hidden\] \{ display: none !important; \}/);
   assert.match(html, /id="try-called"[^>]*\bhidden\b/);
+  assert.match(html, /Ava’s calling you now/);
   assert.match(html, /id="try-idle"/);
 });
 
 test("copy sells missed calls and keeps the hangup signup offer", () => {
   assert.match(html, /miss fewer calls/);
   assert.match(html, /take the enquiry/);
-  assert.match(html, /20 free calls/);
-  assert.match(html, /not a receptionist drafted from your site/);
+  assert.match(html, /20 free calls, no card/);
+  assert.match(html, /our demo receptionist/);
   assert.match(html, /answers as Ava, not in your business name/);
-  assert.match(html, /text with the signup link/);
+  assert.match(html, /text you the signup link/);
   assert.doesNotMatch(html, /book a demo/i);
   assert.doesNotMatch(html, /\bOfcom\b/);
   assert.doesNotMatch(html, /\bTwilio\b/);
