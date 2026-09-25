@@ -8,7 +8,7 @@ import {
 } from "../_shared/contact-memory.ts";
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
-import { extractChatName } from "../_shared/chat-contact-name.ts";
+import { agentAskedForName, bareNameReply, extractChatName } from "../_shared/chat-contact-name.ts";
 import { detectEnquiryType } from "../_shared/chat-enquiry-type.ts";
 
 type ChatRequest = {
@@ -657,6 +657,13 @@ serve(async (req) => {
 
     let chatLog = await getOrCreateChatLog(supabase, profile, body, extracted);
     const collected = { ...(chatLog.metadata?.collected || {}), ...extracted };
+    // "What's your name?" → "Sam Route": a bare reply to the name question is the name.
+    if (!collected.contact_name) {
+      const previous = parseTranscript(chatLog.transcript || "");
+      const lastAgent = [...previous].reverse().find((m) => m.role === "assistant")?.content || "";
+      const bare = agentAskedForName(lastAgent) ? bareNameReply(message) : undefined;
+      if (bare) (collected as Record<string, unknown>).contact_name = bare;
+    }
     const enquiryType = detectEnquiryType(message, collected.enquiry_type);
     if (enquiryType) (collected as Record<string, unknown>).enquiry_type = enquiryType;
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
