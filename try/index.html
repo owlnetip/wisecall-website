@@ -40,257 +40,244 @@
     a { color: inherit; }
     [hidden] { display: none !important; }
     .wrap {
-      width: min(34rem, 100%);
+      width: min(30rem, 100%);
       margin: 0 auto;
-      padding: 0 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+      padding: 0 1rem calc(1.5rem + env(safe-area-inset-bottom));
     }
     header {
       display: flex;
       align-items: center;
-      gap: 0.65rem;
-      padding: 0.7rem 0 0.15rem;
+      gap: 0.6rem;
+      padding: 1.1rem 0 0;
     }
-    header img {
-      height: 2.25rem;
-      width: auto;
-      flex-shrink: 0;
-      object-fit: contain;
-    }
-    header span {
-      font-weight: 700;
-      font-size: 1.05rem;
-      letter-spacing: -0.02em;
-    }
-    .hero {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      padding: 0.35rem 0 1.75rem;
-    }
-    .outcome {
+    header img { height: 2rem; width: auto; object-fit: contain; }
+    header span { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em; }
+    header b { color: #7de8eb; font-weight: 700; }
+    .intro { padding: 2rem 0 1.4rem; }
+    .eyebrow {
       margin: 0;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.55);
     }
     h1 {
-      margin: 0.3rem 0 0.55rem;
-      font-size: clamp(1.7rem, 7vw, 2.2rem);
+      margin: 0.4rem 0 0.6rem;
+      font-size: clamp(1.8rem, 7.5vw, 2.3rem);
       font-weight: 800;
-      line-height: 1.15;
+      line-height: 1.12;
       letter-spacing: -0.03em;
     }
-    .payoff {
-      margin: 0 0 0.85rem;
+    .lede {
+      margin: 0;
       font-size: 1.02rem;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.72);
     }
-    .offer {
-      margin: 0 0 1.1rem;
-      font-size: 1.02rem;
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      padding: 1.4rem;
+      border-radius: 1.1rem;
+      background: #1f3535;
+      border: 1px solid rgba(125, 232, 235, 0.14);
+    }
+    /* Campaign links (?src=) lead with "we'll call you"; ads lead with Call Ava. */
+    .campaign .callback { order: 1; }
+    .campaign .or { order: 2; }
+    .campaign .dial { order: 3; }
+    .or {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    .or::before, .or::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(125, 232, 235, 0.14);
+    }
+    .label {
+      display: block;
+      margin: 0 0 0.6rem;
+      font-size: 0.95rem;
       font-weight: 700;
-      color: #7de8eb;
     }
     .call-ava {
       display: flex;
       align-items: center;
       justify-content: center;
       width: 100%;
-      min-height: 4.4rem;
-      padding: 1.1rem 1.2rem;
-      border-radius: 0.9rem;
+      min-height: 3.6rem;
+      border-radius: 0.8rem;
+      background: #7de8eb;
+      color: #172929;
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      box-shadow: 0 0 32px rgba(125, 232, 235, 0.25);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .call-ava:active, .call-me:active { transform: scale(0.98); }
+    .dial-number {
+      margin: 0.55rem 0 0;
+      text-align: center;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.55);
+    }
+    .dial-number a { color: #7de8eb; font-weight: 600; text-decoration: none; }
+    .row { display: flex; gap: 0.5rem; }
+    .row input {
+      flex: 1;
+      min-width: 0;
+      min-height: 3.2rem;
+      padding: 0.8rem 1rem;
+      border-radius: 0.7rem;
+      border: 1.5px solid rgba(125, 232, 235, 0.28);
+      background: #172929;
+      color: #fff;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      outline: none;
+    }
+    .row input::placeholder { color: rgba(255, 255, 255, 0.35); font-weight: 500; }
+    .row input:focus {
+      border-color: #7de8eb;
+      box-shadow: 0 0 0 3px rgba(125, 232, 235, 0.18);
+    }
+    .call-me {
+      flex-shrink: 0;
+      min-height: 3.2rem;
+      padding: 0 1.2rem;
+      border: 0;
+      border-radius: 0.7rem;
       background: #7de8eb;
       color: #172929;
       font-family: inherit;
       font-weight: 800;
-      font-size: clamp(1.4rem, 6.4vw, 1.85rem);
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      text-decoration: none;
-      text-align: center;
-      box-shadow: 0 0 36px rgba(125, 232, 235, 0.32);
+      font-size: 1rem;
+      cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
     }
-    .call-ava:active { transform: scale(0.98); }
-    .dial-hint {
-      margin: 0.55rem 0 0;
-      text-align: center;
-      font-size: 0.92rem;
-      font-weight: 600;
-      line-height: 1.4;
-      color: rgba(255, 255, 255, 0.62);
-    }
-    .dial-hint a {
+    .call-me:disabled { opacity: 0.6; cursor: default; }
+    .campaign .dial .call-ava {
+      min-height: 3rem;
+      font-size: 1.05rem;
+      background: transparent;
       color: #7de8eb;
-      text-decoration: none;
-    }
-    .secondary {
-      margin: 1.35rem 0 0;
-      padding: 0.95rem 0 0;
-      border-top: 1px solid rgba(125, 232, 235, 0.14);
-    }
-    .secondary-label {
-      margin: 0 0 0.65rem;
-      font-size: 0.92rem;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.62);
-    }
-    .try-form {
-      display: grid;
-      gap: 0.55rem;
-    }
-    .try-form label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-    }
-    .try-form input {
-      width: 100%;
-      min-height: 3.15rem;
-      padding: 0.85rem 1rem;
-      border-radius: 0.6rem;
-      border: 1.5px solid rgba(125, 232, 235, 0.28);
-      background: #1f3535;
-      color: #fff;
-      font-family: inherit;
-      font-size: 16px;
-      font-weight: 500;
-      outline: none;
-    }
-    .try-form input::placeholder {
-      color: rgba(255, 255, 255, 0.38);
-      font-weight: 500;
-    }
-    .try-form input:focus {
-      border-color: #7de8eb;
-      box-shadow: 0 0 0 3px rgba(125, 232, 235, 0.18);
-    }
-    .try-form input[type="email"] {
-      min-height: 2.65rem;
-      padding: 0.6rem 1rem;
-      font-size: 15px;
-      border-color: rgba(125, 232, 235, 0.16);
-      background: rgba(31, 53, 53, 0.72);
+      border: 1.5px solid rgba(125, 232, 235, 0.4);
+      box-shadow: none;
     }
     .status {
-      margin: 0.15rem 0 0;
-      font-size: 0.9rem;
+      margin: 0.6rem 0 0;
+      font-size: 0.88rem;
       font-weight: 600;
       line-height: 1.4;
       color: #7de8eb;
     }
     .status[data-state="error"] { color: #ffb4b4; }
-    .status[hidden] { display: none; }
-    .called h1 { margin-bottom: 0.55rem; }
-    .website-link {
-      margin: 1.15rem 0 0;
+    .hint {
+      margin: 0.55rem 0 0;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    .note {
+      margin: 1.1rem 0.25rem 0;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.5);
       text-align: center;
-      font-size: 0.82rem;
+    }
+    .note strong { color: #7de8eb; font-weight: 700; }
+    .website-link {
+      margin: 0.9rem 0 0;
+      text-align: center;
+      font-size: 0.85rem;
     }
     .website-link a {
-      color: rgba(125, 232, 235, 0.78);
+      color: rgba(125, 232, 235, 0.8);
       font-weight: 600;
       text-decoration: none;
     }
-    .ready {
-      margin: 1.35rem 0 0.7rem;
-      font-size: 0.95rem;
-      font-weight: 700;
-    }
-    .steps {
-      list-style: none;
-      margin: 0;
-      padding: 0;
+    .called { text-align: center; padding: 2rem 1.4rem; }
+    .ringing {
+      width: 4.5rem;
+      height: 4.5rem;
+      margin: 0 auto 1.1rem;
+      border-radius: 50%;
       display: grid;
-      gap: 0.55rem;
-    }
-    .steps li {
-      display: flex;
-      align-items: baseline;
-      gap: 0.7rem;
-      font-size: 0.95rem;
-      line-height: 1.4;
-      color: rgba(255, 255, 255, 0.78);
-    }
-    .num {
-      flex-shrink: 0;
-      width: 1.45rem;
-      font-weight: 800;
-      font-size: 0.82rem;
+      place-items: center;
+      background: rgba(125, 232, 235, 0.12);
       color: #7de8eb;
+      animation: ring 1.6s ease-out infinite;
     }
-    .honest {
-      margin: 1.15rem 0 0;
-      font-size: 0.82rem;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.45);
+    @keyframes ring {
+      0% { box-shadow: 0 0 0 0 rgba(125, 232, 235, 0.35); }
+      100% { box-shadow: 0 0 0 1.4rem rgba(125, 232, 235, 0); }
     }
-    .retry {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: 3.15rem;
-      margin-top: 0.75rem;
-      padding: 0.85rem 1.2rem;
-      border: 0;
-      border-radius: 0.6rem;
-      background: linear-gradient(90deg, #7de8eb, #5dbfc2);
-      color: #172929;
-      font-family: inherit;
+    @media (prefers-reduced-motion: reduce) { .ringing { animation: none; } }
+    .called h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.5rem;
       font-weight: 800;
-      font-size: 1.05rem;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      letter-spacing: -0.02em;
     }
-    .retry:active { transform: scale(0.98); }
+    .called p {
+      margin: 0 auto;
+      max-width: 22rem;
+      font-size: 0.98rem;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.72);
+    }
     footer {
-      margin: 0.25rem 0 0;
-      padding-top: 0.85rem;
-      border-top: 1px solid rgba(125, 232, 235, 0.12);
+      margin: 2rem 0 0;
+      padding-top: 0.9rem;
+      border-top: 1px solid rgba(125, 232, 235, 0.1);
       font-size: 0.75rem;
       color: rgba(255, 255, 255, 0.38);
       display: flex;
+      justify-content: center;
       flex-wrap: wrap;
-      gap: 0.3rem 0.8rem;
+      gap: 0.3rem 0.9rem;
     }
-    footer a {
-      color: rgba(255, 255, 255, 0.38);
-      text-decoration: none;
-    }
+    footer a { color: rgba(255, 255, 255, 0.38); text-decoration: none; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <img src="/owl-logo.png" alt="" width="36" height="36">
-      <span>WiseCall</span>
+      <span>Wise<b>Call</b></span>
     </header>
 
     <main>
-      <section id="try-idle" class="hero" aria-label="Hear Ava">
-        <p class="outcome">They rang. You missed it. They booked someone else.</p>
+      <section class="intro">
+        <p class="eyebrow">They rang. You missed it. They booked someone else.</p>
         <h1>Hear Ava take the enquiry.</h1>
-        <p class="payoff">One tap opens your dialer. Hear Ava answer so you miss fewer calls.</p>
+        <p class="lede">WiseCall’s AI receptionist answers every call so you miss fewer calls. Talk to her yourself, it takes about a minute.</p>
+      </section>
 
-        <a id="call-ava" class="call-ava" href="tel:+441135222277">Call Ava</a>
-        <p class="dial-hint">
-          <a href="tel:+441135222277">+44 113 522 2277</a>
-          <span aria-hidden="true"> · </span>
-          <a href="tel:+441135222277">0113 522 2277</a>
-          <br>20 free calls. No card.
-        </p>
+      <section id="try-idle" class="card" aria-label="Talk to Ava">
+        <div class="dial">
+          <a id="call-ava" class="call-ava" href="tel:+441135222277">Call Ava</a>
+          <p class="dial-number">or dial <a href="tel:+441135222277">0113 522 2277</a></p>
+        </div>
 
-        <div class="secondary">
-          <p class="secondary-label">Or enter your number and we’ll call you</p>
-          <form id="try-form" class="try-form" action="https://app.wisecall.io/setup" method="get">
-            <input type="hidden" name="trial" value="calls">
-            <input type="hidden" name="nowebsite" value="1">
-            <label for="phone">UK mobile</label>
+        <p class="or">or</p>
+
+        <form id="try-form" class="callback" action="https://app.wisecall.io/setup" method="get" novalidate>
+          <input type="hidden" name="trial" value="calls">
+          <input type="hidden" name="nowebsite" value="1">
+          <label class="label" for="phone">Or enter your number and we’ll call you</label>
+          <div class="row">
             <input
               id="phone"
               name="phone"
@@ -298,45 +285,29 @@
               inputmode="tel"
               autocomplete="tel"
               enterkeyhint="go"
-              placeholder="07… your mobile"
+              placeholder="07…"
               required
               data-clarity-mask="true"
             >
-            <label for="email">Email (optional)</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autocomplete="email"
-              placeholder="Email (optional)"
-              data-clarity-mask="true"
-            >
-            <p id="try-status" class="status" hidden></p>
-          </form>
+            <button id="call-me" class="call-me" type="submit">Call me</button>
+          </div>
+          <p id="try-status" class="status" hidden></p>
+          <p class="hint">UK mobiles only.</p>
+        </form>
+      </section>
+
+      <section id="try-called" class="card called" aria-live="polite" hidden>
+        <div class="ringing" aria-hidden="true">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         </div>
-
-        <p class="website-link">
-          <a id="website-path" href="https://app.wisecall.io/setup?trial=calls">Got a website? We’ll draft your receptionist</a>
-        </p>
-
-        <p class="ready">Hear her in one tap</p>
-        <ol class="steps">
-          <li><span class="num">1</span> Tap Call Ava</li>
-          <li><span class="num">2</span> Hear her take the enquiry</li>
-          <li><span class="num">3</span> Miss fewer calls</li>
-        </ol>
-        <p class="honest">You hear Ava, not a receptionist drafted from your site. She answers as Ava, not in your business name. After you hang up you get a text with the signup link if you want.</p>
+        <h2>Ava’s calling you now</h2>
+        <p>Pick up and ask her anything you’d ask a receptionist. When you hang up we’ll text you the signup link.</p>
       </section>
 
-      <section id="try-called" class="hero called" aria-label="We're calling you" hidden>
-        <h1>We’re calling you now</h1>
-        <p class="payoff">Answer to hear Ava. She answers as Ava, not in your business name.</p>
-        <p class="offer">After you hang up you get a text with the signup link if you want. 20 free inbound AI calls. No card.</p>
-        <p class="honest">This is Ava, the same WiseCall demo as the homepage. Not a receptionist drafted from your site.</p>
-        <p class="website-link">
-          <a id="website-path-after" href="https://app.wisecall.io/setup?trial=calls">Got a website? We’ll draft your receptionist</a>
-        </p>
-      </section>
+      <p class="note">You’ll hear Ava, our demo receptionist. She answers as Ava, not in your business name. Then try it on your own number: <strong>20 free calls, no card.</strong></p>
+      <p class="website-link">
+        <a id="website-path" href="https://app.wisecall.io/setup?trial=calls">Got a website? We’ll draft your receptionist</a>
+      </p>
     </main>
 
     <footer>
@@ -360,14 +331,11 @@
 
     var form = document.getElementById("try-form");
     var phone = document.getElementById("phone");
-    var email = document.getElementById("email");
+    var callMe = document.getElementById("call-me");
     var statusEl = document.getElementById("try-status");
     var idle = document.getElementById("try-idle");
     var called = document.getElementById("try-called");
-    var websiteLinks = [
-      document.getElementById("website-path"),
-      document.getElementById("website-path-after"),
-    ];
+    var websiteLink = document.getElementById("website-path");
     var rangKey = "";
     var calling = false;
 
@@ -380,6 +348,14 @@
       return tag ? "try_" + tag : "facebook_try";
     }
 
+    // Anyone arriving from a campaign link came to be called back, so the
+    // number box leads; Facebook ad traffic keeps one-tap Call Ava first.
+    if (trySource() !== "facebook_try" && idle) idle.classList.add("campaign");
+    var label = document.querySelector('label[for="phone"]');
+    if (idle && idle.classList.contains("campaign") && label) {
+      label.textContent = "Enter your mobile and Ava will call you";
+    }
+
     function setStatus(message, state) {
       if (!statusEl) return;
       statusEl.hidden = !message;
@@ -387,21 +363,17 @@
       statusEl.setAttribute("data-state", state || "idle");
     }
 
-    function websiteHref() {
-      var params = new URLSearchParams({ trial: "calls" });
-      if (toUkMobile(phone && phone.value)) params.set("phone", String(phone.value || "").trim());
-      var rawEmail = String((email && email.value) || "").trim();
-      if (rawEmail && rawEmail.indexOf("@") !== -1 && rawEmail.indexOf(".") !== -1) {
-        params.set("email", rawEmail);
-      }
-      return "https://app.wisecall.io/setup?" + params.toString();
+    function setCalling(on) {
+      calling = on;
+      if (!callMe) return;
+      callMe.disabled = on;
+      callMe.textContent = on ? "Calling…" : "Call me";
     }
 
-    function syncWebsiteLinks() {
-      var href = websiteHref();
-      websiteLinks.forEach(function (link) {
-        if (link) link.href = href;
-      });
+    function syncWebsiteLink() {
+      var params = new URLSearchParams({ trial: "calls" });
+      if (toUkMobile(phone && phone.value)) params.set("phone", String(phone.value || "").trim());
+      if (websiteLink) websiteLink.href = "https://app.wisecall.io/setup?" + params.toString();
     }
 
     function showCalled() {
@@ -414,9 +386,10 @@
       var key = toUkMobile(typed);
       if (!key) return;
       if (!force && (rangKey === key || calling)) return;
+      if (calling) return;
       rangKey = key;
-      calling = true;
-      setStatus("Calling you now…", "idle");
+      setCalling(true);
+      setStatus("", "idle");
 
       fetch(WISECALL_DEMO_CALLBACK_ENDPOINT, {
         method: "POST",
@@ -437,32 +410,22 @@
           });
         })
         .catch(function (error) {
-          calling = false;
           rangKey = "";
-          setStatus(error.message || "Could not start the demo call. Check the number and try again.", "error");
-          if (!document.getElementById("try-retry") && form) {
-            var retry = document.createElement("button");
-            retry.id = "try-retry";
-            retry.type = "button";
-            retry.className = "retry";
-            retry.textContent = "Try calling again";
-            retry.addEventListener("click", function () {
-              ringAva(true);
-            });
-            form.appendChild(retry);
-          }
+          setStatus(
+            (error.message || "Could not start the demo call.") + " Check the number and tap Call me to try again.",
+            "error"
+          );
         })
         .then(function () {
-          calling = false;
+          setCalling(false);
         });
     }
 
     if (form && phone) {
       phone.addEventListener("input", function () {
-        syncWebsiteLinks();
+        syncWebsiteLink();
         if (toUkMobile(phone.value)) ringAva(false);
       });
-      if (email) email.addEventListener("input", syncWebsiteLinks);
       form.addEventListener("submit", function (event) {
         event.preventDefault();
         if (!toUkMobile(phone.value)) {
@@ -472,7 +435,7 @@
         }
         ringAva(true);
       });
-      syncWebsiteLinks();
+      syncWebsiteLink();
       if (toUkMobile(phone.value)) ringAva(false);
     }
   </script>

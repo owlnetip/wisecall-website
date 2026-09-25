@@ -143,6 +143,19 @@ function serviceClient() {
   return createClient(url, key);
 }
 
+// Best effort: a failed insert must never stop the call that already started.
+async function recordCallback(row: {
+  phone: string;
+  source: string;
+  profile_slug: string;
+  call_sid: string | null;
+}) {
+  const supabase = serviceClient();
+  if (!supabase) return;
+  const { error } = await supabase.from("wisecall_demo_callbacks").insert(row);
+  if (error) console.error("WiseCall demo callback record failed", { error: error.message });
+}
+
 async function loadGuestProfile(slug: string) {
   const supabase = serviceClient();
   if (!supabase) return null;
@@ -295,13 +308,20 @@ Deno.serve(async (req) => {
     );
   }
 
+  const callSid = result?.sid || result?.data?.sid || null;
   console.log("WiseCall demo callback started", {
     profile_slug: profileSlug,
     called_number: calledNumber,
     source,
     stream_codec: streamCodec,
     edge_base_url: edgeBaseUrl,
-    call_sid: result?.sid || result?.data?.sid || null,
+    call_sid: callSid,
+  });
+  await recordCallback({
+    phone,
+    source: source.slice(0, 64),
+    profile_slug: profileSlug,
+    call_sid: callSid,
   });
 
   return jsonResponse({
