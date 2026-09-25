@@ -9,6 +9,7 @@ import {
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
 import { extractChatName } from "../_shared/chat-contact-name.ts";
+import { detectEnquiryType } from "../_shared/chat-enquiry-type.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -656,6 +657,8 @@ serve(async (req) => {
 
     let chatLog = await getOrCreateChatLog(supabase, profile, body, extracted);
     const collected = { ...(chatLog.metadata?.collected || {}), ...extracted };
+    const enquiryType = detectEnquiryType(message, collected.enquiry_type);
+    if (enquiryType) (collected as Record<string, unknown>).enquiry_type = enquiryType;
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
     // Build the KB search query from recent turns of BOTH roles: a follow-up like
     // "yes give me details" only carries meaning through the assistant turn that
