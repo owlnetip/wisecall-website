@@ -543,12 +543,31 @@ export async function analyseMissedRecentCalls(opts: {
     .limit(50);
   if (error) throw new Error(`Could not list missed calls: ${error.message}`);
 
-  const rows = (data as AnalyzableRow[]).filter(
-    (r) =>
-      (r.transcript ?? "").trim().length >= 10 &&
-      !NON_CALL_OUTCOMES.has(r.outcome ?? "") &&
-      !isLiveChatLog(r),
-  );
+  const candidates = (data as AnalyzableRow[]).filter((r) => (r.transcript ?? "").trim().length >= 10);
+
+  // Website chats are only picked up for agents that email once the chat has
+  // gone quiet (metadata.live_chat_email_when_idle), measured from the last message.
+  const chatProfileIds = [...new Set(candidates.filter((r) => isLiveChatLog(r)).map((r) => r.profile_id as string))];
+  const idleChatProfiles = new Set<string>();
+  if (chatProfileIds.length) {
+    const { data: profiles } = await supabase
+      .from("wisecall_profiles")
+      .select("id, metadata")
+      .in("id", chatProfileIds);
+    for (const p of profiles ?? []) {
+      const meta = (p.metadata ?? {}) as Record<string, unknown>;
+      if (meta.live_chat_email_when_idle === true) idleChatProfiles.add(p.id as string);
+    }
+  }
+
+  const rows = candidates.filter((r) => {
+    if (isLiveChatLog(r)) {
+      if (!idleChatProfiles.has(r.profile_id as string)) return false;
+      const last = Date.parse(String((r.metadata ?? {}).last_message_at ?? (r.metadata ?? {}).closed_at ?? ""));
+      return Number.isFinite(last) && last <= Date.parse(newest);
+    }
+    return !NON_CALL_OUTCOMES.has(r.outcome ?? "");
+  });
   const batch = rows.slice(0, limit);
 
   let analysed = 0;

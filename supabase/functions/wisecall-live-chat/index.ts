@@ -201,6 +201,13 @@ function notifyOnCloseOnly(metadata: Record<string, unknown>): boolean {
   return metadata.live_chat_notify_on_close === true;
 }
 
+// One email per chat, sent by the portal once the chat has gone quiet (or the
+// visitor closes it), so it carries the whole conversation. Nothing is emailed
+// mid-chat; Salesforce is still updated as the chat goes.
+function emailWhenIdle(metadata: Record<string, unknown>): boolean {
+  return metadata.live_chat_email_when_idle === true;
+}
+
 function leadEmailReason(
   metadata: Record<string, unknown>,
   collected: any,
@@ -609,16 +616,20 @@ serve(async (req) => {
 
       if (updateError) throw new Error(updateError.message || JSON.stringify(updateError));
 
-      const emailSent = await maybeSendLeadEmail(
-        supabase,
-        profile,
-        updatedLog,
-        collected,
-        transcript,
-        { force: true },
-      );
+      const idleMode = emailWhenIdle(profile.metadata || {});
+      const emailSent = idleMode
+        ? false
+        : await maybeSendLeadEmail(
+          supabase,
+          profile,
+          updatedLog,
+          collected,
+          transcript,
+          { force: true },
+        );
 
-      if (updatedLog.id && emailSent) {
+      const visitorSpoke = parseTranscript(transcript).some((m) => m.role === "user");
+      if (updatedLog.id && (emailSent || (idleMode && visitorSpoke))) {
         void triggerPortalAnalysis(updatedLog.id as string);
       }
       runInBackground(syncChatLogToSalesforce(supabase, profile, sessionId));
@@ -727,9 +738,12 @@ serve(async (req) => {
       }
     }
 
-    const emailSent = await maybeSendLeadEmail(supabase, profile, chatLog, collected, transcript);
+    const idleMode = emailWhenIdle(profile.metadata || {});
+    const emailSent = idleMode
+      ? false
+      : await maybeSendLeadEmail(supabase, profile, chatLog, collected, transcript);
 
-    if (chatLog.id && (emailSent || collected.contact_email || collected.contact_phone)) {
+    if (!idleMode && chatLog.id && (emailSent || collected.contact_email || collected.contact_phone)) {
       void triggerPortalAnalysis(chatLog.id as string);
     }
     if (collected.contact_email || collected.contact_phone) {
