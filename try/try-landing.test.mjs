@@ -35,7 +35,8 @@ test("Call Ava is the first tap and the number field is secondary", () => {
 
 test("valid UK mobile still auto-calls the existing Ava demo", () => {
   assert.match(html, /profile_slug: "wisecall"/);
-  assert.match(html, /source: "facebook_try"/);
+  assert.match(html, /source: trySource\(\)/);
+  assert.match(html, /return tag \? "try_" \+ tag : "facebook_try";/);
   assert.match(
     html,
     /zgzzpwaqqftmugzpccpm\.supabase\.co\/functions\/v1\/wisecall-demo-callback/,
@@ -66,4 +67,18 @@ test("copy sells missed calls and keeps the hangup signup offer", () => {
   assert.doesNotMatch(html, /\bOfcom\b/);
   assert.doesNotMatch(html, /\bTwilio\b/);
   assert.doesNotMatch(html, /\bBT\b/);
+});
+
+test("campaign links tag the callback source without spoofing reserved ones", () => {
+  const body = html.match(/function trySource\(\) \{[\s\S]*?\n    \}/)[0];
+  const run = (search) =>
+    new Function("window", "URLSearchParams", body + "; return trySource();")(
+      { location: { search } },
+      URLSearchParams,
+    );
+  assert.equal(run(""), "facebook_try");
+  assert.equal(run("?src=email"), "try_email");
+  assert.equal(run("?utm_source=Mailchimp"), "try_mailchimp");
+  assert.equal(run("?src=guest_setup_test"), "try_guest_setup_test");
+  assert.equal(run("?src=%3Cscript%3E"), "try_script");
 });
