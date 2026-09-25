@@ -29,3 +29,18 @@ Deno.test("a later real name still wins after a sentence", () => {
   );
   assertEquals(extractChatName("I'm hoping to sell. I'm Dave Brown"), "Dave Brown");
 });
+
+import { agentAskedForName, bareNameReply } from "./chat-contact-name.ts";
+
+Deno.test("a bare reply to a name question is the name", () => {
+  assertEquals(agentAskedForName("Thanks for letting me know. What's your name, please?"), true);
+  assertEquals(agentAskedForName("What's your email address?"), false);
+  assertEquals(bareNameReply("Sam Route"), "Sam Route");
+  assertEquals(bareNameReply("jane"), "Jane");
+  assertEquals(bareNameReply("Mary Ann Smith."), "Mary Ann Smith");
+  assertEquals(bareNameReply("yes"), undefined);
+  assertEquals(bareNameReply("selling"), undefined);
+  assertEquals(bareNameReply("sam@example.com"), undefined);
+  assertEquals(bareNameReply("07700 900491"), undefined);
+  assertEquals(bareNameReply("I would rather not say"), undefined);
+});

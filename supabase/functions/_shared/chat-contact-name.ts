@@ -55,3 +55,21 @@ export function extractChatName(text: string): string | undefined {
   }
   return undefined;
 }
+
+/**
+ * The visitor's reply straight after the agent asked for their name
+ * ("What's your name?" → "Sam Route"). Only accepts 1-3 name-like words.
+ */
+export function bareNameReply(message: string): string | undefined {
+  const text = String(message || "").trim().replace(/[.!]+$/, "");
+  if (!/^[A-Za-z][A-Za-z'-]*(?:\s+[A-Za-z][A-Za-z'-]*){0,2}$/.test(text)) return undefined;
+  const words = text.split(/\s+/);
+  const first = words[0].toLowerCase();
+  if (NOT_NAME_START.has(first) || STOP_WORDS.has(first)) return undefined;
+  if (/^(yes|yeah|yep|no|nope|ok|okay|thanks|thank|hi|hello|hey|sure|fine|selling|buying|sell|buy|general)$/i.test(text)) return undefined;
+  return words.map(titleCase).join(" ");
+}
+
+export function agentAskedForName(lastAgentMessage: string): boolean {
+  return /\b(your (full )?name|who am i speaking|may i (take|have) your name|can i (take|get|have) your name)\b/i.test(String(lastAgentMessage || ""));
+}
