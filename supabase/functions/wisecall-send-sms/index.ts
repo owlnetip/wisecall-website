@@ -1,6 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { agentSmsSend, verifiedServiceSmsAuth, type AgentSms } from "../_shared/agent-sms-send.ts";
 import { sendVonageSms, smsPhoneDigits } from "../_shared/vonage-messages.ts";
+import { smsStatusToken } from "../_shared/sms-status-token.ts";
+
+// Delivery receipts for agent (Salesforce) sends go to wisecall-sms-status.
+async function smsStatusUrl(): Promise<string | undefined> {
+  const base = (Deno.env.get("SUPABASE_URL") || "").replace(/\/+$/, "");
+  const token = await smsStatusToken();
+  if (!base || !token) return undefined;
+  return `${base}/functions/v1/wisecall-sms-status?token=${token}`;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -247,7 +256,10 @@ Deno.serve(async (req) => {
           }).eq("id", input.request_id);
           if (error) throw new Error("SMS result persistence failed");
         },
-        send: input => sendVonageSms(input, { key, secret }),
+        send: async input => sendVonageSms(input, { key, secret }, fetch, {
+          statusUrl: await smsStatusUrl(),
+          clientRef: typeof body?.request_id === "string" ? body.request_id : undefined,
+        }),
         usage: async profile => {
           const { error } = await supabase.rpc("wisecall_record_sms_message", { p_profile_id: profile });
           if (error) console.error("Agent SMS usage update failed; reconcile sent log");

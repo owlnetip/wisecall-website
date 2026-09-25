@@ -10,6 +10,8 @@ export async function sendVonageSms(
   input: { from: string; to: string; text: string },
   credentials: { key: string; secret: string },
   fetcher: typeof fetch = fetch,
+  // Per-message delivery-status callback (Vonage Messages API webhook_url).
+  options: { statusUrl?: string; clientRef?: string } = {},
 ): Promise<{ messageId: string | null }> {
   const from = smsPhoneDigits(input.from);
   const to = smsPhoneDigits(input.to);
@@ -23,7 +25,11 @@ export async function sendVonageSms(
       Authorization: `Basic ${btoa(`${credentials.key}:${credentials.secret}`)}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ channel: "sms", message_type: "text", from, to, text: input.text }),
+    body: JSON.stringify({
+      channel: "sms", message_type: "text", from, to, text: input.text,
+      ...(options.statusUrl ? { webhook_url: options.statusUrl, webhook_version: "v1" } : {}),
+      ...(options.clientRef ? { client_ref: options.clientRef.slice(0, 100) } : {}),
+    }),
   });
   // Never expose provider response bodies (they may contain credentials or PII).
   if (!response.ok) throw new Error(`Vonage send failed (${response.status})`);

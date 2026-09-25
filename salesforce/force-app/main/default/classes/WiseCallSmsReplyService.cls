@@ -53,7 +53,7 @@ public without sharing class WiseCallSmsReplyService {
         }
         outcome.matchType = target.matchType;
         outcome.recordId = target.recordId;
-        String note = String.isBlank(reply.messageId) ? null : 'WiseCall message id: ' + reply.messageId;
+        String note = WiseCallSms.messageIdNote(reply.messageId);
         outcome.taskId = WiseCallSms.logTask(target.recordId, reply.content.trim(), 'Inbound', target.ownerId, note);
         outcome.notified = notifyOwner(target, reply);
         return outcome;
