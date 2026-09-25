@@ -371,6 +371,15 @@
     var rangKey = "";
     var calling = false;
 
+    // Campaign links tag their callbacks: /try?src=email logs as try_email.
+    // Prefixed so a link can never claim a reserved source like guest_setup_test.
+    function trySource() {
+      var params = new URLSearchParams(window.location.search);
+      var raw = params.get("src") || params.get("utm_source") || "";
+      var tag = raw.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
+      return tag ? "try_" + tag : "facebook_try";
+    }
+
     function setStatus(message, state) {
       if (!statusEl) return;
       statusEl.hidden = !message;
@@ -416,7 +425,7 @@
           phone: typed,
           profile_slug: "wisecall",
           agent_name: "WiseCall Website Assistant",
-          source: "facebook_try",
+          source: trySource(),
         }),
       })
         .then(function (response) {
