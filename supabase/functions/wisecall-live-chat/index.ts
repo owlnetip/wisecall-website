@@ -254,6 +254,11 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     sections.push("", "Client operating instructions:", String(profile.system_prompt).trim());
   }
 
+  // Chat-only instructions; system_prompt is shared with the phone agent.
+  if (typeof metadata.chat_instructions === "string" && metadata.chat_instructions.trim()) {
+    sections.push("", "Website chat instructions:", metadata.chat_instructions.trim());
+  }
+
   if (qualificationQuestions) {
     sections.push(
       "",
