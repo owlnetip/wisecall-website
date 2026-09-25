@@ -18,7 +18,7 @@ public with sharing class WiseCallSmsSendJob implements Queueable, Database.Allo
             WiseCallSms.Result result = WiseCallSms.send(request.recordId, request.phone, request.content);
             if (result.success) {
                 if (request.saveAsActivity != false) {
-                    WiseCallSms.logTask(request.recordId, request.content, 'Outbound', UserInfo.getUserId());
+                    WiseCallSms.logTask(request.recordId, request.content, 'Outbound', UserInfo.getUserId(), WiseCallSms.messageIdNote(result.messageId));
                 }
             } else {
                 System.debug(LoggingLevel.ERROR, 'WiseCall SMS failed for ' + request.recordId + ': ' + result.error);

@@ -83,7 +83,7 @@ private class WiseCallSmsTest {
         System.assertEquals('SMS', task.Type);
         System.assertEquals('Completed', task.Status);
         System.assertEquals('SMS sent: Your viewing is confirmed.', task.Subject);
-        System.assertEquals('Your viewing is confirmed.', task.Description);
+        System.assertEquals('Your viewing is confirmed.\n\nWiseCall message id: m-2', task.Description);
     }
 
     @IsTest
@@ -200,6 +200,58 @@ private class WiseCallSmsTest {
         request.requestBody = Blob.valueOf('not json');
         WiseCallSmsReplyResource.receive();
         System.assertEquals(500, RestContext.response.statusCode);
+    }
+
+    @IsTest
+    static void deliveryReceiptMarksTheOutboundTask() {
+        Lead lead = newLead('07700900472');
+        Id taskId = WiseCallSms.logTask(lead.Id, 'Please sign the agreement', 'Outbound', UserInfo.getUserId(), WiseCallSms.messageIdNote('m-100'));
+        WiseCallSmsStatusService.Result delivered = WiseCallSmsStatusService.apply(lead.Id, 'm-100', 'delivered', null, '2026-09-25T14:25:31Z');
+        System.assertEquals(taskId, delivered.taskId);
+        Task task = [SELECT Subject, Description FROM Task WHERE Id = :taskId];
+        System.assert(task.Description.contains('Delivered to handset 25/09/2026 15:25'), task.Description);
+        System.assertEquals('SMS sent: Please sign the agreement', task.Subject);
+        // A repeat receipt does not add the line twice.
+        WiseCallSmsStatusService.apply(lead.Id, 'm-100', 'delivered', null, '2026-09-25T14:25:31Z');
+        System.assertEquals(1, [SELECT Description FROM Task WHERE Id = :taskId].Description.countMatches('Delivered to handset'));
+    }
+
+    @IsTest
+    static void failedReceiptRenamesTheTask() {
+        Account person = newPersonAccount('07700900473');
+        Id taskId = WiseCallSms.logTask(person.Id, 'Your viewing is tomorrow', 'Outbound', UserInfo.getUserId(), WiseCallSms.messageIdNote('m-101'));
+        WiseCallSmsStatusService.Result failed = WiseCallSmsStatusService.apply(person.Id, 'm-101', 'undeliverable', 'Invalid number', null);
+        System.assertEquals(false, failed.delivered);
+        Task task = [SELECT Subject, Description FROM Task WHERE Id = :taskId];
+        System.assertEquals('SMS not delivered: Your viewing is tomorrow', task.Subject);
+        System.assert(task.Description.contains('NOT delivered (undeliverable: Invalid number)'));
+    }
+
+    @IsTest
+    static void receiptForUnknownMessageIsANoOp() {
+        Lead lead = newLead('07700900474');
+        WiseCallSmsStatusService.Result result = WiseCallSmsStatusService.apply(lead.Id, 'unknown', 'delivered', null, null);
+        System.assert(result.ok);
+        System.assertEquals(null, result.taskId);
+        System.assertEquals(false, WiseCallSmsStatusService.apply(lead.Id, null, 'delivered', null, null).ok);
+    }
+
+    @IsTest
+    static void restEndpointAcceptsDeliveryReceipts() {
+        Lead lead = newLead('07700900475');
+        Id taskId = WiseCallSms.logTask(lead.Id, 'Hello', 'Outbound', UserInfo.getUserId(), WiseCallSms.messageIdNote('m-102'));
+        RestRequest request = new RestRequest();
+        request.requestURI = '/services/apexrest/wisecall/sms/reply';
+        request.httpMethod = 'POST';
+        request.requestBody = Blob.valueOf(JSON.serialize(new Map<String, Object>{
+            'type' => 'status', 'record_id' => String.valueOf(lead.Id), 'message_id' => 'm-102', 'status' => 'delivered'
+        }));
+        RestContext.request = request;
+        RestContext.response = new RestResponse();
+        WiseCallSmsReplyResource.receive();
+        System.assertEquals(200, RestContext.response.statusCode);
+        Map<String, Object> body = (Map<String, Object>) JSON.deserializeUntyped(RestContext.response.responseBody.toString());
+        System.assertEquals(String.valueOf(taskId), body.get('task_id'));
     }
 
     @IsTest

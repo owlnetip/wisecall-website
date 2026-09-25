@@ -134,3 +134,38 @@ export async function postReplyToSalesforce(input: {
 export function replyDigits(raw: string): string {
   return canonicalSmsDigits(raw);
 }
+
+/** Hand a delivery receipt to Salesforce, which updates the outbound SMS Task. */
+export async function postStatusToSalesforce(input: {
+  access: SalesforceAccess;
+  recordId: string | null;
+  messageId: string;
+  status: string;
+  error: string | null;
+  at: string | null;
+  fetchImpl?: typeof fetch;
+}): Promise<{ ok: boolean; taskId: string | null; status: number; error: string | null }> {
+  const fetchImpl = input.fetchImpl ?? fetch;
+  const response = await fetchImpl(`${input.access.instanceUrl}/services/apexrest/wisecall/sms/reply`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${input.access.accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "status",
+      record_id: input.recordId,
+      message_id: input.messageId,
+      status: input.status,
+      error: input.error,
+      at: input.at,
+    }),
+    redirect: "error",
+    signal: AbortSignal.timeout(20000),
+  });
+  const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+  const ok = response.ok && body?.ok === true;
+  return {
+    ok,
+    taskId: typeof body?.task_id === "string" ? body.task_id : null,
+    status: response.status,
+    error: ok ? null : (typeof body?.error === "string" && body.error) || `Salesforce returned HTTP ${response.status}`,
+  };
+}

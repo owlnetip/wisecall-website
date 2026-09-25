@@ -13,6 +13,14 @@ public with sharing class WiseCallSms {
 
     public static final Integer MAX_CONTENT_LENGTH = 1000;
 
+    /** Written into SMS Task descriptions so delivery receipts can find the Task. */
+    public static final String MESSAGE_ID_PREFIX = 'WiseCall message id: ';
+
+    /** Description note for an outbound Task; pass it to logTask. */
+    public static String messageIdNote(String messageId) {
+        return String.isBlank(messageId) ? null : MESSAGE_ID_PREFIX + messageId;
+    }
+
     public class Result {
         @AuraEnabled public Boolean success = false;
         @AuraEnabled public Integer statusCode;
@@ -134,8 +142,7 @@ public with sharing class WiseCallSms {
         return label + text;
     }
 
-    @TestVisible
-    static Id whoIdFor(Id recordId) {
+    public static Id whoIdFor(Id recordId) {
         Schema.SObjectType type = recordId.getSObjectType();
         if (type == Lead.SObjectType || type == Contact.SObjectType) return recordId;
         if (type == Account.SObjectType) {

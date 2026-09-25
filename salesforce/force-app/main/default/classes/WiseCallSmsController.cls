@@ -53,7 +53,7 @@ public with sharing class WiseCallSmsController {
             String.isBlank(requestId) ? null : UserInfo.getUserId() + ':' + requestId
         );
         if (!result.success) throw new AuraHandledException('SMS not sent: ' + result.error);
-        WiseCallSms.logTask(recordId, message.trim(), 'Outbound', UserInfo.getUserId());
+        WiseCallSms.logTask(recordId, message.trim(), 'Outbound', UserInfo.getUserId(), WiseCallSms.messageIdNote(result.messageId));
         return 'SMS sent to ' + phone + '.';
     }
 }

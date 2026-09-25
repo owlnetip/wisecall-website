@@ -64,3 +64,20 @@ test("an unmatched reply handled by the fallback email counts as delivered; erro
   assert.equal(failed.delivered, false);
   assert.equal(failed.error, "boom");
 });
+
+test("delivery receipts go to Salesforce as type status", async () => {
+  const { postStatusToSalesforce } = await import("./salesforce-sms-direct");
+  let sent: Record<string, unknown> = {};
+  const result = await postStatusToSalesforce({
+    access: { instanceUrl: "https://example.my.salesforce.com", accessToken: "tok" } as never,
+    recordId: "001Q500001EeHZSIA3", messageId: "m-9", status: "delivered", error: null, at: "2026-09-25T14:25:00Z",
+    fetchImpl: async (_url, init) => {
+      sent = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({ ok: true, task_id: "00T9" }), { status: 200 });
+    },
+  });
+  assert.equal(sent.type, "status");
+  assert.equal(sent.message_id, "m-9");
+  assert.equal(result.ok, true);
+  assert.equal(result.taskId, "00T9");
+});
