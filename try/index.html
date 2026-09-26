@@ -21,6 +21,7 @@
   <meta name="twitter:description" content="Tap Call Ava to hear her take the enquiry. 20 free inbound AI calls. No card.">
 
   <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/tailwind-compiled.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -47,12 +48,8 @@
     header {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
       padding: 1.1rem 0 0;
     }
-    header img { height: 2rem; width: auto; object-fit: contain; }
-    header span { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em; }
-    header b { color: #7de8eb; font-weight: 700; }
     .intro { padding: 2rem 0 1.4rem; }
     .eyebrow {
       margin: 0;
@@ -254,8 +251,9 @@
 <body>
   <div class="wrap">
     <header>
-      <img src="/owl-logo.png" alt="" width="36" height="36">
-      <span>Wise<b>Call</b></span>
+      <a href="https://wisecall.io/" class="flex items-center gap-3 text-white font-bold text-lg min-w-0 no-underline">
+        <img src="/owl-logo.png" alt="WiseCall" class="h-11 w-auto flex-shrink-0 object-contain">Wise<span class="text-[#7de8eb]">Call</span>
+      </a>
     </header>
 
     <main>
