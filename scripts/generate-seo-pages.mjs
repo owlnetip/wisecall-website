@@ -623,7 +623,7 @@ function renderPricing() {
     description: 'WiseCall AI receptionist pricing for UK businesses: Starter £99, Professional £199 and Business £399 per month on 30-day rolling, or save 15% annually.',
     path: '/pricing/',
   };
-  const body = `${hero({ eyebrow: 'Pricing', h1: 'One AI front desk.', lead: '30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.', cta: 'Call Ava', primaryHref: TRY_PAGE_URL, secondary: '+44 113 522 2277', secondaryHref: DEMO_PHONE_TEL, panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
+  const body = `${hero({ eyebrow: 'Pricing', h1: 'One AI front desk.', lead: '30-day rolling as standard. Cancel with 30 days\' notice. Or pay annually and save 15%.', cta: 'Call Ava', primaryHref: TRY_PAGE_URL, secondary: '+44 113 522 2277', secondaryHref: DEMO_PHONE_TEL, panel: { title: 'Included in every plan', items: ['AI receptionist, 24/7', 'Voice, email, WhatsApp, live chat and SMS', 'Call summaries and transcripts', 'Appointment booking and routing', 'Dashboard and analytics'] } })}
 <style>
   .billing-toggle { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px; background: rgba(255,255,255,.08); }
   .billing-toggle button { border: 0; border-radius: 999px; padding: .45rem 1.15rem; font-size: .875rem; font-weight: 600; background: transparent; color: rgba(255,255,255,.62); cursor: pointer; }
@@ -644,7 +644,7 @@ function renderPricing() {
 ${faqSection([
   { question: 'How does WiseCall pricing work?', answer: 'WiseCall pricing is based on the plan you choose (Starter, Professional or Business) and the number of AI-handled calls, emails, WhatsApp messages, live chat conversations and SMS notifications included each month. Pay monthly on 30-day rolling, or save 15% when you pay annually. All prices exclude VAT.' },
   { question: 'What is included in every plan?', answer: 'Every plan includes a 24/7 AI receptionist, call summaries and transcripts, appointment booking, call transfers and routing, and a dashboard. You can try 20 free calls to test your setup, with no card.' },
-  { question: 'What is the contract term?', answer: 'Plans are 30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%.' },
+  { question: 'What is the contract term?', answer: 'Plans are 30-day rolling, cancelled with 30 days\' notice, with 15% off if you pay annually.' },
   { question: 'What happens if we receive more AI calls than our plan includes?', answer: 'If your business regularly exceeds its monthly allowance, we will recommend moving to a more suitable plan. Book a demo and we can advise based on your call volume.' },
 ], 'Pricing Questions')}
 ${relatedLinks([
@@ -855,7 +855,7 @@ function renderComparison() {
 <section id="demo" class="px-6 py-20">
   <div class="max-w-5xl mx-auto card-strong p-10 md:p-14">
     <h2 class="text-4xl md:text-5xl font-black mb-5 text-center">Try it</h2>
-    <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-center">Call the live demo, or start 20 inbound AI calls with no card. Most businesses are live within a week. 30-day rolling. Cancel before the next month.</p>
+    <p class="text-white/72 text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-center">Call the live demo, or start 20 inbound AI calls with no card. Most businesses are live within a week. 30-day rolling. Cancel with 30 days' notice.</p>
     <div class="mb-8">${trialPair('footer', { center: true })}</div>
     <form id="demoCallbackForm" class="max-w-md mx-auto" novalidate>
       <div class="flex items-center gap-3 rounded-full bg-white/5 border border-[#7de8eb]/30 px-5 py-3.5 focus-within:border-[#7de8eb]/70">

@@ -94,7 +94,7 @@ Do I need to change my phone number?
 No. WiseCall can work with your existing number via call forwarding or SIP/PBX integration depending on your setup.
 
 Is there a contract?
-Plans are 30-day rolling as standard. Cancel before the next month. Or pay annually and save 15%. Prices are shown excluding VAT.
+Plans are 30-day rolling, cancelled with 30 days' notice, with 15% off if you pay annually. Prices are shown excluding VAT.
 
 What happens if I exceed my plan allowance?
 Additional AI calls are charged at your plan's overage rate. Email, WhatsApp, live chat and SMS allowances are shown on the billing page; contact support if you need a higher tier.
