@@ -7,7 +7,7 @@ const MOBILE_CSS = `    .mobile-menu { transform: translateY(-100%); opacity: 0;
 
 const HEADER = `<header class="sticky top-0 z-50 backdrop-blur-md bg-[#172929]/82 border-b border-[#7de8eb]/10 relative">
   <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
-    <a href="/" class="flex items-center gap-3 text-white font-bold text-lg no-underline min-w-0"><img src="/owl-logo.png" alt="WiseCall" class="h-9 w-auto flex-shrink-0"><span class="truncate">WiseCall</span></a>
+    <a href="/" class="flex items-center gap-3 text-white font-bold text-lg no-underline min-w-0"><img src="/owl-logo.png" alt="WiseCall" class="h-11 w-auto flex-shrink-0 object-contain"><span class="truncate">Wise<span class="text-[#7de8eb]">Call</span></span></a>
     <div class="hidden md:flex items-center gap-6 text-sm text-white/70">
       <a href="/how-it-works/" class="hover:text-[#7de8eb]">How It Works</a>
       <a href="/pricing/" class="hover:text-[#7de8eb]">Pricing</a>
