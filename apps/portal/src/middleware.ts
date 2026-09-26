@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import {
+  resolveFirstTouchCookie,
+  SIGNUP_ATTRIBUTION_COOKIE,
+  SIGNUP_ATTRIBUTION_MAX_AGE_SECONDS,
+} from "@/lib/signup-attribution";
 
 // Routes that require a signed-in user. /setup is public: Facebook /try is a
 // one-screen Call me flow that rings the website-drafted test agent.
@@ -20,7 +25,26 @@ function redirectToSignIn(request: NextRequest) {
   const setup = request.nextUrl.searchParams.get("setup");
   if (setup) redirectUrl.searchParams.set("setup", setup);
   redirectUrl.searchParams.set("redirect", returnTo);
-  return NextResponse.redirect(redirectUrl);
+  return withFirstTouchAttribution(request, NextResponse.redirect(redirectUrl));
+}
+
+// First request that carries src/lp/utm_* wins. Later visits in the same
+// browser do not replace the cookie, including when signup happens on another
+// route than /setup.
+function withFirstTouchAttribution(request: NextRequest, response: NextResponse) {
+  const value = resolveFirstTouchCookie(
+    request.cookies.get(SIGNUP_ATTRIBUTION_COOKIE)?.value,
+    request.nextUrl.searchParams,
+  );
+  if (!value) return response;
+  response.cookies.set(SIGNUP_ATTRIBUTION_COOKIE, value, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SIGNUP_ATTRIBUTION_MAX_AGE_SECONDS,
+  });
+  return response;
 }
 
 export async function middleware(request: NextRequest) {
@@ -35,7 +59,7 @@ export async function middleware(request: NextRequest) {
     if (isProtected) {
       return redirectToSignIn(request);
     }
-    return NextResponse.next();
+    return withFirstTouchAttribution(request, NextResponse.next());
   }
 
   let response = NextResponse.next({ request });
@@ -64,7 +88,7 @@ export async function middleware(request: NextRequest) {
     return redirectToSignIn(request);
   }
 
-  return response;
+  return withFirstTouchAttribution(request, response);
 }
 
 export const config = {

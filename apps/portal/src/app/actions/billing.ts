@@ -14,6 +14,7 @@ import {
   TRIAL_DAYS,
   TRIAL_CALL_CAP,
 } from "@/lib/stripe";
+import { attachSignupAttribution } from "@/lib/signup-attribution-store";
 import { checkoutIncludesStripeTrial } from "@/lib/trial";
 
 export type CheckoutResult = { ok: boolean; url?: string; error?: string };
@@ -52,6 +53,7 @@ export async function startCheckout(
     .maybeSingle();
 
   let customerId = existing?.stripe_customer_id as string | undefined;
+  const createdBillingRow = !existing;
   if (!customerId) {
     const customer = await stripe.customers.create({
       email: user.email ?? undefined,
@@ -68,6 +70,9 @@ export async function startCheckout(
       },
       { onConflict: "user_id" },
     );
+    if (createdBillingRow) {
+      await attachSignupAttribution(user.id);
+    }
   }
 
   const stripeTrial =
