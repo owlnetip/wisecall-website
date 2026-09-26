@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { finishGuestTrialWithAccount, type AuthState } from "@/app/actions/auth";
 import type { AgentDraft } from "@/app/actions/wizard";
+import { SignupAttributionInput } from "@/components/signup-attribution-capture";
 
 export function TrialAccountGate({
   draft,
@@ -37,6 +38,7 @@ export function TrialAccountGate({
         <form action={formAction} className="mt-5 space-y-3">
           <input type="hidden" name="intent" value={mode} />
           <input type="hidden" name="draft" value={JSON.stringify(draft)} />
+          <SignupAttributionInput />
 
           <label className="block">
             <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">

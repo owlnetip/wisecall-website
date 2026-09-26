@@ -16,6 +16,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
 import { notifyTrialEnding } from "@/lib/notify";
 import { syncEmailChannelProfiles, getBillingForUser, hasActiveAccess, clearTrialCapBlock } from "@/lib/billing";
+import { stampSignupAtIfMissing } from "@/lib/signup-attribution-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -123,12 +124,13 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
   const planActive = sub.status === "active" || sub.status === "trialing";
 
   // Detect billing period change so we can reset usage counters for the new period.
-  const { data: existing } = await service
+  const { data: existing, error: existingError } = await service
     .from("wisecall_billing")
-    .select("calls_period_end")
+    .select("calls_period_end, status")
     .eq("user_id", userId)
     .maybeSingle();
   const prevPeriodEnd = (existing?.calls_period_end as string | null) ?? null;
+  const hadBillingStatus = Boolean(existing?.status);
   const periodChanged = Boolean(newPeriodEnd && prevPeriodEnd && newPeriodEnd !== prevPeriodEnd);
 
   // Bill the closing period's overage before the reset below zeroes it.
@@ -178,6 +180,12 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
     },
     { onConflict: "user_id" },
   );
+
+  // First subscription on a row that was only a checkout stub. Renewals already
+  // have a status, so they do not move signup_at into a later week.
+  if (!existingError && !hadBillingStatus && planActive) {
+    await stampSignupAtIfMissing(userId);
+  }
 
   // Mirror email-enabled onto the owner's agent profiles (runtime/UI reads metadata).
   await syncEmailChannelProfiles(userId, planActive);

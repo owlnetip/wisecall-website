@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { authAction, resetPassword, type AuthState } from "@/app/actions/auth";
+import { SignupAttributionInput } from "@/components/signup-attribution-capture";
 import { dashboardSetupPath, parseSetupWebsite } from "@/lib/setup-website";
 import { signupRedirectForTrial } from "@/lib/trial";
 
@@ -205,6 +206,7 @@ export function AuthForm({
             <input type="hidden" name="redirect" value={formRedirect} />
             {noCardTrial ? <input type="hidden" name="trial" value="calls" /> : null}
             {setupWebsite ? <input type="hidden" name="website" value={setupWebsite} /> : null}
+            <SignupAttributionInput />
 
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.5)" }}>
