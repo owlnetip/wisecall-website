@@ -50,6 +50,39 @@ test("portal next actions prefer analysis over follow-up titles", () => {
   );
 });
 
+test("inbox next step cannot say none when the call was urgent or a callback was promised", () => {
+  assert.equal(
+    nextStepLabel(
+      portalNextActions({
+        analysisJson: {
+          action_items: [],
+          urgency_level: "high",
+          short_manager_summary: "Locked out of the login system. Blocking all access.",
+        },
+      }),
+    ),
+    "1 follow-up needed",
+  );
+  assert.equal(
+    nextStepLabel(
+      portalNextActions({
+        analysisJson: { action_items: [], urgency_level: "low" },
+        summary: "Callback promised as soon as possible.",
+      }),
+    ),
+    "1 follow-up needed",
+  );
+  assert.equal(
+    nextStepLabel(
+      portalNextActions({
+        analysisJson: { action_items: [], urgency_level: "low" },
+        summary: "Asked what time you open. Resolved on the call.",
+      }),
+    ),
+    "No follow-up needed",
+  );
+});
+
 test("next step label matches the inbox wording", () => {
   assert.equal(nextStepLabel([]), "No follow-up needed");
   assert.equal(nextStepLabel(["Call back"]), "1 follow-up needed");

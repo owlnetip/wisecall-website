@@ -6,6 +6,8 @@ import {
   syncFollowUpsFromAnalysis,
 } from "@/lib/follow-ups-sync";
 import { syncEnquiryFromAnalysis } from "@/lib/enquiries-sync";
+import { preferConfirmedCallerName, preferConfirmedCompany, extractSpelledCompany } from "@/lib/caller-identity";
+import { ensureFollowUpActions } from "@/lib/follow-up-outcome";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WiseCall after-call AI analysis
@@ -221,11 +223,12 @@ export async function analyzeTranscript(input: {
               type: "array",
               items: { type: "string" },
               description:
-                "Concrete post-call tasks for staff (2-5 items max). e.g. 'Call back re refund', 'Book emergency slot'. Empty if none.",
+                "Concrete post-call tasks for staff (2-5 items max). e.g. 'Call back re refund', 'Book emergency slot'. MUST be non-empty when urgency_level is high, or when a callback was promised or requested. Empty only when the call was fully resolved and nobody needs to call back.",
             },
             recommended_follow_up: {
               type: "string",
-              description: "One plain-English next action for the team, or empty string.",
+              description:
+                "One plain-English next action for the team. Required when the call is urgent or a callback was promised or requested. Empty string only when no follow-up is needed.",
             },
             short_manager_summary: {
               type: "string",
@@ -239,7 +242,7 @@ export async function analyzeTranscript(input: {
             caller_name: {
               type: "string",
               description:
-                "Caller's confirmed name if they gave one, else empty string.",
+                "The one person on the phone. If they spelled their name, or the agent read it back and they confirmed, use that exact confirmed name. Never join two people's names into one string. Empty if unknown.",
             },
             callback_phone: {
               type: "string",
@@ -248,7 +251,8 @@ export async function analyzeTranscript(input: {
             },
             company: {
               type: "string",
-              description: "Company the caller said they are from, else empty string.",
+              description:
+                "Company the caller confirmed or spelled. Prefer a read-back or letter-by-letter spelling over a first guess. Empty if they did not give one.",
             },
           },
           required: [
@@ -284,6 +288,7 @@ export async function analyzeTranscript(input: {
             : "Business: a UK small business",
           "",
           "Analyse this completed call. Be accurate and conservative: only flag a complaint, lead, booking or unanswered question if the transcript clearly supports it.",
+          "If urgency_level is high, action_items must include a staff follow-up. If a callback was promised or requested, action_items must include that callback. caller_name is the single confirmed or spelled name of the person speaking, never two names joined together. company is the confirmed or spelled company, or empty.",
           input.summary ? `\nCall summary (from the system):\n${input.summary}` : "",
           "\n--- TRANSCRIPT ---",
           transcript,
@@ -296,7 +301,41 @@ export async function analyzeTranscript(input: {
   if (!block || block.type !== "tool_use") {
     throw new Error("The AI did not return a structured analysis.");
   }
-  return normalise(block.input as Record<string, unknown>);
+  return finaliseCallAnalysis(normalise(block.input as Record<string, unknown>), {
+    transcript,
+    summary: input.summary,
+  });
+}
+
+/**
+ * Apply the follow-up guarantee and prefer confirmed/spelled caller details.
+ * Pure: safe to unit test without calling the model.
+ */
+export function finaliseCallAnalysis(
+  analysis: CallAnalysis,
+  context?: { transcript?: string | null; summary?: string | null },
+): CallAnalysis {
+  const transcript = context?.transcript ?? "";
+  const summary = context?.summary ?? "";
+  const caller_name = preferConfirmedCallerName(analysis.caller_name, transcript, summary);
+  const company = preferConfirmedCompany(analysis.company, transcript, summary);
+  const action_items = ensureFollowUpActions({
+    actionItems: analysis.action_items,
+    urgency: analysis.urgency_level,
+    summary: [summary, analysis.short_manager_summary, analysis.caller_intent].filter(Boolean).join("\n"),
+    transcript,
+    recommendedFollowUp: analysis.recommended_follow_up,
+    outcome: analysis.outcome,
+  });
+  const recommended_follow_up =
+    analysis.recommended_follow_up.trim() || (analysis.action_items.length === 0 ? action_items[0] ?? "" : "");
+  return {
+    ...analysis,
+    caller_name,
+    company,
+    action_items,
+    recommended_follow_up: recommended_follow_up.slice(0, 500),
+  };
 }
 
 // Maps a validated analysis onto the wisecall_call_logs columns added in
@@ -399,7 +438,12 @@ async function syncContactFromAnalysis(
   if (!existing) return;
 
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (analysis.caller_name && !(existing.name ?? "").trim()) {
+  const existingName = (existing.name ?? "").trim();
+  const confirmedName = preferConfirmedCallerName("", row.transcript, row.summary);
+  if (
+    analysis.caller_name &&
+    (!existingName || (confirmedName && confirmedName === analysis.caller_name && existingName !== analysis.caller_name))
+  ) {
     patch.name = analysis.caller_name;
   }
 
@@ -407,7 +451,10 @@ async function syncContactFromAnalysis(
     existing.metadata && typeof existing.metadata === "object"
       ? { ...(existing.metadata as Record<string, unknown>) }
       : {};
-  if (analysis.company && !meta.company) meta.company = analysis.company;
+  const spelledCompany = extractSpelledCompany(`${row.transcript ?? ""}\n${row.summary ?? ""}`);
+  if (analysis.company && (!meta.company || (spelledCompany && spelledCompany === analysis.company))) {
+    meta.company = analysis.company;
+  }
   if (analysis.callback_phone) meta.callback_phone = analysis.callback_phone;
   if (analysis.company || analysis.callback_phone) patch.metadata = meta;
 

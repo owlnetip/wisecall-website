@@ -7,7 +7,7 @@ import type {
   RoutingProvider,
   RoutingStatus,
 } from "@/components/customer-agent-workspace";
-import { nextActionsFromAnalysisJson } from "@/lib/conversation-email";
+import { portalNextActions } from "@/lib/conversation-email";
 import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
 import { normaliseNegotiatorRules } from "@/lib/digital-negotiator";
 import { channelFromLog, type CallChannel } from "@/lib/call-channel";
@@ -376,7 +376,12 @@ export async function getCallLogsForUser(userId: string, profileId?: string): Pr
 }
 
 function actionItemsFromRow(row: CallRow): string[] {
-  return nextActionsFromAnalysisJson(row.ai_analysis_json);
+  return portalNextActions({
+    analysisJson: row.ai_analysis_json,
+    summary: [row.ai_insight_summary, row.summary].filter(Boolean).join("\n"),
+    transcript: row.transcript,
+    outcome: row.outcome,
+  });
 }
 
 function mapCallRow(row: CallRow): CallLog {

@@ -2,10 +2,14 @@
  * Team email for a completed conversation.
  *
  * Matches the customer portal inbox detail: Outcome / Next step / Follow-up
- * needed / What happened. Next actions are the same fields the portal already
- * stores (ai_analysis_json.action_items, else recommended_follow_up, else
- * open follow-up titles). Never invents tasks — omit the list when empty.
+ * needed / What happened. Next actions start from the fields the portal
+ * already stores (ai_analysis_json.action_items, else recommended_follow_up,
+ * else open follow-up titles). An urgent call, or one where a callback was
+ * promised or requested, always keeps at least one follow-up so the next-step
+ * line cannot read "No follow-up needed".
  */
+
+import { analysisFollowUpSignals, ensureFollowUpActions } from "@/lib/follow-up-outcome";
 
 export function nextActionsFromAnalysisJson(json: unknown): string[] {
   if (!json || typeof json !== "object") return [];
@@ -35,10 +39,40 @@ export function nextActionsFromFollowUpTitles(titles: unknown): string[] {
 export function portalNextActions(input: {
   analysisJson?: unknown;
   followUpTitles?: string[];
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
 }): string[] {
   const fromAnalysis = nextActionsFromAnalysisJson(input.analysisJson);
-  if (fromAnalysis.length) return fromAnalysis;
-  return nextActionsFromFollowUpTitles(input.followUpTitles);
+  const base = fromAnalysis.length
+    ? fromAnalysis
+    : nextActionsFromFollowUpTitles(input.followUpTitles);
+  const signals = analysisFollowUpSignals(input.analysisJson);
+  return ensureFollowUpActions({
+    actionItems: base,
+    urgency: input.urgency || signals.urgency,
+    summary: [input.summary, signals.summary].filter(Boolean).join("\n"),
+    transcript: input.transcript,
+    recommendedFollowUp: signals.recommendedFollowUp,
+    outcome: input.outcome || signals.outcome,
+  });
+}
+
+export function emailActionItems(input: {
+  actionItems?: string[] | null;
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
+}): string[] {
+  return ensureFollowUpActions({
+    actionItems: input.actionItems,
+    summary: input.summary,
+    transcript: input.transcript,
+    urgency: input.urgency,
+    outcome: input.outcome,
+  });
 }
 
 export function nextStepLabel(actionItems: string[]): string {
@@ -64,6 +98,7 @@ export type PostCallEmailInput = {
   startedAt?: string | null;
   actionItems: string[];
   agentName?: string;
+  urgency?: string;
 };
 
 function formatWhen(startedAt?: string | null): string {
@@ -92,7 +127,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const when = formatWhen(input.startedAt);
   const outcome = input.outcome.trim();
   const agentName = (input.agentName || "WiseCall").trim() || "WiseCall";
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
   const summary = input.summary.trim();
   const transcript = input.transcript.trim();
 
@@ -136,7 +171,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
 }
 
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
   const blocks = [
     `New message for ${input.businessName}`,
     `Caller: ${input.callerId || "Unknown"}`,

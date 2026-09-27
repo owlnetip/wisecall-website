@@ -152,7 +152,13 @@ serve(async (req) => {
 
   const actionItems = bodyItems.length
     ? bodyItems.slice(0, 5)
-    : portalNextActions({ analysisJson, followUpTitles });
+    : portalNextActions({
+        analysisJson,
+        followUpTitles,
+        summary: [managerSummary, logSummary].filter(Boolean).join("\n"),
+        transcript: bodyTranscript || logTranscript,
+        outcome: bodyOutcome || logOutcome,
+      });
 
   const collectedForRouting = isPlainObject(logMeta.collected) ? logMeta.collected : {};
   const enquiryType = typeof collectedForRouting.enquiry_type === "string" ? collectedForRouting.enquiry_type : "";

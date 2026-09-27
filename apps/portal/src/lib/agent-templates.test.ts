@@ -55,6 +55,8 @@ test("every prompt carries the shared caller-intake instructions", () => {
   for (const template of agentTemplates) {
     const prompt = template.buildPrompt("Northwind Ltd", "Northwind assistant");
     assert.match(prompt, /CALLER DETAILS/, `${template.id} is missing caller intake`);
+    assert.match(prompt, /Who am I speaking with\?/, `${template.id} does not ask who is calling`);
+    assert.match(prompt, /digit by digit/, `${template.id} does not read the callback number back`);
   }
 });
 

@@ -1,5 +1,8 @@
-// Keep in sync with apps/portal/src/lib/conversation-email.ts
 // Dark WiseCall branded post-call email: caller name, summary, labelled conversation.
+// Next-step rules match apps/portal/src/lib/follow-up-outcome.ts.
+
+import { preferConfirmedCallerName } from "../_shared/caller-identity.ts";
+import { analysisFollowUpSignals, ensureFollowUpActions } from "../_shared/follow-up-outcome.ts";
 
 export function nextActionsFromAnalysisJson(json: unknown): string[] {
   if (!json || typeof json !== "object") return [];
@@ -29,10 +32,34 @@ export function nextActionsFromFollowUpTitles(titles: unknown): string[] {
 export function portalNextActions(input: {
   analysisJson?: unknown;
   followUpTitles?: string[];
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
 }): string[] {
   const fromAnalysis = nextActionsFromAnalysisJson(input.analysisJson);
-  if (fromAnalysis.length) return fromAnalysis;
-  return nextActionsFromFollowUpTitles(input.followUpTitles);
+  const base = fromAnalysis.length
+    ? fromAnalysis
+    : nextActionsFromFollowUpTitles(input.followUpTitles);
+  const signals = analysisFollowUpSignals(input.analysisJson);
+  return ensureFollowUpActions({
+    actionItems: base,
+    urgency: input.urgency || signals.urgency,
+    summary: [input.summary, signals.summary].filter(Boolean).join("\n"),
+    transcript: input.transcript,
+    recommendedFollowUp: signals.recommendedFollowUp,
+    outcome: input.outcome || signals.outcome,
+  });
+}
+
+function emailActionItems(input: PostCallEmailInput): string[] {
+  return ensureFollowUpActions({
+    actionItems: input.actionItems,
+    summary: input.summary,
+    transcript: input.transcript,
+    urgency: input.urgency,
+    outcome: input.outcome,
+  });
 }
 
 export function nextStepLabel(actionItems: string[]): string {
@@ -152,6 +179,11 @@ export function callerNameFromSources(input: {
   transcript?: string | null;
   collected?: Record<string, unknown> | null;
 }): string {
+  const confirmed = cleanCallerName(
+    preferConfirmedCallerName("", input.summary, input.transcript),
+  );
+  if (confirmed) return confirmed;
+
   const explicit = cleanCallerName(input.callerName);
   if (explicit) return explicit;
 
@@ -301,7 +333,7 @@ function displayAgentName(agentName?: string): string {
 
 export function postCallEmailSubject(input: PostCallEmailInput): string {
   const who = cleanCallerName(input.callerName) || input.callerId || "Unknown";
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
   return actionItems.length
     ? `Follow-up needed · ${who} · ${input.businessName}`
     : `Message from ${who} · ${input.businessName}`;
@@ -360,7 +392,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const { date, time } = londonParts(input.startedAt);
   const outcome = emailOutcomeLabel(input.outcome);
   const agentName = displayAgentName(input.agentName);
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
   const summary = input.summary.trim();
   const callerName = cleanCallerName(input.callerName);
   const callerId = (input.callerId || "Unknown").trim() || "Unknown";
@@ -424,7 +456,7 @@ ${inner}
 }
 
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
   const callerName = cleanCallerName(input.callerName);
   const turns = parseEmailTranscript(input.transcript);
   const { date, time } = londonParts(input.startedAt);

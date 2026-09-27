@@ -1,5 +1,8 @@
 // Keep in sync with apps/portal/src/lib/conversation-email.ts
 // Portal inbox wording: Next step / Follow-up needed / What happened.
+// Urgent calls and promised/requested callbacks always keep a follow-up.
+
+import { analysisFollowUpSignals, ensureFollowUpActions } from "./follow-up-outcome.ts";
 
 export function nextActionsFromAnalysisJson(json: unknown): string[] {
   if (!json || typeof json !== "object") return [];
@@ -28,10 +31,40 @@ export function nextActionsFromFollowUpTitles(titles: unknown): string[] {
 export function portalNextActions(input: {
   analysisJson?: unknown;
   followUpTitles?: string[];
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
 }): string[] {
   const fromAnalysis = nextActionsFromAnalysisJson(input.analysisJson);
-  if (fromAnalysis.length) return fromAnalysis;
-  return nextActionsFromFollowUpTitles(input.followUpTitles);
+  const base = fromAnalysis.length
+    ? fromAnalysis
+    : nextActionsFromFollowUpTitles(input.followUpTitles);
+  const signals = analysisFollowUpSignals(input.analysisJson);
+  return ensureFollowUpActions({
+    actionItems: base,
+    urgency: input.urgency || signals.urgency,
+    summary: [input.summary, signals.summary].filter(Boolean).join("\n"),
+    transcript: input.transcript,
+    recommendedFollowUp: signals.recommendedFollowUp,
+    outcome: input.outcome || signals.outcome,
+  });
+}
+
+export function emailActionItems(input: {
+  actionItems?: string[] | null;
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
+}): string[] {
+  return ensureFollowUpActions({
+    actionItems: input.actionItems,
+    summary: input.summary,
+    transcript: input.transcript,
+    urgency: input.urgency,
+    outcome: input.outcome,
+  });
 }
 
 export function nextStepLabel(actionItems: string[]): string {
@@ -57,6 +90,7 @@ export type PostCallEmailInput = {
   startedAt?: string | null;
   actionItems: string[];
   agentName?: string;
+  urgency?: string;
 };
 
 function formatWhen(startedAt?: string | null): string {
@@ -85,7 +119,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const when = formatWhen(input.startedAt);
   const outcome = input.outcome.trim();
   const agentName = (input.agentName || "WiseCall").trim() || "WiseCall";
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
   const summary = input.summary.trim();
   const transcript = input.transcript.trim();
 
@@ -129,7 +163,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
 }
 
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
   const blocks = [
     `New message for ${input.businessName}`,
     `Caller: ${input.callerId || "Unknown"}`,

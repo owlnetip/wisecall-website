@@ -159,6 +159,9 @@ serve(async (req) => {
   const actionItems = portalNextActions({
     analysisJson: callLog?.ai_analysis_json,
     followUpTitles,
+    summary: [payloadSummary, callLog?.ai_insight_summary, callLog?.summary].filter(Boolean).join("\n"),
+    transcript: payloadTranscript || callLog?.transcript || "",
+    outcome: outcome || callLog?.outcome || "",
   });
 
   if (
