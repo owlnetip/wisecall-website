@@ -7,7 +7,8 @@ import type {
   RoutingProvider,
   RoutingStatus,
 } from "@/components/customer-agent-workspace";
-import { nextActionsFromAnalysisJson } from "@/lib/conversation-email";
+import { presentCompany } from "@/lib/caller-identity";
+import { portalNextActions } from "@/lib/conversation-email";
 import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
 import { normaliseNegotiatorRules } from "@/lib/digital-negotiator";
 import { channelFromLog, type CallChannel } from "@/lib/call-channel";
@@ -273,6 +274,7 @@ export type CallLog = {
   channel: CallChannel;
   aiInsightSummary: string;
   actionItems: string[];
+  companyLabel: string;
 };
 
 type CallRow = {
@@ -376,7 +378,26 @@ export async function getCallLogsForUser(userId: string, profileId?: string): Pr
 }
 
 function actionItemsFromRow(row: CallRow): string[] {
-  return nextActionsFromAnalysisJson(row.ai_analysis_json);
+  return portalNextActions({
+    analysisJson: row.ai_analysis_json,
+    summary: [row.ai_insight_summary, row.summary].filter(Boolean).join("\n"),
+    transcript: row.transcript,
+    outcome: row.outcome,
+  });
+}
+
+function companyLabelFromRow(row: CallRow): string {
+  const analysis = row.ai_analysis_json;
+  const company = analysis && typeof analysis.company === "string" ? analysis.company : "";
+  const companyStatus =
+    analysis && typeof analysis.company_status === "string" ? analysis.company_status : "";
+  const shown = presentCompany({
+    company,
+    companyStatus,
+    transcript: row.transcript,
+    summary: [row.ai_insight_summary, row.summary].filter(Boolean).join("\n"),
+  });
+  return shown.visible ? shown.text : "";
 }
 
 function mapCallRow(row: CallRow): CallLog {
@@ -395,6 +416,7 @@ function mapCallRow(row: CallRow): CallLog {
     channel,
     aiInsightSummary: row.ai_insight_summary || "",
     actionItems: actionItemsFromRow(row),
+    companyLabel: companyLabelFromRow(row),
   };
 }
 

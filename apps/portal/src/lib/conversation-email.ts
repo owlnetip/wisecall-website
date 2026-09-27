@@ -2,10 +2,15 @@
  * Team email for a completed conversation.
  *
  * Matches the customer portal inbox detail: Outcome / Next step / Follow-up
- * needed / What happened. Next actions are the same fields the portal already
- * stores (ai_analysis_json.action_items, else recommended_follow_up, else
- * open follow-up titles). Never invents tasks — omit the list when empty.
+ * needed / What happened. Next actions start from the fields the portal
+ * already stores (ai_analysis_json.action_items, else recommended_follow_up,
+ * else open follow-up titles). An urgent call, or one where a callback was
+ * promised or requested, always keeps at least one follow-up so the next-step
+ * line cannot read "No follow-up needed".
  */
+
+import { presentCompany } from "@/lib/caller-identity";
+import { analysisFollowUpSignals, ensureFollowUpActions } from "@/lib/follow-up-outcome";
 
 export function nextActionsFromAnalysisJson(json: unknown): string[] {
   if (!json || typeof json !== "object") return [];
@@ -35,10 +40,40 @@ export function nextActionsFromFollowUpTitles(titles: unknown): string[] {
 export function portalNextActions(input: {
   analysisJson?: unknown;
   followUpTitles?: string[];
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
 }): string[] {
   const fromAnalysis = nextActionsFromAnalysisJson(input.analysisJson);
-  if (fromAnalysis.length) return fromAnalysis;
-  return nextActionsFromFollowUpTitles(input.followUpTitles);
+  const base = fromAnalysis.length
+    ? fromAnalysis
+    : nextActionsFromFollowUpTitles(input.followUpTitles);
+  const signals = analysisFollowUpSignals(input.analysisJson);
+  return ensureFollowUpActions({
+    actionItems: base,
+    urgency: input.urgency || signals.urgency,
+    summary: [input.summary, signals.summary].filter(Boolean).join("\n"),
+    transcript: input.transcript,
+    recommendedFollowUp: signals.recommendedFollowUp,
+    outcome: input.outcome || signals.outcome,
+  });
+}
+
+export function emailActionItems(input: {
+  actionItems?: string[] | null;
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
+}): string[] {
+  return ensureFollowUpActions({
+    actionItems: input.actionItems,
+    summary: input.summary,
+    transcript: input.transcript,
+    urgency: input.urgency,
+    outcome: input.outcome,
+  });
 }
 
 export function nextStepLabel(actionItems: string[]): string {
@@ -64,7 +99,20 @@ export type PostCallEmailInput = {
   startedAt?: string | null;
   actionItems: string[];
   agentName?: string;
+  urgency?: string;
+  company?: string;
+  companyStatus?: string;
 };
+
+function companyLine(input: PostCallEmailInput): string {
+  const shown = presentCompany({
+    company: input.company,
+    companyStatus: input.companyStatus,
+    transcript: input.transcript,
+    summary: input.summary,
+  });
+  return shown.visible ? shown.text : "";
+}
 
 function formatWhen(startedAt?: string | null): string {
   if (!startedAt) return "";
@@ -92,9 +140,10 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const when = formatWhen(input.startedAt);
   const outcome = input.outcome.trim();
   const agentName = (input.agentName || "WiseCall").trim() || "WiseCall";
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
   const summary = input.summary.trim();
   const transcript = input.transcript.trim();
+  const company = companyLine(input);
 
   return `
     <div style="font-family:system-ui,-apple-system,sans-serif;color:#172929;max-width:640px;">
@@ -102,6 +151,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
       <p style="margin:0 0 16px;color:#4a5c5b;">A caller left a message with your WiseCall assistant.</p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
         <tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">Caller</td><td>${escapeEmailHtml(input.callerId || "Unknown")}</td></tr>
+        ${company ? `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;">Caller Company</td><td>${escapeEmailHtml(company)}</td></tr>` : ""}
         ${when ? `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;">When</td><td>${escapeEmailHtml(when)}</td></tr>` : ""}
       </table>
       <table style="width:100%;border-collapse:collapse;margin:0 0 18px;background:#f7fafa;border:1px solid #d7e4e3;border-radius:10px;">
@@ -136,10 +186,12 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
 }
 
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
-  const actionItems = portalNextActions({ followUpTitles: input.actionItems });
+  const actionItems = emailActionItems(input);
+  const company = companyLine(input);
   const blocks = [
     `New message for ${input.businessName}`,
     `Caller: ${input.callerId || "Unknown"}`,
+    company ? `Caller Company: ${company}` : "",
     input.outcome.trim() ? `Outcome: ${input.outcome.trim()}` : "",
     `Next step: ${nextStepLabel(actionItems)}`,
   ].filter(Boolean);

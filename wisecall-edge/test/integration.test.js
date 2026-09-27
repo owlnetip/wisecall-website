@@ -101,6 +101,36 @@ test("integration requests validate every redirect before following it", async (
   assert.equal(calls, 1);
 });
 
+test("caller intake is last and asks for one name, a spell-check, and digit-by-digit callback", () => {
+  const prompt = buildSystemPrompt(
+    {
+      system_prompt: "You are the receptionist.\nMay I take your name?",
+      metadata: {},
+    },
+    { callerId: "+447700900123" },
+  );
+  const systemAt = prompt.indexOf("You are the receptionist.");
+  const intakeAt = prompt.lastIndexOf("Who am I speaking with?");
+  assert.ok(systemAt >= 0);
+  assert.ok(intakeAt > systemAt);
+  assert.match(prompt, /Never join two people's names/);
+  assert.match(prompt, /digit by digit/);
+  assert.match(prompt, /read back the caller's name and their company/i);
+  assert.match(prompt, /And which company are you calling from\?/);
+  assert.match(prompt, /explicit yes/);
+  assert.match(prompt, /Never invent, guess, or tidy a company name/);
+  assert.match(prompt, /calling personally/);
+
+  const disabled = buildSystemPrompt(
+    {
+      system_prompt: "You are the receptionist.",
+      metadata: { caller_intake_enabled: false },
+    },
+    {},
+  );
+  assert.equal(disabled.includes("Who am I speaking with?"), false);
+});
+
 test("buildSystemPrompt prepends integration and contact blocks", () => {
   const prompt = buildSystemPrompt(
     { system_prompt: "You are the receptionist." },

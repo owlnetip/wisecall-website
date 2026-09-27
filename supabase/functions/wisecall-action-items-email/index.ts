@@ -152,7 +152,13 @@ serve(async (req) => {
 
   const actionItems = bodyItems.length
     ? bodyItems.slice(0, 5)
-    : portalNextActions({ analysisJson, followUpTitles });
+    : portalNextActions({
+        analysisJson,
+        followUpTitles,
+        summary: [managerSummary, logSummary].filter(Boolean).join("\n"),
+        transcript: bodyTranscript || logTranscript,
+        outcome: bodyOutcome || logOutcome,
+      });
 
   const collectedForRouting = isPlainObject(logMeta.collected) ? logMeta.collected : {};
   const enquiryType = typeof collectedForRouting.enquiry_type === "string" ? collectedForRouting.enquiry_type : "";
@@ -183,15 +189,16 @@ serve(async (req) => {
     collected,
   });
   const details = extraDetailsFromAnalysis(analysisJson);
-  const company =
-    details.company ||
+  const collectedCompany =
     (typeof collected.company === "string" ? collected.company : "") ||
     (typeof collected.contact_company === "string" ? collected.contact_company : "");
+  const company = details.company || (details.companyStatus ? "" : collectedCompany);
   const emailInput = {
     businessName,
     callerId,
     callerName,
     company,
+    companyStatus: details.companyStatus,
     summary,
     transcript,
     outcome: outcome || "Conversation recorded",

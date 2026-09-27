@@ -9,9 +9,6 @@ function buildSystemPrompt(profile, { contactBlock, integrationBlock, callerId }
   if (integrationBlock) parts.push(integrationBlock);
   if (contactBlock) parts.push(contactBlock);
 
-  const intake = buildCallerIntakeSection({ callerId, metadata });
-  if (intake) parts.push(intake);
-
   if (profile.system_prompt) parts.push(profile.system_prompt);
 
   const knowledge = profile.business_context || profile.metadata?.knowledge;
@@ -74,6 +71,12 @@ function buildSystemPrompt(profile, { contactBlock, integrationBlock, callerId }
     );
     parts.push(lines.join("\n"));
   }
+
+  // After the stored prompt on purpose. Agent prompts created earlier bake in
+  // an older copy of these rules; the live block has to come last so every
+  // tenant gets the current name, company and callback read-back.
+  const intake = buildCallerIntakeSection({ callerId, metadata });
+  if (intake) parts.push(intake);
 
   return parts.filter(Boolean).join("\n\n");
 }
