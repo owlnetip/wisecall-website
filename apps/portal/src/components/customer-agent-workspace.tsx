@@ -4906,6 +4906,15 @@ function InboxRow({
             {relativeWhen(log.startedAt)}
           </span>
         </span>
+        {log.companyLabel ? (
+          <span
+            className={`mt-0.5 block truncate text-xs font-bold ${
+              /not confirmed/i.test(log.companyLabel) ? "text-amber-800" : "text-ink-soft"
+            }`}
+          >
+            {log.companyLabel}
+          </span>
+        ) : null}
         <span className="mt-0.5 block truncate text-xs text-ink-soft">
           {showAgentName && log.agentName ? `${log.agentName} · ` : ""}
           {log.summary || friendlyOutcome(log.outcome)}
@@ -4974,6 +4983,15 @@ function ConversationDetail({
           <ChannelIcon channel={log.channel} />
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-lg font-black text-ink">{log.caller || "Unknown"}</h2>
+            {log.companyLabel ? (
+              <p
+                className={`truncate text-sm font-bold ${
+                  /not confirmed/i.test(log.companyLabel) ? "text-amber-800" : "text-ink"
+                }`}
+              >
+                {log.companyLabel}
+              </p>
+            ) : null}
             <p className="text-xs text-ink-soft">
               {meta.label} · {formatWhen(log.startedAt)}
               {log.durationLabel && log.durationLabel !== "-" ? ` · ${log.durationLabel}` : ""}

@@ -9,6 +9,7 @@
  * line cannot read "No follow-up needed".
  */
 
+import { presentCompany } from "@/lib/caller-identity";
 import { analysisFollowUpSignals, ensureFollowUpActions } from "@/lib/follow-up-outcome";
 
 export function nextActionsFromAnalysisJson(json: unknown): string[] {
@@ -99,7 +100,19 @@ export type PostCallEmailInput = {
   actionItems: string[];
   agentName?: string;
   urgency?: string;
+  company?: string;
+  companyStatus?: string;
 };
+
+function companyLine(input: PostCallEmailInput): string {
+  const shown = presentCompany({
+    company: input.company,
+    companyStatus: input.companyStatus,
+    transcript: input.transcript,
+    summary: input.summary,
+  });
+  return shown.visible ? shown.text : "";
+}
 
 function formatWhen(startedAt?: string | null): string {
   if (!startedAt) return "";
@@ -130,6 +143,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const actionItems = emailActionItems(input);
   const summary = input.summary.trim();
   const transcript = input.transcript.trim();
+  const company = companyLine(input);
 
   return `
     <div style="font-family:system-ui,-apple-system,sans-serif;color:#172929;max-width:640px;">
@@ -137,6 +151,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
       <p style="margin:0 0 16px;color:#4a5c5b;">A caller left a message with your WiseCall assistant.</p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
         <tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">Caller</td><td>${escapeEmailHtml(input.callerId || "Unknown")}</td></tr>
+        ${company ? `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;">Caller Company</td><td>${escapeEmailHtml(company)}</td></tr>` : ""}
         ${when ? `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;">When</td><td>${escapeEmailHtml(when)}</td></tr>` : ""}
       </table>
       <table style="width:100%;border-collapse:collapse;margin:0 0 18px;background:#f7fafa;border:1px solid #d7e4e3;border-radius:10px;">
@@ -172,9 +187,11 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
 
 export function buildPostCallEmailText(input: PostCallEmailInput): string {
   const actionItems = emailActionItems(input);
+  const company = companyLine(input);
   const blocks = [
     `New message for ${input.businessName}`,
     `Caller: ${input.callerId || "Unknown"}`,
+    company ? `Caller Company: ${company}` : "",
     input.outcome.trim() ? `Outcome: ${input.outcome.trim()}` : "",
     `Next step: ${nextStepLabel(actionItems)}`,
   ].filter(Boolean);

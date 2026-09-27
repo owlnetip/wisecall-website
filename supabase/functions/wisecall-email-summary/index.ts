@@ -187,6 +187,10 @@ serve(async (req) => {
     profile.clinic_name ||
     profile.profile_name ||
     "Your business";
+  const analysisRecord =
+    callLog?.ai_analysis_json && typeof callLog.ai_analysis_json === "object"
+      ? (callLog.ai_analysis_json as Record<string, unknown>)
+      : null;
   const emailInput = {
     businessName,
     callerId,
@@ -196,6 +200,8 @@ serve(async (req) => {
     startedAt: startedAt || callLog?.started_at || null,
     actionItems,
     agentName: callLog?.profile_name || profile.profile_name || "WiseCall",
+    company: typeof analysisRecord?.company === "string" ? analysisRecord.company : "",
+    companyStatus: typeof analysisRecord?.company_status === "string" ? analysisRecord.company_status : "",
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);

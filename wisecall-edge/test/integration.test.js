@@ -116,6 +116,10 @@ test("caller intake is last and asks for one name, a spell-check, and digit-by-d
   assert.match(prompt, /Never join two people's names/);
   assert.match(prompt, /digit by digit/);
   assert.match(prompt, /read back the caller's name and their company/i);
+  assert.match(prompt, /And which company are you calling from\?/);
+  assert.match(prompt, /explicit yes/);
+  assert.match(prompt, /Never invent, guess, or tidy a company name/);
+  assert.match(prompt, /calling personally/);
 
   const disabled = buildSystemPrompt(
     {

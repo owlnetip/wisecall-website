@@ -6,7 +6,11 @@ import {
   syncFollowUpsFromAnalysis,
 } from "@/lib/follow-ups-sync";
 import { syncEnquiryFromAnalysis } from "@/lib/enquiries-sync";
-import { preferConfirmedCallerName, preferConfirmedCompany, extractSpelledCompany } from "@/lib/caller-identity";
+import {
+  preferConfirmedCallerName,
+  resolveCompanyCapture,
+  type CompanyStatus,
+} from "@/lib/caller-identity";
 import { ensureFollowUpActions } from "@/lib/follow-up-outcome";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,6 +66,7 @@ export type CallAnalysis = {
   caller_name: string;
   callback_phone: string;
   company: string;
+  company_status: CompanyStatus;
 };
 
 function getApiKey(): string | null {
@@ -90,6 +95,7 @@ const CONVERSIONS: ConversionType[] = [
   "sales",
   "none",
 ];
+const COMPANY_STATUSES: CompanyStatus[] = ["confirmed", "unconfirmed", "none"];
 
 function clampScore(n: unknown): number {
   const v = typeof n === "number" ? n : Number(n);
@@ -135,6 +141,7 @@ function normalise(raw: Record<string, unknown>): CallAnalysis {
     caller_name: str("caller_name").slice(0, 80),
     callback_phone: str("callback_phone").slice(0, 24),
     company: str("company").slice(0, 80),
+    company_status: oneOf(raw.company_status, COMPANY_STATUSES, "unconfirmed"),
   };
 }
 
@@ -158,7 +165,7 @@ export async function analyzeTranscript(input: {
 
   const message = await anthropic.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 1200,
+    max_tokens: 1400,
     thinking: { type: "disabled" },
     tool_choice: { type: "tool", name: "emit_call_analysis" },
     tools: [
@@ -252,7 +259,13 @@ export async function analyzeTranscript(input: {
             company: {
               type: "string",
               description:
-                "Company the caller confirmed or spelled. Prefer a read-back or letter-by-letter spelling over a first guess. Empty if they did not give one.",
+                "Company exactly as spelled or confirmed on a read-back. If they corrected it, use the corrected name. Empty when they are calling personally or gave no company. Never invent or tidy a name. An unconfirmed guess may be included only if they actually said it.",
+            },
+            company_status: {
+              type: "string",
+              enum: COMPANY_STATUSES,
+              description:
+                "confirmed only after an explicit yes to a company read-back. none when they are calling personally or have no company. unconfirmed otherwise. The server overwrites this from the transcript.",
             },
           },
           required: [
@@ -275,6 +288,7 @@ export async function analyzeTranscript(input: {
             "caller_name",
             "callback_phone",
             "company",
+            "company_status",
           ],
         },
       },
@@ -288,7 +302,7 @@ export async function analyzeTranscript(input: {
             : "Business: a UK small business",
           "",
           "Analyse this completed call. Be accurate and conservative: only flag a complaint, lead, booking or unanswered question if the transcript clearly supports it.",
-          "If urgency_level is high, action_items must include a staff follow-up. If a callback was promised or requested, action_items must include that callback. caller_name is the single confirmed or spelled name of the person speaking, never two names joined together. company is the confirmed or spelled company, or empty.",
+          "If urgency_level is high, action_items must include a staff follow-up. If a callback was promised or requested, action_items must include that callback. caller_name is the single confirmed or spelled name of the person speaking, never two names joined together. company is the spelled or read-back company. If they corrected it, use the correction. If they are calling personally or said they have no company, company is empty and company_status is none. If they never gave an explicit yes, company_status is unconfirmed and the guess must not be described as fact. Never invent or tidy a company name.",
           input.summary ? `\nCall summary (from the system):\n${input.summary}` : "",
           "\n--- TRANSCRIPT ---",
           transcript,
@@ -318,7 +332,7 @@ export function finaliseCallAnalysis(
   const transcript = context?.transcript ?? "";
   const summary = context?.summary ?? "";
   const caller_name = preferConfirmedCallerName(analysis.caller_name, transcript, summary);
-  const company = preferConfirmedCompany(analysis.company, transcript, summary);
+  const captured = resolveCompanyCapture(analysis.company, transcript, summary);
   const action_items = ensureFollowUpActions({
     actionItems: analysis.action_items,
     urgency: analysis.urgency_level,
@@ -332,7 +346,8 @@ export function finaliseCallAnalysis(
   return {
     ...analysis,
     caller_name,
-    company,
+    company: captured.company,
+    company_status: captured.company_status,
     action_items,
     recommended_follow_up: recommended_follow_up.slice(0, 500),
   };
@@ -451,12 +466,16 @@ async function syncContactFromAnalysis(
     existing.metadata && typeof existing.metadata === "object"
       ? { ...(existing.metadata as Record<string, unknown>) }
       : {};
-  const spelledCompany = extractSpelledCompany(`${row.transcript ?? ""}\n${row.summary ?? ""}`);
-  if (analysis.company && (!meta.company || (spelledCompany && spelledCompany === analysis.company))) {
+  let metadataChanged = false;
+  if (analysis.company_status === "confirmed" && analysis.company && meta.company !== analysis.company) {
     meta.company = analysis.company;
+    metadataChanged = true;
   }
-  if (analysis.callback_phone) meta.callback_phone = analysis.callback_phone;
-  if (analysis.company || analysis.callback_phone) patch.metadata = meta;
+  if (analysis.callback_phone && meta.callback_phone !== analysis.callback_phone) {
+    meta.callback_phone = analysis.callback_phone;
+    metadataChanged = true;
+  }
+  if (metadataChanged) patch.metadata = meta;
 
   if (Object.keys(patch).length <= 1) return;
 

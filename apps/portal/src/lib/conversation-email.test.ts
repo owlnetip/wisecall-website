@@ -126,6 +126,56 @@ test("omits the follow-up list when none exist and says none", () => {
   assert.equal(html.includes("<ul"), false);
 });
 
+test("company confidence is visible in the summary email", () => {
+  const unconfirmed = buildPostCallEmailHtml({
+    businessName: "Excel Telecom",
+    callerId: "07825395792",
+    summary: "Login lockout.",
+    transcript: "user: Harbour and Co",
+    outcome: "Completed",
+    actionItems: [],
+    company: "Harbour and Co",
+    companyStatus: "unconfirmed",
+  });
+  assert.match(unconfirmed, /Caller Company/);
+  assert.match(unconfirmed, /Harbour and Co \(not confirmed\)/);
+
+  const confirmed = buildPostCallEmailText({
+    businessName: "Excel Telecom",
+    callerId: "07825395792",
+    summary: "Login lockout.",
+    transcript: "",
+    outcome: "Completed",
+    actionItems: [],
+    company: "Northwind Digital",
+    companyStatus: "confirmed",
+  });
+  assert.match(confirmed, /Caller Company: Northwind Digital/);
+  assert.equal(confirmed.includes("not confirmed"), false);
+
+  const legacy = buildPostCallEmailHtml({
+    businessName: "Excel Telecom",
+    callerId: "Unknown",
+    summary: "Opening hours.",
+    transcript: "",
+    outcome: "Completed",
+    actionItems: [],
+    company: "Acme Ltd",
+  });
+  assert.match(legacy, /Acme Ltd \(not confirmed\)/);
+
+  const empty = buildPostCallEmailHtml({
+    businessName: "Excel Telecom",
+    callerId: "Unknown",
+    summary: "Opening hours question, resolved on the call.",
+    transcript: "",
+    outcome: "Completed",
+    actionItems: [],
+  });
+  assert.equal(empty.includes("Caller Company"), false);
+  assert.equal(empty.includes("Company not confirmed"), false);
+});
+
 test("plain-text email includes the same next actions", () => {
   const text = buildPostCallEmailText({
     businessName: "Excel Telecom",

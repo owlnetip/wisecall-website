@@ -25,6 +25,7 @@ function blank(overrides: Partial<CallAnalysis>): CallAnalysis {
     caller_name: "Zamia Khan Jamal Rashid",
     callback_phone: "",
     company: "Jamada Restrep",
+    company_status: "unconfirmed",
     ...overrides,
   };
 }
@@ -46,6 +47,22 @@ test("final analysis keeps a follow-up and the confirmed name for an urgent call
   );
   assert.equal(analysis.caller_name, "Zamia Khan");
   assert.equal(analysis.company, "Jamada Restrepo");
+  assert.equal(analysis.company_status, "unconfirmed");
   assert.equal(nextStepLabel(analysis.action_items), "1 follow-up needed");
   assert.notEqual(nextStepLabel(analysis.action_items), "No follow-up needed");
+});
+
+test("final analysis stores the confirmed spelled company, not the first hearing", () => {
+  const analysis = finaliseCallAnalysis(blank({ company_status: "confirmed" }), {
+    transcript: [
+      "Agent: And which company are you calling from?",
+      "Caller: Jamada Restrep",
+      "Agent: Could you spell the company?",
+      "Caller: J-A-M-A-D-A space R-E-S-T-R-E-P-O",
+      "Agent: Jamada Restrepo. Is that right?",
+      "Caller: Yes",
+    ].join("\n"),
+  });
+  assert.equal(analysis.company, "Jamada Restrepo");
+  assert.equal(analysis.company_status, "confirmed");
 });

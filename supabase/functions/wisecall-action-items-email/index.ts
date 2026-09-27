@@ -189,15 +189,16 @@ serve(async (req) => {
     collected,
   });
   const details = extraDetailsFromAnalysis(analysisJson);
-  const company =
-    details.company ||
+  const collectedCompany =
     (typeof collected.company === "string" ? collected.company : "") ||
     (typeof collected.contact_company === "string" ? collected.contact_company : "");
+  const company = details.company || (details.companyStatus ? "" : collectedCompany);
   const emailInput = {
     businessName,
     callerId,
     callerName,
     company,
+    companyStatus: details.companyStatus,
     summary,
     transcript,
     outcome: outcome || "Conversation recorded",
