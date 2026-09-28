@@ -226,6 +226,8 @@ export async function getInsightsForUser(
   const { count: lifetimeCount, error: lifetimeError } = await supabase
     .from("wisecall_call_logs")
     .select("id", { count: "exact", head: true })
+    // Salesforce-sent SMS are logged for billing only; they live in Salesforce, not the portal.
+    .not("call_id", "like", "agent_sms_%")
     .in("profile_id", ids);
   if (lifetimeError) {
     console.error("getInsightsForUser lifetime count failed:", lifetimeError.message);
@@ -237,6 +239,8 @@ export async function getInsightsForUser(
   const { data, error } = await supabase
     .from("wisecall_call_logs")
     .select(INSIGHT_SELECT)
+    // Salesforce-sent SMS are logged for billing only; they live in Salesforce, not the portal.
+    .not("call_id", "like", "agent_sms_%")
     .in("profile_id", ids)
     .gte("created_at", since)
     .order("created_at", { ascending: false })

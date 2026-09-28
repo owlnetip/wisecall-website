@@ -76,3 +76,6 @@ verify_jwt = false
 
 [functions.wisecall-sms-status]
 verify_jwt = false
+
+[functions.wisecall-sms-metering]
+verify_jwt = false

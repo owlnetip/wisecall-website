@@ -84,6 +84,8 @@ export async function getAdminOverview(): Promise<AdminOverview | null> {
   const { data: logs } = await supabase
     .from("wisecall_call_logs")
     .select("profile_id")
+    // Salesforce-sent SMS are logged for billing only; they live in Salesforce, not the portal.
+    .not("call_id", "like", "agent_sms_%")
     .limit(10000);
   for (const log of (logs ?? []) as { profile_id: string | null }[]) {
     if (log.profile_id) counts[log.profile_id] = (counts[log.profile_id] ?? 0) + 1;

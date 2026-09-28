@@ -365,6 +365,8 @@ export async function getCallLogsForUser(userId: string, profileId?: string): Pr
     .select(
       "id, profile_id, profile_name, caller_id, contact_id, summary, outcome, transcript, started_at, finished_at, created_at, metadata, ai_insight_summary, ai_analysis_json",
     )
+    // Salesforce-sent SMS are logged for billing only; they live in Salesforce, not the portal.
+    .not("call_id", "like", "agent_sms_%")
     .in("profile_id", ids)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -560,6 +562,8 @@ export async function getAllCallLogs(): Promise<CallLog[]> {
   const { data, error } = await supabase
     .from("wisecall_call_logs")
     .select(CALL_SELECT)
+    // Salesforce-sent SMS are logged for billing only; they live in Salesforce, not the portal.
+    .not("call_id", "like", "agent_sms_%")
     .order("created_at", { ascending: false })
     .limit(500);
 

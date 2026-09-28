@@ -322,6 +322,8 @@ export async function getTrialUsage(
   const { count, error: countError } = await supabase
     .from("wisecall_call_logs")
     .select("id", { count: "exact", head: true })
+    // Salesforce-sent SMS are logged for billing only; they live in Salesforce, not the portal.
+    .not("call_id", "like", "agent_sms_%")
     .in("profile_id", ids);
   if (countError) {
     console.error("getTrialUsage count failed:", countError.message);

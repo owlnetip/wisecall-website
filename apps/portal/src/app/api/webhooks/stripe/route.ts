@@ -171,6 +171,8 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
             whatsapp_overage_period: 0,
             livechat_used_period: 0,
             livechat_overage_period: 0,
+            sms_used_period: 0,
+            sms_overage_period: 0,
           }
         : {}),
       ...(notificationPhone ? { notification_phone: notificationPhone } : {}),
