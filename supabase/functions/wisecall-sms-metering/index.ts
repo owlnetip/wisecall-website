@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { smsSegments } from "../_shared/sms-segments.ts";
 import { smsStatusToken } from "../_shared/sms-status-token.ts";
+import { salesforceCallbackHeaders } from "../_shared/salesforce-sms-callback.ts";
 
 // Reports sent SMS to a Stripe usage meter, per SMS segment, for agents with
 // metadata.sms_billing = { enabled: true, stripe_customer_id, meter_event, since }.
@@ -37,8 +38,11 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   if (!tokenMatches(url.searchParams.get("token") || "", await smsStatusToken())) return json({ error: "Unauthorized" }, 401);
   const dryRun = url.searchParams.get("dry_run") === "1";
-  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
-  if (!stripeKey && !dryRun) return json({ error: "STRIPE_SECRET_KEY not set" }, 503);
+  // Events go through the portal, whose Stripe key is on the account that owns the meters
+  // (the functions' STRIPE_SECRET_KEY is on a different account).
+  const portal = (Deno.env.get("WISECALL_PORTAL_URL") || "").replace(/\/+$/, "");
+  const sharedSecret = Deno.env.get("WISECALL_SALESFORCE_SMS_SECRET") || "";
+  if ((!portal || !sharedSecret) && !dryRun) return json({ error: "portal not configured" }, 503);
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
   const { data: profiles, error } = await supabase
@@ -69,37 +73,46 @@ Deno.serve(async (req) => {
     }
 
     let sent = 0, segments = 0, failed = 0;
-    for (const log of logs ?? []) {
-      const parts = Math.max(1, smsSegments(smsText(log)));
-      if (dryRun) { sent += 1; segments += parts; continue; }
-      const body = new URLSearchParams({
-        event_name: cfg.meter_event,
-        "payload[stripe_customer_id]": cfg.stripe_customer_id,
-        "payload[value]": String(parts),
-        identifier: `sms-${log.id}`,
-        timestamp: String(Math.floor(Date.parse(log.created_at) / 1000)),
-      });
-      const res = await fetch("https://api.stripe.com/v1/billing/meter_events", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${stripeKey}`, "Content-Type": "application/x-www-form-urlencoded" },
-        body,
-      });
-      const result = await res.json().catch(() => ({}));
-      // A duplicate identifier means Stripe already has it: treat as reported.
-      const duplicate = res.status === 400 && /identifier/i.test(String(result?.error?.message || ""));
-      if (!res.ok && !duplicate) {
-        failed += 1;
-        console.error("[sms-metering] meter event failed", res.status, result?.error?.message);
-        continue;
-      }
-      const { data: fresh } = await supabase.from("wisecall_call_logs").select("metadata").eq("id", log.id).maybeSingle();
-      await supabase.from("wisecall_call_logs").update({
-        metadata: { ...(fresh?.metadata || log.metadata || {}), stripe_metered_at: new Date().toISOString(), stripe_segments: parts },
-      }).eq("id", log.id);
-      sent += 1;
-      segments += parts;
+    let lastError: string | null = null;
+    const batch = (logs ?? []).map((log) => ({ log, parts: Math.max(1, smsSegments(smsText(log))) }));
+    if (dryRun) {
+      report.push({ profile: profile.profile_name, texts: batch.length, segments: batch.reduce((n, b) => n + b.parts, 0), dry_run: true });
+      continue;
     }
-    report.push({ profile: profile.profile_name, texts: sent, segments, failed, remaining_hint: (logs?.length ?? 0) === 200 });
+    if (batch.length) {
+      const res = await fetch(`${portal}/api/billing/meter-events`, {
+        method: "POST",
+        headers: salesforceCallbackHeaders(sharedSecret),
+        body: JSON.stringify({
+          events: batch.map(({ log, parts }) => ({
+            event_name: cfg.meter_event,
+            stripe_customer_id: cfg.stripe_customer_id,
+            value: parts,
+            identifier: `sms-${log.id}`,
+            timestamp: Math.floor(Date.parse(log.created_at) / 1000),
+          })),
+        }),
+        signal: AbortSignal.timeout(110000),
+      });
+      const out = await res.json().catch(() => null) as { results?: { identifier: string; ok: boolean; error?: string }[] } | null;
+      const byId = new Map((out?.results ?? []).map((r) => [r.identifier, r]));
+      if (!res.ok) lastError = `portal ${res.status}`;
+      for (const { log, parts } of batch) {
+        const r = byId.get(`sms-${log.id}`);
+        if (!r?.ok) {
+          failed += 1;
+          if (r?.error) lastError = r.error;
+          continue;
+        }
+        const { data: fresh } = await supabase.from("wisecall_call_logs").select("metadata").eq("id", log.id).maybeSingle();
+        await supabase.from("wisecall_call_logs").update({
+          metadata: { ...(fresh?.metadata || log.metadata || {}), stripe_metered_at: new Date().toISOString(), stripe_segments: parts },
+        }).eq("id", log.id);
+        sent += 1;
+        segments += parts;
+      }
+    }
+    report.push({ profile: profile.profile_name, texts: sent, segments, failed, last_error: lastError, remaining_hint: (logs?.length ?? 0) === 200 });
   }
   return json({ ok: true, dry_run: dryRun, report });
 });
