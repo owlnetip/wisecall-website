@@ -69,8 +69,9 @@ export async function POST(request: Request) {
     const pence = Math.round(units * Number(price.unit_amount_decimal));
     const from = new Date(start * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" });
     const to = new Date(end * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" });
-    const unitLabel = price.nickname || (price.product && typeof price.product !== "string" && "name" in price.product ? price.product.name : "usage");
-    const description = `${unitLabel}: ${units} units ${from} to ${to} (before this price was added) at ${price.unit_amount_decimal}p`;
+    const productId = typeof price.product === "string" ? price.product : price.product.id;
+    const product = await stripe.products.retrieve(productId);
+    const description = `${product.name}: ${units} × ${price.unit_amount_decimal}p, ${from} to ${to}`;
     const result: Record<string, unknown> = { item: item.id, meter: meterId, units, amount_gbp: pence / 100, description };
 
     if (units > 0 && pence > 0 && !body.dry_run) {
