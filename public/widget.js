@@ -191,7 +191,13 @@
       ".hidden{display:none!important}" +
       "@media(max-width:480px){.panel{bottom:0;" +
       SIDE +
-      ":0;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0}" +
+      // Visible-screen height (iOS 100vh includes the area under the toolbar);
+      // --wc-vh is kept in sync with the visual viewport when the keyboard opens.
+      ":0;top:0;width:100vw;max-width:100vw;height:100vh;height:100dvh;height:var(--wc-vh,100dvh);max-height:none;border-radius:0}" +
+      ".foot{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}" +
+      ".pb{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}" +
+      // iOS zooms the page into any input under 16px.
+      ".foot input{font-size:16px}" +
       ".launcher.has-logo.has-label{height:52px;padding:0 12px 0 10px}" +
       ".launcher.has-logo.has-label img{height:16px;max-width:84px}" +
       ".launch-label{font-size:13px;gap:6px;padding-left:8px}" +
@@ -280,17 +286,57 @@
     } else if (!on && ex) ex.remove();
   }
 
+  function isPhone() {
+    return window.matchMedia && window.matchMedia("(max-width: 480px)").matches;
+  }
+
+  // Keep the full-screen panel inside the visible area as the iPhone keyboard
+  // and toolbars come and go.
+  function fitViewport() {
+    var panel = root.querySelector(".panel");
+    if (!panel) return;
+    var vv = window.visualViewport;
+    if (opened && isPhone() && vv) {
+      panel.style.setProperty("--wc-vh", vv.height + "px");
+      panel.style.top = vv.offsetTop + "px";
+      var body = root.querySelector(".body");
+      if (body) body.scrollTop = body.scrollHeight;
+    } else {
+      panel.style.removeProperty("--wc-vh");
+      panel.style.top = "";
+    }
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", fitViewport);
+    window.visualViewport.addEventListener("scroll", fitViewport);
+  }
+
+  var savedOverflow = null;
+  function lockPageScroll(lock) {
+    var el = document.documentElement;
+    if (lock && savedOverflow === null) {
+      savedOverflow = el.style.overflow;
+      el.style.overflow = "hidden";
+    } else if (!lock && savedOverflow !== null) {
+      el.style.overflow = savedOverflow;
+      savedOverflow = null;
+    }
+  }
+
   function toggle() {
     var panel = root.querySelector(".panel");
     opened = !opened;
     panel.classList.toggle("hidden", !opened);
     root.querySelector(".launcher").classList.toggle("hidden", opened);
+    lockPageScroll(opened && isPhone());
+    fitViewport();
     if (opened) {
       if (!greeted) {
         greeted = true;
         bubble("assistant", cfg.greeting);
       }
-      root.querySelector(".foot input").focus();
+      // On phones, let the visitor tap to type: auto-focus pops the keyboard over the greeting.
+      if (!isPhone()) root.querySelector(".foot input").focus();
     }
   }
 
