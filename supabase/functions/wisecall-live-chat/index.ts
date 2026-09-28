@@ -253,6 +253,8 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "- If a [PROPERTY BUDGET SEARCH] block is provided, use it for budget/property questions.",
     PROPERTY_BUDGET_PROMPT_RULES,
     "- If the question is not covered by the KB, use general knowledge to help, suggest troubleshooting steps, explain the issue, offer practical guidance.",
+    "- Business facts are the exception: never use general knowledge or guess about this business's own fees, deposits, charges, prices, refunds, what is optional or required, guarantees, timescales, legal or contract terms. State only what the [KNOWLEDGE BASE] or [PROPERTY BUDGET SEARCH] says, keeping its wording, and do not add anything it doesn't say (for example, don't call something optional, free or refundable unless it says so).",
+    "- If the knowledge base doesn't answer a question about the business's own fees or policies, say you don't want to give them the wrong information and that the team will confirm, then take their details. Never contradict an earlier answer; if you got something wrong, say so plainly and correct it.",
     "- Only escalate to the support team when: (a) the problem needs account-specific access or system configuration you cannot see, OR (b) the visitor explicitly asks to speak to someone or raise a ticket, OR (c) you have genuinely tried to help and the issue remains unresolved.",
     "- When you do escalate, capture the visitor's name, best phone or email, and a clear description of the unresolved issue.",
     "- Never invent business-specific details (prices, timescales, account config, contract terms), for those, say you will check with the support team.",
