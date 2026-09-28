@@ -164,7 +164,11 @@ serve(async (req) => {
   const enquiryType = typeof collectedForRouting.enquiry_type === "string" ? collectedForRouting.enquiry_type : "";
   const to = routedRecipients(profileMeta, enquiryType) ?? recipients(profileMeta);
   if (!to.length) return json({ ok: true, skipped: "no_recipients" });
-  const enquiryLabel = ENQUIRY_LABELS[enquiryType] || "";
+  const configuredLabel = Array.isArray(profileMeta.chat_enquiry_categories)
+    ? (profileMeta.chat_enquiry_categories as Array<Record<string, unknown>>)
+        .find((c) => c?.key === enquiryType)?.label
+    : undefined;
+  const enquiryLabel = (typeof configuredLabel === "string" && configuredLabel) || ENQUIRY_LABELS[enquiryType] || "";
   const baseSummary = (managerSummary || logSummary).trim();
   const summary = enquiryLabel ? `Enquiry type: ${enquiryLabel}. ${baseSummary}`.trim() : baseSummary;
   const transcript = (bodyTranscript || logTranscript).trim();

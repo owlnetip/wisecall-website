@@ -2,6 +2,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import type { CallAnalysis } from "@/lib/call-analysis";
 import { friendlyOutcome } from "@/lib/agents";
 import { portalNextActions } from "@/lib/conversation-email";
+import { classifyEnquiry, parseCategories } from "@/lib/enquiry-classifier";
 
 function actionItemsFromAnalysis(analysis: CallAnalysis): string[] {
   return portalNextActions({ analysisJson: analysis });
@@ -238,6 +239,28 @@ export async function sendPostCallEmailForLog(
   const transcript = (log.transcript || "").trim();
   if (summary.length < 3 && transcript.length < 10 && !actionItems.length) {
     return { ok: true, skipped: "no_content" };
+  }
+
+  // Chats: let the AI pick the enquiry type from the agent's own categories, so
+  // the email goes to that department (chat_enquiry_routing) with the type shown.
+  if (isLiveChatLog(log)) {
+    try {
+      const { data: profile } = await supabase.from("wisecall_profiles").select("metadata").eq("id", log.profile_id).maybeSingle();
+      const categories = parseCategories(profile?.metadata);
+      if (categories.length) {
+        const enquiryType = await classifyEnquiry(transcript, categories);
+        if (enquiryType) {
+          const { data: fresh } = await supabase.from("wisecall_call_logs").select("metadata").eq("id", callLogId).maybeSingle();
+          const meta = isPlainObject(fresh?.metadata) ? fresh.metadata : {};
+          const collected = isPlainObject(meta.collected) ? meta.collected : {};
+          await supabase.from("wisecall_call_logs").update({
+            metadata: { ...meta, collected: { ...collected, enquiry_type: enquiryType }, enquiry_type_source: "ai" },
+          }).eq("id", callLogId);
+        }
+      }
+    } catch (error) {
+      console.error("enquiry classification failed:", error instanceof Error ? error.message : error);
+    }
   }
 
   const sent = await sendActionItemsEmail({

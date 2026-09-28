@@ -74,6 +74,12 @@ function getApiKey(): string | null {
   return process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_WISECASE || null;
 }
 
+/** Claude key and model shared with other portal AI helpers. */
+export function claudeConfig(): { apiKey: string; model: string } | null {
+  const apiKey = getApiKey();
+  return apiKey ? { apiKey, model: CLAUDE_MODEL } : null;
+}
+
 export function isAnalysisConfigured(): boolean {
   return Boolean(getApiKey());
 }
