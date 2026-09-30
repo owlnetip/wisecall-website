@@ -1,5 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  findReusableMorUserId,
+  morDeviceDescription,
+  morUsernameForAccount,
+  morUserNameParts,
+  profileAgentName,
+  profileBusinessName,
+} from "../_shared/wisecall-mor-account.mjs";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -238,6 +246,115 @@ async function syncMorDevicePassword(options: {
   return usernameForHash;
 }
 
+async function updateMorUserDisplayName(options: {
+  morApiUrl: string;
+  resellerUsername: string;
+  reseller: { password: string; apiKey: string; uniqueHash: string };
+  morUserId: string;
+  firstName: string;
+  lastName: string;
+}): Promise<void> {
+  const { morApiUrl, resellerUsername, reseller, morUserId, firstName, lastName } = options;
+  const params = new URLSearchParams({
+    u: resellerUsername,
+    user_id: morUserId,
+    first_name: firstName,
+    last_name: lastName,
+    hash: reseller.uniqueHash || await sha1(`${morUserId}${reseller.apiKey}`),
+  });
+  if (reseller.password) params.set("p", reseller.password);
+
+  let xml = await morGet(`${morApiUrl}/billing/api/user_update?${params.toString()}`);
+  let err = morResponseError(xml);
+  if (
+    err &&
+    reseller.uniqueHash &&
+    reseller.uniqueHash !== reseller.apiKey &&
+    shouldTryAlternateAuth(xml, err)
+  ) {
+    params.set("hash", await sha1(`${morUserId}${reseller.apiKey}`));
+    xml = await morGet(`${morApiUrl}/billing/api/user_update?${params.toString()}`);
+    err = morResponseError(xml);
+  }
+  if (err) throw new Error(`MOR user_update name failed: ${err}`);
+}
+
+async function updateMorDeviceDescription(options: {
+  morApiUrl: string;
+  resellerUsername: string;
+  reseller: { password: string; apiKey: string; uniqueHash: string };
+  morUserId: string;
+  morDeviceId: string;
+  description: string;
+}): Promise<void> {
+  const { morApiUrl, resellerUsername, reseller, morUserId, morDeviceId, description } = options;
+  const deviceHash = reseller.uniqueHash || await sha1(`${morUserId}${reseller.apiKey}`);
+  const devicesParams = new URLSearchParams({
+    u: resellerUsername,
+    hash: deviceHash,
+    user_id: morUserId,
+    show_hidden_devices: "0",
+  });
+  if (reseller.password) devicesParams.set("p", reseller.password);
+
+  const devicesXml = await morGet(`${morApiUrl}/billing/api/devices_get?${devicesParams.toString()}`);
+  const block = morDeviceBlock(devicesXml, morDeviceId);
+  if (!block) throw new Error(`MOR devices_get: device ${morDeviceId} was not found`);
+
+  const usernameForHash = xmlTag(block, "username") || "";
+  const authentication = xmlTag(block, "authentication") || "0";
+  const host = xmlTag(block, "ipaddr") || xmlTag(block, "host") || "dynamic";
+  const port = xmlTag(block, "port") || "5060";
+  const updateHash = await sha1(
+    `${morDeviceId}${authentication}${usernameForHash}${host}${port}${reseller.apiKey}`,
+  );
+
+  const updateParams = new URLSearchParams({
+    u: resellerUsername,
+    device: morDeviceId,
+    authentication,
+    username: usernameForHash,
+    host,
+    port,
+    hash: updateHash,
+    description,
+    device_type: "SIP",
+  });
+  if (reseller.password) updateParams.set("p", reseller.password);
+
+  const updateXml = await morGet(`${morApiUrl}/billing/api/device_update?${updateParams.toString()}`);
+  const updateErr = morResponseError(updateXml);
+  if (updateErr) throw new Error(`MOR device_update description failed: ${updateErr}`);
+}
+
+async function applyMorAccountLabels(options: {
+  morApiUrl: string;
+  resellerUsername: string;
+  reseller: { password: string; apiKey: string; uniqueHash: string };
+  morUserId: string;
+  morDeviceId: string;
+  businessName: string;
+  agentName: string;
+}): Promise<void> {
+  const names = morUserNameParts(options.businessName);
+  await updateMorUserDisplayName({
+    morApiUrl: options.morApiUrl,
+    resellerUsername: options.resellerUsername,
+    reseller: options.reseller,
+    morUserId: options.morUserId,
+    firstName: names.first_name,
+    lastName: names.last_name,
+  });
+  await updateMorDeviceDescription({
+    morApiUrl: options.morApiUrl,
+    resellerUsername: options.resellerUsername,
+    reseller: options.reseller,
+    morUserId: options.morUserId,
+    morDeviceId: options.morDeviceId,
+    description: morDeviceDescription(options.agentName),
+  });
+}
+
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -285,8 +402,14 @@ serve(async (req) => {
       return json({ ok: false, error: "Forbidden" }, 403);
     }
 
-    const { profile_id } = await req.json();
-    if (!profile_id) return json({ ok: false, error: "profile_id required" }, 400);
+    let body: Record<string, unknown> = {};
+    try {
+      body = (await req.json()) as Record<string, unknown>;
+    } catch {
+      body = {};
+    }
+    const action = String(body.action || "").trim();
+    const profile_id = String(body.profile_id || "").trim();
 
     const MOR_API_URL = Deno.env.get("MOR_API_URL");
     const MOR_API_SECRET = Deno.env.get("MOR_API_SECRET");
@@ -314,9 +437,69 @@ serve(async (req) => {
     const resellerOwnerId = reseller.uniqueHash || reseller.resellerId;
     console.log(`✅ Using MOR reseller ${resellerUsername} (${MOR_RESELLER_ID}) for provisioning`);
 
-    // Deterministic username, same on every attempt for this profile. If we
-    // are recovering from an old admin-owned partial, use a stable replacement.
-    const baseMorUsername = "wca" + profile_id.replace(/-/g, "").slice(0, 10);
+    if (action === "relabel_accounts") {
+      if (providedKey !== SERVICE_ROLE_KEY) {
+        return json({ ok: false, error: "Forbidden" }, 403);
+      }
+      const { data: liveProfiles, error: liveErr } = await supabase
+        .from("wisecall_profiles")
+        .select("id, business_name, clinic_name, receptionist_name, profile_name, metadata")
+        .eq("is_active", true);
+      if (liveErr) throw new Error(`relabel_accounts: ${liveErr.message}`);
+
+      const results: Array<{ profile_id: string; ok: boolean; error?: string }> = [];
+      for (const row of liveProfiles || []) {
+        const routing = ((row.metadata as Record<string, unknown> | null)?.routing || {}) as Record<string, unknown>;
+        const liveUserId = String(routing.morUserId || "");
+        const liveDeviceId = String(routing.morDeviceId || "");
+        if (!liveUserId || !liveDeviceId) continue;
+        try {
+          await applyMorAccountLabels({
+            morApiUrl: MOR_API_URL,
+            resellerUsername,
+            reseller,
+            morUserId: liveUserId,
+            morDeviceId: liveDeviceId,
+            businessName: profileBusinessName(row),
+            agentName: profileAgentName(row),
+          });
+          results.push({ profile_id: row.id as string, ok: true });
+        } catch (err) {
+          results.push({
+            profile_id: row.id as string,
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+      return json({
+        ok: results.every((row) => row.ok),
+        action: "relabel_accounts",
+        updated: results.filter((row) => row.ok).length,
+        failed: results.filter((row) => !row.ok).length,
+        results,
+      });
+    }
+
+    if (!profile_id) return json({ ok: false, error: "profile_id required" }, 400);
+
+    const { data: profileRow, error: profileReadErr } = await supabase
+      .from("wisecall_profiles")
+      .select("id, business_name, clinic_name, receptionist_name, profile_name, metadata")
+      .eq("id", profile_id)
+      .maybeSingle();
+    if (profileReadErr) throw new Error(`wisecall_profiles read: ${profileReadErr.message}`);
+    if (!profileRow) throw new Error(`Agent profile ${profile_id} not found`);
+
+    const profileMetadata = (profileRow.metadata as Record<string, unknown> | null) ?? {};
+    const ownerId = String(profileMetadata.owner_id || "");
+    const businessName = profileBusinessName(profileRow);
+    const agentName = profileAgentName(profileRow);
+    const userNames = morUserNameParts(businessName);
+
+    // Deterministic username per owner + business so a second Direct agent
+    // reuses the same MOR user. Profile-id fallback keeps ownerless rows unique.
+    const baseMorUsername = morUsernameForAccount({ ownerId, businessName, profileId: profile_id });
     let morUsername = baseMorUsername;
 
     // ── 0. Check for existing partial provisioning (idempotency) ──────────
@@ -333,7 +516,7 @@ serve(async (req) => {
 
     const { data: existingSip } = await supabase
       .from("wisecall_sip_endpoints")
-      .select("sip_username, sip_password, mor_device_id")
+      .select("sip_username, sip_password, mor_device_id, transport")
       .eq("profile_id", profile_id)
       .maybeSingle();
 
@@ -357,10 +540,7 @@ serve(async (req) => {
       if (existingPool?.id && existingPool?.did_number) {
         didPoolId = existingPool.id;
         didNumber = existingPool.did_number;
-        morUsername = `${baseMorUsername}r`;
-        console.log(
-          `♻️ Reusing reserved DID ${didNumber}, replacing partial MOR resources with reseller-owned ${morUsername}`,
-        );
+        console.log(`♻️ Reusing reserved DID ${didNumber}`);
       } else {
         // ── 1. Reserve a free DID ────────────────────────────────────────────
         // If already reserved for this profile, the SQL fn returns the existing row.
@@ -379,59 +559,82 @@ serve(async (req) => {
       sipPassword = generateSecret();
       const morPassword = generateSecret();
 
-      // ── 2. Create MOR user ───────────────────────────────────────────────
-      const userParams = new URLSearchParams({
-        u: resellerUsername,
-        hash: reseller.uniqueHash || reseller.apiKey,
-        username: morUsername,
-        password: morPassword,
-        password2: morPassword,
-        first_name: "WiseCall",
-        last_name: "Agent",
-        email: `${morUsername}@wisecall.io`,
-        device_type: "SIP",
-        country_id: "80",
-        id: resellerOwnerId,
-        owner_id: resellerOwnerId,
+      const siblingQuery = ownerId
+        ? await supabase
+          .from("wisecall_profiles")
+          .select("id, business_name, clinic_name, metadata")
+          .eq("metadata->>owner_id", ownerId)
+          .neq("id", profile_id)
+        : { data: [] as Array<Record<string, unknown>>, error: null };
+      if (siblingQuery.error) throw new Error(`sibling MOR lookup: ${siblingQuery.error.message}`);
+      const reusedMorUserId = findReusableMorUserId(siblingQuery.data || [], {
+        ownerId,
+        businessName,
+        profileId: profile_id,
       });
-      if (reseller.password) userParams.set("p", reseller.password);
 
-      const userXml = await morPost(`${MOR_API_URL}/billing/api/user_register`, userParams);
-      console.log("MOR user_register response:", userXml.slice(0, 400));
-      const userErr = morError(userXml);
-      if (userErr) {
-        if (/username.*taken|already.*taken/i.test(userErr)) {
-          // User was created in a previous attempt, look up their ID from users_get.
-          console.log(`⚠️ Username ${morUsername} already exists, looking up user_id…`);
-          const usersXml = await morGet(
-            `${MOR_API_URL}/billing/api/users_get?` +
-            new URLSearchParams({ u: "admin", p: MOR_ADMIN_PASSWORD, hash: MOR_UNIQUE_HASH.trim() })
-          );
-          const userBlocks = usersXml.match(/<user>([\s\S]*?)<\/user>/gi) || [];
-          for (const block of userBlocks) {
-            if (block.includes(`<username>${morUsername}</username>`)) {
-              morUserId = xmlTag(block, "id") ?? "";
-              break;
-            }
-          }
-          if (!morUserId) throw new Error(`MOR user ${morUsername} already exists but could not find their ID`);
-          console.log(`♻️ Found existing MOR user: id=${morUserId}`);
-        } else {
-          throw new Error(`MOR user_register failed: ${userErr}`);
-        }
+      // ── 2. Create or reuse MOR user (one per owner + business) ───────────
+      if (reusedMorUserId) {
+        morUserId = reusedMorUserId;
+        console.log(`♻️ Reusing MOR user ${morUserId} for ${businessName}`);
       } else {
-        morUserId = xmlTag(userXml, "user_id") ?? "";
-        if (!morUserId) throw new Error("MOR user_register: no user_id in response");
-        console.log(`✅ MOR user created: id=${morUserId} username=${morUsername}`);
+        if (existingPool?.id && existingPool?.did_number && !existingPool?.mor_user_id) {
+          morUsername = `${baseMorUsername}r`;
+          console.log(`♻️ Replacing partial MOR resources with reseller-owned ${morUsername}`);
+        }
+        const userParams = new URLSearchParams({
+          u: resellerUsername,
+          hash: reseller.uniqueHash || reseller.apiKey,
+          username: morUsername,
+          password: morPassword,
+          password2: morPassword,
+          first_name: userNames.first_name,
+          last_name: userNames.last_name,
+          email: `${morUsername}@wisecall.io`,
+          device_type: "SIP",
+          country_id: "80",
+          id: resellerOwnerId,
+          owner_id: resellerOwnerId,
+        });
+        if (reseller.password) userParams.set("p", reseller.password);
+
+        const userXml = await morPost(`${MOR_API_URL}/billing/api/user_register`, userParams);
+        console.log("MOR user_register response:", userXml.slice(0, 400));
+        const userErr = morError(userXml);
+        if (userErr) {
+          if (/username.*taken|already.*taken/i.test(userErr)) {
+            // User was created in a previous attempt, look up their ID from users_get.
+            console.log(`⚠️ Username ${morUsername} already exists, looking up user_id…`);
+            const usersXml = await morGet(
+              `${MOR_API_URL}/billing/api/users_get?` +
+              new URLSearchParams({ u: "admin", p: MOR_ADMIN_PASSWORD, hash: MOR_UNIQUE_HASH.trim() })
+            );
+            const userBlocks = usersXml.match(/<user>([\s\S]*?)<\/user>/gi) || [];
+            for (const block of userBlocks) {
+              if (block.includes(`<username>${morUsername}</username>`)) {
+                morUserId = xmlTag(block, "id") ?? "";
+                break;
+              }
+            }
+            if (!morUserId) throw new Error(`MOR user ${morUsername} already exists but could not find their ID`);
+            console.log(`♻️ Found existing MOR user: id=${morUserId}`);
+          } else {
+            throw new Error(`MOR user_register failed: ${userErr}`);
+          }
+        } else {
+          morUserId = xmlTag(userXml, "user_id") ?? "";
+          if (!morUserId) throw new Error("MOR user_register: no user_id in response");
+          console.log(`✅ MOR user created: id=${morUserId} username=${morUsername} name=${businessName}`);
+        }
       }
 
-      // ── 3. Create SIP device under the new user ──────────────────────────
+      // ── 3. Create SIP device under the user (one per agent) ──────────────
       const deviceHash = reseller.uniqueHash || await sha1(`${morUserId}${reseller.apiKey}`);
       const deviceParams = new URLSearchParams({
         u: resellerUsername,
         hash: deviceHash,
         user_id: morUserId,
-        description: `WiseCall agent ${profile_id.slice(0, 8)}`,
+        description: morDeviceDescription(agentName),
         type: "SIP",
         device_type: "SIP",
         authentication: "0",
@@ -445,7 +648,9 @@ serve(async (req) => {
       const deviceErr = morError(deviceXml);
       let deviceSourceXml = deviceXml;
       if (deviceErr) {
-        // If device already exists for this user, look it up via devices_get.
+        // If this profile already had a device, look it up. Do not steal another
+        // agent’s device when this is a second device on a shared MOR user.
+        const knownDeviceId = existingPool?.mor_device_id || existingSip?.mor_device_id || "";
         console.warn(`⚠️ device_create error: ${deviceErr}, looking up existing device for user ${morUserId}`);
         const devicesParams = new URLSearchParams({
           u: resellerUsername,
@@ -458,17 +663,25 @@ serve(async (req) => {
           `${MOR_API_URL}/billing/api/devices_get?${devicesParams.toString()}`
         );
         console.log("MOR devices_get response:", devicesXml.slice(0, 400));
-        morDeviceId = xmlTag(devicesXml, "device_id") || xmlTag(devicesXml, "id") || "";
-        if (!morDeviceId) throw new Error(`MOR device_create failed: ${deviceErr}`);
-        deviceSourceXml = devicesXml;
-        console.log(`♻️ Found existing MOR device: id=${morDeviceId}`);
+        if (knownDeviceId) {
+          morDeviceId = xmlTag(morDeviceBlock(devicesXml, knownDeviceId), "device_id")
+            || xmlTag(morDeviceBlock(devicesXml, knownDeviceId), "id")
+            || knownDeviceId;
+          deviceSourceXml = devicesXml;
+          console.log(`♻️ Found existing MOR device: id=${morDeviceId}`);
+        } else {
+          throw new Error(`MOR device_create failed: ${deviceErr}`);
+        }
       } else {
         morDeviceId = xmlTag(deviceXml, "device_id") || xmlTag(deviceXml, "id") || "";
         if (!morDeviceId) throw new Error("MOR device_create: no device_id in response");
         console.log(`✅ MOR device created: id=${morDeviceId}`);
       }
 
-      deviceUsername = xmlTag(deviceSourceXml, "username") || xmlTag(deviceSourceXml, "name") || morUsername;
+      deviceUsername = xmlTag(morDeviceBlock(deviceSourceXml, morDeviceId), "username")
+        || xmlTag(deviceSourceXml, "username")
+        || xmlTag(deviceSourceXml, "name")
+        || morUsername;
 
       // Save MOR IDs to pool now so retries can skip user/device creation.
       await supabase
@@ -491,6 +704,22 @@ serve(async (req) => {
       sipPassword,
     });
     console.log(`✅ MOR SIP password synced for device ${morDeviceId}`);
+
+    try {
+      await applyMorAccountLabels({
+        morApiUrl: MOR_API_URL,
+        resellerUsername,
+        reseller,
+        morUserId,
+        morDeviceId,
+        businessName,
+        agentName,
+      });
+      console.log(`✅ MOR labels: user=${businessName} device=${agentName}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`⚠️ MOR label update failed (provisioning continues): ${message}`);
+    }
 
     const apiSecret = MOR_API_SECRET.trim();
     const staleDidProfileId = "00000000-0000-0000-0000-000000000000";
@@ -726,13 +955,7 @@ serve(async (req) => {
     console.log(`✅ SIP endpoint upserted: ${deviceUsername}@${MOR_SIP_HOST}`);
 
     // ── 7. Update agent profile: routing + number ─────────────────────────
-    const { data: profileRow } = await supabase
-      .from("wisecall_profiles")
-      .select("metadata")
-      .eq("id", profile_id)
-      .single();
-
-    const metadata = (profileRow?.metadata as Record<string, unknown>) ?? {};
+    const metadata = profileMetadata;
     const routing = {
       provider: "mor_sip",
       number: didNumber,
