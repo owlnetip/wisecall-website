@@ -1,15 +1,15 @@
 // wisecall-kb-search, retrieve an agent's knowledge-base chunks for a question.
 //
 // The voice runtime / chat / email call this when the agent needs to look
-// something up in the customer's uploaded documents. Embeds the query with Jina
-// (matching how kb-ingest embedded the docs, 1024-dim jina-embeddings-v3) and
+// something up in the customer's uploaded documents. Embeds the query with OpenAI
+// (matching how kb-ingest embeds the docs, 1024-dim OpenAI text-embedding-3-small) and
 // runs the existing search_knowledge_base RPC filtered to this agent's bot id
 // (= the wisecall profile id).
 //
 // POST { profile_id, query, match_count? }  (auth: Supabase anon key, the
 // project is at its 100-secret limit, so we rely on standard JWT verification
 // rather than a bespoke shared secret; KB content is low-sensitivity business info).
-// Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, JINA_API_KEY.
+// Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY.
 
 import { fetchPropertyBudgetContext } from "../_shared/kb-property-budget-lookup.ts";
 import {
@@ -31,20 +31,22 @@ type KbCandidate = { content: string | null; title: string | null; embedding: un
 const FALLBACK_LIMIT = 750;
 const FALLBACK_MIN_SIMILARITY = 0.35;
 
+// Must match kb-ingest. The Jina key is gone from the project, so kb-ingest has
+// embedded with OpenAI text-embedding-3-small (1024 dims) since Sep 2026, and
+// older Jina-embedded rows are being re-embedded to match.
 async function embedQuery(text: string): Promise<number[] | null> {
-  const key = Deno.env.get("JINA_API_KEY");
-  if (!key) throw new Error("JINA_API_KEY not configured");
-  const res = await fetch("https://api.jina.ai/v1/embeddings", {
+  const key = Deno.env.get("OPENAI_API_KEY");
+  if (!key) throw new Error("OPENAI_API_KEY not configured");
+  const res = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "jina-embeddings-v3",
-      task: "retrieval.query",
+      model: "text-embedding-3-small",
       dimensions: 1024,
       input: [text],
     }),
   });
-  if (!res.ok) throw new Error(`Jina ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
   return data?.data?.[0]?.embedding ?? null;
 }
