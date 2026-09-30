@@ -38,6 +38,8 @@
     font_family: "",
     font_stylesheet: "",
     launcher_label: "",
+    launcher_text_color: "",
+    launcher_icon_color: "",
   };
 
   // Per-agent brand presets. The live-chat config overrides these when it
@@ -51,6 +53,11 @@
       font_stylesheet:
         "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap",
       launcher_label: "Chat with us",
+    },
+    // Crystal Care Collection site greens (offBlack text, sage icon).
+    "crystal-care-collection-assistant-crysta-059f37a4": {
+      launcher_text_color: "#323723",
+      launcher_icon_color: "#98a769",
     },
   };
   var sessionId = null;
@@ -84,6 +91,11 @@
     return s;
   }
 
+  function safeColor(value) {
+    var v = String(value || "").trim();
+    return /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(v) ? v : "";
+  }
+
   function safeLabel(value) {
     var s = String(value || "").replace(/\s+/g, " ").trim();
     if (!s || s.length > 40) return "";
@@ -114,6 +126,8 @@
       "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
     var fontCss = safeHttps(cfg.font_stylesheet);
     var label = safeLabel(cfg.launcher_label);
+    var labelColor = safeColor(cfg.launcher_text_color) || "#123A4B";
+    var labelIconColor = safeColor(cfg.launcher_icon_color) || "#E07A6E";
     var chatIcon =
       '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     var launcherInner = logo
@@ -145,8 +159,12 @@
       ".launcher.has-logo img{height:32px;width:auto;max-width:168px;display:block}" +
       ".launcher.has-logo.has-label{gap:10px;height:56px;padding:0 16px 0 12px}" +
       ".launcher.has-logo.has-label img{height:20px;max-width:112px}" +
-      ".launch-label{display:flex;align-items:center;gap:7px;padding-left:10px;border-left:1px solid rgba(18,58,75,.16);color:#123A4B;font-weight:700;font-size:14.5px;line-height:1;white-space:nowrap}" +
-      ".launcher .launch-label svg{width:18px;height:18px;color:#E07A6E}" +
+      ".launch-label{display:flex;align-items:center;gap:7px;padding-left:10px;border-left:1px solid rgba(18,58,75,.16);color:" +
+      labelColor +
+      ";font-weight:700;font-size:14.5px;line-height:1;white-space:nowrap}" +
+      ".launcher .launch-label svg{width:18px;height:18px;color:" +
+      labelIconColor +
+      "}" +
       ".hdr .av.logo{width:auto;height:auto;border-radius:10px;background:#fff;padding:5px 10px}" +
       ".hdr .av.logo img{height:28px;width:auto;max-width:180px;display:block}" +
       ".panel{position:fixed;bottom:92px;" +
@@ -386,6 +404,8 @@
     cfg.font_family = remote.font_family || preset.font_family || "";
     cfg.font_stylesheet = remote.font_stylesheet || preset.font_stylesheet || "";
     cfg.launcher_label = remote.launcher_label || preset.launcher_label || "";
+    cfg.launcher_text_color = remote.launcher_text_color || preset.launcher_text_color || "";
+    cfg.launcher_icon_color = remote.launcher_icon_color || preset.launcher_icon_color || "";
     // Optional embed overrides, used by the local preview.
     if (script.getAttribute("data-logo")) cfg.logo_url = script.getAttribute("data-logo");
     if (script.getAttribute("data-font")) cfg.font_family = script.getAttribute("data-font");
