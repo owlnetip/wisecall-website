@@ -611,8 +611,11 @@ export async function analyseMissedRecentCalls(opts: {
     .not("profile_id", "is", null)
     .gte("created_at", oldest)
     .lte("created_at", newest)
+    // SMS logs are never analysed, so without this they fill the window and
+    // hide newer calls and chats until they age out.
+    .or('outcome.is.null,outcome.not.in.(sms_sent,sms_failed,"SMS replied")')
     .order("created_at", { ascending: true })
-    .limit(50);
+    .limit(200);
   if (error) throw new Error(`Could not list missed calls: ${error.message}`);
 
   const candidates = (data as AnalyzableRow[]).filter((r) => (r.transcript ?? "").trim().length >= 10);
