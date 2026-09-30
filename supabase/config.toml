@@ -79,3 +79,6 @@ verify_jwt = false
 
 [functions.wisecall-sms-metering]
 verify_jwt = false
+
+[functions.kb-reembed]
+verify_jwt = true
