@@ -35,6 +35,7 @@
     accent_color: "#7de8eb",
     background_color: "#172929",
     logo_url: "",
+    logo_mode: "",
     font_family: "",
     font_stylesheet: "",
     launcher_label: "",
@@ -54,8 +55,10 @@
         "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap",
       launcher_label: "Chat with us",
     },
-    // Crystal Care Collection site greens (offBlack text, sage icon).
+    // Crystal Care Collection site greens (offBlack text, sage icon); their
+    // house mark is square, so it is shown as an icon beside the name.
     "crystal-care-collection-assistant-crysta-059f37a4": {
+      logo_mode: "icon",
       launcher_text_color: "#323723",
       launcher_icon_color: "#98a769",
     },
@@ -136,8 +139,10 @@
         '" alt=""/>' +
         (label ? '<span class="launch-label">' + chatIcon + esc(label) + "</span>" : "")
       : chatIcon;
+    // "icon" = a square mark (not a wordmark), so the header still shows the name.
+    var iconLogo = !!logo && cfg.logo_mode === "icon";
     var avatar = logo
-      ? '<div class="av logo"><img src="' + esc(logo) + '" alt=""/></div>'
+      ? '<div class="av logo' + (iconLogo ? " icon" : "") + '"><img src="' + esc(logo) + '" alt=""/></div>'
       : '<div class="av">' + (cfg.assistant_name || "A").charAt(0).toUpperCase() + "</div>";
     root.innerHTML =
       "<style>" +
@@ -159,6 +164,7 @@
       ".launcher.has-logo img{height:32px;width:auto;max-width:168px;display:block}" +
       ".launcher.has-logo.has-label{gap:10px;height:56px;padding:0 16px 0 12px}" +
       ".launcher.has-logo.has-label img{height:20px;max-width:112px}" +
+      ".launcher.icon-logo img,.launcher.icon-logo.has-label img{height:28px;width:28px;max-width:28px;object-fit:contain}" +
       ".launch-label{display:flex;align-items:center;gap:7px;padding-left:10px;border-left:1px solid rgba(18,58,75,.16);color:" +
       labelColor +
       ";font-weight:700;font-size:14.5px;line-height:1;white-space:nowrap}" +
@@ -167,6 +173,8 @@
       "}" +
       ".hdr .av.logo{width:auto;height:auto;border-radius:10px;background:#fff;padding:5px 10px}" +
       ".hdr .av.logo img{height:28px;width:auto;max-width:180px;display:block}" +
+      ".hdr .av.logo.icon{width:40px;height:40px;padding:6px;display:flex;align-items:center;justify-content:center}" +
+      ".hdr .av.logo.icon img{width:28px;height:28px;max-width:28px;object-fit:contain}" +
       ".panel{position:fixed;bottom:92px;" +
       SIDE +
       ":20px;width:374px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.32);display:flex;flex-direction:column;overflow:hidden}" +
@@ -218,11 +226,13 @@
       ".foot input{font-size:16px}" +
       ".launcher.has-logo.has-label{height:52px;padding:0 12px 0 10px}" +
       ".launcher.has-logo.has-label img{height:16px;max-width:84px}" +
+      ".launcher.icon-logo.has-label img{height:24px;width:24px;max-width:24px}" +
       ".launch-label{font-size:13px;gap:6px;padding-left:8px}" +
       ".launcher .launch-label svg{width:16px;height:16px}}" +
       "</style>" +
       '<button class="launcher' +
       (logo ? " has-logo" : "") +
+      (iconLogo ? " icon-logo" : "") +
       (label ? " has-label" : "") +
       '" aria-label="' +
       esc(label || "Open chat") +
@@ -234,7 +244,7 @@
       '">' +
       '<div class="hdr">' +
       avatar +
-      (logo
+      (logo && !iconLogo
         ? ""
         : '<div><div class="t">' +
           esc(cfg.title) +
@@ -401,6 +411,7 @@
     if (remote.accent_color) cfg.accent_color = remote.accent_color;
     if (remote.background_color) cfg.background_color = remote.background_color;
     cfg.logo_url = remote.logo_url || preset.logo_url || "";
+    cfg.logo_mode = remote.logo_mode || preset.logo_mode || "";
     cfg.font_family = remote.font_family || preset.font_family || "";
     cfg.font_stylesheet = remote.font_stylesheet || preset.font_stylesheet || "";
     cfg.launcher_label = remote.launcher_label || preset.launcher_label || "";
