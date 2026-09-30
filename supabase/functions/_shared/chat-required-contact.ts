@@ -89,9 +89,28 @@ function joinLabels(fields: RequiredContactField[]): string {
   return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
 }
 
+/** The visitor's first real question, so it can be answered once details are in. */
+export function firstEnquiry(messages: Array<{ role: string; content: string }>): string | null {
+  const found = messages.find((message) => message.role === "user" && messageIsEnquiry(message.content));
+  return found ? found.content.trim().slice(0, 400) : null;
+}
+
+function alreadyAskedFor(
+  messages: Array<{ role: string; content: string }>,
+  field: RequiredContactField,
+): boolean {
+  return messages.some(
+    (message) =>
+      message.role === "assistant" && message.content.includes(HOLD_MARK) && message.content.includes(ASK[field]),
+  );
+}
+
 /**
- * Reply to use instead of the model while required details are missing.
- * Null means the visitor has not asked yet, or every required detail is in.
+ * Fixed-wording ask to use instead of the model while required details are missing.
+ * Each detail is asked this way once. If the visitor's answer didn't register
+ * (odd formatting, a partial number, a refusal), repeating the same line makes
+ * them type it again and again, so the model takes over with a note instead.
+ * Null means: let the model reply.
  */
 export function requiredContactHoldReply(
   metadata: Record<string, unknown> | null | undefined,
@@ -101,7 +120,7 @@ export function requiredContactHoldReply(
   const required = requiredContactFields(metadata);
   if (!required.length || !visitorHasAsked(messages)) return null;
   const missing = required.filter((field) => !hasContactField(collected, field));
-  if (!missing.length) return null;
+  if (!missing.length || alreadyAskedFor(messages, missing[0])) return null;
 
   const started = messages.some(
     (message) => message.role === "assistant" && message.content.includes(HOLD_MARK),
@@ -111,15 +130,30 @@ export function requiredContactHoldReply(
   if (!started) {
     return `Thanks, I can help with that. I'll need your ${list} before I can go any further. ${question}`;
   }
-  return `I still need your ${list} before I can go any further. ${question}`;
+  return `Thanks. I'll just need your ${list} before I can go any further. ${question}`;
 }
 
-export function contactDetailsCompleteNote(
+/** Extra system note for the model about the required details. */
+export function requiredContactNote(
   metadata: Record<string, unknown> | null | undefined,
   collected: Record<string, unknown>,
+  messages: Array<{ role: string; content: string }>,
 ): string | null {
   const required = requiredContactFields(metadata);
-  if (!required.length || !requiredContactSatisfied(metadata, collected)) return null;
-  const phone = required.includes("phone") ? " Confirm the phone number once, then help them." : "";
-  return `The visitor has given their ${joinLabels(required)}. Answer the enquiry they asked.${phone} Do not ask for those details again, and do not treat any of them as optional.`;
+  if (!required.length || !visitorHasAsked(messages)) return null;
+  const enquiry = firstEnquiry(messages);
+  const asked = enquiry ? ` Their enquiry was: "${enquiry}". Deal with that now; do not ask them to repeat it or ask what it is about.` : "";
+
+  if (requiredContactSatisfied(metadata, collected)) {
+    const phone = required.includes("phone") ? " Confirm the phone number once, then help them." : "";
+    return `The visitor has given their ${joinLabels(required)}.${asked}${phone} Do not ask for those details again.`;
+  }
+
+  const missing = required.filter((field) => !hasContactField(collected, field));
+  return [
+    `Still missing: their ${joinLabels(missing)}.`,
+    "Read their last message carefully first. If it already contains the detail in an unusual format (a space inside an email address, a number split up with spaces or dashes), take it as given, repeat it back once to confirm, and ask for the next missing detail. Never ask for something they have already typed.",
+    "If what they typed is incomplete (a phone number that is too short, an email without the part after @), say exactly what looks wrong in a friendly way and ask them to check it.",
+    "If they would rather not give the phone number, explain briefly that the team uses it to follow up quickly and ask again in different words. Never repeat a sentence you have already used in this chat.",
+  ].join(" ") + asked;
 }

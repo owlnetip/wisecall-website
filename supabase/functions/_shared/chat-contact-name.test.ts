@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { extractChatName } from "./chat-contact-name.ts";
+import { extractChatName, extractEmail, nameAlongsideContact } from "./chat-contact-name.ts";
 
 Deno.test("real names are captured", () => {
   assertEquals(extractChatName("Hi my name is jane smith and I want to sell"), "Jane Smith");
@@ -43,4 +43,19 @@ Deno.test("a bare reply to a name question is the name", () => {
   assertEquals(bareNameReply("sam@example.com"), undefined);
   assertEquals(bareNameReply("07700 900491"), undefined);
   assertEquals(bareNameReply("I would rather not say"), undefined);
+});
+
+Deno.test("emails typed with stray spaces are still captured", () => {
+  assertEquals(extractEmail("Micheleaponton @gmail.com"), "Micheleaponton@gmail.com");
+  assertEquals(extractEmail("jane@ gmail .com"), "jane@gmail.com");
+  assertEquals(extractEmail("Jillmarshall66@hotmail.co.uk 07885670677"), "Jillmarshall66@hotmail.co.uk");
+  assertEquals(extractEmail("Email please"), undefined);
+});
+
+Deno.test("a name sent together with an email or phone is captured", () => {
+  assertEquals(nameAlongsideContact("Sanusi Ibrahim abusalma469@gmail.com 07553 985651"), "Sanusi Ibrahim");
+  assertEquals(nameAlongsideContact("Mania Zamanian/ zamanianmania@gmail.com / 07467485737"), "Mania Zamanian");
+  assertEquals(nameAlongsideContact("call me on 07700900461"), undefined);
+  assertEquals(nameAlongsideContact("Email me at a@b.com"), undefined);
+  assertEquals(nameAlongsideContact("yes 07700900461"), undefined);
 });

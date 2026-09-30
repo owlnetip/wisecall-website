@@ -1,7 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
-  contactDetailsCompleteNote,
   requiredContactHoldReply,
+  requiredContactNote,
   requiredContactSatisfied,
 } from "./chat-required-contact.ts";
 
@@ -61,11 +61,36 @@ Deno.test("with name, email and phone the chat can continue", () => {
   ];
   assertEquals(requiredContactHoldReply(meta, collected, messages), null);
   assertEquals(requiredContactSatisfied(meta, collected), true);
-  assertEquals((contactDetailsCompleteNote(meta, collected) || "").includes("not treat any of them as optional"), true);
+  const note = requiredContactNote(meta, collected, messages) || "";
+  assertEquals(note.includes("Do not ask for those details again"), true);
+  assertEquals(note.includes('"I want to sell my house"'), true);
 });
 
 Deno.test("agents without the setting are unchanged", () => {
   const messages = [{ role: "user", content: "I want to sell my house" }];
   assertEquals(requiredContactHoldReply({}, {}, messages), null);
   assertEquals(requiredContactSatisfied({}, {}), true);
+});
+
+Deno.test("a detail that didn't register is not asked with the same line twice", () => {
+  // 30 Sep: "Micheleaponton @gmail.com" wasn't parsed and the chat looped.
+  const messages = [
+    { role: "user", content: "Please call back call was disconnected" },
+    {
+      role: "assistant",
+      content:
+        "Thanks, I can help with that. I'll need your name, email address and phone number before I can go any further. What's your name?",
+    },
+    { role: "user", content: "Michele" },
+    {
+      role: "assistant",
+      content: "Thanks. I'll just need your email address and phone number before I can go any further. What's your email address?",
+    },
+    { role: "user", content: "something odd" },
+  ];
+  const collected = { contact_name: "Michele" };
+  assertEquals(requiredContactHoldReply(meta, collected, messages), null);
+  const note = requiredContactNote(meta, collected, messages) || "";
+  assertEquals(note.includes("Still missing: their email address and phone number"), true);
+  assertEquals(note.includes("Please call back call was disconnected"), true);
 });

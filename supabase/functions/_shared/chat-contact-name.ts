@@ -73,3 +73,50 @@ export function bareNameReply(message: string): string | undefined {
 export function agentAskedForName(lastAgentMessage: string): boolean {
   return /\b(your (full )?name|who am i speaking|may i (take|have) your name|can i (take|get|have) your name)\b/i.test(String(lastAgentMessage || ""));
 }
+
+const STRICT_EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+// Phone keyboards often put a space before "@" or around dots:
+// "Micheleaponton @gmail.com", "jane@ gmail .com".
+const SPACED_EMAIL = /[A-Z0-9._%+-]+\s*@\s*[A-Z0-9-]+(?:\s*\.\s*[A-Z0-9-]+)*\s*\.\s*[A-Z]{2,}\b/i;
+
+export function extractEmail(text: string): string | undefined {
+  const value = String(text || "");
+  const strict = value.match(STRICT_EMAIL)?.[0];
+  if (strict) return strict;
+  const spaced = value.match(SPACED_EMAIL)?.[0];
+  return spaced ? spaced.replace(/\s+/g, "") : undefined;
+}
+
+const PHONE = /(?:\+44|0)\s?[\d\s().-]{9,}/;
+
+export function extractPhone(text: string): string | undefined {
+  const raw = String(text || "").match(PHONE)?.[0];
+  return raw ? raw.replace(/[^\d+]/g, "") : undefined;
+}
+
+/**
+ * The name in a message that also carries an email or phone, e.g.
+ * "Sanusi Ibrahim abusalma469@gmail.com 07553 985651" or
+ * "Mania Zamanian / zamanianmania@gmail.com / 07467485737".
+ */
+export function nameAlongsideContact(message: string): string | undefined {
+  const text = String(message || "");
+  const email = text.match(STRICT_EMAIL)?.[0] || text.match(SPACED_EMAIL)?.[0];
+  const phone = text.match(PHONE)?.[0];
+  if (!email && !phone) return undefined;
+  let rest = text;
+  if (email) rest = rest.replace(email, " ");
+  if (phone) rest = rest.replace(phone, " ");
+  rest = rest.replace(/[\/|,;:&+]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!rest) return undefined;
+  // "call me on 0770...", "email me at ..." are not names.
+  const words = rest.toLowerCase().split(" ");
+  if (words.some((word) => STOP_WORDS.has(word) || NOT_NAME_START.has(word) || CONTACT_WORDS.has(word))) {
+    return undefined;
+  }
+  return bareNameReply(rest);
+}
+
+const CONTACT_WORDS = new Set([
+  "me", "call", "ring", "text", "reach", "contact", "mob", "tel", "or", "via", "best", "on", "is", "ok",
+]);

@@ -8,13 +8,20 @@ import {
 } from "../_shared/contact-memory.ts";
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
-import { agentAskedForName, bareNameReply, extractChatName } from "../_shared/chat-contact-name.ts";
+import {
+  agentAskedForName,
+  bareNameReply,
+  extractChatName,
+  extractEmail,
+  extractPhone,
+  nameAlongsideContact,
+} from "../_shared/chat-contact-name.ts";
 import { detectEnquiryType } from "../_shared/chat-enquiry-type.ts";
 import {
-  contactDetailsCompleteNote,
   requiredContactFields,
   requiredContactHoldReply,
-  requiredContactSatisfied,
+  requiredContactNote,
+  firstEnquiry,
 } from "../_shared/chat-required-contact.ts";
 
 type ChatRequest = {
@@ -160,9 +167,9 @@ function isPlausibleContactName(value: string): boolean {
 }
 
 function extractContactData(text: string) {
-  const email = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
-  const phone = text.match(/(?:\+44|0)\s?[\d\s().-]{9,}/)?.[0]?.replace(/[^\d+]/g, "");
-  const name = extractChatName(text);
+  const email = extractEmail(text);
+  const phone = extractPhone(text);
+  const name = extractChatName(text) || nameAlongsideContact(text);
 
   return compactObject({
     contact_email: email,
@@ -215,37 +222,12 @@ function emailWhenIdle(metadata: Record<string, unknown>): boolean {
   return metadata.live_chat_email_when_idle === true;
 }
 
-// Hold the team email until the required details are in. The portal treats
-// analysed_at / summary_email_sent as "already handled", so an unfinished
-// chat is marked that way and cleared again once name, email and phone exist.
-function requiredContactEmailHold(
-  profileMetadata: Record<string, unknown>,
-  collected: Record<string, unknown>,
-  metadata: Record<string, unknown>,
-): { metadata: Record<string, unknown>; analysedAt?: string | null } {
-  if (!requiredContactFields(profileMetadata).length) return { metadata };
-  if (requiredContactSatisfied(profileMetadata, collected)) {
-    if (metadata.required_contact_hold !== true) return { metadata };
-    const next = { ...metadata };
-    delete next.summary_email_sent;
-    delete next.required_contact_hold;
-    return { metadata: next, analysedAt: null };
-  }
-  return {
-    metadata: { ...metadata, summary_email_sent: true, required_contact_hold: true },
-    analysedAt: new Date().toISOString(),
-  };
-}
-
 function leadEmailReason(
   metadata: Record<string, unknown>,
   collected: any,
   transcript: string,
   options: { force?: boolean } = {},
 ) {
-  if (requiredContactFields(metadata).length && !requiredContactSatisfied(metadata, collected || {})) {
-    return null;
-  }
   if (!options.force && notifyOnCloseOnly(metadata)) return null;
   if (collected.contact_email || collected.contact_phone) return "contact_details";
   if (metadata.live_chat_notify_without_contact === false) return null;
@@ -277,12 +259,16 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "- Ask one clear question at a time.",
     "- Never say the visitor is calling, never offer SMS, and never say you will text them. This is website chat.",
     "- Do not invent bookings, viewing availability, fees, guarantees, opening hours, or legal advice.",
+    "- You only get to reply when the visitor sends a message, so you cannot go away and check. Never say 'one moment', 'let me check' or 'I'll look into that' as your whole reply: give the answer in the same message, or say plainly that you can't see it and what happens next.",
+    "- Before asking anything, read the whole conversation. Never ask for something the visitor has already told you (what they want, an address, a property, their name, email or phone). Refer back to it instead.",
     "",
     "Using knowledge:",
     "- ALWAYS attempt to answer or troubleshoot first. Do NOT jump straight to 'I'll pass this to the team' as your first response.",
     "- If a [KNOWLEDGE BASE] block is provided below, use it as the authoritative source and answer from it.",
     "- If a [PROPERTY BUDGET SEARCH] block is provided, use it for budget/property questions.",
     PROPERTY_BUDGET_PROMPT_RULES,
+    "- Properties and listings: only mention a property, address, price, bedroom count or reference number that appears in a [KNOWLEDGE BASE] or [PROPERTY BUDGET SEARCH] block, or that you already quoted from one earlier in this chat. Never make up example listings, addresses or reference numbers, even as a rough idea of what is available. If nothing provided matches the area, budget or property they asked about, say you can't see a matching listing right now and offer to have the team get in touch.",
+    "- If a visitor asks whether a specific property is still available and it is not in the provided listings, say you can't see it listed at the moment and the team will confirm. Do not ask them to prove or re-describe it.",
     "- If the question is not covered by the KB, use general knowledge to help, suggest troubleshooting steps, explain the issue, offer practical guidance.",
     "- Business facts are the exception: never use general knowledge or guess about this business's own fees, deposits, charges, prices, refunds, what is optional or required, guarantees, timescales, legal or contract terms. State only what the [KNOWLEDGE BASE] or [PROPERTY BUDGET SEARCH] says, keeping its wording, and do not add anything it doesn't say (for example, don't call something optional, free or refundable unless it says so).",
     "- If the knowledge base doesn't answer a question about the business's own fees or policies, say you don't want to give them the wrong information and that the team will confirm, then take their details. Never contradict an earlier answer; if you got something wrong, say so plainly and correct it.",
@@ -402,7 +388,11 @@ async function callOpenAi(
   const prompt = buildProfilePrompt(profile, profile?.metadata || {});
   const messages = [
     { role: "system", content: prompt },
-    ...(kbContext ? [{ role: "system", content: kbContext }] : []),
+    {
+      role: "system",
+      content: kbContext ||
+        "[NO KNOWLEDGE BASE MATCH] Nothing from the knowledge base matched this message. Do not name or list any property, address, price or reference number unless you already quoted it from the knowledge base earlier in this chat.",
+    },
     ...(memoryBlock ? [{ role: "system", content: memoryBlock }] : []),
     ...(contactNote ? [{ role: "system", content: contactNote }] : []),
     ...history.slice(-18).map((message) => ({
@@ -640,23 +630,21 @@ serve(async (req) => {
 
       const transcript = String(chatLog.transcript || "");
       const finishedAt = new Date().toISOString();
-      const held = requiredContactEmailHold(profile.metadata || {}, collected, {
-        ...(chatLog.metadata || {}),
-        collected,
-        visitor_metadata: {
-          ...(chatLog.metadata?.visitor_metadata || {}),
-          ...(body.metadata || {}),
-        },
-        last_page_url: body.page_url || chatLog.metadata?.page_url,
-        closed_at: finishedAt,
-      });
       const { data: updatedLog, error: updateError } = await supabase
         .from("wisecall_call_logs")
         .update({
           outcome: "live_chat_closed",
           finished_at: finishedAt,
-          ...(held.analysedAt !== undefined ? { analysed_at: held.analysedAt } : {}),
-          metadata: held.metadata,
+          metadata: {
+            ...(chatLog.metadata || {}),
+            collected,
+            visitor_metadata: {
+              ...(chatLog.metadata?.visitor_metadata || {}),
+              ...(body.metadata || {}),
+            },
+            last_page_url: body.page_url || chatLog.metadata?.page_url,
+            closed_at: finishedAt,
+          },
         })
         .eq("call_id", sessionId)
         .select("*")
@@ -677,13 +665,10 @@ serve(async (req) => {
         );
 
       const visitorSpoke = parseTranscript(transcript).some((m) => m.role === "user");
-      const contactReady = requiredContactSatisfied(profile.metadata || {}, collected);
-      if (updatedLog.id && contactReady && (emailSent || (idleMode && visitorSpoke))) {
+      if (updatedLog.id && (emailSent || (idleMode && visitorSpoke))) {
         void triggerPortalAnalysis(updatedLog.id as string);
       }
-      if (requiredContactSatisfied(profile.metadata || {}, collected)) {
-        runInBackground(syncChatLogToSalesforce(supabase, profile, sessionId));
-      }
+      runInBackground(syncChatLogToSalesforce(supabase, profile, sessionId));
 
       return jsonResponse({
         session_id: sessionId,
@@ -728,13 +713,18 @@ serve(async (req) => {
         .map((m) => m.content)
         .join(" ")
         .slice(-1500);
-      const kbContext = await fetchKbContext(profile.id, recentTurns || message);
+      // Collecting name/email/phone pushes the original question out of the last
+      // few turns, and without it the search finds no listings and the model
+      // invents some. Always search with the first real enquiry too.
+      const enquiry = firstEnquiry(history);
+      const kbQuery = enquiry && !recentTurns.includes(enquiry) ? `${enquiry} ${recentTurns}`.slice(-1500) : recentTurns;
+      const kbContext = await fetchKbContext(profile.id, kbQuery || message);
       const contactContext = await loadContactContext(supabase, profile.id, {
         phone: collected.contact_phone as string | undefined,
         email: collected.contact_email as string | undefined,
       });
       const memoryBlock = buildMemoryBlock(contactContext);
-      const contactNote = contactDetailsCompleteNote(profile.metadata || {}, collected);
+      const contactNote = requiredContactNote(profile.metadata || {}, collected, history);
       reply = (await callOpenAi(profile, history, kbContext, memoryBlock, contactNote)) ||
         fallbackReply(profile, collected);
     }
@@ -742,21 +732,19 @@ serve(async (req) => {
     const transcript = formatTranscript(updatedMessages);
 
     const summarySource = message.length > 180 ? `${message.slice(0, 177)}...` : message;
-    const held = requiredContactEmailHold(profile.metadata || {}, collected, {
-      ...(chatLog.metadata || {}),
-      collected,
-      channel: "chat",
-      last_page_url: body.page_url || chatLog.metadata?.page_url,
-      last_message_at: new Date().toISOString(),
-    });
     const updatePayload = {
       caller_id: collected.contact_email || collected.contact_phone || chatLog.caller_id || "website visitor",
       summary: summarySource || "Website live chat",
       outcome: "live_chat",
       transcript,
       finished_at: new Date().toISOString(),
-      ...(held.analysedAt !== undefined ? { analysed_at: held.analysedAt } : {}),
-      metadata: held.metadata,
+      metadata: {
+        ...(chatLog.metadata || {}),
+        collected,
+        channel: "chat",
+        last_page_url: body.page_url || chatLog.metadata?.page_url,
+        last_message_at: new Date().toISOString(),
+      },
     };
 
     const { data: updatedLog, error: updateError } = await supabase
@@ -813,10 +801,7 @@ serve(async (req) => {
     if (!idleMode && chatLog.id && (emailSent || collected.contact_email || collected.contact_phone)) {
       void triggerPortalAnalysis(chatLog.id as string);
     }
-    if (
-      requiredContactSatisfied(profile.metadata || {}, collected) &&
-      (collected.contact_email || collected.contact_phone)
-    ) {
+    if (collected.contact_email || collected.contact_phone) {
       runInBackground(syncChatLogToSalesforce(supabase, profile, chatLog.call_id as string));
     }
 
