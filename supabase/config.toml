@@ -82,3 +82,6 @@ verify_jwt = false
 
 [functions.kb-reembed]
 verify_jwt = true
+
+[functions.ops-alert-email]
+verify_jwt = true
