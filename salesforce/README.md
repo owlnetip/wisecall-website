@@ -66,3 +66,10 @@ Task creation is not idempotent after an uncertain network result.
   (plain value). Rotate all three together.
 - Portal production env points `SALESFORCE_*` at this sandbox and enables only
   the BetterMove profile.
+
+## Website chat leads (production)
+
+`WiseCall_Chat_Leads_Access` is the permission set for the chat integration user
+(create/edit Lead, read Contact, log Tasks, with the field access the chat writes).
+It mirrors the sandbox app `WiseCall_Website_Chat_Leads`. The user also needs an
+External Client App with the Client Credentials flow and that user as "run as".
