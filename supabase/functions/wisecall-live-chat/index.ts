@@ -10,6 +10,12 @@ import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/k
 import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
 import { agentAskedForName, bareNameReply, extractChatName } from "../_shared/chat-contact-name.ts";
 import { detectEnquiryType } from "../_shared/chat-enquiry-type.ts";
+import {
+  contactDetailsCompleteNote,
+  requiredContactFields,
+  requiredContactHoldReply,
+  requiredContactSatisfied,
+} from "../_shared/chat-required-contact.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -209,12 +215,37 @@ function emailWhenIdle(metadata: Record<string, unknown>): boolean {
   return metadata.live_chat_email_when_idle === true;
 }
 
+// Hold the team email until the required details are in. The portal treats
+// analysed_at / summary_email_sent as "already handled", so an unfinished
+// chat is marked that way and cleared again once name, email and phone exist.
+function requiredContactEmailHold(
+  profileMetadata: Record<string, unknown>,
+  collected: Record<string, unknown>,
+  metadata: Record<string, unknown>,
+): { metadata: Record<string, unknown>; analysedAt?: string | null } {
+  if (!requiredContactFields(profileMetadata).length) return { metadata };
+  if (requiredContactSatisfied(profileMetadata, collected)) {
+    if (metadata.required_contact_hold !== true) return { metadata };
+    const next = { ...metadata };
+    delete next.summary_email_sent;
+    delete next.required_contact_hold;
+    return { metadata: next, analysedAt: null };
+  }
+  return {
+    metadata: { ...metadata, summary_email_sent: true, required_contact_hold: true },
+    analysedAt: new Date().toISOString(),
+  };
+}
+
 function leadEmailReason(
   metadata: Record<string, unknown>,
   collected: any,
   transcript: string,
   options: { force?: boolean } = {},
 ) {
+  if (requiredContactFields(metadata).length && !requiredContactSatisfied(metadata, collected || {})) {
+    return null;
+  }
   if (!options.force && notifyOnCloseOnly(metadata)) return null;
   if (collected.contact_email || collected.contact_phone) return "contact_details";
   if (metadata.live_chat_notify_without_contact === false) return null;
@@ -274,6 +305,16 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
   // Chat-only instructions; system_prompt is shared with the phone agent.
   if (typeof metadata.chat_instructions === "string" && metadata.chat_instructions.trim()) {
     sections.push("", "Website chat instructions:", metadata.chat_instructions.trim());
+  }
+
+  if (requiredContactFields(metadata).length) {
+    sections.push(
+      "",
+      "Required contact details:",
+      "- Once the visitor has asked a question or explained the enquiry, their name, email address and phone number are all required.",
+      "- Do not answer the enquiry, book anything, or pass it to the team until every one of those details has been given.",
+      "- The phone number is mandatory. If they skip it or would rather not give it, ask again. Do not continue without it.",
+    );
   }
 
   if (qualificationQuestions) {
@@ -353,6 +394,7 @@ async function callOpenAi(
   history: ChatMessage[],
   kbContext: string | null,
   memoryBlock: string,
+  contactNote: string | null,
 ) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return null;
@@ -362,6 +404,7 @@ async function callOpenAi(
     { role: "system", content: prompt },
     ...(kbContext ? [{ role: "system", content: kbContext }] : []),
     ...(memoryBlock ? [{ role: "system", content: memoryBlock }] : []),
+    ...(contactNote ? [{ role: "system", content: contactNote }] : []),
     ...history.slice(-18).map((message) => ({
       role: message.role === "assistant" ? "assistant" : "user",
       content: message.content,
@@ -597,21 +640,23 @@ serve(async (req) => {
 
       const transcript = String(chatLog.transcript || "");
       const finishedAt = new Date().toISOString();
+      const held = requiredContactEmailHold(profile.metadata || {}, collected, {
+        ...(chatLog.metadata || {}),
+        collected,
+        visitor_metadata: {
+          ...(chatLog.metadata?.visitor_metadata || {}),
+          ...(body.metadata || {}),
+        },
+        last_page_url: body.page_url || chatLog.metadata?.page_url,
+        closed_at: finishedAt,
+      });
       const { data: updatedLog, error: updateError } = await supabase
         .from("wisecall_call_logs")
         .update({
           outcome: "live_chat_closed",
           finished_at: finishedAt,
-          metadata: {
-            ...(chatLog.metadata || {}),
-            collected,
-            visitor_metadata: {
-              ...(chatLog.metadata?.visitor_metadata || {}),
-              ...(body.metadata || {}),
-            },
-            last_page_url: body.page_url || chatLog.metadata?.page_url,
-            closed_at: finishedAt,
-          },
+          ...(held.analysedAt !== undefined ? { analysed_at: held.analysedAt } : {}),
+          metadata: held.metadata,
         })
         .eq("call_id", sessionId)
         .select("*")
@@ -632,10 +677,13 @@ serve(async (req) => {
         );
 
       const visitorSpoke = parseTranscript(transcript).some((m) => m.role === "user");
-      if (updatedLog.id && (emailSent || (idleMode && visitorSpoke))) {
+      const contactReady = requiredContactSatisfied(profile.metadata || {}, collected);
+      if (updatedLog.id && contactReady && (emailSent || (idleMode && visitorSpoke))) {
         void triggerPortalAnalysis(updatedLog.id as string);
       }
-      runInBackground(syncChatLogToSalesforce(supabase, profile, sessionId));
+      if (requiredContactSatisfied(profile.metadata || {}, collected)) {
+        runInBackground(syncChatLogToSalesforce(supabase, profile, sessionId));
+      }
 
       return jsonResponse({
         session_id: sessionId,
@@ -669,39 +717,46 @@ serve(async (req) => {
     const enquiryType = detectEnquiryType(message, collected.enquiry_type);
     if (enquiryType) (collected as Record<string, unknown>).enquiry_type = enquiryType;
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
-    // Build the KB search query from recent turns of BOTH roles: a follow-up like
-    // "yes give me details" only carries meaning through the assistant turn that
-    // named the thing ("that property"), so user-only context misses the referent.
-    const recentTurns = history
-      .slice(-6)
-      .map((m) => m.content)
-      .join(" ")
-      .slice(-1500);
-    const kbContext = await fetchKbContext(profile.id, recentTurns || message);
-    const contactContext = await loadContactContext(supabase, profile.id, {
-      phone: collected.contact_phone as string | undefined,
-      email: collected.contact_email as string | undefined,
-    });
-    const memoryBlock = buildMemoryBlock(contactContext);
-    const reply =
-      (await callOpenAi(profile, history, kbContext, memoryBlock)) || fallbackReply(profile, collected);
+    const holdReply = requiredContactHoldReply(profile.metadata || {}, collected, history);
+    let reply = holdReply;
+    if (!reply) {
+      // Build the KB search query from recent turns of BOTH roles: a follow-up like
+      // "yes give me details" only carries meaning through the assistant turn that
+      // named the thing ("that property"), so user-only context misses the referent.
+      const recentTurns = history
+        .slice(-6)
+        .map((m) => m.content)
+        .join(" ")
+        .slice(-1500);
+      const kbContext = await fetchKbContext(profile.id, recentTurns || message);
+      const contactContext = await loadContactContext(supabase, profile.id, {
+        phone: collected.contact_phone as string | undefined,
+        email: collected.contact_email as string | undefined,
+      });
+      const memoryBlock = buildMemoryBlock(contactContext);
+      const contactNote = contactDetailsCompleteNote(profile.metadata || {}, collected);
+      reply = (await callOpenAi(profile, history, kbContext, memoryBlock, contactNote)) ||
+        fallbackReply(profile, collected);
+    }
     const updatedMessages = [...history, { role: "assistant", content: reply } as ChatMessage];
     const transcript = formatTranscript(updatedMessages);
 
     const summarySource = message.length > 180 ? `${message.slice(0, 177)}...` : message;
+    const held = requiredContactEmailHold(profile.metadata || {}, collected, {
+      ...(chatLog.metadata || {}),
+      collected,
+      channel: "chat",
+      last_page_url: body.page_url || chatLog.metadata?.page_url,
+      last_message_at: new Date().toISOString(),
+    });
     const updatePayload = {
       caller_id: collected.contact_email || collected.contact_phone || chatLog.caller_id || "website visitor",
       summary: summarySource || "Website live chat",
       outcome: "live_chat",
       transcript,
       finished_at: new Date().toISOString(),
-      metadata: {
-        ...(chatLog.metadata || {}),
-        collected,
-        channel: "chat",
-        last_page_url: body.page_url || chatLog.metadata?.page_url,
-        last_message_at: new Date().toISOString(),
-      },
+      ...(held.analysedAt !== undefined ? { analysed_at: held.analysedAt } : {}),
+      metadata: held.metadata,
     };
 
     const { data: updatedLog, error: updateError } = await supabase
@@ -758,7 +813,10 @@ serve(async (req) => {
     if (!idleMode && chatLog.id && (emailSent || collected.contact_email || collected.contact_phone)) {
       void triggerPortalAnalysis(chatLog.id as string);
     }
-    if (collected.contact_email || collected.contact_phone) {
+    if (
+      requiredContactSatisfied(profile.metadata || {}, collected) &&
+      (collected.contact_email || collected.contact_phone)
+    ) {
       runInBackground(syncChatLogToSalesforce(supabase, profile, chatLog.call_id as string));
     }
 
