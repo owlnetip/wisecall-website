@@ -33,6 +33,16 @@ const NAME_BLOCK = new Set([
   "thank",
   "you",
   "please",
+  // Chat read-backs are often "just to confirm, your phone number is 0113...".
+  "phone",
+  "mobile",
+  "email",
+  "address",
+  "postcode",
+  "is",
+  "are",
+  "was",
+  "be",
 ]);
 
 const COMPANY_BLOCK = new Set([
@@ -146,6 +156,8 @@ export function extractSpelledCompany(text: string): string | null {
 export function cleanPersonName(raw: string): string | null {
   let value = raw.replace(/^(?:it'?s|this is|i am|i'm|my name is)\s+/i, "").trim();
   value = value.split(/\b(?:and|from|with|calling|about|here|at|on)\b|[,.!?;]/i)[0] ?? "";
+  // A read-back of a number or address is not a name, however the words fall.
+  if (/\d|@|\b(?:phone|mobile|email|e-mail|number|address|postcode)\b/i.test(value)) return null;
   const words = value
     .trim()
     .split(/\s+/)

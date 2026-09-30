@@ -123,3 +123,25 @@ test("older analyses without a confidence field stay readable", () => {
     "Jamada Restrepo",
   );
 });
+
+test("a chat read-back of the phone number is not a caller name", () => {
+  // 30 Sep: "Just to confirm, your phone number is 01132863299?" became "Phone Is".
+  const chat = [
+    "Visitor: luke , luke@exceltelecom.co.uk , 01132863299",
+    "WiseCall: Thanks, Luke. Just to confirm, your phone number is 01132863299?",
+    "Visitor: yes",
+  ].join("\n");
+  assert.equal(preferConfirmedCallerName("Luke", chat), "Luke");
+  assert.equal(preferConfirmedCallerName("", chat), "");
+  assert.equal(
+    preferConfirmedCallerName("Jane Smith", "Agent: Just to confirm, your email address is jane@example.com?"),
+    "Jane Smith",
+  );
+});
+
+test("a voice read-back of the name still works", () => {
+  assert.equal(
+    preferConfirmedCallerName("", "Agent: Just to confirm, I'm speaking with Alana Shaw."),
+    "Alana Shaw",
+  );
+});
