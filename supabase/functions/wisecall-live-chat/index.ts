@@ -8,8 +8,21 @@ import {
 } from "../_shared/contact-memory.ts";
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
-import { agentAskedForName, bareNameReply, extractChatName } from "../_shared/chat-contact-name.ts";
+import {
+  agentAskedForName,
+  bareNameReply,
+  extractChatName,
+  extractEmail,
+  extractPhone,
+  nameAlongsideContact,
+} from "../_shared/chat-contact-name.ts";
 import { detectEnquiryType } from "../_shared/chat-enquiry-type.ts";
+import {
+  requiredContactFields,
+  requiredContactHoldReply,
+  requiredContactNote,
+  firstEnquiry,
+} from "../_shared/chat-required-contact.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -154,9 +167,9 @@ function isPlausibleContactName(value: string): boolean {
 }
 
 function extractContactData(text: string) {
-  const email = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
-  const phone = text.match(/(?:\+44|0)\s?[\d\s().-]{9,}/)?.[0]?.replace(/[^\d+]/g, "");
-  const name = extractChatName(text);
+  const email = extractEmail(text);
+  const phone = extractPhone(text);
+  const name = extractChatName(text) || nameAlongsideContact(text);
 
   return compactObject({
     contact_email: email,
@@ -246,12 +259,16 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "- Ask one clear question at a time.",
     "- Never say the visitor is calling, never offer SMS, and never say you will text them. This is website chat.",
     "- Do not invent bookings, viewing availability, fees, guarantees, opening hours, or legal advice.",
+    "- You only get to reply when the visitor sends a message, so you cannot go away and check. Never say 'one moment', 'let me check' or 'I'll look into that' as your whole reply: give the answer in the same message, or say plainly that you can't see it and what happens next.",
+    "- Before asking anything, read the whole conversation. Never ask for something the visitor has already told you (what they want, an address, a property, their name, email or phone). Refer back to it instead.",
     "",
     "Using knowledge:",
     "- ALWAYS attempt to answer or troubleshoot first. Do NOT jump straight to 'I'll pass this to the team' as your first response.",
     "- If a [KNOWLEDGE BASE] block is provided below, use it as the authoritative source and answer from it.",
     "- If a [PROPERTY BUDGET SEARCH] block is provided, use it for budget/property questions.",
     PROPERTY_BUDGET_PROMPT_RULES,
+    "- Properties and listings: only mention a property, address, price, bedroom count or reference number that appears in a [KNOWLEDGE BASE] or [PROPERTY BUDGET SEARCH] block, or that you already quoted from one earlier in this chat. Never make up example listings, addresses or reference numbers, even as a rough idea of what is available. If nothing provided matches the area, budget or property they asked about, say you can't see a matching listing right now and offer to have the team get in touch.",
+    "- If a visitor asks whether a specific property is still available and it is not in the provided listings, say you can't see it listed at the moment and the team will confirm. Do not ask them to prove or re-describe it.",
     "- If the question is not covered by the KB, use general knowledge to help, suggest troubleshooting steps, explain the issue, offer practical guidance.",
     "- Business facts are the exception: never use general knowledge or guess about this business's own fees, deposits, charges, prices, refunds, what is optional or required, guarantees, timescales, legal or contract terms. State only what the [KNOWLEDGE BASE] or [PROPERTY BUDGET SEARCH] says, keeping its wording, and do not add anything it doesn't say (for example, don't call something optional, free or refundable unless it says so).",
     "- If the knowledge base doesn't answer a question about the business's own fees or policies, say you don't want to give them the wrong information and that the team will confirm, then take their details. Never contradict an earlier answer; if you got something wrong, say so plainly and correct it.",
@@ -274,6 +291,16 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
   // Chat-only instructions; system_prompt is shared with the phone agent.
   if (typeof metadata.chat_instructions === "string" && metadata.chat_instructions.trim()) {
     sections.push("", "Website chat instructions:", metadata.chat_instructions.trim());
+  }
+
+  if (requiredContactFields(metadata).length) {
+    sections.push(
+      "",
+      "Required contact details:",
+      "- Once the visitor has asked a question or explained the enquiry, their name, email address and phone number are all required.",
+      "- Do not answer the enquiry, book anything, or pass it to the team until every one of those details has been given.",
+      "- The phone number is mandatory. If they skip it or would rather not give it, ask again. Do not continue without it.",
+    );
   }
 
   if (qualificationQuestions) {
@@ -353,6 +380,7 @@ async function callOpenAi(
   history: ChatMessage[],
   kbContext: string | null,
   memoryBlock: string,
+  contactNote: string | null,
 ) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return null;
@@ -360,8 +388,13 @@ async function callOpenAi(
   const prompt = buildProfilePrompt(profile, profile?.metadata || {});
   const messages = [
     { role: "system", content: prompt },
-    ...(kbContext ? [{ role: "system", content: kbContext }] : []),
+    {
+      role: "system",
+      content: kbContext ||
+        "[NO KNOWLEDGE BASE MATCH] Nothing from the knowledge base matched this message. Do not name or list any property, address, price or reference number unless you already quoted it from the knowledge base earlier in this chat.",
+    },
     ...(memoryBlock ? [{ role: "system", content: memoryBlock }] : []),
+    ...(contactNote ? [{ role: "system", content: contactNote }] : []),
     ...history.slice(-18).map((message) => ({
       role: message.role === "assistant" ? "assistant" : "user",
       content: message.content,
@@ -669,22 +702,32 @@ serve(async (req) => {
     const enquiryType = detectEnquiryType(message, collected.enquiry_type);
     if (enquiryType) (collected as Record<string, unknown>).enquiry_type = enquiryType;
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
-    // Build the KB search query from recent turns of BOTH roles: a follow-up like
-    // "yes give me details" only carries meaning through the assistant turn that
-    // named the thing ("that property"), so user-only context misses the referent.
-    const recentTurns = history
-      .slice(-6)
-      .map((m) => m.content)
-      .join(" ")
-      .slice(-1500);
-    const kbContext = await fetchKbContext(profile.id, recentTurns || message);
-    const contactContext = await loadContactContext(supabase, profile.id, {
-      phone: collected.contact_phone as string | undefined,
-      email: collected.contact_email as string | undefined,
-    });
-    const memoryBlock = buildMemoryBlock(contactContext);
-    const reply =
-      (await callOpenAi(profile, history, kbContext, memoryBlock)) || fallbackReply(profile, collected);
+    const holdReply = requiredContactHoldReply(profile.metadata || {}, collected, history);
+    let reply = holdReply;
+    if (!reply) {
+      // Build the KB search query from recent turns of BOTH roles: a follow-up like
+      // "yes give me details" only carries meaning through the assistant turn that
+      // named the thing ("that property"), so user-only context misses the referent.
+      const recentTurns = history
+        .slice(-6)
+        .map((m) => m.content)
+        .join(" ")
+        .slice(-1500);
+      // Collecting name/email/phone pushes the original question out of the last
+      // few turns, and without it the search finds no listings and the model
+      // invents some. Always search with the first real enquiry too.
+      const enquiry = firstEnquiry(history);
+      const kbQuery = enquiry && !recentTurns.includes(enquiry) ? `${enquiry} ${recentTurns}`.slice(-1500) : recentTurns;
+      const kbContext = await fetchKbContext(profile.id, kbQuery || message);
+      const contactContext = await loadContactContext(supabase, profile.id, {
+        phone: collected.contact_phone as string | undefined,
+        email: collected.contact_email as string | undefined,
+      });
+      const memoryBlock = buildMemoryBlock(contactContext);
+      const contactNote = requiredContactNote(profile.metadata || {}, collected, history);
+      reply = (await callOpenAi(profile, history, kbContext, memoryBlock, contactNote)) ||
+        fallbackReply(profile, collected);
+    }
     const updatedMessages = [...history, { role: "assistant", content: reply } as ChatMessage];
     const transcript = formatTranscript(updatedMessages);
 
