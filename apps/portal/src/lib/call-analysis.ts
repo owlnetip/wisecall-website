@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getServiceSupabase } from "@/lib/supabase";
 import {
   isLiveChatLog,
+  liveChatRequiredContactMissing,
   sendPostCallEmailForLog,
   syncFollowUpsFromAnalysis,
 } from "@/lib/follow-ups-sync";
@@ -624,6 +625,7 @@ export async function analyseMissedRecentCalls(opts: {
   // gone quiet (metadata.live_chat_email_when_idle), measured from the last message.
   const chatProfileIds = [...new Set(candidates.filter((r) => isLiveChatLog(r)).map((r) => r.profile_id as string))];
   const idleChatProfiles = new Set<string>();
+  const chatProfileMeta = new Map<string, unknown>();
   if (chatProfileIds.length) {
     const { data: profiles } = await supabase
       .from("wisecall_profiles")
@@ -631,6 +633,7 @@ export async function analyseMissedRecentCalls(opts: {
       .in("id", chatProfileIds);
     for (const p of profiles ?? []) {
       const meta = (p.metadata ?? {}) as Record<string, unknown>;
+      chatProfileMeta.set(p.id as string, meta);
       if (meta.live_chat_email_when_idle === true) idleChatProfiles.add(p.id as string);
     }
   }
@@ -638,6 +641,7 @@ export async function analyseMissedRecentCalls(opts: {
   const rows = candidates.filter((r) => {
     if (isLiveChatLog(r)) {
       if (!idleChatProfiles.has(r.profile_id as string)) return false;
+      if (liveChatRequiredContactMissing(chatProfileMeta.get(r.profile_id as string), r.metadata)) return false;
       const last = Date.parse(String((r.metadata ?? {}).last_message_at ?? (r.metadata ?? {}).closed_at ?? ""));
       return Number.isFinite(last) && last <= Date.parse(newest);
     }

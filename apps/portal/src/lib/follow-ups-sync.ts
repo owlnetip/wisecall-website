@@ -53,6 +53,27 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+const REQUIRED_CONTACT_KEYS: Record<string, string> = {
+  name: "contact_name",
+  email: "contact_email",
+  phone: "contact_phone",
+};
+
+/** True when this chat is waiting on details the agent marked mandatory. */
+export function liveChatRequiredContactMissing(profileMetadata: unknown, logMetadata: unknown): boolean {
+  if (!isPlainObject(profileMetadata)) return false;
+  const raw = profileMetadata.live_chat_required_contact;
+  if (!Array.isArray(raw) || raw.length === 0) return false;
+  const logMeta = isPlainObject(logMetadata) ? logMetadata : {};
+  const collected = isPlainObject(logMeta.collected) ? logMeta.collected : {};
+  return raw.some((field) => {
+    const key = REQUIRED_CONTACT_KEYS[String(field)];
+    if (!key) return false;
+    const value = collected[key];
+    return typeof value !== "string" || value.trim().length === 0;
+  });
+}
+
 export function isLiveChatLog(log: {
   call_id?: string | null;
   metadata?: unknown;
@@ -212,6 +233,17 @@ export async function sendPostCallEmailForLog(
 
   if (isLiveChatLog(log) && !actionItems.length && !(await emailsChatWhenIdle(log.profile_id))) {
     return { ok: true, skipped: "live_chat_no_follow_ups" };
+  }
+
+  if (isLiveChatLog(log)) {
+    const { data: contactProfile } = await supabase
+      .from("wisecall_profiles")
+      .select("metadata")
+      .eq("id", log.profile_id)
+      .maybeSingle();
+    if (liveChatRequiredContactMissing(contactProfile?.metadata, log.metadata)) {
+      return { ok: true, skipped: "required_contact_missing" };
+    }
   }
 
   // Agents with an after_call rule pointing at wisecall-email-summary already
