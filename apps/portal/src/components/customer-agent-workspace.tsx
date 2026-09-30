@@ -114,6 +114,7 @@ import { SupportChatPanel } from "./support-chat-panel";
 import { SetupWizard, type WizardResult } from "./setup-wizard";
 import type { AgentDraft } from "@/app/actions/wizard";
 import { impersonateCustomerForm, stopImpersonating } from "@/app/actions/admin";
+import { SyncMorNamesButton } from "@/components/sync-mor-names-button";
 import { filterRowsByAgent, visibleInboxProfileIds } from "@/lib/inbox-scope";
 import { OutboundManager } from "@/components/outbound-manager";
 import { AgentPreviewModal } from "./agent-preview-modal";
@@ -2011,6 +2012,7 @@ export function CustomerAgentWorkspace({
                       <Mail className="h-5 w-5 flex-shrink-0" />
                       Dental outreach
                     </a>
+                    <SyncMorNamesButton />
                   </>
                 ) : (
                   isAdmin && (
@@ -2122,6 +2124,7 @@ export function CustomerAgentWorkspace({
                   <Mail className="h-5 w-5 flex-shrink-0" />
                   Dental outreach
                 </a>
+                <SyncMorNamesButton />
               </>
             ) : (
               isAdmin && (

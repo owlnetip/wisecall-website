@@ -144,6 +144,41 @@ function morProvisionHeaders(serviceRoleKey: string): Record<string, string> {
   return headers;
 }
 
+async function syncMorAgentDisplayName(profileId?: string): Promise<{
+  ok: boolean;
+  updated?: number;
+  error?: string;
+}> {
+  const config = getSupabaseConfig();
+  if (!config) return { ok: false, error: "Supabase not configured." };
+  try {
+    const fnRes = await fetch(`${config.url}/functions/v1/wisecall-provision-mor-agent`, {
+      method: "POST",
+      headers: morProvisionHeaders(config.serviceRoleKey),
+      body: JSON.stringify(
+        profileId
+          ? { profile_id: profileId, sync_name_only: true }
+          : { sync_name_only: true },
+      ),
+    });
+    const fnBody = (await fnRes.json().catch(() => ({}))) as {
+      ok?: boolean;
+      updated?: number;
+      error?: string;
+      failed?: { profileId: string; error: string }[];
+    };
+    if (!fnBody.ok) {
+      const failed = Array.isArray(fnBody.failed) && fnBody.failed[0]?.error
+        ? fnBody.failed[0].error
+        : fnBody.error || `MOR name sync failed (${fnRes.status})`;
+      return { ok: false, updated: fnBody.updated, error: failed };
+    }
+    return { ok: true, updated: fnBody.updated };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+}
+
 // Creates a brand-new agent owned by the signed-in user. The first real DDI for
 // an owner is included and goes live when assignment succeeds. Extra numbered
 // agents stay in setup until an additional number is provisioned/charged.
@@ -598,6 +633,17 @@ export async function updateAgent(
     });
   }
 
+  if (patch.name !== undefined || patch.businessName !== undefined) {
+    const provider = routingProviderFromMetadata(nextMetadata);
+    if (provider === "mor_sip" || provider === "mor_openai") {
+      void syncMorAgentDisplayName(agentId).then((result) => {
+        if (!result.ok) {
+          console.warn("[updateAgent] MOR name sync failed:", result.error);
+        }
+      });
+    }
+  }
+
   revalidatePath("/dashboard");
   return { ok: true };
 }
@@ -901,6 +947,23 @@ export async function provisionNumber(agentId: string): Promise<ProvisionResult>
   //     .eq("metadata->>owner_id", user.id);
   //   revalidatePath("/dashboard");
   //   return { ok: true, routing };
+}
+
+// Pushes WiseCall agent names onto existing MOR users so the PBX Users list
+// shows the agent/business name instead of every row saying "WiseCall Agent".
+// Admin-only; omit agentId to rename every assigned MOR user.
+export async function syncMorAgentNames(agentId?: string): Promise<{
+  ok: boolean;
+  updated?: number;
+  error?: string;
+}> {
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+  if (!isAdmin(user)) return { ok: false, error: "Admins only." };
+  return syncMorAgentDisplayName(agentId);
 }
 
 // Lightweight poll used by the portal to detect when a pending agent's number
