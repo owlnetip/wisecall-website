@@ -21,13 +21,22 @@ const LABEL: Record<RequiredContactField, string> = {
   phone: "phone number",
 };
 
+// One friendly question at a time. Each ask is distinctive so we can tell the
+// fixed-wording ask was already used (see alreadyAskedFor).
 const ASK: Record<RequiredContactField, string> = {
+  name: "Can I take your name first?",
+  email: "What's the best email address for you?",
+  phone: "What's the best phone number to reach you on?",
+};
+
+// Wording used before 1 Oct 2026, so chats already in progress at deploy time
+// aren't asked the same thing twice.
+const LEGACY_HOLD_MARK = "before I can go any further";
+const LEGACY_ASK: Record<RequiredContactField, string> = {
   name: "What's your name?",
   email: "What's your email address?",
   phone: "What's the best phone number to reach you on?",
 };
-
-const HOLD_MARK = "before I can go any further";
 
 export function requiredContactFields(
   metadata: Record<string, unknown> | null | undefined,
@@ -101,8 +110,13 @@ function alreadyAskedFor(
 ): boolean {
   return messages.some(
     (message) =>
-      message.role === "assistant" && message.content.includes(HOLD_MARK) && message.content.includes(ASK[field]),
+      message.role === "assistant" && alreadyAskedForOne(message.content, field),
   );
+}
+
+function firstName(collected: Record<string, unknown>): string {
+  const name = typeof collected.contact_name === "string" ? collected.contact_name.trim() : "";
+  return name.split(/\s+/)[0] || "";
 }
 
 /**
@@ -122,15 +136,17 @@ export function requiredContactHoldReply(
   const missing = required.filter((field) => !hasContactField(collected, field));
   if (!missing.length || alreadyAskedFor(messages, missing[0])) return null;
 
-  const started = messages.some(
-    (message) => message.role === "assistant" && message.content.includes(HOLD_MARK),
+  const field = missing[0];
+  const askedBefore = messages.some(
+    (message) => message.role === "assistant" && ORDER.some((f) => alreadyAskedForOne(message.content, f)),
   );
-  const question = ASK[missing[0]];
-  const list = joinLabels(missing);
-  if (!started) {
-    return `Thanks, I can help with that. I'll need your ${list} before I can go any further. ${question}`;
-  }
-  return `Thanks. I'll just need your ${list} before I can go any further. ${question}`;
+  if (!askedBefore) return `Happy to help with that. ${ASK[field]}`;
+  const name = firstName(collected);
+  return `${name ? `Thanks, ${name}.` : "Thanks."} ${ASK[field]}`;
+}
+
+function alreadyAskedForOne(content: string, field: RequiredContactField): boolean {
+  return content.includes(ASK[field]) || (content.includes(LEGACY_HOLD_MARK) && content.includes(LEGACY_ASK[field]));
 }
 
 /** Extra system note for the model about the required details. */
