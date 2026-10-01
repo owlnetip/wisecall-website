@@ -21,9 +21,8 @@ Deno.test("once they ask, name email and phone are required before an answer", (
     { role: "user", content: "I want to sell my house in Leeds" },
   ];
   const reply = requiredContactHoldReply(meta, {}, messages) || "";
-  assertEquals(reply.includes("before I can go any further"), true);
-  assertEquals(reply.includes("What's your name?"), true);
-  assertEquals(reply.includes("phone number"), true);
+  // One friendly question, not a list of demands (1 Oct: a visitor left after that).
+  assertEquals(reply, "Happy to help with that. Can I take your name first?");
   assertEquals(requiredContactSatisfied(meta, {}), false);
 });
 
@@ -93,4 +92,35 @@ Deno.test("a detail that didn't register is not asked with the same line twice",
   const note = requiredContactNote(meta, collected, messages) || "";
   assertEquals(note.includes("Still missing: their email address and phone number"), true);
   assertEquals(note.includes("Please call back call was disconnected"), true);
+});
+
+Deno.test("details are asked one at a time, using their name", () => {
+  const first = [{ role: "user", content: "How does selling to you work?" }];
+  assertEquals(requiredContactHoldReply(meta, {}, first), "Happy to help with that. Can I take your name first?");
+  const second = [
+    ...first,
+    { role: "assistant", content: "Happy to help with that. Can I take your name first?" },
+    { role: "user", content: "Jane Smith" },
+  ];
+  assertEquals(
+    requiredContactHoldReply(meta, { contact_name: "Jane Smith" }, second),
+    "Thanks, Jane. What's the best email address for you?",
+  );
+  const third = [
+    ...second,
+    { role: "assistant", content: "Thanks, Jane. What's the best email address for you?" },
+    { role: "user", content: "jane@example.com" },
+  ];
+  assertEquals(
+    requiredContactHoldReply(meta, { contact_name: "Jane Smith", contact_email: "jane@example.com" }, third),
+    "Thanks, Jane. What's the best phone number to reach you on?",
+  );
+});
+
+Deno.test("a visitor who gives their name up front is asked for the email straight away", () => {
+  const messages = [{ role: "user", content: "Hi I'm Tom and I want to sell my flat" }];
+  assertEquals(
+    requiredContactHoldReply(meta, { contact_name: "Tom" }, messages),
+    "Happy to help with that. What's the best email address for you?",
+  );
 });
