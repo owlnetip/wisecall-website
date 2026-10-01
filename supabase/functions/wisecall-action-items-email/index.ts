@@ -215,6 +215,7 @@ serve(async (req) => {
       agentName ||
       logAgentName ||
       "WiseCall",
+    propertyAddress: typeof collected.property_address === "string" ? collected.property_address : "",
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);

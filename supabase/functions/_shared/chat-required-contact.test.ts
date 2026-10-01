@@ -1,5 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  extractPropertyAddress,
+  hasPostcode,
   requiredContactHoldReply,
   requiredContactNote,
   requiredContactSatisfied,
@@ -123,4 +125,49 @@ Deno.test("a visitor who gives their name up front is asked for the email straig
     requiredContactHoldReply(meta, { contact_name: "Tom" }, messages),
     "Happy to help with that. What's the best email address for you?",
   );
+});
+
+const sellerMeta = { live_chat_required_contact: ["name", "email", "phone", "seller_address"] };
+const details = { contact_name: "Jane Smith", contact_email: "jane@example.com", contact_phone: "07700900461" };
+
+Deno.test("sellers are asked for the property address after their contact details", () => {
+  const messages = [{ role: "user", content: "I want to sell my house" }];
+  assertEquals(
+    requiredContactHoldReply(sellerMeta, { ...details, enquiry_type: "seller" }, messages),
+    "Happy to help with that. What's the address of the property you're selling, including the postcode?",
+  );
+  assertEquals(requiredContactSatisfied(sellerMeta, { ...details, enquiry_type: "seller" }), false);
+  assertEquals(
+    requiredContactSatisfied(sellerMeta, { ...details, enquiry_type: "seller", property_address: "30 Orchard Gardens, Hereford HR1 1AA" }),
+    true,
+  );
+});
+
+Deno.test("buyers and general enquiries are not asked for a property address", () => {
+  const messages = [{ role: "user", content: "Do you have 3 bed houses in Leeds?" }];
+  assertEquals(requiredContactHoldReply(sellerMeta, { ...details, enquiry_type: "buyer" }, messages), null);
+  assertEquals(requiredContactSatisfied(sellerMeta, { ...details, enquiry_type: "general" }), true);
+});
+
+Deno.test("the address is taken from the reply to the question, or any postcode", () => {
+  const asked = "Thanks, Jane. What's the address of the property you're selling, including the postcode?";
+  assertEquals(extractPropertyAddress("30 Orchard Gardens Hereford", asked), "30 Orchard Gardens Hereford");
+  assertEquals(extractPropertyAddress("95 canonbury road en1 3 LP", ""), "95 canonbury road en1 3 LP");
+  assertEquals(extractPropertyAddress("yes", asked), undefined);
+  assertEquals(extractPropertyAddress("I'd rather talk to someone first", asked), undefined);
+  assertEquals(extractPropertyAddress("I want to sell my house", ""), undefined);
+});
+
+Deno.test("an address without a postcode gets one follow-up for it", () => {
+  const collected = { ...details, enquiry_type: "seller", property_address: "30 Orchard Gardens Hereford" };
+  const note = requiredContactNote(sellerMeta, collected, [{ role: "user", content: "I want to sell my house" }]) || "";
+  assertEquals(note.includes("has no postcode"), true);
+  const withPostcode = { ...collected, property_address: "30 Orchard Gardens, Hereford HR1 1AA" };
+  const ok = requiredContactNote(sellerMeta, withPostcode, [{ role: "user", content: "I want to sell my house" }]) || "";
+  assertEquals(ok.includes("has no postcode"), false);
+});
+
+Deno.test("postcodes are recognised, including stray spaces, without false hits", () => {
+  for (const ok of ["HR1 1AA", "LS10 2AB", "en1 3 LP", "SW1A1AA", "M1 1AE"]) assertEquals(hasPostcode(ok), true, ok);
+  for (const no of ["3 bed house", "£150,000", "07700900461", "I want to sell"]) assertEquals(hasPostcode(no), false, no);
 });
