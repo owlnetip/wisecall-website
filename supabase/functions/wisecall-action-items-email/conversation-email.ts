@@ -264,6 +264,8 @@ export type PostCallEmailInput = {
   actionItems: string[];
   agentName?: string;
   companyStatus?: string;
+  /** Website chat: the address of the property a seller wants to sell. */
+  propertyAddress?: string;
 };
 
 const EMAIL_LOGO_URL = "https://app.wisecall.io/owl-logo.png";
@@ -418,6 +420,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
     detailRow("Caller Name", callerName || "Not captured"),
     company ? detailRow("Caller Company", company) : "",
     detailRow("Caller Phone", callerId),
+    input.propertyAddress?.trim() ? detailRow("Property Address", input.propertyAddress.trim()) : "",
     duration ? detailRow("Call Duration", duration) : "",
     urgency ? detailRow("Urgency", urgency) : "",
     date ? detailRow("Date", date) : "",
@@ -481,6 +484,7 @@ export function buildPostCallEmailText(input: PostCallEmailInput): string {
     `Caller Name: ${callerName || "Not captured"}`,
     companyLine(input) ? `Caller Company: ${companyLine(input)}` : "",
     `Caller Phone: ${input.callerId || "Unknown"}`,
+    ...(input.propertyAddress?.trim() ? [`Property Address: ${input.propertyAddress.trim()}`] : []),
     duration ? `Call Duration: ${duration}` : "",
     input.urgency?.trim() ? `Urgency: ${input.urgency.trim()}` : "",
     date ? `Date: ${date}` : "",

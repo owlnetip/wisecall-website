@@ -22,6 +22,8 @@ import {
   requiredContactHoldReply,
   requiredContactNote,
   firstEnquiry,
+  extractPropertyAddress,
+  hasPostcode,
 } from "../_shared/chat-required-contact.ts";
 
 type ChatRequest = {
@@ -701,6 +703,18 @@ serve(async (req) => {
     }
     const enquiryType = detectEnquiryType(message, collected.enquiry_type);
     if (enquiryType) (collected as Record<string, unknown>).enquiry_type = enquiryType;
+    // Sellers: keep the property address (their reply to the address question,
+    // or any message with a postcode). A later full address with a postcode
+    // replaces one that had none.
+    if (collected.enquiry_type === "seller") {
+      const previousTurns = parseTranscript(chatLog.transcript || "");
+      const lastAgentTurn = [...previousTurns].reverse().find((m) => m.role === "assistant")?.content || "";
+      const address = extractPropertyAddress(message, lastAgentTurn);
+      const current = String((collected as Record<string, unknown>).property_address || "");
+      if (address && (!current || (!hasPostcode(current) && hasPostcode(address)))) {
+        (collected as Record<string, unknown>).property_address = address;
+      }
+    }
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
     const holdReply = requiredContactHoldReply(profile.metadata || {}, collected, history);
     let reply = holdReply;
