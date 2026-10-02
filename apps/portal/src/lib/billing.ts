@@ -13,6 +13,7 @@ import {
   planSmsIncluded,
   planOverageRateGbp,
 } from "@/lib/stripe";
+import { recordNewTrialAttribution, stampSignupAtIfMissing } from "@/lib/signup-attribution-store";
 import { canStartNoCardTrial, isNoCardTrial, noCardTrialBillingRow } from "@/lib/trial";
 
 export type Billing = {
@@ -140,7 +141,10 @@ export type StartNoCardTrialResult = { ok: boolean; error?: string };
 // Grants the advertised 20 inbound AI calls with no Stripe customer and no card.
 // Idempotent while they already have access. Refuses if they previously had a
 // paid/canceled subscription — those accounts continue through /billing.
-export async function startNoCardTrialForUser(userId: string): Promise<StartNoCardTrialResult> {
+export async function startNoCardTrialForUser(
+  userId: string,
+  attributionFallback?: unknown,
+): Promise<StartNoCardTrialResult> {
   let existing: Billing | null = null;
   try {
     existing = await getBillingForUser(userId);
@@ -158,12 +162,20 @@ export async function startNoCardTrialForUser(userId: string): Promise<StartNoCa
   const supabase = getServiceSupabase();
   if (!supabase) return { ok: false, error: "Server not configured." };
 
+  // Trial fields only. signup_at / signup_attribution are a follow-up write so
+  // a database that has not been migrated yet can still create the trial.
   const { error } = await supabase.from("wisecall_billing").upsert(noCardTrialBillingRow(userId), {
     onConflict: "user_id",
   });
   if (error) {
     console.error("startNoCardTrialForUser failed:", error.message);
     return { ok: false, error: "Could not start the free calls." };
+  }
+
+  // An existing billing row (even one with no status yet) is not a new trial
+  // start. Leave its attribution and signup_at untouched.
+  if (!existing) {
+    await recordNewTrialAttribution(userId, attributionFallback);
   }
 
   await syncEmailChannelProfiles(userId, true);
@@ -249,6 +261,9 @@ export async function reconcileBillingFromStripe(
       },
       { onConflict: "user_id" },
     );
+    if (!billing?.status) {
+      await stampSignupAtIfMissing(userId);
+    }
     const refreshed = await getBillingForUser(userId);
     if (planSub.status === "active") {
       await clearTrialCapBlock(userId);

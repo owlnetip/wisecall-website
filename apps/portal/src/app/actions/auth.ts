@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -18,6 +19,12 @@ import {
 } from "@/lib/signup-session";
 import { parseWizardDraft } from "@/lib/wizard-draft";
 import { createAgentFromWizardDraft } from "@/app/actions/agents";
+import {
+  chooseAttribution,
+  serializeAttribution,
+  SIGNUP_ATTRIBUTION_COOKIE,
+  SIGNUP_ATTRIBUTION_PARAM,
+} from "@/lib/signup-attribution";
 
 export type AuthState = { error?: string; message?: string };
 
@@ -69,14 +76,21 @@ export async function signUpAction(
   }
 
   const supabase = await createSupabaseServerClient();
+  const cookieStore = await cookies();
+  const attribution = chooseAttribution(
+    cookieStore.get(SIGNUP_ATTRIBUTION_COOKIE)?.value,
+    formData.get("attribution"),
+  );
   // Send confirmation links to the WiseCall portal explicitly, so they don't
   // fall back to the shared project's Site URL (owlnet.io). Requires this URL to
   // be in the Supabase redirect allowlist.
   // Route the confirmation link through /auth/confirm so the PKCE ?code is
   // exchanged for a session (cookies set) before the no-card trial dashboard
-  // or the sales-led billing page.
+  // or the sales-led billing page. attr lets the same first touch survive when
+  // the magic link is opened without the browser cookie.
   const confirmParams = new URLSearchParams({ next: confirmNext });
   if (noCard) confirmParams.set("trial", "calls");
+  if (attribution) confirmParams.set(SIGNUP_ATTRIBUTION_PARAM, serializeAttribution(attribution));
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -136,7 +150,7 @@ export async function signUpAction(
   }
 
   if (noCard && userId) {
-    const started = await startNoCardTrialForUser(userId);
+    const started = await startNoCardTrialForUser(userId, attribution);
     if (!started.ok) {
       return { error: started.error ?? "Could not start the free calls." };
     }
@@ -215,6 +229,10 @@ export async function finishGuestTrialWithAccount(
     authData.set("trial", "calls");
     authData.set("stay", "1");
     authData.set("redirect", "/dashboard");
+    const attribution = formData.get("attribution");
+    if (typeof attribution === "string" && attribution) {
+      authData.set("attribution", attribution);
+    }
     const authResult =
       intent === "signin" ? await signInAction({}, authData) : await signUpAction({}, authData);
     if (authResult.error || authResult.message) return authResult;

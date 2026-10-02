@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { GuestSetup } from "@/components/guest-setup";
+import { SignupAttributionCapture } from "@/components/signup-attribution-capture";
 import { parseSetupEmail, parseSetupPhone } from "@/lib/guest-auto-ring";
+import { attributionFromSearchParams } from "@/lib/signup-attribution";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { dashboardSetupPath, parseNoWebsite, parseSetupWebsite } from "@/lib/setup-website";
 
@@ -21,9 +23,22 @@ export default async function GuestSetupPage({
     phone?: string;
     email?: string;
     nowebsite?: string;
+    src?: string;
+    lp?: string;
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
   }>;
 }) {
-  const { website, phone, email, nowebsite } = await searchParams;
+  const { website, phone, email, nowebsite, src, lp, utm_source, utm_medium, utm_campaign } =
+    await searchParams;
+  const attribution = attributionFromSearchParams({
+    src,
+    lp,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+  });
   const setupWebsite = parseSetupWebsite(website) ?? "";
   const noWebsite = parseNoWebsite(nowebsite) && !setupWebsite;
   const setupPhone = parseSetupPhone(phone);
@@ -40,11 +55,14 @@ export default async function GuestSetupPage({
   }
 
   return (
-    <GuestSetup
-      initialWebsite={setupWebsite}
-      initialPhone={setupPhone}
-      initialEmail={setupEmail}
-      noWebsite={noWebsite}
-    />
+    <>
+      <SignupAttributionCapture initial={attribution} />
+      <GuestSetup
+        initialWebsite={setupWebsite}
+        initialPhone={setupPhone}
+        initialEmail={setupEmail}
+        noWebsite={noWebsite}
+      />
+    </>
   );
 }

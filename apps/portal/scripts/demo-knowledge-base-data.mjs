@@ -47,7 +47,7 @@ Business, £399/month (£339.15/month billed annually, £4,069.80/year)
 
 All plans include the same platform features, only the monthly usage allowances change.
 
-Free trial: 7 days with up to 20 AI calls during the trial period.
+Free trial: 20 free inbound calls. No card needed.
 
 Overage (when included usage is exceeded):
 - Starter: £0.65 per additional AI call
@@ -100,7 +100,7 @@ What happens if I exceed my plan allowance?
 Additional AI calls are charged at your plan's overage rate. Email, WhatsApp, live chat and SMS allowances are shown on the billing page; contact support if you need a higher tier.
 
 Can I try WiseCall before subscribing?
-Yes, sign up for a 7-day free trial (up to 20 AI calls) from the portal.
+Yes. You get 20 free inbound calls, and no card is needed. Start at https://app.wisecall.io/setup.
 
 How do I book a demo?
 Visit https://www.wisecall.io and book a free 15-minute demo, or email hello@wisecall.io.`,
@@ -111,7 +111,7 @@ Visit https://www.wisecall.io and book a free 15-minute demo, or email hello@wis
     category: "General",
     text: `Getting started with WiseCall:
 
-1. Sign up at https://app.wisecall.io and choose a plan (or start the 7-day trial).
+1. Sign up at https://app.wisecall.io. You get 20 free inbound calls, and no card is needed.
 2. Complete your agent profile, business name, greeting, office hours and routing preferences.
 3. Add knowledge base content, pricing, services, FAQs and policies so the AI answers accurately.
 4. Connect your channels, provision a voice number, SMS, WhatsApp and/or live chat widget as needed.

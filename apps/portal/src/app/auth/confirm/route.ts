@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
-    const started = await startNoCardTrialForUser(user.id);
+    const started = await startNoCardTrialForUser(user.id, searchParams.get("attr"));
     if (!started.ok) {
       console.error("auth/confirm no-card trial failed", started.error);
     }
