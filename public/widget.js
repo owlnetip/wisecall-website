@@ -66,6 +66,10 @@
       font_stylesheet:
         "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap",
       launcher_label: "Chat with us",
+      // Voice on the WiseCall profile is Gemma. The saved chat label is still
+      // "Bettermove assistant"; show Gemma unless a different name is saved.
+      assistant_name: "Gemma",
+      greeting: "Hi, I'm Gemma, Bettermove's AI Assistant. How can I help today?",
     },
     // Crystal Care Collection site greens (offBlack text, sage icon); their
     // house mark is square, so it is shown as an icon beside the name.
@@ -440,6 +444,20 @@
     if (remote.title) cfg.title = remote.title;
     if (remote.assistant_name) cfg.assistant_name = remote.assistant_name;
     if (remote.greeting) cfg.greeting = remote.greeting;
+    // Replace only the stock BetterMove name and greeting. A greeting or name
+    // saved on the profile still wins.
+    if (
+      preset.assistant_name &&
+      (!remote.assistant_name || cfg.assistant_name === "Bettermove assistant")
+    ) {
+      cfg.assistant_name = preset.assistant_name;
+    }
+    if (
+      preset.greeting &&
+      (!remote.greeting || remote.greeting === "Hi, I am Bettermove assistant. How can I help today?")
+    ) {
+      cfg.greeting = preset.greeting;
+    }
     if (remote.accent_color) cfg.accent_color = remote.accent_color;
     if (remote.background_color) cfg.background_color = remote.background_color;
     cfg.logo_url = remote.logo_url || preset.logo_url || "";

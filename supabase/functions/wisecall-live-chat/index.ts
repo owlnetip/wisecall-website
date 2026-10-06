@@ -240,8 +240,14 @@ function leadEmailReason(
   return null;
 }
 
+function chatAssistantName(profile: any, metadata: Record<string, unknown>) {
+  const custom = typeof metadata.chat_assistant_name === "string" ? metadata.chat_assistant_name.trim() : "";
+  if (custom && custom.length <= 80) return custom;
+  return profile?.receptionist_name || "WiseCall";
+}
+
 function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
-  const receptionistName = profile?.receptionist_name || "WiseCall";
+  const receptionistName = chatAssistantName(profile, metadata);
   const businessName = profile?.business_name || profile?.profile_name || "the business";
   const greeting = metadata.chat_greeting || `Hi, I am ${receptionistName}. How can I help today?`;
   const smsLinks =
@@ -427,7 +433,7 @@ async function callOpenAi(
 }
 
 function fallbackReply(profile: any, collected: Record<string, unknown>) {
-  const name = profile?.receptionist_name || "WiseCall";
+  const name = chatAssistantName(profile, profile?.metadata || {});
 
   if (collected.contact_email || collected.contact_phone) {
     return "Thanks, I have captured that and will pass it to the team for follow-up.";
@@ -587,10 +593,10 @@ serve(async (req) => {
       return jsonResponse({
         profile_slug: profile.slug,
         title: profile.business_name || profile.profile_name || "WiseCall",
-        assistant_name: profile.receptionist_name || "WiseCall",
+        assistant_name: chatAssistantName(profile, profile.metadata || {}),
         greeting:
           profile.metadata?.chat_greeting ||
-          `Hi, I am ${profile.receptionist_name || "WiseCall"}. How can I help today?`,
+          `Hi, I am ${chatAssistantName(profile, profile.metadata || {})}. How can I help today?`,
         accent_color: profile.metadata?.chat_accent_color || "#7de8eb",
         background_color: profile.metadata?.chat_background_color || "#172929",
         logo_url: httpsUrl(profile.metadata?.chat_logo_url),
