@@ -235,6 +235,8 @@ export type Assistant = {
   slug?: string; // used for the website chat widget embed + live-chat backend
   chatAccentColor?: string; // website chat widget theming (metadata.chat_accent_color)
   chatBackgroundColor?: string; // metadata.chat_background_color
+  chatAssistantName?: string; // metadata.chat_assistant_name, website chat only
+  chatGreeting?: string; // metadata.chat_greeting, website chat only
   name: string;
   businessName: string;
   industry: string;
@@ -511,6 +513,8 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
   const [copied, setCopied] = useState(false);
   const [accent, setAccent] = useState(assistant.chatAccentColor || "#7de8eb");
   const [bg, setBg] = useState(assistant.chatBackgroundColor || "#172929");
+  const [chatName, setChatName] = useState(assistant.chatAssistantName || "");
+  const [chatGreeting, setChatGreeting] = useState(assistant.chatGreeting || "");
   const [pending, start] = useTransition();
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -518,7 +522,11 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
   const embed = `<script src="https://wisecall.io/widget.js" data-agent="${slug}" async></script>`;
   const dirty =
     accent !== (assistant.chatAccentColor || "#7de8eb") ||
-    bg !== (assistant.chatBackgroundColor || "#172929");
+    bg !== (assistant.chatBackgroundColor || "#172929") ||
+    chatName !== (assistant.chatAssistantName || "") ||
+    chatGreeting !== (assistant.chatGreeting || "");
+  const previewName = chatName.trim() || assistant.name || "Assistant";
+  const previewGreeting = chatGreeting.trim() || `Hi, I am ${previewName}. How can I help today?`;
 
   function copy() {
     navigator.clipboard?.writeText(embed).then(
@@ -533,7 +541,12 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
     setErr(null);
     setSaved(false);
     start(async () => {
-      const r = await updateAgent(assistant.id, { chatAccentColor: accent, chatBackgroundColor: bg });
+      const r = await updateAgent(assistant.id, {
+        chatAccentColor: accent,
+        chatBackgroundColor: bg,
+        chatAssistantName: chatName,
+        chatGreeting,
+      });
       if (r.ok) setSaved(true);
       else setErr(r.error ?? "Couldn't save.");
     });
@@ -569,7 +582,32 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
       {/* Brand colours + live preview */}
       <div className="mt-3 flex flex-wrap items-start gap-4 border-t border-line pt-3">
         <div className="space-y-2">
-          <p className="text-xs font-black uppercase tracking-wide text-ink-faint">Match your brand</p>
+          <p className="text-xs font-black uppercase tracking-wide text-ink-faint">Website chat</p>
+          <label className="block text-xs font-bold text-ink">
+            <span className="mb-1 block text-ink-soft">Chat name</span>
+            <input
+              type="text"
+              value={chatName}
+              maxLength={40}
+              placeholder={assistant.name || "Assistant"}
+              onChange={(e) => setChatName(e.target.value)}
+              className="w-full max-w-xs rounded-lg border border-line bg-white px-2 py-1.5 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-teal/40"
+            />
+          </label>
+          <label className="block text-xs font-bold text-ink">
+            <span className="mb-1 block text-ink-soft">Opening line</span>
+            <textarea
+              value={chatGreeting}
+              maxLength={240}
+              rows={3}
+              placeholder={`Hi, I am ${previewName}. How can I help today?`}
+              onChange={(e) => setChatGreeting(e.target.value)}
+              className="w-full max-w-sm rounded-lg border border-line bg-white px-2 py-1.5 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-teal/40"
+            />
+          </label>
+          <p className="max-w-sm text-[11px] font-medium text-ink-faint">
+            This is the name and first message on your website. The phone greeting stays as it is.
+          </p>
           <ColorField label="Accent" value={accent} onChange={setAccent} />
           <ColorField label="Header" value={bg} onChange={setBg} />
           <div className="flex items-center gap-3 pt-1">
@@ -579,7 +617,7 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
               disabled={pending || !dirty}
               className="inline-flex h-8 items-center rounded-lg bg-ink px-4 text-xs font-black text-white transition hover:bg-[#263130] disabled:opacity-50"
             >
-              {pending ? "Saving…" : "Save colours"}
+              {pending ? "Saving…" : "Save"}
             </button>
             {saved && !dirty && <span className="text-xs font-medium text-teal">Saved</span>}
             {err && <span className="text-xs font-medium text-danger">{err}</span>}
@@ -594,13 +632,13 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
                 className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black"
                 style={{ background: accent, color: "#0e1b1b" }}
               >
-                {(assistant.name || "A").charAt(0).toUpperCase()}
+                {previewName.charAt(0).toUpperCase()}
               </span>
-              <span className="truncate text-[11px] font-bold text-white">{assistant.name}</span>
+              <span className="truncate text-[11px] font-bold text-white">{previewName}</span>
             </div>
             <div className="space-y-1.5 bg-[#f6f8f8] p-2">
               <div className="max-w-[80%] rounded-lg rounded-bl-sm bg-white px-2 py-1 text-[10px] text-ink shadow-sm">
-                Hi! How can I help?
+                {previewGreeting}
               </div>
               <div
                 className="ml-auto max-w-[80%] rounded-lg rounded-br-sm px-2 py-1 text-[10px]"
