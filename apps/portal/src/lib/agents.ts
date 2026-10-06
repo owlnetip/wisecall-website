@@ -194,6 +194,7 @@ function mapProfile(row: ProfileRow): Assistant {
     chatBackgroundColor: meta(row, "chat_background_color") || undefined,
     chatAssistantName: meta(row, "chat_assistant_name") || undefined,
     chatGreeting: meta(row, "chat_greeting") || undefined,
+    chatLogoUrl: meta(row, "chat_logo_url") || undefined,
     name: row.receptionist_name || row.profile_name || "Assistant",
     businessName: row.business_name || row.clinic_name || "",
     industry: meta(row, "industry") || "General",

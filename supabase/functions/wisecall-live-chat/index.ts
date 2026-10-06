@@ -246,6 +246,12 @@ function chatAssistantName(profile: any, metadata: Record<string, unknown>) {
   return profile?.receptionist_name || "WiseCall";
 }
 
+function chatLogoMode(value: unknown): "avatar" | "icon" | null {
+  const mode = String(value || "").trim();
+  if (mode === "avatar" || mode === "icon") return mode;
+  return null;
+}
+
 function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
   const receptionistName = chatAssistantName(profile, metadata);
   const businessName = profile?.business_name || profile?.profile_name || "the business";
@@ -600,6 +606,7 @@ serve(async (req) => {
         accent_color: profile.metadata?.chat_accent_color || "#7de8eb",
         background_color: profile.metadata?.chat_background_color || "#172929",
         logo_url: httpsUrl(profile.metadata?.chat_logo_url),
+        logo_mode: chatLogoMode(profile.metadata?.chat_logo_mode),
         font_family: cssFontFamily(profile.metadata?.chat_font_family),
         font_stylesheet: httpsUrl(profile.metadata?.chat_font_stylesheet),
         launcher_label: launcherLabel(profile.metadata?.chat_launcher_label),

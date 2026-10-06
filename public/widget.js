@@ -91,6 +91,19 @@
   document.body.appendChild(host);
   var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
 
+  // A png/jpg/webp/gif is a face. SVG wordmarks are not.
+  function isChatPhotoUrl(url) {
+    try {
+      var u = new URL(String(url || "").trim());
+      var local =
+        u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1");
+      if (u.protocol !== "https:" && !local) return false;
+      return /\.(png|jpe?g|webp|gif)$/i.test(u.pathname);
+    } catch (e) {
+      return false;
+    }
+  }
+
   function safeHttps(url) {
     var raw = String(url || "").trim();
     if (!/^https?:\/\//i.test(raw)) return "";
@@ -464,15 +477,18 @@
     if (remote.background_color) cfg.background_color = remote.background_color;
     cfg.logo_url = remote.logo_url || preset.logo_url || "";
     cfg.logo_mode = remote.logo_mode || preset.logo_mode || "";
-    // BetterMove's saved logo is the wordmark. The avatar preset replaces that
-    // image only. A different logo saved on the profile still wins, as a wordmark.
+    // BetterMove's saved logo is the wordmark, so the face preset replaces it.
+    // A photo uploaded in the portal replaces that face and stays circular.
+    // Any other saved logo (an SVG wordmark) stays wide.
     if (preset.logo_mode === "avatar" && preset.logo_url) {
       var remoteLogo = String(remote.logo_url || "");
       var wordmarkUrl = String(preset.wordmark_url || "");
       if (!remoteLogo || remoteLogo === wordmarkUrl) {
         cfg.logo_url = preset.logo_url;
         cfg.logo_mode = "avatar";
-      } else if (remoteLogo !== preset.logo_url && !remote.logo_mode) {
+      } else if (!remote.logo_mode && isChatPhotoUrl(remoteLogo)) {
+        cfg.logo_mode = "avatar";
+      } else if (!remote.logo_mode) {
         cfg.logo_mode = "";
       }
     }
@@ -486,6 +502,9 @@
     if (script.getAttribute("data-font")) cfg.font_family = script.getAttribute("data-font");
     if (script.getAttribute("data-font-css")) cfg.font_stylesheet = script.getAttribute("data-font-css");
     if (script.getAttribute("data-launcher-label")) cfg.launcher_label = script.getAttribute("data-launcher-label");
+    // The live chat service does not send logo_mode yet. A saved photo is still
+    // a circle. Icon mode (Crystal Care) and SVG wordmarks are left as they are.
+    if (!cfg.logo_mode && isChatPhotoUrl(cfg.logo_url)) cfg.logo_mode = "avatar";
   }
 
   // Fetch theming/greeting, then render.

@@ -25,7 +25,13 @@ import {
   validateIntegrationWebhooks,
 } from "@/lib/integration-webhooks";
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
-import { cleanChatAssistantName, cleanChatGreeting } from "@/lib/chat-widget-settings";
+import {
+  CHAT_AVATAR_BUCKET,
+  chatAvatarObjectPath,
+  cleanChatAssistantName,
+  cleanChatGreeting,
+  inspectChatPhoto,
+} from "@/lib/chat-widget-settings";
 import { ingestWebsiteKnowledgeBase } from "@/app/actions/knowledge-base";
 import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhooks";
 import { DEFAULT_VOICE_ID, getVoiceOption } from "@/lib/voices";
@@ -612,6 +618,116 @@ export async function updateAgent(
   }
 
   revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+type OwnedAgent =
+  | {
+      ok: true;
+      service: NonNullable<ReturnType<typeof getServiceSupabase>>;
+      admin: boolean;
+      userId: string;
+      id: string;
+      metadata: Record<string, unknown>;
+    }
+  | { ok: false; error: string };
+
+// Same owner and billing gate as updateAgent. The photo actions use it so a
+// colour save cannot clear the picture, and a picture save cannot change the phone.
+async function requireOwnedAgent(agentId: string): Promise<OwnedAgent> {
+  const auth = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+  const admin = isAdmin(user);
+  if (!admin && !hasActiveAccess(await getBillingForUser(user.id))) {
+    return { ok: false, error: "Start your free trial first." };
+  }
+
+  const service = getServiceSupabase();
+  if (!service) return { ok: false, error: "Server not configured." };
+
+  const { data: row, error: readError } = await service
+    .from("wisecall_profiles")
+    .select("id, metadata")
+    .eq("id", agentId)
+    .maybeSingle();
+  if (readError) return { ok: false, error: readError.message };
+  if (!row?.id) return { ok: false, error: "Agent not found." };
+
+  const metadata = (row.metadata as Record<string, unknown> | null) ?? {};
+  if (metadata.owner_id !== user.id && !admin) {
+    return { ok: false, error: "You don't have access to this agent." };
+  }
+  return { ok: true, service, admin, userId: user.id, id: row.id as string, metadata };
+}
+
+async function writeChatLogo(agent: Extract<OwnedAgent, { ok: true }>, logoUrl: string, logoMode: string) {
+  const nextMetadata = {
+    ...agent.metadata,
+    chat_logo_url: logoUrl,
+    chat_logo_mode: logoMode,
+  };
+  let writeQuery = agent.service.from("wisecall_profiles").update({ metadata: nextMetadata }).eq("id", agent.id);
+  if (!agent.admin) writeQuery = writeQuery.eq("metadata->>owner_id", agent.userId);
+  const { error } = await writeQuery;
+  if (error) return { ok: false as const, error: error.message };
+  revalidatePath("/dashboard");
+  return { ok: true as const };
+}
+
+function removeStoredChatAvatar(agent: Extract<OwnedAgent, { ok: true }>, previousUrl: unknown) {
+  if (typeof previousUrl !== "string" || !previousUrl) return;
+  const objectPath = chatAvatarObjectPath(previousUrl, agent.id);
+  if (!objectPath) return;
+  void agent.service.storage
+    .from(CHAT_AVATAR_BUCKET)
+    .remove([objectPath])
+    .then(({ error }) => {
+      if (error) console.error("[chat avatar] remove failed:", error.message);
+    });
+}
+
+/** Upload a circular website-chat photo for this agent. Does not change the phone greeting. */
+export async function uploadChatAvatar(
+  agentId: string,
+  formData: FormData,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const agent = await requireOwnedAgent(agentId);
+  if (!agent.ok) return agent;
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, error: "Choose a photo to upload." };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const inspected = inspectChatPhoto(bytes);
+  if (!inspected.ok) return inspected;
+
+  const objectPath = `${agent.id}/${crypto.randomUUID()}.${inspected.ext}`;
+  const { error: uploadError } = await agent.service.storage.from(CHAT_AVATAR_BUCKET).upload(objectPath, bytes, {
+    contentType: inspected.contentType,
+    upsert: false,
+  });
+  if (uploadError) return { ok: false, error: uploadError.message };
+
+  const { data } = agent.service.storage.from(CHAT_AVATAR_BUCKET).getPublicUrl(objectPath);
+  const url = data.publicUrl;
+  const saved = await writeChatLogo(agent, url, "avatar");
+  if (!saved.ok) {
+    void agent.service.storage.from(CHAT_AVATAR_BUCKET).remove([objectPath]);
+    return saved;
+  }
+  removeStoredChatAvatar(agent, agent.metadata.chat_logo_url);
+  return { ok: true, url };
+}
+
+/** Remove a custom website-chat photo. BetterMove falls back to its existing face. */
+export async function clearChatAvatar(agentId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const agent = await requireOwnedAgent(agentId);
+  if (!agent.ok) return agent;
+  const saved = await writeChatLogo(agent, "", "");
+  if (!saved.ok) return saved;
+  removeStoredChatAvatar(agent, agent.metadata.chat_logo_url);
   return { ok: true };
 }
 
