@@ -108,7 +108,11 @@ export function resolveChatLogo(input: {
   const wordmarkUrl = (input.wordmarkUrl || "").trim();
 
   let url = remoteUrl || presetUrl;
-  let mode = remoteMode || presetMode;
+  let mode: ChatLogoMode = remoteMode === "avatar" || remoteMode === "icon"
+    ? remoteMode
+    : presetMode === "avatar" || presetMode === "icon"
+      ? presetMode
+      : "";
 
   if (presetMode === "avatar" && presetUrl) {
     if (!remoteUrl || remoteUrl === wordmarkUrl) {
