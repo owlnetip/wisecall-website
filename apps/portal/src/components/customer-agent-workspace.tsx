@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ChangeEvent, type ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -63,8 +63,11 @@ import {
   provisionNumber,
   setAgentLive,
   testVoice,
+  clearChatAvatar,
   updateAgent,
+  uploadChatAvatar,
 } from "@/app/actions/agents";
+import { CHAT_AVATAR_MAX_BYTES, previewChatPhotoUrl, savedChatPhotoUrl } from "@/lib/chat-widget-settings";
 import { provisionSmsNumber } from "@/app/actions/sms";
 import type { AgentSmsNumber, AgentWhatsappNumber } from "@/lib/agents";
 import {
@@ -237,6 +240,7 @@ export type Assistant = {
   chatBackgroundColor?: string; // metadata.chat_background_color
   chatAssistantName?: string; // metadata.chat_assistant_name, website chat only
   chatGreeting?: string; // metadata.chat_greeting, website chat only
+  chatLogoUrl?: string; // metadata.chat_logo_url, website chat photo only
   name: string;
   businessName: string;
   industry: string;
@@ -515,9 +519,14 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
   const [bg, setBg] = useState(assistant.chatBackgroundColor || "#172929");
   const [chatName, setChatName] = useState(assistant.chatAssistantName || "");
   const [chatGreeting, setChatGreeting] = useState(assistant.chatGreeting || "");
+  const [photoUrl, setPhotoUrl] = useState(previewChatPhotoUrl(slug, assistant.chatLogoUrl));
+  const [customPhoto, setCustomPhoto] = useState(Boolean(savedChatPhotoUrl(slug, assistant.chatLogoUrl)));
   const [pending, start] = useTransition();
+  const [photoPending, startPhoto] = useTransition();
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [photoErr, setPhotoErr] = useState<string | null>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
 
   const embed = `<script src="https://wisecall.io/widget.js" data-agent="${slug}" async></script>`;
   const dirty =
@@ -549,6 +558,39 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
       });
       if (r.ok) setSaved(true);
       else setErr(r.error ?? "Couldn't save.");
+    });
+  }
+  function onPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (file.size > CHAT_AVATAR_MAX_BYTES) {
+      setPhotoErr("Photo must be under 2 MB.");
+      return;
+    }
+    setPhotoErr(null);
+    const body = new FormData();
+    body.set("file", file);
+    startPhoto(async () => {
+      const result = await uploadChatAvatar(assistant.id, body);
+      if (result.ok) {
+        setPhotoUrl(result.url);
+        setCustomPhoto(true);
+      } else {
+        setPhotoErr(result.error);
+      }
+    });
+  }
+  function removePhoto() {
+    setPhotoErr(null);
+    startPhoto(async () => {
+      const result = await clearChatAvatar(assistant.id);
+      if (result.ok) {
+        setPhotoUrl(previewChatPhotoUrl(slug, ""));
+        setCustomPhoto(false);
+      } else {
+        setPhotoErr(result.error);
+      }
     });
   }
 
@@ -608,6 +650,49 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
           <p className="max-w-sm text-[11px] font-medium text-ink-faint">
             This is the name and first message on your website. The phone greeting stays as it is.
           </p>
+          <div className="flex items-center gap-3 pt-1">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-white">
+              {photoUrl ? (
+                <img src={photoUrl} alt="" className="h-full w-full object-cover object-[center_22%]" />
+              ) : (
+                <span className="text-sm font-black text-ink-soft">{previewName.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-bold text-ink">Chat photo</p>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  ref={photoInput}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={onPhoto}
+                />
+                <button
+                  type="button"
+                  onClick={() => photoInput.current?.click()}
+                  disabled={photoPending}
+                  className="inline-flex h-8 items-center rounded-lg border border-line bg-white px-3 text-xs font-black text-ink transition hover:bg-card-tint disabled:opacity-50"
+                >
+                  {photoPending ? "Uploading…" : photoUrl ? "Replace photo" : "Upload photo"}
+                </button>
+                {customPhoto && (
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    disabled={photoPending}
+                    className="text-xs font-bold text-ink-soft underline-offset-2 hover:text-danger hover:underline disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 max-w-xs text-[11px] font-medium text-ink-faint">
+                PNG, JPG or WEBP, under 2 MB. It shows as a circle on your website.
+              </p>
+              {photoErr && <p className="mt-1 text-xs font-medium text-danger">{photoErr}</p>}
+            </div>
+          </div>
           <ColorField label="Accent" value={accent} onChange={setAccent} />
           <ColorField label="Header" value={bg} onChange={setBg} />
           <div className="flex items-center gap-3 pt-1">
@@ -628,12 +713,16 @@ function WidgetEmbedRow({ assistant }: { assistant: Assistant }) {
         <div className="ml-auto">
           <div className="w-[150px] overflow-hidden rounded-xl border border-line bg-white shadow-sm">
             <div className="flex items-center gap-2 px-3 py-2" style={{ background: bg }}>
-              <span
-                className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black"
-                style={{ background: accent, color: "#0e1b1b" }}
-              >
-                {previewName.charAt(0).toUpperCase()}
-              </span>
+              {photoUrl ? (
+                <img src={photoUrl} alt="" className="h-5 w-5 rounded-full object-cover object-[center_22%]" />
+              ) : (
+                <span
+                  className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black"
+                  style={{ background: accent, color: "#0e1b1b" }}
+                >
+                  {previewName.charAt(0).toUpperCase()}
+                </span>
+              )}
               <span className="truncate text-[11px] font-bold text-white">{previewName}</span>
             </div>
             <div className="space-y-1.5 bg-[#f6f8f8] p-2">

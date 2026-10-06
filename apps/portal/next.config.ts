@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 const appRoot = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Chat photos are up to 2 MB. The server-action default is 1 MB.
+    serverActions: {
+      bodySizeLimit: "3mb",
+    },
+  },
   turbopack: {
     root: appRoot,
   },
