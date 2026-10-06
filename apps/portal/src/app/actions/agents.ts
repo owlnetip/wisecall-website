@@ -25,6 +25,7 @@ import {
   validateIntegrationWebhooks,
 } from "@/lib/integration-webhooks";
 import { assertPublicHttpUrl, PublicUrlError } from "@/lib/public-url";
+import { cleanChatAssistantName, cleanChatGreeting } from "@/lib/chat-widget-settings";
 import { ingestWebsiteKnowledgeBase } from "@/app/actions/knowledge-base";
 import { webhookSupabaseUrl, withTemplateWebhooks } from "@/lib/template-webhooks";
 import { DEFAULT_VOICE_ID, getVoiceOption } from "@/lib/voices";
@@ -69,6 +70,8 @@ export type AgentPatch = {
   outOfHoursMessage?: string;
   chatAccentColor?: string;
   chatBackgroundColor?: string;
+  chatAssistantName?: string;
+  chatGreeting?: string;
   status?: "Live" | "Setup" | "Review";
   integrationWebhooks?: IntegrationWebhook[];
   negotiatorRules?: NegotiatorRules;
@@ -521,6 +524,16 @@ export async function updateAgent(
   // Website chat widget theming, wisecall-live-chat reads these metadata keys.
   if (patch.chatAccentColor !== undefined) nextMetadata.chat_accent_color = patch.chatAccentColor;
   if (patch.chatBackgroundColor !== undefined) nextMetadata.chat_background_color = patch.chatBackgroundColor;
+  if (patch.chatAssistantName !== undefined) {
+    const cleaned = cleanChatAssistantName(patch.chatAssistantName);
+    if (!cleaned.ok) return { ok: false, error: cleaned.error };
+    nextMetadata.chat_assistant_name = cleaned.value;
+  }
+  if (patch.chatGreeting !== undefined) {
+    const cleaned = cleanChatGreeting(patch.chatGreeting);
+    if (!cleaned.ok) return { ok: false, error: cleaned.error };
+    nextMetadata.chat_greeting = cleaned.value;
+  }
   if (patch.integrationWebhooks !== undefined) {
     // Custom before/during/after call webhooks (integrationWebhooks.runtime.js).
     const storedWebhooks = readIntegrationWebhooks(metadata);

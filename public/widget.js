@@ -66,10 +66,10 @@
       font_stylesheet:
         "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap",
       launcher_label: "Chat with us",
-      // Voice on the WiseCall profile is Gemma. The saved chat label is still
-      // "Bettermove assistant"; show Gemma unless a different name is saved.
-      assistant_name: "Gemma",
-      greeting: "Hi, I'm Gemma, Bettermove's AI Assistant. How can I help today?",
+      // Profile chat name. Only used when the service still returns the old
+      // agent-record name. A name saved in the portal is returned as-is.
+      assistant_name: "Betty",
+      greeting: "Hi, I'm Betty, Bettermove's AI Assistant. How can I help today?",
     },
     // Crystal Care Collection site greens (offBlack text, sage icon); their
     // house mark is square, so it is shown as an icon beside the name.
@@ -444,17 +444,19 @@
     if (remote.title) cfg.title = remote.title;
     if (remote.assistant_name) cfg.assistant_name = remote.assistant_name;
     if (remote.greeting) cfg.greeting = remote.greeting;
-    // Replace only the stock BetterMove name and greeting. A greeting or name
-    // saved on the profile still wins.
+    // Older chat responses used the agent record name. Betty is the saved chat
+    // name for that case. Any other name or opening line from the service wins,
+    // including a later edit in the portal.
     if (
       preset.assistant_name &&
-      (!remote.assistant_name || cfg.assistant_name === "Bettermove assistant")
+      (cfg.assistant_name === "Bettermove assistant" || cfg.assistant_name === "Gemma")
     ) {
       cfg.assistant_name = preset.assistant_name;
     }
     if (
       preset.greeting &&
-      (!remote.greeting || remote.greeting === "Hi, I am Bettermove assistant. How can I help today?")
+      (cfg.greeting === "Hi, I am Bettermove assistant. How can I help today?" ||
+        cfg.greeting === "Hi, I'm Gemma, Bettermove's AI Assistant. How can I help today?")
     ) {
       cfg.greeting = preset.greeting;
     }
