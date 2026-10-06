@@ -43,13 +43,25 @@
     launcher_icon_color: "",
   };
 
+  // Same origin as this script, so the preview and wisecall.io both load the file.
+  function widgetOrigin() {
+    try {
+      if (script.src) return new URL(script.src).origin;
+    } catch (e) {}
+    return "https://wisecall.io";
+  }
+
   // Per-agent brand presets. The live-chat config overrides these when it
   // returns logo_url / font_family, so a metadata change does not need a
   // widget release. BetterMove's wordmark is Lexend (their heading face).
+  // logo_mode "avatar" is a circular face in place of that wordmark.
+  var BETTERMOVE_WORDMARK =
+    "https://www.bettermove.co.uk/wp-content/themes/cb-bettermove2023/img/bm-logo-2026.svg";
   var BRAND = {
     "bettermove-assistant-bettermove-4a19c75d": {
-      logo_url:
-        "https://www.bettermove.co.uk/wp-content/themes/cb-bettermove2023/img/bm-logo-2026.svg",
+      logo_url: widgetOrigin() + "/bettermove-chat-avatar.webp",
+      logo_mode: "avatar",
+      wordmark_url: BETTERMOVE_WORDMARK,
       font_family: "Lexend, system-ui, sans-serif",
       font_stylesheet:
         "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap",
@@ -77,10 +89,12 @@
 
   function safeHttps(url) {
     var raw = String(url || "").trim();
-    if (!/^https:\/\//i.test(raw)) return "";
+    if (!/^https?:\/\//i.test(raw)) return "";
     try {
       var u = new URL(raw);
-      if (u.protocol !== "https:") return "";
+      var local =
+        u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1");
+      if (u.protocol !== "https:" && !local) return "";
       return u.href.replace(/["']/g, "");
     } catch (e) {
       return "";
@@ -141,8 +155,14 @@
       : chatIcon;
     // "icon" = a square mark (not a wordmark), so the header still shows the name.
     var iconLogo = !!logo && cfg.logo_mode === "icon";
+    var avatarLogo = !!logo && cfg.logo_mode === "avatar";
+    var wordmark = !!logo && !iconLogo && !avatarLogo;
     var avatar = logo
-      ? '<div class="av logo' + (iconLogo ? " icon" : "") + '"><img src="' + esc(logo) + '" alt=""/></div>'
+      ? '<div class="av logo' +
+        (iconLogo ? " icon" : avatarLogo ? " avatar" : "") +
+        '"><img src="' +
+        esc(logo) +
+        '" alt=""/></div>'
       : '<div class="av">' + (cfg.assistant_name || "A").charAt(0).toUpperCase() + "</div>";
     root.innerHTML =
       "<style>" +
@@ -165,6 +185,11 @@
       ".launcher.has-logo.has-label{gap:10px;height:56px;padding:0 16px 0 12px}" +
       ".launcher.has-logo.has-label img{height:20px;max-width:112px}" +
       ".launcher.icon-logo img,.launcher.icon-logo.has-label img{height:28px;width:28px;max-width:28px;object-fit:contain}" +
+      ".launcher.has-logo.avatar-logo,.launcher.has-logo.avatar-logo.has-label{height:64px;padding:6px 16px 6px 6px;gap:10px}" +
+      ".launcher.avatar-logo img,.launcher.avatar-logo.has-label img,.launcher.has-logo.avatar-logo.has-label img{width:52px;height:52px;max-width:52px;border-radius:50%;object-fit:cover;object-position:center 22%;box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(18,58,75,.16)}" +
+      ".launcher.avatar-logo .launch-label{border-left:none;padding-left:4px}" +
+      ".launcher.avatar-logo:not(.has-label){width:64px;height:64px;padding:0;border-radius:50%}" +
+      ".launcher.avatar-logo:not(.has-label) img{width:64px;height:64px;max-width:64px;box-shadow:none}" +
       ".launch-label{display:flex;align-items:center;gap:7px;padding-left:10px;border-left:1px solid rgba(18,58,75,.16);color:" +
       labelColor +
       ";font-weight:700;font-size:14.5px;line-height:1;white-space:nowrap}" +
@@ -175,6 +200,8 @@
       ".hdr .av.logo img{height:28px;width:auto;max-width:180px;display:block}" +
       ".hdr .av.logo.icon{width:40px;height:40px;padding:6px;display:flex;align-items:center;justify-content:center}" +
       ".hdr .av.logo.icon img{width:28px;height:28px;max-width:28px;object-fit:contain}" +
+      ".hdr .av.logo.avatar{width:42px;height:42px;padding:0;border-radius:50%;overflow:hidden}" +
+      ".hdr .av.logo.avatar img{width:42px;height:42px;max-width:42px;object-fit:cover;object-position:center 22%;border-radius:50%}" +
       ".panel{position:fixed;bottom:92px;" +
       SIDE +
       ":20px;width:374px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.32);display:flex;flex-direction:column;overflow:hidden}" +
@@ -227,12 +254,17 @@
       ".launcher.has-logo.has-label{height:52px;padding:0 12px 0 10px}" +
       ".launcher.has-logo.has-label img{height:16px;max-width:84px}" +
       ".launcher.icon-logo.has-label img{height:24px;width:24px;max-width:24px}" +
+      ".launcher.has-logo.avatar-logo,.launcher.has-logo.avatar-logo.has-label{height:58px;padding:4px 12px 4px 4px}" +
+      ".launcher.avatar-logo img,.launcher.avatar-logo.has-label img,.launcher.has-logo.avatar-logo.has-label img{width:48px;height:48px;max-width:48px}" +
+      ".launcher.avatar-logo:not(.has-label){width:56px;height:56px;padding:0}" +
+      ".launcher.avatar-logo:not(.has-label) img{width:56px;height:56px;max-width:56px}" +
       ".launch-label{font-size:13px;gap:6px;padding-left:8px}" +
       ".launcher .launch-label svg{width:16px;height:16px}}" +
       "</style>" +
       '<button class="launcher' +
       (logo ? " has-logo" : "") +
       (iconLogo ? " icon-logo" : "") +
+      (avatarLogo ? " avatar-logo" : "") +
       (label ? " has-label" : "") +
       '" aria-label="' +
       esc(label || "Open chat") +
@@ -244,7 +276,7 @@
       '">' +
       '<div class="hdr">' +
       avatar +
-      (logo && !iconLogo
+      (wordmark
         ? ""
         : '<div><div class="t">' +
           esc(cfg.title) +
@@ -412,6 +444,18 @@
     if (remote.background_color) cfg.background_color = remote.background_color;
     cfg.logo_url = remote.logo_url || preset.logo_url || "";
     cfg.logo_mode = remote.logo_mode || preset.logo_mode || "";
+    // BetterMove's saved logo is the wordmark. The avatar preset replaces that
+    // image only. A different logo saved on the profile still wins, as a wordmark.
+    if (preset.logo_mode === "avatar" && preset.logo_url) {
+      var remoteLogo = String(remote.logo_url || "");
+      var wordmarkUrl = String(preset.wordmark_url || "");
+      if (!remoteLogo || remoteLogo === wordmarkUrl) {
+        cfg.logo_url = preset.logo_url;
+        cfg.logo_mode = "avatar";
+      } else if (remoteLogo !== preset.logo_url && !remote.logo_mode) {
+        cfg.logo_mode = "";
+      }
+    }
     cfg.font_family = remote.font_family || preset.font_family || "";
     cfg.font_stylesheet = remote.font_stylesheet || preset.font_stylesheet || "";
     cfg.launcher_label = remote.launcher_label || preset.launcher_label || "";
