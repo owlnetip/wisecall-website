@@ -1,20 +1,30 @@
-// WiseCall WhatsApp channel (Twilio Programmable Messaging / WhatsApp).
+// WiseCall WhatsApp channel (Twilio Programmable Messaging, or Vonage Messages API).
 //
-// POST = inbound WhatsApp message from Twilio → resolve the receiving number to
+// POST = inbound WhatsApp message from Twilio (form-encoded) or Vonage (JSON,
+// `?token=` = smsStatusToken("wisecall-whatsapp-inbound")); the provider is
+// detected from the request and the reply goes back the same way → resolve the receiving number to
 // the agent (wisecall_whatsapp_numbers.whatsapp_number stores E.164 number) →
 // gate on active plan → AI reply from agent prompt + knowledge base → send via
 // Twilio Messages API → record usage → contact memory update.
 //
-// Secrets: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, CLAUDE_API_WISECASE,
+// Secrets: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, Vault VONAGE_WHATSAPP_APP_KEY (Vonage), CLAUDE_API_WISECASE,
 // OPENAI_API_KEY, SUPABASE_URL/SERVICE_ROLE_KEY.
 // Deploy with --no-verify-jwt.
 // Set this function URL as the inbound webhook in:
 //   Twilio Console → Messaging → Senders → WhatsApp sender → Webhook URL
+// Vonage: set it as the Inbound URL of the Messages application linked to the
+//   WhatsApp number, with `?token=<token>` appended.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { buildMemoryBlock, loadContactContext, triggerPortalAnalysis } from "../_shared/contact-memory.ts";
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { tryHandleViewingReply } from "../_shared/viewing-confirm.ts";
+import { smsStatusToken } from "../_shared/sms-status-token.ts";
+import { sendVonageWhatsapp } from "../_shared/vonage-messages.ts";
+import { getSecret } from "../_shared/app-secrets.ts";
+
+// Vonage "WiseCall WhatsApp" Messages application; its private key is in Vault (VONAGE_WHATSAPP_APP_KEY).
+const VONAGE_WHATSAPP_APPLICATION_ID = "22ecbebb-e7e7-4b1b-a4bc-734befec1173";
 
 const CLAUDE_MODEL = "claude-opus-4-8";
 
@@ -43,7 +53,7 @@ function normaliseWhatsappAddress(value: string): string {
 function whatsappNumberCandidates(value: string): string[] {
   const normalised = normaliseWhatsappAddress(value);
   const digitsOnly = normalised.replace(/\D/g, "");
-  return [...new Set([normalised, digitsOnly].filter(Boolean))];
+  return [...new Set([normalised, digitsOnly, digitsOnly ? `+${digitsOnly}` : ""].filter(Boolean))];
 }
 
 function twilioWhatsappAddress(value: string): string {
@@ -177,7 +187,17 @@ async function fetchKbContext(profileId: string, query: string): Promise<string 
 
 // Send a WhatsApp text reply via Twilio Programmable Messaging.
 // `from` = the agent's WhatsApp Business number (E.164), `to` = customer number.
-async function sendWhatsapp(from: string, to: string, body: string): Promise<void> {
+type Provider = "twilio" | "vonage";
+
+
+async function sendWhatsapp(provider: Provider, from: string, to: string, body: string): Promise<void> {
+  if (provider === "vonage") {
+    await sendVonageWhatsapp(
+      { from, to, text: body },
+      { applicationId: VONAGE_WHATSAPP_APPLICATION_ID, privateKey: (await getSecret("VONAGE_WHATSAPP_APP_KEY")) || "" },
+    );
+    return;
+  }
   const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
   const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
   if (!accountSid || !authToken) throw new Error("Twilio credentials not configured");
@@ -206,32 +226,64 @@ Deno.serve(async (req) => {
   if (req.method === "GET") return json({ ok: true });
   if (req.method !== "POST") return twiml();
 
-  let form: URLSearchParams;
-  try {
-    form = new URLSearchParams(await req.text());
-  } catch {
-    return twiml();
-  }
+  const provider: Provider = (req.headers.get("content-type") || "").includes("json") ? "vonage" : "twilio";
+  let toNumber = "";
+  let fromNumber = "";
+  let incoming = "";
+  let senderName: string | undefined;
+  let messageSid = "";
 
-  // Only Twilio should reach this endpoint. Bad signatures are rejected; handled
-  // runtime failures below still return 200 TwiML to avoid webhook retry loops.
-  if (!(await verifyTwilioSignature(req, form))) {
-    console.error("[wisecall-whatsapp-inbound] invalid twilio signature");
-    if (Deno.env.get("TWILIO_STRICT_SIGNATURE") !== "false") {
-      return twiml(403);
+  if (provider === "vonage") {
+    // Vonage Messages API inbound: JSON { channel, from, to, message_uuid, text, profile.name }.
+    // Authenticated by the derived URL token (the project is at the secret limit).
+    const supplied = new URL(req.url).searchParams.get("token") || "";
+    const expected = await smsStatusToken("wisecall-whatsapp-inbound");
+    if (!expected || !(await timingSafeEqual(supplied, expected))) {
+      console.error("[wisecall-whatsapp-inbound] invalid vonage token");
+      return twiml(401);
     }
-  }
+    let event: Record<string, unknown>;
+    try {
+      event = await req.json();
+    } catch {
+      return twiml();
+    }
+    // Status callbacks and non-text/non-WhatsApp events are acknowledged and ignored.
+    if (event.channel !== "whatsapp" || event.message_type !== "text") return twiml();
+    toNumber = normaliseWhatsappAddress(String(event.to ?? ""));
+    fromNumber = normaliseWhatsappAddress(String(event.from ?? ""));
+    incoming = String(event.text ?? "").trim();
+    const profileInfo = event.profile as { name?: unknown } | undefined;
+    senderName = typeof profileInfo?.name === "string" && profileInfo.name.trim() ? profileInfo.name.trim() : undefined;
+    messageSid = String(event.message_uuid ?? "");
+  } else {
+    let form: URLSearchParams;
+    try {
+      form = new URLSearchParams(await req.text());
+    } catch {
+      return twiml();
+    }
 
-  // Always 200 to Twilio for handled cases, non-200 triggers retries.
-  try {
+    // Bad signatures are rejected; handled runtime failures below still return
+    // 200 TwiML to avoid webhook retry loops.
+    if (!(await verifyTwilioSignature(req, form))) {
+      console.error("[wisecall-whatsapp-inbound] invalid twilio signature");
+      if (Deno.env.get("TWILIO_STRICT_SIGNATURE") !== "false") {
+        return twiml(403);
+      }
+    }
+
     // Twilio inbound WhatsApp payload is application/x-www-form-urlencoded:
     // From=whatsapp:+447..., To=whatsapp:+44..., Body=..., ProfileName=...
-    const toNumber = normaliseWhatsappAddress(formValue(form, "To"));
-    const fromNumber = normaliseWhatsappAddress(formValue(form, "From"));
-    const incoming = formValue(form, "Body");
-    const senderName = formValue(form, "ProfileName") || undefined;
-    const messageSid = formValue(form, "MessageSid") || formValue(form, "SmsMessageSid");
+    toNumber = normaliseWhatsappAddress(formValue(form, "To"));
+    fromNumber = normaliseWhatsappAddress(formValue(form, "From"));
+    incoming = formValue(form, "Body");
+    senderName = formValue(form, "ProfileName") || undefined;
+    messageSid = formValue(form, "MessageSid") || formValue(form, "SmsMessageSid");
+  }
 
+  // Always 200 for handled cases, non-200 triggers retries.
+  try {
     if (!toNumber || !fromNumber || !incoming) {
       return twiml();
     }
@@ -264,23 +316,28 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await supabase
       .from("wisecall_profiles")
-      .select("id, business_name, clinic_name, profile_name, system_prompt, business_context, metadata")
+      .select("id, slug, business_name, clinic_name, profile_name, system_prompt, business_context, metadata")
       .eq("id", waNumber.profile_id)
       .maybeSingle();
     if (!profile) return twiml();
 
+    // Ava, WiseCall's own website demo agent (slug "wisecall"), has no customer
+    // owner or plan, so she skips the owner/billing gate (no usage is counted).
+    const isAvaDemo = profile.slug === "wisecall";
     const ownerId = (profile.metadata as Record<string, string> | null)?.owner_id;
-    if (!ownerId) return twiml();
+    if (!ownerId && !isAvaDemo) return twiml();
 
-    const { data: billingRow } = await supabase
-      .from("wisecall_billing")
-      .select("status")
-      .eq("user_id", ownerId)
-      .maybeSingle();
-    const sandboxBillingBypass =
-      isSandboxNumber(toNumber) && Deno.env.get("WISECALL_WHATSAPP_SANDBOX_BYPASS_BILLING") === "true";
-    if (!sandboxBillingBypass && (!billingRow || !["active", "trialing"].includes(billingRow.status))) {
-      return twiml();
+    if (!isAvaDemo) {
+      const { data: billingRow } = await supabase
+        .from("wisecall_billing")
+        .select("status")
+        .eq("user_id", ownerId)
+        .maybeSingle();
+      const sandboxBillingBypass =
+        isSandboxNumber(toNumber) && Deno.env.get("WISECALL_WHATSAPP_SANDBOX_BYPASS_BILLING") === "true";
+      if (!sandboxBillingBypass && (!billingRow || !["active", "trialing"].includes(billingRow.status))) {
+        return twiml();
+      }
     }
 
     const businessName =
@@ -297,13 +354,13 @@ Deno.serve(async (req) => {
         channel: "whatsapp",
         businessName: String(businessName).slice(0, 40),
         sendTo: async (to, text) => {
-          // Prefer WhatsApp for the counterparty notify; Twilio accepts E.164.
-          await sendWhatsapp(toNumber, to, text);
+          // Prefer WhatsApp for the counterparty notify; both providers take E.164.
+          await sendWhatsapp(provider, toNumber, to, text);
         },
       });
       if (viewing.handled) {
         try {
-          await sendWhatsapp(toNumber, fromNumber, viewing.replyText);
+          await sendWhatsapp(provider, toNumber, fromNumber, viewing.replyText);
         } catch (e) {
           console.error("[wisecall-whatsapp-inbound] viewing reply send:", (e as Error).message);
         }
@@ -373,7 +430,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-      await sendWhatsapp(toNumber, fromNumber, replyText);
+      await sendWhatsapp(provider, toNumber, fromNumber, replyText);
     } catch (e) {
       console.error("[wisecall-whatsapp-inbound] send error:", (e as Error).message);
       return twiml();
@@ -425,14 +482,20 @@ Deno.serve(async (req) => {
         transcript: `FROM: ${senderName || fromNumber}\n\n--- Their message ---\n${incoming}\n\n--- WiseCall reply ---\n${replyText}`,
         started_at: now,
         finished_at: now,
-        metadata: { channel: "whatsapp", message_sid: messageSid || null },
+        metadata: {
+          channel: "whatsapp",
+          provider,
+          message_sid: messageSid || null,
+          // Ava is a demo: never email a summary of her WhatsApp chats.
+          ...(isAvaDemo ? { summary_email_sent: true } : {}),
+        },
       }).select("id").single();
       callLogId = logRow?.id ?? null;
     } catch (e) {
       console.error("[wisecall-whatsapp-inbound] log insert:", (e as Error).message);
     }
 
-    if (callLogId) void triggerPortalAnalysis(callLogId);
+    if (callLogId && !isAvaDemo) void triggerPortalAnalysis(callLogId);
 
     return twiml();
   } catch (e) {

@@ -36,3 +36,59 @@ export async function sendVonageSms(
   const result = await response.json() as { message_uuid?: string };
   return { messageId: result.message_uuid ?? null };
 }
+
+// WhatsApp sends are not accepted with the account key/secret (401): they need a
+// JWT signed with the Messages application's private key (RS256).
+function b64url(bytes: Uint8Array | string): string {
+  const raw = typeof bytes === "string" ? new TextEncoder().encode(bytes) : bytes;
+  return btoa(String.fromCharCode(...raw)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export async function vonageApplicationJwt(applicationId: string, privateKeyPem: string): Promise<string> {
+  const der = Uint8Array.from(
+    atob(privateKeyPem.replace(/-----(BEGIN|END) PRIVATE KEY-----/g, "").replace(/\s+/g, "")),
+    (c) => c.charCodeAt(0),
+  );
+  const key = await crypto.subtle.importKey(
+    "pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"],
+  );
+  const iat = Math.floor(Date.now() / 1000);
+  const signingInput = `${b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${
+    b64url(JSON.stringify({ application_id: applicationId, iat, exp: iat + 300, jti: crypto.randomUUID() }))
+  }`;
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(signingInput));
+  return `${signingInput}.${b64url(new Uint8Array(sig))}`;
+}
+
+// Free-text WhatsApp reply over the Vonage Messages API. Only valid inside the
+// 24h customer-service window, which holds for a reply to an inbound message.
+export async function sendVonageWhatsapp(
+  input: { from: string; to: string; text: string },
+  credentials: { applicationId: string; privateKey: string },
+  fetcher: typeof fetch = fetch,
+): Promise<{ messageId: string | null }> {
+  const from = smsPhoneDigits(input.from);
+  const to = smsPhoneDigits(input.to);
+  if (!from || !to) throw new Error("Numeric WhatsApp sender and destination required");
+  if (!credentials.applicationId || !credentials.privateKey) throw new Error("Vonage WhatsApp application key not configured");
+  const response = await fetcher("https://api.nexmo.com/v1/messages", {
+    method: "POST",
+    redirect: "error",
+    signal: AbortSignal.timeout(15_000),
+    headers: {
+      Authorization: `Bearer ${await vonageApplicationJwt(credentials.applicationId, credentials.privateKey)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ channel: "whatsapp", message_type: "text", from, to, text: input.text }),
+  });
+  if (!response.ok) {
+    let reason = "";
+    try {
+      const err = await response.json() as { title?: string; detail?: string };
+      reason = [err.title, err.detail].filter(Boolean).join(": ").slice(0, 200);
+    } catch { /* body not JSON */ }
+    throw new Error(`Vonage WhatsApp send failed (${response.status})${reason ? ` ${reason}` : ""}`);
+  }
+  const result = await response.json() as { message_uuid?: string };
+  return { messageId: result.message_uuid ?? null };
+}
