@@ -312,23 +312,28 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await supabase
       .from("wisecall_profiles")
-      .select("id, business_name, clinic_name, profile_name, system_prompt, business_context, metadata")
+      .select("id, slug, business_name, clinic_name, profile_name, system_prompt, business_context, metadata")
       .eq("id", waNumber.profile_id)
       .maybeSingle();
     if (!profile) return twiml();
 
+    // Ava, WiseCall's own website demo agent (slug "wisecall"), has no customer
+    // owner or plan, so she skips the owner/billing gate (no usage is counted).
+    const isAvaDemo = profile.slug === "wisecall";
     const ownerId = (profile.metadata as Record<string, string> | null)?.owner_id;
-    if (!ownerId) return twiml();
+    if (!ownerId && !isAvaDemo) return twiml();
 
-    const { data: billingRow } = await supabase
-      .from("wisecall_billing")
-      .select("status")
-      .eq("user_id", ownerId)
-      .maybeSingle();
-    const sandboxBillingBypass =
-      isSandboxNumber(toNumber) && Deno.env.get("WISECALL_WHATSAPP_SANDBOX_BYPASS_BILLING") === "true";
-    if (!sandboxBillingBypass && (!billingRow || !["active", "trialing"].includes(billingRow.status))) {
-      return twiml();
+    if (!isAvaDemo) {
+      const { data: billingRow } = await supabase
+        .from("wisecall_billing")
+        .select("status")
+        .eq("user_id", ownerId)
+        .maybeSingle();
+      const sandboxBillingBypass =
+        isSandboxNumber(toNumber) && Deno.env.get("WISECALL_WHATSAPP_SANDBOX_BYPASS_BILLING") === "true";
+      if (!sandboxBillingBypass && (!billingRow || !["active", "trialing"].includes(billingRow.status))) {
+        return twiml();
+      }
     }
 
     const businessName =
