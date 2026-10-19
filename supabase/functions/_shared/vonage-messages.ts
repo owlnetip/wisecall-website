@@ -36,3 +36,29 @@ export async function sendVonageSms(
   const result = await response.json() as { message_uuid?: string };
   return { messageId: result.message_uuid ?? null };
 }
+
+// Free-text WhatsApp reply over the Vonage Messages API. Only valid inside the
+// 24h customer-service window, which holds for a reply to an inbound message.
+export async function sendVonageWhatsapp(
+  input: { from: string; to: string; text: string },
+  credentials: { key: string; secret: string },
+  fetcher: typeof fetch = fetch,
+): Promise<{ messageId: string | null }> {
+  const from = smsPhoneDigits(input.from);
+  const to = smsPhoneDigits(input.to);
+  if (!from || !to) throw new Error("Numeric WhatsApp sender and destination required");
+  if (!credentials.key || !credentials.secret) throw new Error("Vonage credentials not configured");
+  const response = await fetcher("https://api.nexmo.com/v1/messages", {
+    method: "POST",
+    redirect: "error",
+    signal: AbortSignal.timeout(15_000),
+    headers: {
+      Authorization: `Basic ${btoa(`${credentials.key}:${credentials.secret}`)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ channel: "whatsapp", message_type: "text", from, to, text: input.text }),
+  });
+  if (!response.ok) throw new Error(`Vonage WhatsApp send failed (${response.status})`);
+  const result = await response.json() as { message_uuid?: string };
+  return { messageId: result.message_uuid ?? null };
+}
