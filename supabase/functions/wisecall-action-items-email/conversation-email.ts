@@ -266,7 +266,17 @@ export type PostCallEmailInput = {
   companyStatus?: string;
   /** Website chat: the address of the property a seller wants to sell. */
   propertyAddress?: string;
+  /** Which channel the conversation arrived on; unset means a phone call. */
+  channel?: "chat" | "call";
 };
+
+export function isChatChannel(input: { channel?: string }): boolean {
+  return input.channel === "chat";
+}
+
+function channelTitle(input: { channel?: string }): string {
+  return isChatChannel(input) ? "Live chat transcript" : "Call transcript";
+}
 
 const EMAIL_LOGO_URL = "https://app.wisecall.io/owl-logo.png";
 const BRAND_DARK = "#172929";
@@ -349,9 +359,10 @@ function displayAgentName(agentName?: string): string {
 export function postCallEmailSubject(input: PostCallEmailInput): string {
   const who = cleanCallerName(input.callerName) || input.callerId || "Unknown";
   const actionItems = emailActionItems(input);
+  const prefix = isChatChannel(input) ? "Live chat" : "Call";
   return actionItems.length
-    ? `Follow-up needed · ${who} · ${input.businessName}`
-    : `Message from ${who} · ${input.businessName}`;
+    ? `${prefix} · Follow-up needed · ${who} · ${input.businessName}`
+    : `${prefix} · Message from ${who} · ${input.businessName}`;
 }
 
 function card(inner: string): string {
@@ -414,14 +425,16 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
   const company = companyLine(input);
   const duration = durationLabel(input.durationSeconds, input.startedAt, input.finishedAt);
   const urgency = (input.urgency || "").trim();
+  const chat = isChatChannel(input);
 
   const detailRows = [
+    detailRow("Channel", chat ? "Live chat" : "Phone call"),
     detailRow("Agent Name", agentName),
-    detailRow("Caller Name", callerName || "Not captured"),
-    company ? detailRow("Caller Company", company) : "",
-    detailRow("Caller Phone", callerId),
+    detailRow(chat ? "Name" : "Caller Name", callerName || "Not captured"),
+    company ? detailRow(chat ? "Company" : "Caller Company", company) : "",
+    detailRow(chat ? "Contact" : "Caller Phone", callerId),
     input.propertyAddress?.trim() ? detailRow("Property Address", input.propertyAddress.trim()) : "",
-    duration ? detailRow("Call Duration", duration) : "",
+    duration && !chat ? detailRow("Call Duration", duration) : "",
     urgency ? detailRow("Urgency", urgency) : "",
     date ? detailRow("Date", date) : "",
     time ? detailRow("Time", time) : "",
@@ -440,7 +453,7 @@ export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
           </td>
         </tr>
       </table>
-      <p style="margin:0 0 22px;font-size:20px;font-weight:700;color:#ffffff;">Call transcript</p>
+      <p style="margin:0 0 22px;font-size:20px;font-weight:700;color:#ffffff;">${channelTitle(input)}</p>
       ${card(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows}</table>`)}
       ${followUpBlockHtml(actionItems)}
       ${
@@ -479,13 +492,14 @@ export function buildPostCallEmailText(input: PostCallEmailInput): string {
   const duration = durationLabel(input.durationSeconds, input.startedAt, input.finishedAt);
   const blocks = [
     "WiseCall",
-    "Call transcript",
+    channelTitle(input),
+    `Channel: ${isChatChannel(input) ? "Live chat" : "Phone call"}`,
     `Agent Name: ${displayAgentName(input.agentName)}`,
-    `Caller Name: ${callerName || "Not captured"}`,
-    companyLine(input) ? `Caller Company: ${companyLine(input)}` : "",
-    `Caller Phone: ${input.callerId || "Unknown"}`,
+    `${isChatChannel(input) ? "Name" : "Caller Name"}: ${callerName || "Not captured"}`,
+    companyLine(input) ? `${isChatChannel(input) ? "Company" : "Caller Company"}: ${companyLine(input)}` : "",
+    `${isChatChannel(input) ? "Contact" : "Caller Phone"}: ${input.callerId || "Unknown"}`,
     ...(input.propertyAddress?.trim() ? [`Property Address: ${input.propertyAddress.trim()}`] : []),
-    duration ? `Call Duration: ${duration}` : "",
+    duration && !isChatChannel(input) ? `Call Duration: ${duration}` : "",
     input.urgency?.trim() ? `Urgency: ${input.urgency.trim()}` : "",
     date ? `Date: ${date}` : "",
     time ? `Time: ${time}` : "",
