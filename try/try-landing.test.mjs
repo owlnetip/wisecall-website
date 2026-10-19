@@ -98,6 +98,6 @@ test("campaign links tag the callback source without spoofing reserved ones", ()
 });
 
 test("Ava can also be messaged on WhatsApp, as a quiet secondary link", () => {
-  assert.match(html, /id="whatsapp-ava" href="https:\/\/wa\.me\/447441448406\?text=Hi%20Ava"/);
+  assert.match(html, /id="whatsapp-ava" href="https:\/\/wa\.me\/447451277744\?text=Hi%20Ava"/);
   assert.ok(html.indexOf('id="whatsapp-ava"') > html.indexOf('id="call-ava"'), "Call Ava stays first");
 });
