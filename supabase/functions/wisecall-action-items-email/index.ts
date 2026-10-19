@@ -216,6 +216,10 @@ serve(async (req) => {
       logAgentName ||
       "WiseCall",
     propertyAddress: typeof collected.property_address === "string" ? collected.property_address : "",
+    channel:
+      logMeta.channel === "chat" || /^live_chat/i.test(outcome) || /^live_chat/i.test(logOutcome)
+        ? ("chat" as const)
+        : ("call" as const),
   };
   const html = buildPostCallEmailHtml(emailInput);
   const text = buildPostCallEmailText(emailInput);
