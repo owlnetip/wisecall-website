@@ -7,8 +7,7 @@
 // gate on active plan → AI reply from agent prompt + knowledge base → send via
 // Twilio Messages API → record usage → contact memory update.
 //
-// Secrets: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, VONAGE_API_KEY/SECRET (Vonage
-// numbers), CLAUDE_API_WISECASE,
+// Secrets: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, Vault VONAGE_WHATSAPP_APP_KEY (Vonage), CLAUDE_API_WISECASE,
 // OPENAI_API_KEY, SUPABASE_URL/SERVICE_ROLE_KEY.
 // Deploy with --no-verify-jwt.
 // Set this function URL as the inbound webhook in:
@@ -22,6 +21,10 @@ import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/k
 import { tryHandleViewingReply } from "../_shared/viewing-confirm.ts";
 import { smsStatusToken } from "../_shared/sms-status-token.ts";
 import { sendVonageWhatsapp } from "../_shared/vonage-messages.ts";
+import { getSecret } from "../_shared/app-secrets.ts";
+
+// Vonage "WiseCall WhatsApp" Messages application; its private key is in Vault (VONAGE_WHATSAPP_APP_KEY).
+const VONAGE_WHATSAPP_APPLICATION_ID = "22ecbebb-e7e7-4b1b-a4bc-734befec1173";
 
 const CLAUDE_MODEL = "claude-opus-4-8";
 
@@ -186,11 +189,12 @@ async function fetchKbContext(profileId: string, query: string): Promise<string 
 // `from` = the agent's WhatsApp Business number (E.164), `to` = customer number.
 type Provider = "twilio" | "vonage";
 
+
 async function sendWhatsapp(provider: Provider, from: string, to: string, body: string): Promise<void> {
   if (provider === "vonage") {
     await sendVonageWhatsapp(
       { from, to, text: body },
-      { key: Deno.env.get("VONAGE_API_KEY") || "", secret: Deno.env.get("VONAGE_API_SECRET") || "" },
+      { applicationId: VONAGE_WHATSAPP_APPLICATION_ID, privateKey: (await getSecret("VONAGE_WHATSAPP_APP_KEY")) || "" },
     );
     return;
   }
@@ -478,14 +482,20 @@ Deno.serve(async (req) => {
         transcript: `FROM: ${senderName || fromNumber}\n\n--- Their message ---\n${incoming}\n\n--- WiseCall reply ---\n${replyText}`,
         started_at: now,
         finished_at: now,
-        metadata: { channel: "whatsapp", provider, message_sid: messageSid || null },
+        metadata: {
+          channel: "whatsapp",
+          provider,
+          message_sid: messageSid || null,
+          // Ava is a demo: never email a summary of her WhatsApp chats.
+          ...(isAvaDemo ? { summary_email_sent: true } : {}),
+        },
       }).select("id").single();
       callLogId = logRow?.id ?? null;
     } catch (e) {
       console.error("[wisecall-whatsapp-inbound] log insert:", (e as Error).message);
     }
 
-    if (callLogId) void triggerPortalAnalysis(callLogId);
+    if (callLogId && !isAvaDemo) void triggerPortalAnalysis(callLogId);
 
     return twiml();
   } catch (e) {
