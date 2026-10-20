@@ -184,52 +184,33 @@ serve(async (req) => {
     }
 
     if (didId) {
-      const unassignAttempts = [
-        reseller.uniqueHash
-          ? { label: "reseller unique hash", hash: reseller.uniqueHash }
-          : null,
-        { label: "did_id + reseller api key", hash: await sha1(`${didId}${reseller.apiKey}`) },
-      ].filter(Boolean) as Array<{ label: string; hash: string }>;
-
-      for (const attempt of unassignAttempts) {
-        try {
-          const params = new URLSearchParams({
-            u: reseller.username,
-            did_id: didId,
-            hash: attempt.hash,
-          });
-          if (reseller.password) params.set("p", reseller.password);
-          const xml = await morGet(
-            `${MOR_API_URL}/billing/api/did_unassign_device?${params.toString()}`,
-          );
-          const err = morError(xml);
-          if (!err || /not assigned|already/i.test(err)) break;
-          warnings.push(`MOR did_unassign_device ${attempt.label}: ${err}`);
-        } catch (err) {
-          warnings.push(
-            `MOR did_unassign_device ${attempt.label}: ${
-              err instanceof Error ? err.message : String(err)
-            }`,
-          );
-        }
-      }
-
+      // Free the DID by setting did_user_id = -1 (MOR's "make DID free"), which
+      // detaches it from the agent's user and its device, returning it to the
+      // reseller's free pool. This MUST run as the reseller that owns the DID —
+      // admin gets "Access Denied"/"already assigned" on a reseller-owned DID,
+      // the same reason provisioning runs under the reseller. Hash is
+      // sha1(did_id + secret), the exact reverse of the provisioning reserve.
+      // (There is no reliable dedicated did_unassign_device method; per the
+      // Kolmisoft wiki, did_details_update did_user_id=-1 is the way to free.)
       try {
-        const reserveHash = await sha1(`${didId}${MOR_API_SECRET.trim()}`);
+        const freeHash = await sha1(`${didId}${MOR_API_SECRET.trim()}`);
+        const params = new URLSearchParams({
+          u: reseller.username,
+          did_id: didId,
+          did_user_id: "-1",
+          hash: freeHash,
+        });
+        if (reseller.password) params.set("p", reseller.password);
         const xml = await morGet(
-          `${MOR_API_URL}/billing/api/did_details_update?` +
-            new URLSearchParams({
-              u: "admin",
-              did_id: didId,
-              did_user_id: MOR_RESELLER_ID,
-              hash: reserveHash,
-            }),
+          `${MOR_API_URL}/billing/api/did_details_update?${params.toString()}`,
         );
         const err = morError(xml);
-        if (err) warnings.push(`MOR did_details_update release to reseller: ${err}`);
+        if (err && !/not assigned|already|free/i.test(err)) {
+          warnings.push(`MOR did_details_update (free DID): ${err}`);
+        }
       } catch (err) {
         warnings.push(
-          `MOR did_details_update release to reseller: ${
+          `MOR did_details_update (free DID): ${
             err instanceof Error ? err.message : String(err)
           }`,
         );
