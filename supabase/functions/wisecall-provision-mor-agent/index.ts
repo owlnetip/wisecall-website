@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { morAgentDisplayName, type MorAgentDisplayName } from "../_shared/mor-agent-name.ts";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -171,7 +172,8 @@ async function syncMorDevicePassword(options: {
   morUserId: string;
   morDeviceId: string;
   deviceUsername: string;
-  sipPassword: string;
+  sipPassword?: string;
+  description?: string;
 }): Promise<string> {
   const {
     morApiUrl,
@@ -181,6 +183,7 @@ async function syncMorDevicePassword(options: {
     morDeviceId,
     deviceUsername,
     sipPassword,
+    description,
   } = options;
 
   const deviceHash = reseller.uniqueHash || await sha1(`${morUserId}${reseller.apiKey}`);
@@ -214,9 +217,10 @@ async function syncMorDevicePassword(options: {
     host,
     port,
     hash: updateHash,
-    password: sipPassword,
     device_type: "SIP",
   });
+  if (sipPassword) updateParams.set("password", sipPassword);
+  if (description) updateParams.set("description", description);
   if (reseller.password) updateParams.set("p", reseller.password);
 
   const updateXml = await morGet(
@@ -231,11 +235,70 @@ async function syncMorDevicePassword(options: {
   );
   const verifyBlock = morDeviceBlock(verifyXml, morDeviceId);
   const morPassword = xmlTag(verifyBlock, "secret") || xmlTag(verifyBlock, "password");
-  if (morPassword && morPassword !== sipPassword) {
+  if (sipPassword && morPassword && morPassword !== sipPassword) {
     throw new Error("MOR device_update password did not match the saved SIP password");
   }
 
   return usernameForHash;
+}
+
+async function syncMorUserDisplayName(options: {
+  morApiUrl: string;
+  resellerUsername: string;
+  reseller: {
+    password: string;
+    apiKey: string;
+    uniqueHash: string;
+  };
+  morUserId: string;
+  name: MorAgentDisplayName;
+}): Promise<void> {
+  const { morApiUrl, resellerUsername, reseller, morUserId, name } = options;
+
+  const attempts = [
+    { label: "reseller unique hash", hash: reseller.uniqueHash },
+    { label: "user_id + api key", hash: await sha1(`${morUserId}${reseller.apiKey}`) },
+    {
+      label: "user_id + names + api key",
+      hash: await sha1(
+        `${morUserId}${name.lastName}${name.firstName}${name.companyName}${reseller.apiKey}`,
+      ),
+    },
+  ].filter((attempt) => Boolean(attempt.hash));
+
+  let lastXml = "";
+  let lastErr: string | null = null;
+  for (const attempt of attempts) {
+    const params = new URLSearchParams({
+      u: resellerUsername,
+      user_id: morUserId,
+      u23: name.firstName,
+      u17: name.lastName,
+      company_name: name.companyName,
+      hash: attempt.hash,
+    });
+    if (reseller.password) params.set("p", reseller.password);
+
+    const xml = await morGet(
+      `${morApiUrl}/billing/api/user_details_update?${params.toString()}`,
+    );
+    lastXml = xml;
+    lastErr = morResponseError(xml);
+    if (!lastErr) {
+      console.log(
+        `✅ MOR user ${morUserId} renamed to ${name.firstName} ${name.lastName} (${attempt.label})`,
+      );
+      return;
+    }
+    if (!shouldTryAlternateAuth(xml, lastErr) && !/incorrect hash/i.test(lastErr)) {
+      break;
+    }
+    console.log(`⚠️ user_details_update failed with ${attempt.label}: ${lastErr}`);
+  }
+
+  throw new Error(
+    `MOR user_details_update name failed: ${lastErr || lastXml.slice(0, 200)}`,
+  );
 }
 
 // ─── main ─────────────────────────────────────────────────────────────────────
@@ -285,8 +348,12 @@ serve(async (req) => {
       return json({ ok: false, error: "Forbidden" }, 403);
     }
 
-    const { profile_id } = await req.json();
-    if (!profile_id) return json({ ok: false, error: "profile_id required" }, 400);
+    const body = await req.json().catch(() => ({}));
+    const profile_id = typeof body?.profile_id === "string" ? body.profile_id.trim() : "";
+    const syncNameOnly = body?.sync_name_only === true;
+    if (!profile_id && !syncNameOnly) {
+      return json({ ok: false, error: "profile_id required" }, 400);
+    }
 
     const MOR_API_URL = Deno.env.get("MOR_API_URL");
     const MOR_API_SECRET = Deno.env.get("MOR_API_SECRET");
@@ -314,6 +381,90 @@ serve(async (req) => {
     const resellerOwnerId = reseller.uniqueHash || reseller.resellerId;
     console.log(`✅ Using MOR reseller ${resellerUsername} (${MOR_RESELLER_ID}) for provisioning`);
 
+    const profileNameSelect =
+      "id, profile_name, receptionist_name, business_name, clinic_name, metadata";
+
+    // Cosmetic rename of existing MOR users from the WiseCall agent name.
+    // Does not reserve DIDs, create users, or touch SIP passwords.
+    if (syncNameOnly) {
+      let poolQuery = supabase
+        .from("wisecall_mor_ddi_pool")
+        .select("profile_id, mor_user_id, mor_device_id")
+        .in("status", ["assigned", "reserved"])
+        .not("mor_user_id", "is", null);
+      if (profile_id) poolQuery = poolQuery.eq("profile_id", profile_id);
+      const { data: poolRows, error: poolErr } = await poolQuery;
+      if (poolErr) throw new Error(`MOR name sync pool lookup failed: ${poolErr.message}`);
+
+      const targets = new Map<string, { morUserId: string; morDeviceId: string }>();
+      for (const row of poolRows ?? []) {
+        const id = typeof row.profile_id === "string" ? row.profile_id : "";
+        const morUserId = typeof row.mor_user_id === "string" ? row.mor_user_id : "";
+        if (!id || !morUserId || targets.has(id)) continue;
+        targets.set(id, {
+          morUserId,
+          morDeviceId: typeof row.mor_device_id === "string" ? row.mor_device_id : "",
+        });
+      }
+
+      const profileIds = [...targets.keys()];
+      if (profile_id && !targets.has(profile_id)) {
+        const { data: profileFallback } = await supabase
+          .from("wisecall_profiles")
+          .select(profileNameSelect)
+          .eq("id", profile_id)
+          .maybeSingle();
+        const routing = (profileFallback?.metadata as Record<string, unknown> | null)?.routing as
+          | Record<string, unknown>
+          | undefined;
+        const morUserId = typeof routing?.morUserId === "string" ? routing.morUserId : "";
+        if (morUserId) {
+          targets.set(profile_id, {
+            morUserId,
+            morDeviceId: typeof routing?.morDeviceId === "string" ? routing.morDeviceId : "",
+          });
+          profileIds.push(profile_id);
+        }
+      }
+
+      if (!targets.size) {
+        return json({ ok: true, updated: 0, failed: [] });
+      }
+
+      const { data: profiles, error: profilesErr } = await supabase
+        .from("wisecall_profiles")
+        .select(profileNameSelect)
+        .in("id", profileIds);
+      if (profilesErr) throw new Error(`MOR name sync profile lookup failed: ${profilesErr.message}`);
+
+      const profilesById = new Map(
+        (profiles ?? []).map((row) => [String(row.id), row]),
+      );
+      const failed: { profileId: string; error: string }[] = [];
+      let updated = 0;
+
+      for (const [id, target] of targets) {
+        const profile = profilesById.get(id);
+        const name = morAgentDisplayName(profile ?? {});
+        try {
+          await syncMorUserDisplayName({
+            morApiUrl: MOR_API_URL,
+            resellerUsername,
+            reseller,
+            morUserId: target.morUserId,
+            name,
+          });
+          updated += 1;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          console.warn(`⚠️ MOR name sync failed for ${id}:`, message);
+          failed.push({ profileId: id, error: message });
+        }
+      }
+
+      return json({ ok: failed.length === 0, updated, failed });
+    }
+
     // Deterministic username, same on every attempt for this profile. If we
     // are recovering from an old admin-owned partial, use a stable replacement.
     const baseMorUsername = "wca" + profile_id.replace(/-/g, "").slice(0, 10);
@@ -336,6 +487,15 @@ serve(async (req) => {
       .select("sip_username, sip_password, mor_device_id")
       .eq("profile_id", profile_id)
       .maybeSingle();
+
+    const { data: profileRow, error: profileReadErr } = await supabase
+      .from("wisecall_profiles")
+      .select(profileNameSelect)
+      .eq("id", profile_id)
+      .maybeSingle();
+    if (profileReadErr) throw new Error(`Profile lookup failed: ${profileReadErr.message}`);
+    if (!profileRow) throw new Error(`Agent profile ${profile_id} was not found`);
+    const agentDisplayName = morAgentDisplayName(profileRow);
 
     let didPoolId = "";
     let didNumber = "";
@@ -386,8 +546,9 @@ serve(async (req) => {
         username: morUsername,
         password: morPassword,
         password2: morPassword,
-        first_name: "WiseCall",
-        last_name: "Agent",
+        first_name: agentDisplayName.firstName,
+        last_name: agentDisplayName.lastName,
+        company_name: agentDisplayName.companyName,
         email: `${morUsername}@wisecall.io`,
         device_type: "SIP",
         country_id: "80",
@@ -431,7 +592,7 @@ serve(async (req) => {
         u: resellerUsername,
         hash: deviceHash,
         user_id: morUserId,
-        description: `WiseCall agent ${profile_id.slice(0, 8)}`,
+        description: agentDisplayName.description,
         type: "SIP",
         device_type: "SIP",
         authentication: "0",
@@ -489,8 +650,24 @@ serve(async (req) => {
       morDeviceId,
       deviceUsername,
       sipPassword,
+      description: agentDisplayName.description,
     });
     console.log(`✅ MOR SIP password synced for device ${morDeviceId}`);
+
+    try {
+      await syncMorUserDisplayName({
+        morApiUrl: MOR_API_URL,
+        resellerUsername,
+        reseller,
+        morUserId,
+        name: agentDisplayName,
+      });
+    } catch (err) {
+      console.warn(
+        "⚠️ MOR user rename failed (provision continues):",
+        err instanceof Error ? err.message : err,
+      );
+    }
 
     const apiSecret = MOR_API_SECRET.trim();
     const staleDidProfileId = "00000000-0000-0000-0000-000000000000";
@@ -726,13 +903,14 @@ serve(async (req) => {
     console.log(`✅ SIP endpoint upserted: ${deviceUsername}@${MOR_SIP_HOST}`);
 
     // ── 7. Update agent profile: routing + number ─────────────────────────
-    const { data: profileRow } = await supabase
+    const { data: latestProfile } = await supabase
       .from("wisecall_profiles")
       .select("metadata")
       .eq("id", profile_id)
       .single();
 
-    const metadata = (profileRow?.metadata as Record<string, unknown>) ?? {};
+    const metadata = (latestProfile?.metadata as Record<string, unknown>) ??
+      ((profileRow.metadata as Record<string, unknown>) ?? {});
     const routing = {
       provider: "mor_sip",
       number: didNumber,
