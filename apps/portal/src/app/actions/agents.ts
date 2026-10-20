@@ -41,6 +41,7 @@ import {
   CARTESIA_API_VERSION,
   cartesiaLanguageField,
   cartesiaTtsModelCandidates,
+  agentTtsMetadataForProvider,
   shouldRetryCartesiaModel,
 } from "@/lib/cartesia";
 import {
@@ -200,7 +201,7 @@ export async function createAgent(input: NewAgent): Promise<CreateResult> {
     learning_enabled: true,
     greeting: input.greeting ?? "",
     voice: voiceName,
-    tts_provider: ttsProvider,
+    ...agentTtsMetadataForProvider(ttsProvider),
     tts_voice_id: voiceId,
     knowledge: input.knowledge ?? "",
     knowledge_fields: input.knowledgeFields ?? {},
@@ -494,8 +495,9 @@ export async function updateAgent(
   if (patch.voice !== undefined) {
     nextMetadata.voice = patch.voice;
     const { ttsProvider, voiceId } = resolveVoiceRuntime(patch.voice);
-    nextMetadata.tts_provider = ttsProvider;
+    Object.assign(nextMetadata, agentTtsMetadataForProvider(ttsProvider));
     nextMetadata.tts_voice_id = voiceId;
+    if (ttsProvider !== "cartesia") delete nextMetadata.tts_model;
   }
   if (patch.knowledge !== undefined) nextMetadata.knowledge = patch.knowledge;
   if (patch.knowledgeFields !== undefined) nextMetadata.knowledge_fields = patch.knowledgeFields;
