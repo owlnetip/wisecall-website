@@ -6,6 +6,11 @@
 //   credentials_env: "SALESFORCE_BETTERMOVE",           // reads <prefix>_CLIENT_ID / _CLIENT_SECRET
 //   lead_source: "Website Chat",                         // optional; dropped if the picklist rejects it
 //   company: "Private individual",                       // optional; only used if the org requires Company
+//   record_type_id: "012…",                              // optional; new Leads only (else the run-as user's default applies)
+//   brand: {                                             // optional; new Leads only, from the chat's page URL
+//     field: "Brand__c",
+//     sites: { "bettermove.co.uk": "Bettermove", "brand2.co.uk": "Brand Two" },
+//   },
 // }
 //
 // Auth is the OAuth client-credentials flow against a Connected App with a
@@ -30,6 +35,8 @@ export type SalesforceLeadConfig = {
   clientSecret: string;
   leadSource: string | null;
   company: string | null;
+  recordTypeId: string | null;
+  brand: { field: string; sites: Record<string, string> } | null;
 };
 
 export type SalesforceLeadState = {
@@ -81,7 +88,38 @@ export function salesforceLeadConfig(
 
   const leadSource = String(cfg.lead_source ?? "Website Chat").trim() || null;
   const company = String(cfg.company || "").trim() || null;
-  return { instanceUrl, clientId, clientSecret, leadSource, company };
+  const rawRecordType = String(cfg.record_type_id || "").trim();
+  const recordTypeId = /^012[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$/.test(rawRecordType) ? rawRecordType : null;
+  return { instanceUrl, clientId, clientSecret, leadSource, company, recordTypeId, brand: brandConfig(cfg.brand) };
+}
+
+function brandConfig(value: unknown): SalesforceLeadConfig["brand"] {
+  if (!isPlainObject(value) || !isPlainObject(value.sites)) return null;
+  const field = String(value.field || "").trim();
+  if (!/^[A-Za-z][A-Za-z0-9_]{0,60}$/.test(field)) return null;
+  const sites: Record<string, string> = {};
+  for (const [host, brand] of Object.entries(value.sites)) {
+    const key = host.trim().toLowerCase().replace(/^www\./, "");
+    const label = String(brand || "").trim();
+    if (key && label) sites[key] = label;
+  }
+  return Object.keys(sites).length > 0 ? { field, sites } : null;
+}
+
+// Which configured site the chat was opened on; the exact host or any subdomain
+// of it counts. Null when the URL is missing or matches none.
+export function brandForPageUrl(brand: SalesforceLeadConfig["brand"], pageUrl: unknown): string | null {
+  if (!brand) return null;
+  let host: string;
+  try {
+    host = new URL(String(pageUrl || "")).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+  const match = Object.keys(brand.sites)
+    .filter((site) => host === site || host.endsWith(`.${site}`))
+    .sort((a, b) => b.length - a.length)[0];
+  return match ? brand.sites[match] : null;
 }
 
 // UK-normalised digits so 07…, +44…, 0044… and 44… compare equal.
@@ -288,14 +326,29 @@ function leadFields(cfg: SalesforceLeadConfig, collected: Record<string, unknown
   return fields;
 }
 
-async function createLead(sf: SalesforceClient, cfg: SalesforceLeadConfig, fields: Record<string, unknown>) {
-  const body = { ...fields };
+// Fields that only make sense when the Lead is first created (staff may change
+// them afterwards, so later PATCHes never touch them).
+function createOnlyFields(cfg: SalesforceLeadConfig, pageUrl: unknown): Record<string, unknown> {
+  const extra: Record<string, unknown> = {};
+  if (cfg.recordTypeId) extra.RecordTypeId = cfg.recordTypeId;
+  const brand = brandForPageUrl(cfg.brand, pageUrl);
+  if (cfg.brand && brand) extra[cfg.brand.field] = brand;
+  return extra;
+}
+
+async function createLead(
+  sf: SalesforceClient,
+  cfg: SalesforceLeadConfig,
+  fields: Record<string, unknown>,
+  extra: Record<string, unknown> = {},
+) {
+  const body = { ...fields, ...extra };
   if (cfg.leadSource) body.LeadSource = cfg.leadSource;
   if (cfg.company) body.Company = cfg.company;
 
   // Adapt to the org rather than guess its config: add Company only if it's
   // required, drop LeadSource if the picklist doesn't have our value.
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     try {
       const created = await sf.request("POST", "/sobjects/Lead", body, { "Sforce-Auto-Assign": "TRUE" });
       return String(created.id);
@@ -311,6 +364,16 @@ async function createLead(sf: SalesforceClient, cfg: SalesforceLeadConfig, field
       }
       if (badSource && body.LeadSource) {
         delete body.LeadSource;
+        continue;
+      }
+      // A bad Brand value or record type must not lose the lead: drop it and let
+      // the org's default apply.
+      const badExtra = Object.keys(extra).find(
+        (name) => name in body && (codes.some((e) => e.fields.includes(name)) || err.message.includes(name)),
+      );
+      if (badExtra) {
+        console.error(`[salesforce-lead] dropping ${badExtra}: ${err.message.slice(0, 200)}`);
+        delete body[badExtra];
         continue;
       }
       throw err;
@@ -382,7 +445,8 @@ export async function syncChatToSalesforce(
       };
     }
 
-    const leadId = await createLead(sf, cfg, leadFields(cfg, collected, description));
+    const pageUrl = metadata.page_url || metadata.last_page_url;
+    const leadId = await createLead(sf, cfg, leadFields(cfg, collected, description), createOnlyFields(cfg, pageUrl));
     return { status: "created", object: "Lead", record_id: leadId, transcript_length: transcriptLength, at: now };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
