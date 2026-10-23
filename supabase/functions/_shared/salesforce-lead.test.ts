@@ -1,5 +1,6 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  brandForPageUrl,
   normalisePhone,
   SalesforceClient,
   type SalesforceLeadConfig,
@@ -15,6 +16,8 @@ const CFG: SalesforceLeadConfig = {
   clientSecret: "secret",
   leadSource: "Website Chat",
   company: null,
+  recordTypeId: null,
+  brand: null,
 };
 
 type Call = { method: string; path: string; body: any; headers: Record<string, string> };
@@ -211,4 +214,73 @@ Deno.test("no email or phone means nothing is sent", async () => {
   const log = { call_id: "chat_x", transcript: "user: hi", metadata: { collected: { contact_name: "Bob" } } };
   assertEquals(await syncChatToSalesforce(client, CFG, log), null);
   assertEquals(calls.length, 0);
+});
+
+const BRANDED: SalesforceLeadConfig = {
+  ...CFG,
+  recordTypeId: "012Q1000000AbCdIAK",
+  brand: { field: "Brand__c", sites: { "bettermove.co.uk": "Bettermove", "second.co.uk": "Second Brand" } },
+};
+
+Deno.test("brand follows the page URL host, longest match, www and subdomains ignored", () => {
+  const b = BRANDED.brand;
+  assertEquals(brandForPageUrl(b, "https://www.bettermove.co.uk/sell?x=1"), "Bettermove");
+  assertEquals(brandForPageUrl(b, "https://shop.second.co.uk/"), "Second Brand");
+  assertEquals(brandForPageUrl(b, "https://notbettermove.co.uk/"), null);
+  assertEquals(brandForPageUrl(b, "not a url"), null);
+  assertEquals(brandForPageUrl(null, "https://www.bettermove.co.uk/"), null);
+});
+
+Deno.test("config validates record type id and brand field name", () => {
+  const env = (n: string) => (n.endsWith("_CLIENT_ID") ? "id" : "secret");
+  const base = { enabled: true, instance_url: "https://bettermove.my.salesforce.com", credentials_env: "SALESFORCE_BETTERMOVE" };
+  const ok = salesforceLeadConfig(
+    { salesforce_leads: { ...base, record_type_id: "012Q1000000AbCdIAK", brand: { field: "Brand__c", sites: { "WWW.Bettermove.co.uk": "Bettermove" } } } },
+    env,
+  )!;
+  assertEquals(ok.recordTypeId, "012Q1000000AbCdIAK");
+  assertEquals(ok.brand, { field: "Brand__c", sites: { "bettermove.co.uk": "Bettermove" } });
+  const bad = salesforceLeadConfig(
+    { salesforce_leads: { ...base, record_type_id: "Vendor", brand: { field: "Brand; DROP", sites: { "a.co.uk": "A" } } } },
+    env,
+  )!;
+  assertEquals(bad.recordTypeId, null);
+  assertEquals(bad.brand, null);
+});
+
+Deno.test("new Lead gets the record type and brand; updates and Tasks never do", async () => {
+  const { calls, client } = fakeSalesforce({
+    "POST /sobjects/Lead": () => ({ status: 201, body: { id: "00Q9" } }),
+  });
+  const state = await syncChatToSalesforce(client, BRANDED, chatLog());
+  const create = calls.find((c) => c.method === "POST")!;
+  assertEquals(create.body.RecordTypeId, "012Q1000000AbCdIAK");
+  assertEquals(create.body.Brand__c, "Bettermove");
+
+  const later = chatLog({ salesforce_lead: state, last_page_url: "https://www.second.co.uk/" });
+  (later as any).transcript += "\nuser: more";
+  const second = fakeSalesforce({ "PATCH /sobjects/Lead/00Q9": () => ({ status: 204, body: null }) });
+  await syncChatToSalesforce(second.client, BRANDED, later);
+  const patch = second.calls.find((c) => c.method === "PATCH")!;
+  assertEquals(patch.body.RecordTypeId, undefined);
+  assertEquals(patch.body.Brand__c, undefined);
+});
+
+Deno.test("unknown site sets no brand; a rejected brand or record type is dropped, not fatal", async () => {
+  const other = fakeSalesforce({ "POST /sobjects/Lead": () => ({ status: 201, body: { id: "00QA" } }) });
+  await syncChatToSalesforce(other.client, BRANDED, chatLog({ page_url: "https://elsewhere.com/" }));
+  assertEquals(other.calls.find((c) => c.method === "POST")!.body.Brand__c, undefined);
+
+  const { calls, client } = fakeSalesforce({
+    "POST /sobjects/Lead": (call) => {
+      if (call.body.Brand__c) return { status: 400, body: [{ errorCode: "INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST", message: "Brand: bad value", fields: ["Brand__c"] }] };
+      if (call.body.RecordTypeId) return { status: 400, body: [{ errorCode: "INVALID_CROSS_REFERENCE_KEY", message: "Record Type ID: this ID value isn't valid", fields: ["RecordTypeId"] }] };
+      return { status: 201, body: { id: "00QB" } };
+    },
+  });
+  const state = await syncChatToSalesforce(client, BRANDED, chatLog());
+  assertEquals(state?.record_id, "00QB");
+  const last = calls.filter((c) => c.method === "POST").at(-1)!;
+  assertEquals(last.body.Brand__c, undefined);
+  assertEquals(last.body.RecordTypeId, undefined);
 });
