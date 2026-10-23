@@ -75,7 +75,7 @@ export function applySiteBranding<T extends Record<string, any>>(profile: T, pag
     "chat_font_stylesheet",
   ]) delete metadata[key];
   metadata.chat_assistant_name = assistant;
-  metadata.chat_greeting = text(site.greeting, 300) || `Hi, I'm ${assistant}, ${brand}'s AI Assistant. How can I help today?`;
+  metadata.chat_greeting = text(site.greeting, 300) || `Hi, I'm ${assistant}, ${brand}${/s$/i.test(brand) ? "'" : "'s"} AI Assistant. How can I help today?`;
   if (text(site.accent_color, 20)) metadata.chat_accent_color = text(site.accent_color, 20);
   if (text(site.background_color, 20)) metadata.chat_background_color = text(site.background_color, 20);
   if (text(site.logo_url, 500)) metadata.chat_logo_url = text(site.logo_url, 500);

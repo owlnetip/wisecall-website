@@ -44,7 +44,7 @@ Deno.test("a matched site replaces brand identity instead of inheriting Bettermo
   assertEquals(out.business_name, "Yorkshire Property Buyers");
   assertEquals(out.id, "p1");
   assertEquals(md.chat_assistant_name, "Betty");
-  assertEquals(md.chat_greeting, "Hi, I'm Betty, Yorkshire Property Buyers's AI Assistant. How can I help today?");
+  assertEquals(md.chat_greeting, "Hi, I'm Betty, Yorkshire Property Buyers' AI Assistant. How can I help today?");
   assertEquals(md.chat_accent_color, "#112233");
   assertEquals(md.chat_logo_url, "https://www.yorkshirepropertybuyers.co.uk/logo.png");
   assertEquals(md.chat_font_family, undefined);
