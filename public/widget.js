@@ -433,6 +433,7 @@
         message: text,
         messages: messages,
         session_id: sessionId,
+        page_url: location.href,
       }),
     })
       .then(function (r) {
@@ -452,8 +453,10 @@
   }
 
   function applyBranding(data) {
-    var preset = BRAND[SLUG] || {};
     var remote = data && !data.error ? data : {};
+    // A site with its own brand (chat_sites) supplies everything itself, so the
+    // agent's built-in preset (BetterMove's face and wordmark) must not leak in.
+    var preset = remote.site_branded ? {} : BRAND[SLUG] || {};
     if (remote.title) cfg.title = remote.title;
     if (remote.assistant_name) cfg.assistant_name = remote.assistant_name;
     if (remote.greeting) cfg.greeting = remote.greeting;
@@ -508,7 +511,7 @@
   }
 
   // Fetch theming/greeting, then render.
-  fetch(BASE + "?profile_slug=" + encodeURIComponent(SLUG))
+  fetch(BASE + "?profile_slug=" + encodeURIComponent(SLUG) + "&page_url=" + encodeURIComponent(location.href))
     .then(function (r) {
       return r.json();
     })

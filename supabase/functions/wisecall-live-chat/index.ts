@@ -25,6 +25,7 @@ import {
   extractPropertyAddress,
   hasPostcode,
 } from "../_shared/chat-required-contact.ts";
+import { applySiteBranding, pageUrlFromRequest } from "../_shared/chat-site-brand.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -593,10 +594,15 @@ serve(async (req) => {
     if (req.method === "GET") {
       const url = new URL(req.url);
       const profileSlug = url.searchParams.get("profile_slug") || "the-home-cloud";
-      const profile = await loadProfile(supabase, profileSlug);
-      if (!profile) return jsonResponse({ error: "Profile not found" }, 404);
+      const baseProfile = await loadProfile(supabase, profileSlug);
+      if (!baseProfile) return jsonResponse({ error: "Profile not found" }, 404);
+      const profile = applySiteBranding(
+        baseProfile,
+        url.searchParams.get("page_url") || pageUrlFromRequest(req),
+      );
 
       return jsonResponse({
+        site_branded: profile.site_branded === true,
         profile_slug: profile.slug,
         title: profile.business_name || profile.profile_name || "WiseCall",
         assistant_name: chatAssistantName(profile, profile.metadata || {}),
@@ -617,8 +623,10 @@ serve(async (req) => {
 
     const body = (await req.json()) as ChatRequest;
     const profileSlug = normaliseText(body.profile_slug || "the-home-cloud");
-    const profile = await loadProfile(supabase, profileSlug);
-    if (!profile) return jsonResponse({ error: "Profile not found" }, 404);
+    const baseProfile = await loadProfile(supabase, profileSlug);
+    if (!baseProfile) return jsonResponse({ error: "Profile not found" }, 404);
+    body.page_url = pageUrlFromRequest(req, body.page_url) || undefined;
+    const profile = applySiteBranding(baseProfile, body.page_url);
 
     if (body.end_session === true) {
       const sessionId = normaliseText(body.session_id);
