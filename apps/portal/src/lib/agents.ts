@@ -13,6 +13,7 @@ import { readIntegrationWebhooks } from "@/lib/integration-webhooks";
 import { normaliseNegotiatorRules } from "@/lib/digital-negotiator";
 import { channelFromLog, type CallChannel } from "@/lib/call-channel";
 import { scopedProfileIds } from "@/lib/inbox-scope";
+import { chatSiteLabel } from "@/lib/chat-site-label";
 
 export type { CallChannel };
 
@@ -275,6 +276,7 @@ export type CallLog = {
   durationLabel: string;
   transcript: string;
   channel: CallChannel;
+  siteLabel: string; // web chats only: the website the visitor was on
   aiInsightSummary: string;
   actionItems: string[];
   companyLabel: string;
@@ -350,7 +352,7 @@ export async function getCallLogsForUser(userId: string, profileId?: string): Pr
 
   const { data: owned, error: ownedError } = await supabase
     .from("wisecall_profiles")
-    .select("id")
+    .select("id, business_name, metadata")
     .eq("metadata->>owner_id", userId);
   if (ownedError) {
     console.error("getCallLogsForUser profiles failed:", ownedError.message);
@@ -379,7 +381,13 @@ export async function getCallLogsForUser(userId: string, profileId?: string): Pr
     throw new Error("Could not load inbox conversations.");
   }
 
-  return (data as CallRow[]).map(mapCallRow);
+  const profiles = new Map(
+    (owned ?? []).map((row) => [
+      row.id as string,
+      { businessName: row.business_name as string | null, metadata: (row.metadata ?? null) as Record<string, unknown> | null },
+    ]),
+  );
+  return (data as CallRow[]).map((row) => mapCallRow(row, profiles.get(row.profile_id || "")));
 }
 
 function actionItemsFromRow(row: CallRow): string[] {
@@ -405,7 +413,10 @@ function companyLabelFromRow(row: CallRow): string {
   return shown.visible ? shown.text : "";
 }
 
-function mapCallRow(row: CallRow): CallLog {
+function mapCallRow(
+  row: CallRow,
+  profile?: { businessName?: string | null; metadata?: Record<string, unknown> | null },
+): CallLog {
   const channel = channelFromRow(row);
   return {
     id: row.id,
@@ -419,6 +430,7 @@ function mapCallRow(row: CallRow): CallLog {
     durationLabel: duration(row.started_at, row.finished_at),
     transcript: row.transcript || "",
     channel,
+    siteLabel: channel === "chat" ? chatSiteLabel(row.metadata, profile) : "",
     aiInsightSummary: row.ai_insight_summary || "",
     actionItems: actionItemsFromRow(row),
     companyLabel: companyLabelFromRow(row),
@@ -575,5 +587,26 @@ export async function getAllCallLogs(): Promise<CallLog[]> {
     return [];
   }
 
-  return (data as CallRow[]).map(mapCallRow);
+  // Only web chats need the agent's settings (for the site label).
+  const chatProfileIds = Array.from(
+    new Set(
+      (data as CallRow[])
+        .filter((row) => channelFromRow(row) === "chat" && row.profile_id)
+        .map((row) => row.profile_id as string),
+    ),
+  );
+  const profiles = new Map<string, { businessName: string | null; metadata: Record<string, unknown> | null }>();
+  if (chatProfileIds.length > 0) {
+    const { data: rows } = await supabase
+      .from("wisecall_profiles")
+      .select("id, business_name, metadata")
+      .in("id", chatProfileIds);
+    for (const row of rows ?? []) {
+      profiles.set(row.id as string, {
+        businessName: row.business_name as string | null,
+        metadata: (row.metadata ?? null) as Record<string, unknown> | null,
+      });
+    }
+  }
+  return (data as CallRow[]).map((row) => mapCallRow(row, profiles.get(row.profile_id || "")));
 }
