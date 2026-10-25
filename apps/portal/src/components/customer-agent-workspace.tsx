@@ -5044,6 +5044,7 @@ function InboxRow({
         ) : null}
         <span className="mt-0.5 block truncate text-xs text-ink-soft">
           {showAgentName && log.agentName ? `${log.agentName} · ` : ""}
+          {log.siteLabel ? `${log.siteLabel} · ` : ""}
           {log.summary || friendlyOutcome(log.outcome)}
         </span>
       </span>
@@ -5120,7 +5121,8 @@ function ConversationDetail({
               </p>
             ) : null}
             <p className="text-xs text-ink-soft">
-              {meta.label} · {formatWhen(log.startedAt)}
+              {meta.label}
+              {log.siteLabel ? ` · ${log.siteLabel}` : ""} · {formatWhen(log.startedAt)}
               {log.durationLabel && log.durationLabel !== "-" ? ` · ${log.durationLabel}` : ""}
               {log.agentName ? ` · answered by ${log.agentName}` : ""}
             </p>
@@ -5269,6 +5271,7 @@ function UnifiedInbox({
 }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | CallChannel>("all");
+  const [siteFilter, setSiteFilter] = useState("all");
   // When arriving from an insight with a call pre-selected, mobile should land
   // straight on the conversation, not the list.
   const [mobileDetail, setMobileDetail] = useState(Boolean(selectedId));
@@ -5276,17 +5279,24 @@ function UnifiedInbox({
   const present = useMemo(() => new Set(callLogs.map((l) => l.channel)), [callLogs]);
   const filters = INBOX_FILTERS.filter((f) => f.value === "all" || present.has(f.value));
 
+  // Web chats from more than one website: offer a site filter beside the channels.
+  const sites = useMemo(
+    () => Array.from(new Set(callLogs.map((l) => l.siteLabel).filter(Boolean))).sort(),
+    [callLogs],
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return callLogs.filter((log) => {
       if (filter !== "all" && log.channel !== filter) return false;
+      if (siteFilter !== "all" && log.siteLabel !== siteFilter) return false;
       if (!q) return true;
-      return [log.caller, log.summary, log.agentName, friendlyOutcome(log.outcome)]
+      return [log.caller, log.summary, log.agentName, log.siteLabel, friendlyOutcome(log.outcome)]
         .join(" ")
         .toLowerCase()
         .includes(q);
     });
-  }, [callLogs, search, filter]);
+  }, [callLogs, search, filter, siteFilter]);
 
   // Zero-click default: on desktop the newest conversation is open as soon as
   // you land, mobile still starts on the list.
@@ -5405,6 +5415,24 @@ function UnifiedInbox({
                     }`}
                   >
                     {f.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {sites.length > 1 && (
+              <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5" aria-label="Filter by website">
+                {["all", ...sites].map((site) => (
+                  <button
+                    key={site}
+                    type="button"
+                    onClick={() => setSiteFilter(site)}
+                    className={`press flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold transition ${
+                      siteFilter === site
+                        ? "bg-teal text-white"
+                        : "bg-card-tint text-ink-soft hover:bg-card-tint"
+                    }`}
+                  >
+                    {site === "all" ? "All sites" : site}
                   </button>
                 ))}
               </div>
