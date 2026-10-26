@@ -303,6 +303,21 @@ export async function findExistingRecord(
     }
   }
 
+  if (phone.length >= 10) {
+    // SOSL lags new records by a while; exact-value SOQL on the common stored forms
+    // sees a Lead we created seconds ago (needed to adopt it if our state write was lost).
+    const forms = [...new Set([String(collected.contact_phone).trim(), `0${phone.slice(1)}`, `+44${phone.slice(1)}`, `44${phone.slice(1)}`])];
+    const recent = await sf.query(
+      `SELECT Id, OwnerId, Description FROM Lead WHERE IsConverted = false AND CreatedDate = LAST_N_DAYS:1 ` +
+        `AND (Phone IN (${forms.map(soqlString).join(", ")}) OR MobilePhone IN (${forms.map(soqlString).join(", ")})) ` +
+        `ORDER BY LastModifiedDate DESC LIMIT 5`,
+    );
+    for (const r of recent?.records ?? []) {
+      if (leads.some((m) => m.id === r.Id)) continue;
+      leads.push({ object: "Lead", id: r.Id, ownerId: r.OwnerId ?? null, ours: isOurs(r.Description, callId) });
+    }
+  }
+
   if (phone.length >= 10 && contacts.length === 0) {
     const result = await sf.search(
       `FIND {${phone}} IN PHONE FIELDS RETURNING ` +
@@ -473,29 +488,34 @@ export async function syncChatToSalesforce(
 
 // A sync that is mid-create holds the chat for this long; after that the claim
 // is treated as abandoned (the function was killed) and may be retaken.
-const CREATE_CLAIM_MS = 60_000;
+const CREATE_CLAIM_MS = 20_000;
+const CLAIM_RETRY_MS = 5_000;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Loads the freshest chat log, syncs, and merges the result into its metadata
 // (re-read immediately before writing, since the chat handler also rewrites it).
 // Messages can arrive faster than a create finishes (and Salesforce phone search
 // lags new records), so the first sync for a chat claims it with a conditional
-// update; a concurrent sync skips rather than creating a second Lead, and the
-// claim holder re-syncs afterwards if the chat moved on in the meantime.
+// update; a concurrent sync waits and looks again rather than creating a second Lead,
+// and the claim holder re-syncs afterwards if the chat moved on in the meantime.
 export async function syncChatLogToSalesforce(supabase: any, profile: any, callId: string): Promise<void> {
   const cfg = salesforceLeadConfig(profile?.metadata);
   if (!cfg || !callId) return;
 
   try {
     const sf = new SalesforceClient(cfg);
-    for (let pass = 0; pass < 2; pass++) {
-      const { data: chatLog } = await supabase
+    let known: SalesforceLeadState | null = null; // what this run wrote; the chat handler can overwrite metadata
+    for (let pass = 0; pass < 6; pass++) {
+      const { data: fetched } = await supabase
         .from("wisecall_call_logs")
         .select("*")
         .eq("call_id", callId)
         .maybeSingle();
-      if (!chatLog) return;
+      if (!fetched) return;
 
-      const metadata = isPlainObject(chatLog.metadata) ? chatLog.metadata : {};
+      const fetchedMeta = isPlainObject(fetched.metadata) ? fetched.metadata : {};
+      const metadata = known ? { ...fetchedMeta, salesforce_lead: known } : fetchedMeta;
+      const chatLog = known ? { ...fetched, metadata } : fetched;
       const previous = isPlainObject(metadata.salesforce_lead) ? (metadata.salesforce_lead as SalesforceLeadState) : null;
 
       const collected = isPlainObject(metadata.collected) ? metadata.collected : {};
@@ -503,7 +523,10 @@ export async function syncChatLogToSalesforce(supabase: any, profile: any, callI
 
       if (!previous?.record_id) {
         if ((previous?.failed_attempts ?? 0) >= MAX_FAILED_ATTEMPTS) return;
-        if (previous?.status === "creating" && Date.now() - Date.parse(previous.at) < CREATE_CLAIM_MS) return;
+        if (previous?.status === "creating" && Date.now() - Date.parse(previous.at) < CREATE_CLAIM_MS) {
+          await sleep(CLAIM_RETRY_MS); // another sync is creating; look again once it has finished
+          continue;
+        }
         const claim = { ...(previous || {}), status: "creating", at: new Date().toISOString() };
         let query = supabase
           .from("wisecall_call_logs")
@@ -511,7 +534,10 @@ export async function syncChatLogToSalesforce(supabase: any, profile: any, callI
           .eq("call_id", callId);
         query = previous ? query.eq("metadata->salesforce_lead->>at", previous.at) : query.is("metadata->salesforce_lead", null);
         const { data: claimed } = await query.select("call_id");
-        if (!claimed || claimed.length === 0) return; // another sync holds this chat
+        if (!claimed || claimed.length === 0) {
+          await sleep(CLAIM_RETRY_MS);
+          continue;
+        }
       }
 
       const state = await syncChatToSalesforce(sf, cfg, chatLog);
@@ -520,6 +546,7 @@ export async function syncChatLogToSalesforce(supabase: any, profile: any, callI
         return;
       }
 
+      known = state;
       const { data: latest } = await supabase
         .from("wisecall_call_logs")
         .select("metadata, transcript")
