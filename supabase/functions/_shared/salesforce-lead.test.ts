@@ -177,6 +177,7 @@ Deno.test("later messages update the same Lead, and skip when nothing changed", 
   assertEquals(state?.record_id, "00Q1");
   assertEquals(state?.error, undefined);
   const patch = calls.find((c) => c.method === "PATCH")!;
+  assertEquals(patch.headers["Sforce-Auto-Assign"], "FALSE");
   assert(patch.body.Description.includes("I want to sell my house"));
   assertEquals(patch.body.LastName, "Smith");
   assert(!calls.some((c) => c.method === "POST"));
