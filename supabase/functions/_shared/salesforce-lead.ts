@@ -27,7 +27,11 @@ const API_VERSION = "v61.0";
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_FAILED_ATTEMPTS = 5;
 const DESCRIPTION_LIMIT = 31_000;
-const PLACEHOLDER_LAST_NAME = "Website visitor";
+// A plain API update re-runs the org's lead assignment rules, which moved
+// freshly routed Leads (Vendor Leads) back to Unassigned Leads. Only the create
+// should assign.
+const KEEP_OWNER = { "Sforce-Auto-Assign": "FALSE" };
+const PLACEHOLDER_LAST_NAME = "Website chat";
 
 export type SalesforceLeadConfig = {
   instanceUrl: string;
@@ -40,7 +44,7 @@ export type SalesforceLeadConfig = {
 };
 
 export type SalesforceLeadState = {
-  status: "created" | "task_logged" | "failed";
+  status: "created" | "task_logged" | "failed" | "creating";
   object?: "Lead" | "Task";
   record_id?: string;
   who_id?: string;
@@ -125,6 +129,8 @@ export function brandForPageUrl(brand: SalesforceLeadConfig["brand"], pageUrl: u
 // UK-normalised digits so 07…, +44…, 0044… and 44… compare equal.
 export function normalisePhone(value: unknown): string {
   let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("00440")) digits = digits.slice(4); // 0044 (0)7…
+  else if (digits.startsWith("440") && digits.length >= 13) digits = digits.slice(2); // +44 (0)7…
   if (digits.startsWith("0044")) digits = `0${digits.slice(4)}`;
   else if (digits.startsWith("44") && digits.length >= 12) digits = `0${digits.slice(2)}`;
   return digits;
@@ -297,6 +303,21 @@ export async function findExistingRecord(
     }
   }
 
+  if (phone.length >= 10) {
+    // SOSL lags new records by a while; exact-value SOQL on the common stored forms
+    // sees a Lead we created seconds ago (needed to adopt it if our state write was lost).
+    const forms = [...new Set([String(collected.contact_phone).trim(), `0${phone.slice(1)}`, `+44${phone.slice(1)}`, `44${phone.slice(1)}`])];
+    const recent = await sf.query(
+      `SELECT Id, OwnerId, Description FROM Lead WHERE IsConverted = false AND CreatedDate = LAST_N_DAYS:1 ` +
+        `AND (Phone IN (${forms.map(soqlString).join(", ")}) OR MobilePhone IN (${forms.map(soqlString).join(", ")})) ` +
+        `ORDER BY LastModifiedDate DESC LIMIT 5`,
+    );
+    for (const r of recent?.records ?? []) {
+      if (leads.some((m) => m.id === r.Id)) continue;
+      leads.push({ object: "Lead", id: r.Id, ownerId: r.OwnerId ?? null, ours: isOurs(r.Description, callId) });
+    }
+  }
+
   if (phone.length >= 10 && contacts.length === 0) {
     const result = await sf.search(
       `FIND {${phone}} IN PHONE FIELDS RETURNING ` +
@@ -350,7 +371,11 @@ async function createLead(
   // required, drop LeadSource if the picklist doesn't have our value.
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      const created = await sf.request("POST", "/sobjects/Lead", body, { "Sforce-Auto-Assign": "TRUE" });
+      const created = await sf.request("POST", "/sobjects/Lead", body, {
+        "Sforce-Auto-Assign": "TRUE",
+        // Their Leads-against-Contacts duplicate rule is "Allow with alert"; save anyway.
+        "Sforce-Duplicate-Rule-Header": "allowSave=true",
+      });
       return String(created.id);
     } catch (err) {
       if (!(err instanceof SalesforceError)) throw err;
@@ -418,7 +443,7 @@ export async function syncChatToSalesforce(
       const { LastName, FirstName, ...rest } = leadFields(cfg, collected, description);
       const patch: Record<string, unknown> = { ...rest };
       if (collected.contact_name) Object.assign(patch, { LastName, ...(FirstName ? { FirstName } : {}) });
-      await sf.request("PATCH", `/sobjects/Lead/${previous.record_id}`, patch);
+      await sf.request("PATCH", `/sobjects/Lead/${previous.record_id}`, patch, KEEP_OWNER);
       return { ...previous, transcript_length: transcriptLength, at: now };
     }
     if (previous?.record_id && previous.object === "Task") {
@@ -429,7 +454,7 @@ export async function syncChatToSalesforce(
     const match = await findExistingRecord(sf, collected, callId);
     if (match?.ours) {
       // Our own Lead from this chat whose state write was lost; adopt it.
-      await sf.request("PATCH", `/sobjects/Lead/${match.id}`, { Description: description });
+      await sf.request("PATCH", `/sobjects/Lead/${match.id}`, { Description: description }, KEEP_OWNER);
       return { status: "created", object: "Lead", record_id: match.id, transcript_length: transcriptLength, at: now };
     }
     if (match) {
@@ -461,33 +486,89 @@ export async function syncChatToSalesforce(
   }
 }
 
+// A sync that is mid-create holds the chat for this long; after that the claim
+// is treated as abandoned (the function was killed) and may be retaken.
+const CREATE_CLAIM_MS = 20_000;
+const CLAIM_RETRY_MS = 5_000;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Loads the freshest chat log, syncs, and merges the result into its metadata
 // (re-read immediately before writing, since the chat handler also rewrites it).
+// Messages can arrive faster than a create finishes (and Salesforce phone search
+// lags new records), so the first sync for a chat claims it with a conditional
+// update; a concurrent sync waits and looks again rather than creating a second Lead,
+// and the claim holder re-syncs afterwards if the chat moved on in the meantime.
 export async function syncChatLogToSalesforce(supabase: any, profile: any, callId: string): Promise<void> {
   const cfg = salesforceLeadConfig(profile?.metadata);
   if (!cfg || !callId) return;
 
   try {
-    const { data: chatLog } = await supabase
-      .from("wisecall_call_logs")
-      .select("*")
-      .eq("call_id", callId)
-      .maybeSingle();
-    if (!chatLog) return;
+    const sf = new SalesforceClient(cfg);
+    let known: SalesforceLeadState | null = null; // what this run wrote; the chat handler can overwrite metadata
+    for (let pass = 0; pass < 6; pass++) {
+      const { data: fetched } = await supabase
+        .from("wisecall_call_logs")
+        .select("*")
+        .eq("call_id", callId)
+        .maybeSingle();
+      if (!fetched) return;
 
-    const state = await syncChatToSalesforce(new SalesforceClient(cfg), cfg, chatLog);
-    if (!state) return;
+      const fetchedMeta = isPlainObject(fetched.metadata) ? fetched.metadata : {};
+      const metadata = known ? { ...fetchedMeta, salesforce_lead: known } : fetchedMeta;
+      const chatLog = known ? { ...fetched, metadata } : fetched;
+      const previous = isPlainObject(metadata.salesforce_lead) ? (metadata.salesforce_lead as SalesforceLeadState) : null;
 
-    const { data: latest } = await supabase
-      .from("wisecall_call_logs")
-      .select("metadata")
-      .eq("call_id", callId)
-      .maybeSingle();
-    await supabase
-      .from("wisecall_call_logs")
-      .update({ metadata: { ...(latest?.metadata || {}), salesforce_lead: state } })
-      .eq("call_id", callId);
+      const collected = isPlainObject(metadata.collected) ? metadata.collected : {};
+      if (!collected.contact_email && !collected.contact_phone) return;
+
+      if (!previous?.record_id) {
+        if ((previous?.failed_attempts ?? 0) >= MAX_FAILED_ATTEMPTS) return;
+        if (previous?.status === "creating" && Date.now() - Date.parse(previous.at) < CREATE_CLAIM_MS) {
+          await sleep(CLAIM_RETRY_MS); // another sync is creating; look again once it has finished
+          continue;
+        }
+        const claim = { ...(previous || {}), status: "creating", at: new Date().toISOString() };
+        let query = supabase
+          .from("wisecall_call_logs")
+          .update({ metadata: { ...metadata, salesforce_lead: claim } })
+          .eq("call_id", callId);
+        query = previous ? query.eq("metadata->salesforce_lead->>at", previous.at) : query.is("metadata->salesforce_lead", null);
+        const { data: claimed } = await query.select("call_id");
+        if (!claimed || claimed.length === 0) {
+          await sleep(CLAIM_RETRY_MS);
+          continue;
+        }
+      }
+
+      const state = await syncChatToSalesforce(sf, cfg, chatLog);
+      if (!state) {
+        if (!previous?.record_id) await restoreState(supabase, callId, previous); // release the claim
+        return;
+      }
+
+      known = state;
+      const { data: latest } = await supabase
+        .from("wisecall_call_logs")
+        .select("metadata, transcript")
+        .eq("call_id", callId)
+        .maybeSingle();
+      await supabase
+        .from("wisecall_call_logs")
+        .update({ metadata: { ...(latest?.metadata || {}), salesforce_lead: state } })
+        .eq("call_id", callId);
+
+      // Messages that landed while we were creating were skipped; send them now.
+      if (String(latest?.transcript || "").length === state.transcript_length) return;
+    }
   } catch (err) {
     console.error("[salesforce-lead] unexpected:", err instanceof Error ? err.message : err);
   }
+}
+
+async function restoreState(supabase: any, callId: string, previous: SalesforceLeadState | null) {
+  const { data: latest } = await supabase.from("wisecall_call_logs").select("metadata").eq("call_id", callId).maybeSingle();
+  const metadata = { ...(latest?.metadata || {}) };
+  if (previous) metadata.salesforce_lead = previous;
+  else delete metadata.salesforce_lead;
+  await supabase.from("wisecall_call_logs").update({ metadata }).eq("call_id", callId);
 }

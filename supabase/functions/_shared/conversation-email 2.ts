@@ -1,0 +1,313 @@
+// Hangup post-call email.
+// Layout, outcome labels, callback number and priority row match the live
+// wisecall-email-summary template. Follow-up and caller/company confirmation
+// match the portal rules in follow-up-outcome.ts and caller-identity.ts.
+
+import { preferConfirmedCallerName, presentCompany } from "./caller-identity.ts";
+import { analysisFollowUpSignals, ensureFollowUpActions } from "./follow-up-outcome.ts";
+
+export function nextActionsFromAnalysisJson(json: unknown): string[] {
+  if (!json || typeof json !== "object") return [];
+  const record = json as Record<string, unknown>;
+  const items = record.action_items;
+  if (Array.isArray(items)) {
+    return items
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .slice(0, 5);
+  }
+  const legacy = record.recommended_follow_up;
+  return typeof legacy === "string" && legacy.trim() ? [legacy.trim()] : [];
+}
+
+export function nextActionsFromFollowUpTitles(titles: unknown): string[] {
+  if (!Array.isArray(titles)) return [];
+  return titles
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+/** Live Claude urgency uses "emergency"; the follow-up rule treats that as urgent. */
+function urgencyForFollowUp(value?: string | null): string | null | undefined {
+  if ((value ?? "").trim().toLowerCase() === "emergency") return "urgent";
+  return value;
+}
+
+export function portalNextActions(input: {
+  analysisJson?: unknown;
+  followUpTitles?: string[];
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
+}): string[] {
+  const fromAnalysis = nextActionsFromAnalysisJson(input.analysisJson);
+  const base = fromAnalysis.length
+    ? fromAnalysis
+    : nextActionsFromFollowUpTitles(input.followUpTitles);
+  const signals = analysisFollowUpSignals(input.analysisJson);
+  return ensureFollowUpActions({
+    actionItems: base,
+    urgency: urgencyForFollowUp(input.urgency || signals.urgency),
+    summary: [input.summary, signals.summary].filter(Boolean).join("\n"),
+    transcript: input.transcript,
+    recommendedFollowUp: signals.recommendedFollowUp,
+    outcome: input.outcome || signals.outcome,
+  });
+}
+
+export function emailActionItems(input: {
+  actionItems?: string[] | null;
+  summary?: string | null;
+  transcript?: string | null;
+  urgency?: string | null;
+  outcome?: string | null;
+}): string[] {
+  return ensureFollowUpActions({
+    actionItems: input.actionItems,
+    summary: input.summary,
+    transcript: input.transcript,
+    urgency: urgencyForFollowUp(input.urgency),
+    outcome: input.outcome,
+  });
+}
+
+/**
+ * Runtime state names such as bridge_closed or deepgram_closed are engineering
+ * vocabulary and must never reach a customer's inbox. Free-text outcomes the
+ * model writes ("Message taken for Matt Savage") are already readable and pass
+ * through untouched.
+ */
+const OUTCOME_LABELS: Record<string, string> = {
+  caller_stop: "Caller ended the call",
+  caller_hangup: "Caller ended the call",
+  caller_disconnected: "Caller ended the call",
+  remote_hangup: "Caller ended the call",
+  // Who hung up is not knowable from these, so they stay neutral.
+  bridge_closed: "Call ended",
+  deepgram_closed: "Call ended",
+  live_chat_closed: "Chat ended",
+  live_chat: "Web chat",
+  no_answer: "No answer",
+  completed: "Call completed",
+  transferred: "Transferred to the team",
+  transfer_to_mobile_completed: "Transferred to the team",
+  sms_sent: "Information sent by SMS",
+  message_taken: "Message taken",
+};
+
+export function outcomeLabel(raw: string | null | undefined): string {
+  const value = String(raw ?? "").trim();
+  if (!value) return "Conversation recorded";
+
+  const known = OUTCOME_LABELS[value.toLowerCase().replace(/\s+/g, "_")];
+  if (known) return known;
+
+  // An unmapped internal code still must not go out as raw snake_case.
+  if (/^[a-z0-9]+(?:_[a-z0-9]+)+$/.test(value)) {
+    const words = value.replace(/_/g, " ");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+
+  return value;
+}
+
+export function nextStepLabel(actionItems: string[]): string {
+  if (!actionItems.length) return "No follow-up needed";
+  return `${actionItems.length} follow-up${actionItems.length === 1 ? "" : "s"} needed`;
+}
+
+export function escapeEmailHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export type PostCallEmailInput = {
+  businessName: string;
+  callerId: string;
+  summary: string;
+  transcript: string;
+  outcome: string;
+  startedAt?: string | null;
+  actionItems: string[];
+  agentName?: string;
+  /** Caller details read back out of the conversation; all optional. */
+  callerName?: string | null;
+  company?: string | null;
+  companyStatus?: string | null;
+  /** Number the caller gave on the call, which is often not the calling line. */
+  callbackNumber?: string | null;
+  urgency?: string | null;
+};
+
+/** Spelled or read-back name wins over the model guess. */
+export function emailCallerName(input: {
+  callerName?: string | null;
+  transcript?: string | null;
+  summary?: string | null;
+}): string {
+  return preferConfirmedCallerName(
+    input.callerName || "",
+    input.transcript,
+    input.summary,
+  ).trim();
+}
+
+const URGENCY_COLOURS: Record<string, string> = {
+  emergency: "#b42318",
+  urgent: "#b54708",
+};
+
+function digitsOnly(value: string): string {
+  const digits = String(value || "").replace(/\D/g, "");
+  // Compare on the national part so +447… and 07… match.
+  return digits.length > 9 ? digits.slice(-9) : digits;
+}
+
+function detailRowHtml(label: string, value: string, colour?: string): string {
+  if (!value.trim()) return "";
+  const valueStyle = colour ? ` style="color:${colour};font-weight:800;"` : "";
+  return `<tr><td style="padding:6px 0;color:#148b8e;font-weight:700;width:120px;">${escapeEmailHtml(label)}</td><td${valueStyle}>${escapeEmailHtml(value)}</td></tr>`;
+}
+
+function formatWhen(startedAt?: string | null): string {
+  if (!startedAt) return "";
+  const date = new Date(startedAt);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("en-GB", { timeZone: "Europe/London" });
+}
+
+function followUpBlockHtml(actionItems: string[]): string {
+  if (!actionItems.length) return "";
+  const items = actionItems
+    .map(
+      (item) =>
+        `<li style="margin:0 0 8px;color:#0e4b4d;">${escapeEmailHtml(item)}</li>`,
+    )
+    .join("");
+  return `
+      <div style="margin:0 0 18px;padding:14px 16px;background:#f0faf9;border:1px solid #cfe9e4;border-radius:10px;">
+        <p style="margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#148b8e;">Follow-up needed</p>
+        <ul style="margin:0;padding-left:18px;">${items}</ul>
+      </div>`;
+}
+
+function companyLine(input: PostCallEmailInput): string {
+  const shown = presentCompany({
+    company: input.company,
+    companyStatus: input.companyStatus,
+    transcript: input.transcript,
+    summary: input.summary,
+  });
+  return shown.visible ? shown.text : "";
+}
+
+export function postCallEmailSubject(input: PostCallEmailInput): string {
+  const actionItems = emailActionItems(input);
+  const who = emailCallerName(input) || (input.callerId || "").trim() || "Unknown";
+  const prefix = (input.urgency || "").trim().toLowerCase() === "emergency" ? "EMERGENCY · " : "";
+  return actionItems.length
+    ? `${prefix}Follow-up needed · ${who} · ${input.businessName}`
+    : `${prefix}Message from ${who} · ${input.businessName}`;
+}
+
+export function buildPostCallEmailHtml(input: PostCallEmailInput): string {
+  const when = formatWhen(input.startedAt);
+  const outcome = outcomeLabel(input.outcome);
+  const agentName = (input.agentName || "WiseCall").trim() || "WiseCall";
+  const actionItems = emailActionItems(input);
+  const summary = input.summary.trim();
+  const transcript = input.transcript.trim();
+  const callerName = emailCallerName(input);
+  const company = companyLine(input);
+  const callbackNumber = (input.callbackNumber || "").trim();
+  const callerId = (input.callerId || "").trim();
+  const urgency = (input.urgency || "").trim().toLowerCase();
+  // Name leads when we have one; the calling line then gets its own row, since
+  // a diverted call presents the forwarding number rather than the caller's.
+  const callerLine = callerName || callerId || "Unknown";
+  const sameNumber = digitsOnly(callbackNumber) === digitsOnly(callerId);
+  const showCallingLine = Boolean(callerId) && callerLine !== callerId && !sameNumber;
+
+  return `
+    <div style="font-family:system-ui,-apple-system,sans-serif;color:#172929;max-width:640px;">
+      <h2 style="margin:0 0 8px;font-size:20px;">New message for ${escapeEmailHtml(input.businessName)}</h2>
+      <p style="margin:0 0 16px;color:#4a5c5b;">A caller left a message with your WiseCall assistant.</p>
+      <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
+        ${detailRowHtml("Caller", callerLine)}
+        ${detailRowHtml("Call back", callbackNumber)}
+        ${showCallingLine ? detailRowHtml("Calling line", callerId) : ""}
+        ${detailRowHtml("Company", company)}
+        ${when ? detailRowHtml("When", when) : ""}
+        ${URGENCY_COLOURS[urgency] ? detailRowHtml("Priority", urgency === "emergency" ? "Emergency" : "Urgent", URGENCY_COLOURS[urgency]) : ""}
+      </table>
+      <table style="width:100%;border-collapse:collapse;margin:0 0 18px;background:#f7fafa;border:1px solid #d7e4e3;border-radius:10px;">
+        <tr>
+          <td style="padding:12px 14px;border-right:1px solid #d7e4e3;width:33%;vertical-align:top;">
+            <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Outcome</p>
+            <p style="margin:0;font-size:14px;font-weight:800;">${escapeEmailHtml(outcome)}</p>
+          </td>
+          <td style="padding:12px 14px;border-right:1px solid #d7e4e3;width:33%;vertical-align:top;">
+            <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Next step</p>
+            <p style="margin:0;font-size:14px;font-weight:800;color:${actionItems.length ? "#0e4b4d" : "#1f7a5c"};">${escapeEmailHtml(nextStepLabel(actionItems))}</p>
+          </td>
+          <td style="padding:12px 14px;width:33%;vertical-align:top;">
+            <p style="margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">Handled by</p>
+            <p style="margin:0;font-size:14px;font-weight:800;">${escapeEmailHtml(agentName)}</p>
+          </td>
+        </tr>
+      </table>
+      ${followUpBlockHtml(actionItems)}
+      ${
+        summary
+          ? `<h3 style="margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7a8a89;">What happened</h3><p style="margin:0 0 16px;padding:12px;background:#f0faf9;border-radius:8px;">${escapeEmailHtml(summary)}</p>`
+          : ""
+      }
+      ${
+        transcript
+          ? `<h3 style="margin:0 0 8px;font-size:15px;">Conversation transcript</h3><pre style="white-space:pre-wrap;background:#f7fafa;border:1px solid #d7e4e3;border-radius:8px;padding:14px;font-family:ui-monospace,monospace;line-height:1.45;">${escapeEmailHtml(transcript)}</pre>`
+          : ""
+      }
+      <p style="margin:20px 0 0;font-size:12px;color:#7a8a89;">Open the conversation in your WiseCall inbox to call back or mark follow-ups done.</p>
+    </div>`;
+}
+
+export function buildPostCallEmailText(input: PostCallEmailInput): string {
+  const actionItems = emailActionItems(input);
+  const callerName = emailCallerName(input);
+  const callbackNumber = (input.callbackNumber || "").trim();
+  const company = companyLine(input);
+  const callerId = (input.callerId || "").trim();
+  const callerLine = callerName || callerId || "Unknown";
+  const showCallingLine =
+    Boolean(callerId) &&
+    callerLine !== callerId &&
+    digitsOnly(callbackNumber) !== digitsOnly(callerId);
+  const blocks = [
+    `New message for ${input.businessName}`,
+    `Caller: ${callerLine}`,
+    callbackNumber ? `Call back: ${callbackNumber}` : "",
+    showCallingLine ? `Calling line: ${callerId}` : "",
+    company ? `Company: ${company}` : "",
+    input.outcome.trim() ? `Outcome: ${outcomeLabel(input.outcome)}` : "",
+    `Next step: ${nextStepLabel(actionItems)}`,
+  ].filter(Boolean);
+
+  if (actionItems.length) {
+    blocks.push(["Follow-up needed:", ...actionItems.map((item) => `- ${item}`)].join("\n"));
+  }
+  if (input.summary.trim()) {
+    blocks.push(`What happened: ${input.summary.trim()}`);
+  }
+  if (input.transcript.trim()) {
+    blocks.push(input.transcript.trim());
+  }
+  return blocks.join("\n\n");
+}
