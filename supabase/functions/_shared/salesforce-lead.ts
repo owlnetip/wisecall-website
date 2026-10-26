@@ -27,7 +27,7 @@ const API_VERSION = "v61.0";
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_FAILED_ATTEMPTS = 5;
 const DESCRIPTION_LIMIT = 31_000;
-const PLACEHOLDER_LAST_NAME = "Website visitor";
+const PLACEHOLDER_LAST_NAME = "Website chat";
 
 export type SalesforceLeadConfig = {
   instanceUrl: string;
@@ -125,6 +125,8 @@ export function brandForPageUrl(brand: SalesforceLeadConfig["brand"], pageUrl: u
 // UK-normalised digits so 07…, +44…, 0044… and 44… compare equal.
 export function normalisePhone(value: unknown): string {
   let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("00440")) digits = digits.slice(4); // 0044 (0)7…
+  else if (digits.startsWith("440") && digits.length >= 13) digits = digits.slice(2); // +44 (0)7…
   if (digits.startsWith("0044")) digits = `0${digits.slice(4)}`;
   else if (digits.startsWith("44") && digits.length >= 12) digits = `0${digits.slice(2)}`;
   return digits;
@@ -350,7 +352,11 @@ async function createLead(
   // required, drop LeadSource if the picklist doesn't have our value.
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      const created = await sf.request("POST", "/sobjects/Lead", body, { "Sforce-Auto-Assign": "TRUE" });
+      const created = await sf.request("POST", "/sobjects/Lead", body, {
+        "Sforce-Auto-Assign": "TRUE",
+        // Their Leads-against-Contacts duplicate rule is "Allow with alert"; save anyway.
+        "Sforce-Duplicate-Rule-Header": "allowSave=true",
+      });
       return String(created.id);
     } catch (err) {
       if (!(err instanceof SalesforceError)) throw err;

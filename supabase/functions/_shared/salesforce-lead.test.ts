@@ -89,12 +89,12 @@ Deno.test("config needs enabled flag, valid URL and both secrets", () => {
 });
 
 Deno.test("phones compare across UK formats; names split sensibly", () => {
-  for (const p of ["07700 900123", "+447700900123", "00447700900123", "447700900123"]) {
+  for (const p of ["07700 900123", "+447700900123", "00447700900123", "447700900123", "+44 (0)7700 900123"]) {
     assertEquals(normalisePhone(p), "07700900123");
   }
   assertEquals(splitName("Jane Anne Smith"), { firstName: "Jane Anne", lastName: "Smith" });
   assertEquals(splitName("Jane"), { firstName: null, lastName: "Jane" });
-  assertEquals(splitName(""), { firstName: null, lastName: "Website visitor" });
+  assertEquals(splitName(""), { firstName: null, lastName: "Website chat" });
 });
 
 Deno.test("no match creates a Lead with assignment rules and chat details", async () => {
@@ -106,6 +106,7 @@ Deno.test("no match creates a Lead with assignment rules and chat details", asyn
   assertEquals(state?.record_id, "00Q1");
   const create = calls.find((c) => c.method === "POST")!;
   assertEquals(create.headers["Sforce-Auto-Assign"], "TRUE");
+  assertEquals(create.headers["Sforce-Duplicate-Rule-Header"], "allowSave=true");
   assertEquals(create.body.FirstName, "Jane");
   assertEquals(create.body.LastName, "Smith");
   assertEquals(create.body.Email, "jane@example.com");
