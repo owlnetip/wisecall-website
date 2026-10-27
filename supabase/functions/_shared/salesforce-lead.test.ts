@@ -153,6 +153,25 @@ Deno.test("existing Contact gets a completed Task owned by the record owner, no 
   assert(!calls.some((c) => c.path.startsWith("/sobjects/Lead")));
 });
 
+Deno.test("a Task the integration user cannot edit is replaced by one it owns, then updated in place", async () => {
+  const denied = [{ errorCode: "INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY", message: "insufficient access rights on object id", fields: [] }];
+  const { calls, client } = fakeSalesforce({
+    "PATCH /sobjects/Task/00TT": () => ({ status: 400, body: denied }),
+    "POST /sobjects/Task": () => ({ status: 201, body: { id: "00TN" } }),
+  });
+  const log = chatLog({
+    salesforce_lead: { status: "task_logged", object: "Task", record_id: "00TT", who_id: "003C", who_object: "Contact", transcript_length: 5, at: "x" },
+  });
+  const state = await syncChatToSalesforce(client, CFG, log);
+  assertEquals(state?.record_id, "00TN");
+  assertEquals(state?.status, "task_logged");
+  assertEquals(state?.error, undefined);
+  const created = calls.find((c) => c.method === "POST" && c.path === "/sobjects/Task")!;
+  assertEquals(created.body.WhoId, "003C");
+  assertEquals(created.body.OwnerId, undefined);
+  assert(created.body.Description.includes("I want to sell my house"));
+});
+
 Deno.test("phone-only match requires the exact number, not SOSL's fuzzy hit", async () => {
   const { calls, client } = fakeSalesforce({
     "GET /search": () => ({
