@@ -12,6 +12,7 @@
     "build": "vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
+    "check:supabase-grants": "node scripts/check-supabase-grants.mjs --self-test && node scripts/check-supabase-grants.mjs",
     "preview": "vite preview",
     "serve": "npx serve .",
     "build:jameshare": "node scripts/build-jameshare.mjs"
