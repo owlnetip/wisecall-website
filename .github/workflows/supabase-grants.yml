@@ -1,0 +1,25 @@
+name: Supabase grants
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  grants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Lint migration grants
+        run: node scripts/check-supabase-grants.mjs --self-test && node scripts/check-supabase-grants.mjs
+      - name: Install PostgreSQL
+        run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql
+      - name: Smoke test Data API grants
+        run: |
+          sudo service postgresql start
+          sudo -u postgres psql -c "DROP DATABASE IF EXISTS wisecall_grants_smoke;"
+          sudo -u postgres psql -c "CREATE DATABASE wisecall_grants_smoke;"
+          sudo -u postgres psql -d wisecall_grants_smoke -v ON_ERROR_STOP=1 -f scripts/smoke-data-api-grants.sql
