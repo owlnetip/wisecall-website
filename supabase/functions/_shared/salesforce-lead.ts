@@ -447,8 +447,24 @@ export async function syncChatToSalesforce(
       return { ...previous, transcript_length: transcriptLength, at: now };
     }
     if (previous?.record_id && previous.object === "Task") {
-      await sf.request("PATCH", `/sobjects/Task/${previous.record_id}`, { Description: description });
-      return { ...previous, transcript_length: transcriptLength, at: now };
+      try {
+        await sf.request("PATCH", `/sobjects/Task/${previous.record_id}`, { Description: description });
+        return { ...previous, transcript_length: transcriptLength, at: now };
+      } catch (err) {
+        // The Task was created with the record owner as its owner, and the
+        // integration user cannot edit another user's Task. Log the full
+        // transcript on a new Task owned by the integration user instead, so
+        // every later message can update that one in place.
+        const noEditAccess =
+          err instanceof SalesforceError && err.errorCodes().some((e) => e.code.startsWith("INSUFFICIENT_ACCESS"));
+        if (!noEditAccess || !previous.who_id) throw err;
+        const { OwnerId: _owner, ...fields } = taskFields(
+          { object: previous.who_object ?? "Contact", id: previous.who_id, ownerId: null, ours: false },
+          description,
+        );
+        const task = await sf.request("POST", "/sobjects/Task", fields);
+        return { ...previous, record_id: String(task.id), transcript_length: transcriptLength, error: undefined, at: now };
+      }
     }
 
     const match = await findExistingRecord(sf, collected, callId);
