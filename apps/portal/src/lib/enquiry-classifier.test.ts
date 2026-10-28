@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildClassifierPrompt, classifyEnquiry, parseCategories, pickCategory } from "./enquiry-classifier";
+import { buildClassifierPrompt, classifiesCalls, classifyEnquiry, parseCategories, pickCategory } from "./enquiry-classifier";
 
 const categories = parseCategories({
   chat_enquiry_categories: [
@@ -30,4 +30,10 @@ test("reply is matched to a known key only", () => {
 test("classifyEnquiry uses the model reply", async () => {
   assert.equal(await classifyEnquiry("Visitor: I'd like to offer 250k on Wesley Street", categories, async () => "offers"), "offers");
   assert.equal(await classifyEnquiry("hi", categories, async () => "offers"), null); // too short
+});
+
+test("calls are only classified when the agent opts in", () => {
+  assert.equal(classifiesCalls({ enquiry_routing_calls: true }), true);
+  assert.equal(classifiesCalls({ chat_enquiry_categories: [] }), false);
+  assert.equal(classifiesCalls(null), false);
 });
