@@ -14,6 +14,7 @@ import { normaliseNegotiatorRules } from "@/lib/digital-negotiator";
 import { channelFromLog, type CallChannel } from "@/lib/call-channel";
 import { scopedProfileIds } from "@/lib/inbox-scope";
 import { chatSiteLabel } from "@/lib/chat-site-label";
+import { readEnquiryRouting } from "@/lib/enquiry-routing";
 
 export type { CallChannel };
 
@@ -209,6 +210,8 @@ function mapProfile(row: ProfileRow): Assistant {
     transferNumber: meta(row, "transfer_number"),
     defaultEmail: readDefaultEmail(row),
     contacts: readContacts(row),
+    enquiryRouting: readEnquiryRouting(row.metadata),
+    enquiryRoutingCalls: row.metadata?.enquiry_routing_calls === true,
     // Greeting & business knowledge are columns the live runtime reads
     // (settings.js greeting, prompt.js business_context); fall back to legacy
     // metadata for portal-created agents that only have the metadata copy.

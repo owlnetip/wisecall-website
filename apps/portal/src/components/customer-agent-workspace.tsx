@@ -104,6 +104,7 @@ import { ViewingsView } from "./viewings-view";
 import { DigitalNegotiatorView } from "./digital-negotiator-view";
 import { NegotiatorRulesCard } from "./negotiator-rules-card";
 import type { NegotiatorRules } from "@/lib/digital-negotiator";
+import type { EnquiryRoute } from "@/lib/enquiry-routing";
 import { isEstateAgentTemplate } from "@/lib/estate-agent-template";
 import { CalendarBookingCard } from "./calendar-booking-card";
 import { RaiseTicketModal } from "./raise-ticket-modal";
@@ -270,6 +271,8 @@ export type Assistant = {
   templateId?: string;
   /** Estate Digital Negotiator trainable rules (metadata.negotiator_rules). */
   negotiatorRules?: NegotiatorRules;
+  enquiryRouting?: EnquiryRoute[]; // metadata.chat_enquiry_categories + chat_enquiry_routing
+  enquiryRoutingCalls?: boolean; // metadata.enquiry_routing_calls, calls follow the same routing
   ownerEmail?: string; // admin view only, which customer owns this agent
   ownerId?: string; // admin view only, owner's auth user id (for "log in as")
 };
@@ -1932,6 +1935,8 @@ export function CustomerAgentWorkspace({
         officeHours: assistantToSave.officeHours,
         outOfHoursMessage: assistantToSave.outOfHoursMessage,
         negotiatorRules: assistantToSave.negotiatorRules,
+        enquiryRouting: assistantToSave.enquiryRouting,
+        enquiryRoutingCalls: assistantToSave.enquiryRoutingCalls,
         ...(isAdmin
           ? {
               phoneNumber: assistantToSave.phoneNumber,
@@ -3421,6 +3426,10 @@ function AssistantDetail({
             saveError={saveError}
             onChange={(contacts) => onChange({ contacts })}
             onDefaultEmailChange={(defaultEmail) => onChange({ defaultEmail })}
+            enquiryRouting={assistant.enquiryRouting ?? []}
+            enquiryRoutingCalls={assistant.enquiryRoutingCalls === true}
+            onEnquiryRoutingChange={(enquiryRouting) => onChange({ enquiryRouting })}
+            onEnquiryRoutingCallsChange={(enquiryRoutingCalls) => onChange({ enquiryRoutingCalls })}
             onSave={onSave}
           />
         </div>
@@ -3933,6 +3942,10 @@ function RoutingTab({
   saveError,
   onChange,
   onDefaultEmailChange,
+  enquiryRouting,
+  enquiryRoutingCalls,
+  onEnquiryRoutingChange,
+  onEnquiryRoutingCallsChange,
   onSave,
 }: {
   contacts: RoutingContact[];
@@ -3942,6 +3955,10 @@ function RoutingTab({
   saveError: string | null;
   onChange: (contacts: RoutingContact[]) => void;
   onDefaultEmailChange: (value: string) => void;
+  enquiryRouting: EnquiryRoute[];
+  enquiryRoutingCalls: boolean;
+  onEnquiryRoutingChange: (routes: EnquiryRoute[]) => void;
+  onEnquiryRoutingCallsChange: (value: boolean) => void;
   onSave: () => void;
 }) {
   function update(id: string, patch: Partial<RoutingContact>) {
@@ -3994,6 +4011,14 @@ function RoutingTab({
         />
       </div>
 
+      <EnquiryRoutingCard
+        routes={enquiryRouting}
+        routeCalls={enquiryRoutingCalls}
+        defaultEmail={defaultEmail}
+        onChange={onEnquiryRoutingChange}
+        onRouteCallsChange={onEnquiryRoutingCallsChange}
+      />
+
       {contacts.length > 0 ? (
         <div className="space-y-4">
           {contacts.map((contact) => (
@@ -4033,6 +4058,107 @@ function RoutingTab({
         </button>
         {saveError && <p className="mt-2 text-sm text-danger">{saveError}</p>}
       </div>
+    </div>
+  );
+}
+
+// Which inbox each enquiry type's summary email goes to. Claude picks the type
+// from this list when a chat ends (and after calls when routeCalls is on).
+function EnquiryRoutingCard({
+  routes,
+  routeCalls,
+  defaultEmail,
+  onChange,
+  onRouteCallsChange,
+}: {
+  routes: EnquiryRoute[];
+  routeCalls: boolean;
+  defaultEmail: string;
+  onChange: (routes: EnquiryRoute[]) => void;
+  onRouteCallsChange: (value: boolean) => void;
+}) {
+  function update(index: number, patch: Partial<EnquiryRoute>) {
+    onChange(routes.map((route, i) => (i === index ? { ...route, ...patch } : route)));
+  }
+
+  return (
+    <div className="mb-6 rounded-2xl border border-line bg-card p-5 shadow-card">
+      <span className="flex items-center gap-2 text-sm font-black">
+        <Inbox className="h-4 w-4 text-teal" />
+        Enquiry routing
+      </span>
+      <p className="mt-1 mb-4 text-sm text-ink-soft">
+        When a website chat ends, the AI decides what kind of enquiry it was and emails the
+        summary to that team. Types with no inbox use the default inbox
+        {defaultEmail ? ` (${defaultEmail})` : ""}.
+      </p>
+
+      {routes.length > 0 ? (
+        <div className="space-y-3">
+          {routes.map((route, index) => (
+            <div key={route.key || `new-${index}`} className="rounded-xl border border-line bg-white p-4">
+              <div className="flex items-start gap-3">
+                <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                  <Field label="Enquiry type" value={route.label} onChange={(v) => update(index, { label: v })} />
+                  <Field
+                    label="What counts as this type"
+                    value={route.description}
+                    onChange={(v) => update(index, { description: v })}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onChange(routes.filter((_, i) => i !== index))}
+                  aria-label={`Remove ${route.label || "enquiry type"}`}
+                  className="mt-7 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-ink-soft transition hover:bg-danger-wash hover:text-danger"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-3">
+                <span className="mb-2 block text-sm font-black">Send summary to</span>
+                <KeywordInput
+                  keywords={route.emails}
+                  onChange={(emails) => update(index, { emails })}
+                  placeholder={defaultEmail ? `Default inbox (${defaultEmail})` : "Type an email and press Enter"}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-line-strong bg-white px-5 py-6 text-center text-sm text-ink-soft">
+          No enquiry types yet, so every summary goes to the default inbox.
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => onChange([...routes, { key: "", label: "", description: "", emails: [] }])}
+        className="mt-3 inline-flex items-center gap-2 rounded-lg border border-dashed border-black/20 px-4 py-2.5 text-sm font-black text-teal transition hover:bg-card-tint"
+      >
+        <Plus className="h-4 w-4" />
+        Add enquiry type
+      </button>
+
+      {routes.length > 0 ? (
+        <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={routeCalls}
+            onChange={(event) => onRouteCallsChange(event.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-black/30 accent-[#148b8e]"
+          />
+          <span>
+            <span className="font-black">Route phone calls the same way</span>
+            <span className="block text-ink-soft">
+              {routeCalls
+                ? "Call summaries go to the team for that enquiry type."
+                : "Off: every call summary goes to the default inbox."}
+            </span>
+          </span>
+        </label>
+      ) : null}
     </div>
   );
 }
@@ -4156,9 +4282,11 @@ function RouteToggle({
 function KeywordInput({
   keywords,
   onChange,
+  placeholder = "Type a keyword and press Enter",
 }: {
   keywords: string[];
   onChange: (keywords: string[]) => void;
+  placeholder?: string;
 }) {
   const [draft, setDraft] = useState("");
 
@@ -4208,7 +4336,7 @@ function KeywordInput({
           }
         }}
         onBlur={() => commit(draft)}
-        placeholder={keywords.length ? "Add another…" : "Type a keyword and press Enter"}
+        placeholder={keywords.length ? "Add another…" : placeholder}
         className="min-w-[150px] flex-1 bg-transparent text-sm outline-none placeholder:text-ink-faint"
       />
     </div>
