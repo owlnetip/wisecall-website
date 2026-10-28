@@ -27,6 +27,13 @@ import {
 
 import { postSalesforceCallback } from "../_shared/salesforce-sms-callback.ts";
 import { routeConfirmedSalesforceReply } from "../_shared/salesforce-sms-inbound-router.ts";
+import {
+  appendTurn,
+  isOpenThread,
+  SMS_THREAD_OUTCOME,
+  threadsEnabled,
+  threadUserMessage,
+} from "../_shared/sms-thread.ts";
 
 const CLAUDE_MODEL = "claude-sonnet-4-6";
 
@@ -277,6 +284,23 @@ async function handleInbound(params: Record<string, unknown>): Promise<void> {
 
   const kbContext = await fetchKbContext(profile.id, inbound.text);
 
+  // Agents with sms_conversation_threads keep one log per conversation, so the
+  // reply sees the earlier texts and the email waits until the thread is quiet.
+  const threaded = threadsEnabled(profile.metadata);
+  let thread: { id: string; transcript: string | null; metadata: Record<string, unknown> | null } | null = null;
+  if (threaded) {
+    const { data: latest } = await supabase
+      .from("wisecall_call_logs")
+      .select("id, transcript, metadata, analysed_at")
+      .eq("profile_id", profile.id)
+      .eq("caller_id", fromNumber)
+      .eq("outcome", SMS_THREAD_OUTCOME)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latest && isOpenThread(latest)) thread = latest;
+  }
+
   const systemPrompt = [
     profile.system_prompt ||
       `You are a helpful, professional UK English receptionist for ${businessName}.`,
@@ -301,7 +325,7 @@ async function handleInbound(params: Record<string, unknown>): Promise<void> {
     .filter(Boolean)
     .join("\n");
 
-  const userMessage = `The customer (${fromNumber}) sent an SMS:\n\n${inbound.text}`;
+  const userMessage = threadUserMessage(fromNumber, thread?.transcript || "", inbound.text);
 
   let replyText: string;
   try {
@@ -342,6 +366,48 @@ async function handleInbound(params: Record<string, unknown>): Promise<void> {
     }
   } catch (e) {
     console.error("[wisecall-sms-inbound] contact upsert:", (e as Error).message);
+  }
+
+  if (threaded) {
+    try {
+      const lastMessageAt = new Date().toISOString();
+      const transcript = appendTurn(thread?.transcript || "", inbound.text, replyText);
+      if (thread) {
+        await supabase.from("wisecall_call_logs").update({
+          transcript,
+          finished_at: lastMessageAt,
+          metadata: {
+            ...(thread.metadata || {}),
+            last_message_at: lastMessageAt,
+            sms_count: Number(thread.metadata?.sms_count || 1) + 1,
+          },
+        }).eq("id", thread.id);
+      } else {
+        await supabase.from("wisecall_call_logs").insert({
+          call_id: `sms-${inbound.messageId || crypto.randomUUID()}`,
+          profile_id: profile.id,
+          profile_name: profile.profile_name || businessName,
+          caller_id: fromNumber,
+          contact_id: contactId,
+          summary: `SMS: ${inbound.text.slice(0, 80)}`,
+          outcome: SMS_THREAD_OUTCOME,
+          transcript,
+          started_at: now,
+          finished_at: now,
+          metadata: {
+            channel: "sms",
+            sms_thread: true,
+            message_id: inbound.messageId || null,
+            last_message_at: lastMessageAt,
+            sms_count: 1,
+          },
+        });
+      }
+    } catch (e) {
+      console.error("[wisecall-sms-inbound] thread log:", (e as Error).message);
+    }
+    // The portal's catch-up analyses and emails the thread once it goes quiet.
+    return;
   }
 
   let callLogId: string | null = null;

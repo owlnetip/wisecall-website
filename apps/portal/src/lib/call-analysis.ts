@@ -550,8 +550,11 @@ export async function backfillAnalysisForUser(
     .limit(limit + 1);
   if (error) throw new Error(`Could not list pending calls: ${error.message}`);
 
+  // An SMS thread still being texted is left for the catch-up to email whole.
   const rows = (data as AnalyzableRow[]).filter(
-    (r) => (r.transcript ?? "").trim().length >= 10,
+    (r) =>
+      (r.transcript ?? "").trim().length >= 10 &&
+      !(isSmsThreadLog(r) && !smsThreadIsIdle(r)),
   );
   const batch = rows.slice(0, limit);
 
@@ -581,6 +584,22 @@ export async function backfillAnalysisForUser(
 }
 
 const NON_CALL_OUTCOMES = new Set(["sms_sent", "sms_failed", "SMS replied", "live_chat"]);
+
+// SMS conversation threads (wisecall-sms-inbound, metadata.sms_thread) are
+// emailed once nobody has texted for this long. Keep in sync with
+// supabase/functions/_shared/sms-thread.ts.
+export const SMS_THREAD_IDLE_MS = 10 * 60_000;
+
+export function isSmsThreadLog(log: { metadata?: unknown }): boolean {
+  const meta = log.metadata && typeof log.metadata === "object" ? (log.metadata as Record<string, unknown>) : {};
+  return meta.sms_thread === true;
+}
+
+export function smsThreadIsIdle(log: { metadata?: unknown }, now = Date.now()): boolean {
+  const meta = log.metadata && typeof log.metadata === "object" ? (log.metadata as Record<string, unknown>) : {};
+  const last = Date.parse(String(meta.last_message_at ?? ""));
+  return Number.isFinite(last) && now - last >= SMS_THREAD_IDLE_MS;
+}
 
 // Safety net for the runtime's call-completed trigger: picks up phone calls
 // that ended a few minutes ago and still have no analysis (trigger failed, or
@@ -636,6 +655,7 @@ export async function analyseMissedRecentCalls(opts: {
   }
 
   const rows = candidates.filter((r) => {
+    if (isSmsThreadLog(r)) return smsThreadIsIdle(r, now);
     if (isLiveChatLog(r)) {
       if (!idleChatProfiles.has(r.profile_id as string)) return false;
       const last = Date.parse(String((r.metadata ?? {}).last_message_at ?? (r.metadata ?? {}).closed_at ?? ""));
