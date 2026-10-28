@@ -3,7 +3,8 @@ import { claudeConfig } from "@/lib/call-analysis";
 
 // Picks the enquiry type of a finished website chat from the agent's own list
 // (profile.metadata.chat_enquiry_categories), so the one post-chat email can go
-// to that department (metadata.chat_enquiry_routing[key]).
+// to that department (metadata.chat_enquiry_routing[key]). Phone calls are
+// classified too when the agent opts in with metadata.enquiry_routing_calls.
 
 export type EnquiryCategory = { key: string; label: string; description: string };
 
@@ -21,17 +22,22 @@ export function parseCategories(metadata: unknown): EnquiryCategory[] {
     .filter((c) => /^[a-z0-9_]{2,40}$/.test(c.key));
 }
 
+export function classifiesCalls(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== "object") return false;
+  return (metadata as Record<string, unknown>).enquiry_routing_calls === true;
+}
+
 export function buildClassifierPrompt(transcript: string, categories: EnquiryCategory[]): string {
   const list = categories.map((c) => `- ${c.key}: ${c.description || c.label}`).join("\n");
   return [
-    "Classify this website chat into exactly one category, based on what the visitor needs.",
+    "Classify this conversation into exactly one category, based on what the visitor or caller needs.",
     "",
     "Categories:",
     list,
     "",
     "Reply with the category key only, nothing else.",
     "",
-    "Chat:",
+    "Conversation:",
     transcript.slice(-12000),
   ].join("\n");
 }
