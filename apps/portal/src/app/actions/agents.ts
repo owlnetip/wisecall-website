@@ -55,6 +55,7 @@ import {
   type NegotiatorRules,
 } from "@/lib/digital-negotiator";
 import { mergeNotificationEmails, primaryInboxEmail } from "@/lib/notification-recipients";
+import { enquiryRoutingMetadata, type EnquiryRoute } from "@/lib/enquiry-routing";
 
 export type AgentPatch = {
   name?: string;
@@ -81,6 +82,8 @@ export type AgentPatch = {
   status?: "Live" | "Setup" | "Review";
   integrationWebhooks?: IntegrationWebhook[];
   negotiatorRules?: NegotiatorRules;
+  enquiryRouting?: EnquiryRoute[];
+  enquiryRoutingCalls?: boolean;
 };
 
 function routingProviderFromMetadata(
@@ -526,6 +529,22 @@ export async function updateAgent(
   if (patch.negotiatorRules !== undefined) {
     // Estate Digital Negotiator trainable rules (prompt.js injects at call time).
     nextMetadata.negotiator_rules = normaliseNegotiatorRules(patch.negotiatorRules);
+  }
+  if (patch.enquiryRouting !== undefined) {
+    // Which inbox each enquiry type's summary email goes to (enquiry-routing.ts).
+    // Agents that never had routing stay without the keys.
+    const hadRouting =
+      metadata.chat_enquiry_categories !== undefined || metadata.chat_enquiry_routing !== undefined;
+    if (patch.enquiryRouting.length || hadRouting) {
+      const built = enquiryRoutingMetadata(patch.enquiryRouting);
+      if (!built.ok) return { ok: false, error: built.error };
+      nextMetadata.chat_enquiry_categories = built.value.chat_enquiry_categories;
+      nextMetadata.chat_enquiry_routing = built.value.chat_enquiry_routing;
+    }
+  }
+  if (patch.enquiryRoutingCalls !== undefined) {
+    if (patch.enquiryRoutingCalls) nextMetadata.enquiry_routing_calls = true;
+    else delete nextMetadata.enquiry_routing_calls;
   }
   // Website chat widget theming, wisecall-live-chat reads these metadata keys.
   if (patch.chatAccentColor !== undefined) nextMetadata.chat_accent_color = patch.chatAccentColor;
