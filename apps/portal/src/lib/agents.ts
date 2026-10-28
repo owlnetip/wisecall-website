@@ -317,6 +317,7 @@ const OUTCOME_LABELS: Record<string, string> = {
   "whatsapp replied": "WhatsApp replied",
   // SMS
   "sms replied": "SMS replied",
+  "sms conversation": "SMS conversation",
   // Email
   "email replied": "Email replied",
 };

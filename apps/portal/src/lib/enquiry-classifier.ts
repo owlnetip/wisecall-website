@@ -3,8 +3,8 @@ import { claudeConfig } from "@/lib/call-analysis";
 
 // Picks the enquiry type of a finished website chat from the agent's own list
 // (profile.metadata.chat_enquiry_categories), so the one post-chat email can go
-// to that department (metadata.chat_enquiry_routing[key]). Phone calls are
-// classified too when the agent opts in with metadata.enquiry_routing_calls.
+// to that department (metadata.chat_enquiry_routing[key]). Phone calls and SMS
+// threads are classified too when the agent opts in with metadata.enquiry_routing_calls.
 
 export type EnquiryCategory = { key: string; label: string; description: string };
 
