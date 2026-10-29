@@ -8,7 +8,7 @@
 // Auth: the same X-WiseCall-SMS-Secret header as wisecall-listing-sms (Supabase
 // is at its secret limit, so no new secret).
 
-import { describeListing, findListings, loadListings } from "../_shared/property-listings.ts";
+import { describeListing, findListings, type Listing, loadListings } from "../_shared/property-listings.ts";
 
 type FindListingRequest = {
   street?: string;
@@ -20,6 +20,40 @@ type FindListingRequest = {
   profileId?: string;
   profile_id?: string;
 };
+
+// TTS reads "£220,000" unreliably (Cartesia once said it as two hundred
+// pounds), so the voice result carries prices already in words.
+const ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+  "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+function under1000(n: number): string {
+  const h = Math.floor(n / 100), r = n % 100;
+  const rest = r < 20 ? ONES[r] : TENS[Math.floor(r / 10)] + (r % 10 ? `-${ONES[r % 10]}` : "");
+  if (!h) return rest;
+  return `${ONES[h]} hundred${rest ? ` and ${rest}` : ""}`;
+}
+
+export function poundsInWords(n: number): string {
+  n = Math.round(n);
+  if (!n) return "zero pounds";
+  const parts: string[] = [];
+  const m = Math.floor(n / 1_000_000), t = Math.floor((n % 1_000_000) / 1000), u = n % 1000;
+  if (m) parts.push(`${under1000(m)} million`);
+  if (t) parts.push(`${under1000(t)} thousand`);
+  if (u) parts.push(u < 100 && parts.length ? `and ${under1000(u)}` : under1000(u));
+  return `${parts.join(" ")} pounds`;
+}
+
+function spoken(l: Listing): string {
+  const town = (l.town || "").replace(/^city of\s+/i, "");
+  let type = (l.property_type || "property").toLowerCase();
+  if (/(detached|terraced|terrace|semi)$/.test(type)) type += " house"; // "terraced" alone sounds clipped
+  const kind = [l.bedrooms ? `${l.bedrooms} bed` : "", type].filter(Boolean).join(" ");
+  const price = l.price ? `${(l.price_qualifier || "").toLowerCase()} ${poundsInWords(l.price)}`.trim() : "";
+  const status = l.status === "FOR SALE" ? "" : `, and it's ${l.status.toLowerCase().replace("stc", "S T C")}`;
+  return `a ${kind} on ${l.street || l.display_address}${town ? ` in ${town}` : ""}${price ? `, ${price}` : ""}${status}`;
+}
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -71,15 +105,16 @@ Deno.serve(async (req) => {
 
   const listings = lookup.matches.map((m) => ({
     description: describeListing(m.listing),
+    say_it_like_this: spoken(m.listing),
     status: m.listing.status,
     reference: m.listing.listing_id,
     property_url: m.listing.url,
   }));
   const instruction = {
     match:
-      "Read this listing back in plain words (street, town, bedrooms, asking price; never a house number or URL) and ask the caller to confirm it's the one. If its status is not FOR SALE, tell them. If they say no, don't keep searching: take their details and the property in their words.",
+      "Read this listing back using say_it_like_this (never a house number, URL or reference) and ask the caller to confirm it's the one. If its status is not FOR SALE, tell them. If they say no, don't keep searching: take their details and the property in their words.",
     multiple:
-      "More than one listing fits. Ask one short question to tell them apart (bedrooms or price), then confirm. If it's still unclear, take their details and the property in their words.",
+      "More than one listing fits (see say_it_like_this for each). Ask one short question to tell them apart (bedrooms or price), then confirm. If it's still unclear, take their details and the property in their words.",
     none:
       "No listing matched. Don't keep searching or ask for more address details. Take their details and the property in their words, and say someone will call them back as soon as possible.",
   }[lookup.result];
