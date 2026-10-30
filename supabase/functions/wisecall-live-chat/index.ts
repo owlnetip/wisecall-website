@@ -9,6 +9,7 @@ import {
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
 import {
+  agentAskedForContact,
   agentAskedForName,
   bareNameReply,
   extractChatName,
@@ -742,7 +743,12 @@ serve(async (req) => {
     if (!collected.contact_name) {
       const previous = parseTranscript(chatLog.transcript || "");
       const lastAgent = [...previous].reverse().find((m) => m.role === "assistant")?.content || "";
-      const bare = agentAskedForName(lastAgent) ? bareNameReply(message) : undefined;
+      // Visitors often give their name late, when asked for an email instead
+      // ("What's your email?" → "Sophia"). Only while we have no name yet, and
+      // only when the reply carries no email or phone.
+      const askedForName = agentAskedForName(lastAgent) ||
+        (agentAskedForContact(lastAgent) && !extractEmail(message) && !extractPhone(message));
+      const bare = askedForName ? bareNameReply(message) : undefined;
       if (bare) (collected as Record<string, unknown>).contact_name = bare;
     }
     const enquiryType = detectEnquiryType(message, collected.enquiry_type);
