@@ -7,6 +7,8 @@
 //   lead_source: "Website Chat",                         // optional; dropped if the picklist rejects it
 //   company: "Private individual",                       // optional; only used if the org requires Company
 //   record_type_id: "012…",                              // optional; new Leads only (else the run-as user's default applies)
+//   record_types: { seller: "Vendor", buyer: "Buyer" },  // optional; new Leads only, by the chat's enquiry type
+//                                                        // (Id or RecordType DeveloperName; wins over record_type_id)
 //   brand: {                                             // optional; new Leads only, from the chat's page URL
 //     field: "Brand__c",
 //     sites: { "bettermove.co.uk": "Bettermove", "brand2.co.uk": "Brand Two" },
@@ -40,6 +42,7 @@ export type SalesforceLeadConfig = {
   leadSource: string | null;
   company: string | null;
   recordTypeId: string | null;
+  recordTypes: Record<string, string>;
   brand: { field: string; sites: Record<string, string> } | null;
 };
 
@@ -94,7 +97,16 @@ export function salesforceLeadConfig(
   const company = String(cfg.company || "").trim() || null;
   const rawRecordType = String(cfg.record_type_id || "").trim();
   const recordTypeId = /^012[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$/.test(rawRecordType) ? rawRecordType : null;
-  return { instanceUrl, clientId, clientSecret, leadSource, company, recordTypeId, brand: brandConfig(cfg.brand) };
+  const recordTypes: Record<string, string> = {};
+  if (isPlainObject(cfg.record_types)) {
+    for (const [type, value] of Object.entries(cfg.record_types)) {
+      const v = String(value || "").trim();
+      if (/^[A-Za-z][A-Za-z0-9_]{0,79}$/.test(v) || /^012[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$/.test(v)) recordTypes[type] = v;
+    }
+  }
+  return {
+    instanceUrl, clientId, clientSecret, leadSource, company, recordTypeId, recordTypes, brand: brandConfig(cfg.brand),
+  };
 }
 
 function brandConfig(value: unknown): SalesforceLeadConfig["brand"] {
@@ -347,11 +359,42 @@ function leadFields(cfg: SalesforceLeadConfig, collected: Record<string, unknown
   return fields;
 }
 
+// The AI's finer post-chat categories fold into the chat's seller/buyer types.
+const ENQUIRY_FAMILY: Record<string, string> = { viewing: "buyer", offers: "buyer" };
+
+const recordTypeIds = new Map<string, string | null>();
+
+// Record type ids differ between a sandbox and prod, so config can name the
+// type (DeveloperName) and we look its id up once per isolate.
+export async function leadRecordTypeId(
+  sf: SalesforceClient,
+  cfg: SalesforceLeadConfig,
+  enquiryType: unknown,
+): Promise<string | null> {
+  const type = String(enquiryType || "");
+  const wanted = cfg.recordTypes[type] ?? cfg.recordTypes[ENQUIRY_FAMILY[type] ?? ""];
+  if (!wanted) return cfg.recordTypeId;
+  if (/^012[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$/.test(wanted)) return wanted;
+  const key = `${cfg.instanceUrl}|${wanted}`;
+  if (!recordTypeIds.has(key)) {
+    try {
+      const res = await sf.query(
+        `SELECT Id FROM RecordType WHERE SobjectType = 'Lead' AND IsActive = true AND DeveloperName = ${soqlString(wanted)} LIMIT 1`,
+      );
+      recordTypeIds.set(key, res?.records?.[0]?.Id ?? null);
+    } catch (err) {
+      console.error(`[salesforce-lead] record type ${wanted}: ${(err as Error).message.slice(0, 200)}`);
+      return cfg.recordTypeId; // don't cache a transient failure
+    }
+  }
+  return recordTypeIds.get(key) ?? cfg.recordTypeId;
+}
+
 // Fields that only make sense when the Lead is first created (staff may change
 // them afterwards, so later PATCHes never touch them).
-function createOnlyFields(cfg: SalesforceLeadConfig, pageUrl: unknown): Record<string, unknown> {
+function createOnlyFields(cfg: SalesforceLeadConfig, pageUrl: unknown, recordTypeId: string | null): Record<string, unknown> {
   const extra: Record<string, unknown> = {};
-  if (cfg.recordTypeId) extra.RecordTypeId = cfg.recordTypeId;
+  if (recordTypeId) extra.RecordTypeId = recordTypeId;
   const brand = brandForPageUrl(cfg.brand, pageUrl);
   if (cfg.brand && brand) extra[cfg.brand.field] = brand;
   return extra;
@@ -447,8 +490,24 @@ export async function syncChatToSalesforce(
       return { ...previous, transcript_length: transcriptLength, at: now };
     }
     if (previous?.record_id && previous.object === "Task") {
-      await sf.request("PATCH", `/sobjects/Task/${previous.record_id}`, { Description: description });
-      return { ...previous, transcript_length: transcriptLength, at: now };
+      try {
+        await sf.request("PATCH", `/sobjects/Task/${previous.record_id}`, { Description: description });
+        return { ...previous, transcript_length: transcriptLength, at: now };
+      } catch (err) {
+        // The Task was created with the record owner as its owner, and the
+        // integration user cannot edit another user's Task. Log the full
+        // transcript on a new Task owned by the integration user instead, so
+        // every later message can update that one in place.
+        const noEditAccess =
+          err instanceof SalesforceError && err.errorCodes().some((e) => e.code.startsWith("INSUFFICIENT_ACCESS"));
+        if (!noEditAccess || !previous.who_id) throw err;
+        const { OwnerId: _owner, ...fields } = taskFields(
+          { object: previous.who_object ?? "Contact", id: previous.who_id, ownerId: null, ours: false },
+          description,
+        );
+        const task = await sf.request("POST", "/sobjects/Task", fields);
+        return { ...previous, record_id: String(task.id), transcript_length: transcriptLength, error: undefined, at: now };
+      }
     }
 
     const match = await findExistingRecord(sf, collected, callId);
@@ -471,7 +530,13 @@ export async function syncChatToSalesforce(
     }
 
     const pageUrl = metadata.page_url || metadata.last_page_url;
-    const leadId = await createLead(sf, cfg, leadFields(cfg, collected, description), createOnlyFields(cfg, pageUrl));
+    const recordTypeId = await leadRecordTypeId(sf, cfg, collected.enquiry_type);
+    const leadId = await createLead(
+      sf,
+      cfg,
+      leadFields(cfg, collected, description),
+      createOnlyFields(cfg, pageUrl, recordTypeId),
+    );
     return { status: "created", object: "Lead", record_id: leadId, transcript_length: transcriptLength, at: now };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

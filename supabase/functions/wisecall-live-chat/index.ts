@@ -9,6 +9,7 @@ import {
 import { fetchMergedKbContext, PROPERTY_BUDGET_PROMPT_RULES } from "../_shared/kb-context.ts";
 import { syncChatLogToSalesforce } from "../_shared/salesforce-lead.ts";
 import {
+  agentAskedForContact,
   agentAskedForName,
   bareNameReply,
   extractChatName,
@@ -26,6 +27,7 @@ import {
   hasPostcode,
 } from "../_shared/chat-required-contact.ts";
 import { applySiteBranding, pageUrlFromRequest } from "../_shared/chat-site-brand.ts";
+import { findListings, listingCheckBlock, loadListings } from "../_shared/property-listings.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -283,6 +285,7 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "- If a [PROPERTY BUDGET SEARCH] block is provided, use it for budget/property questions.",
     PROPERTY_BUDGET_PROMPT_RULES,
     "- Properties and listings: only mention a property, address, price, bedroom count or reference number that appears in a [KNOWLEDGE BASE] or [PROPERTY BUDGET SEARCH] block, or that you already quoted from one earlier in this chat. Never make up example listings, addresses or reference numbers, even as a rough idea of what is available. If nothing provided matches the area, budget or property they asked about, say you can't see a matching listing right now and offer to have the team get in touch.",
+    "- If a [LISTING CHECK] block is provided, it is the listing the visitor most likely means: follow its instructions to confirm it with them before taking an offer or viewing request.",
     "- If a visitor asks whether a specific property is still available and it is not in the provided listings, say you can't see it listed at the moment and the team will confirm. Do not ask them to prove or re-describe it.",
     "- If the question is not covered by the KB, use general knowledge to help, suggest troubleshooting steps, explain the issue, offer practical guidance.",
     "- Business facts are the exception: never use general knowledge or guess about this business's own fees, deposits, charges, prices, refunds, what is optional or required, guarantees, timescales, legal or contract terms. State only what the [KNOWLEDGE BASE] or [PROPERTY BUDGET SEARCH] says, keeping its wording, and do not add anything it doesn't say (for example, don't call something optional, free or refundable unless it says so).",
@@ -386,6 +389,27 @@ async function fetchKbContext(profileId: string, query: string): Promise<string 
     return await fetchMergedKbContext(profileId, query);
   } catch (e) {
     console.error("[wisecall-live-chat] kb context:", (e as Error).message);
+    return null;
+  }
+}
+
+// Agents with metadata.listing_lookup.enabled check what the visitor said
+// against their mirrored Rightmove listings, so an offer or viewing request can
+// be confirmed against a real listing. Best-effort: no block on any failure.
+async function fetchListingCheck(profile: any, history: ChatMessage[]): Promise<string | null> {
+  const config = profile?.metadata?.listing_lookup;
+  if (!config || config.enabled !== true) return null;
+  const said = history.filter((m) => m.role === "user").slice(-6).map((m) => m.content).join(". ");
+  if (!said.trim()) return null;
+  try {
+    const { listings, refreshedAt } = await loadListings(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      profile.id,
+    );
+    return listingCheckBlock(findListings(listings, said), refreshedAt);
+  } catch (e) {
+    console.error("[wisecall-live-chat] listing check:", (e as Error).message);
     return null;
   }
 }
@@ -719,7 +743,12 @@ serve(async (req) => {
     if (!collected.contact_name) {
       const previous = parseTranscript(chatLog.transcript || "");
       const lastAgent = [...previous].reverse().find((m) => m.role === "assistant")?.content || "";
-      const bare = agentAskedForName(lastAgent) ? bareNameReply(message) : undefined;
+      // Visitors often give their name late, when asked for an email instead
+      // ("What's your email?" → "Sophia"). Only while we have no name yet, and
+      // only when the reply carries no email or phone.
+      const askedForName = agentAskedForName(lastAgent) ||
+        (agentAskedForContact(lastAgent) && !extractEmail(message) && !extractPhone(message));
+      const bare = askedForName ? bareNameReply(message) : undefined;
       if (bare) (collected as Record<string, unknown>).contact_name = bare;
     }
     const enquiryType = detectEnquiryType(message, collected.enquiry_type);
@@ -753,7 +782,11 @@ serve(async (req) => {
       // invents some. Always search with the first real enquiry too.
       const enquiry = firstEnquiry(history);
       const kbQuery = enquiry && !recentTurns.includes(enquiry) ? `${enquiry} ${recentTurns}`.slice(-1500) : recentTurns;
-      const kbContext = await fetchKbContext(profile.id, kbQuery || message);
+      const [kbFound, listingCheck] = await Promise.all([
+        fetchKbContext(profile.id, kbQuery || message),
+        fetchListingCheck(profile, history),
+      ]);
+      const kbContext = listingCheck ? [listingCheck, kbFound].filter(Boolean).join("\n\n") : kbFound;
       const contactContext = await loadContactContext(supabase, profile.id, {
         phone: collected.contact_phone as string | undefined,
         email: collected.contact_email as string | undefined,
