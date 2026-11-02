@@ -28,6 +28,15 @@ import {
 } from "../_shared/chat-required-contact.ts";
 import { applySiteBranding, pageUrlFromRequest } from "../_shared/chat-site-brand.ts";
 import { findListings, listingCheckBlock, loadListings } from "../_shared/property-listings.ts";
+import {
+  chatToolDefinitions,
+  earlierToolResultsBlock,
+  readChatToolHooks,
+  readChatToolState,
+  runChatTool,
+  type ChatToolContext,
+  type ChatToolState,
+} from "../_shared/chat-tools.ts";
 
 type ChatRequest = {
   session_id?: string;
@@ -356,6 +365,17 @@ function buildProfilePrompt(profile: any, metadata: Record<string, unknown>) {
     "- Replace phone words like caller, calling, call, and SMS with visitor, chat, callback, email, or direct link as appropriate.",
   );
 
+  if (readChatToolHooks(metadata).length) {
+    sections.push(
+      "",
+      "Website chat tools (these override the chat rules above where they differ):",
+      "- You have working tools on this chat. When you need one, call it in this same turn, before you reply.",
+      "- Never reply that you will check or do something and stop there: the visitor hears nothing more until they write again.",
+      "- Only tell the visitor something happened if a tool result shows it. Never invent a result.",
+      "- Text confirmations (SMS) are real on this chat: call them SMS or a text, as the tool instructions do.",
+    );
+  }
+
   sections.push("", `Business name reference: ${businessName}.`);
   return sections.join("\n").trim();
 }
@@ -414,18 +434,22 @@ async function fetchListingCheck(profile: any, history: ChatMessage[]): Promise<
   }
 }
 
+const MAX_TOOL_ROUNDS = 4;
+
 async function callOpenAi(
   profile: any,
   history: ChatMessage[],
   kbContext: string | null,
   memoryBlock: string,
   contactNote: string | null,
+  toolRun: { context: ChatToolContext; state: ChatToolState } | null = null,
 ) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return null;
 
   const prompt = buildProfilePrompt(profile, profile?.metadata || {});
-  const messages = [
+  const earlierResults = toolRun ? earlierToolResultsBlock(toolRun.state) : null;
+  const messages: any[] = [
     { role: "system", content: prompt },
     {
       role: "system",
@@ -434,33 +458,65 @@ async function callOpenAi(
     },
     ...(memoryBlock ? [{ role: "system", content: memoryBlock }] : []),
     ...(contactNote ? [{ role: "system", content: contactNote }] : []),
+    ...(earlierResults ? [{ role: "system", content: earlierResults }] : []),
     ...history.slice(-18).map((message) => ({
       role: message.role === "assistant" ? "assistant" : "user",
       content: message.content,
     })),
   ];
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: Deno.env.get("WISECALL_CHAT_MODEL") || "gpt-4.1-mini",
-      messages,
-      temperature: 0.25,
-      max_tokens: 450,
-    }),
-  });
+  const hooks = toolRun ? readChatToolHooks(profile?.metadata) : [];
+  const onceOnly: string[] = Array.isArray(profile?.metadata?.chat_tools?.once_per_chat)
+    ? profile.metadata.chat_tools.once_per_chat
+    : [];
 
-  if (!response.ok) {
-    console.error("WiseCall live chat OpenAI error:", response.status, await response.text());
-    return null;
+  // Without tools this is a single request. With them, the model may call a tool
+  // and see the result; the last round forces a text reply.
+  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: Deno.env.get("WISECALL_CHAT_MODEL") || "gpt-4.1-mini",
+        messages,
+        temperature: 0.25,
+        max_tokens: 450,
+        ...(hooks.length
+          ? {
+            tools: chatToolDefinitions(hooks),
+            parallel_tool_calls: false,
+            tool_choice: round === MAX_TOOL_ROUNDS - 1 ? "none" : "auto",
+          }
+          : {}),
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("WiseCall live chat OpenAI error:", response.status, await response.text());
+      return null;
+    }
+
+    const result = await response.json();
+    const choice = result?.choices?.[0]?.message;
+    if (!toolRun || !choice?.tool_calls?.length) return normaliseText(choice?.content);
+
+    messages.push(choice);
+    for (const call of choice.tool_calls) {
+      const output = await runChatTool(
+        hooks,
+        onceOnly,
+        call.function?.name,
+        call.function?.arguments,
+        toolRun.context,
+        toolRun.state,
+      );
+      messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(output) });
+    }
   }
-
-  const result = await response.json();
-  return normaliseText(result?.choices?.[0]?.message?.content);
+  return null;
 }
 
 function fallbackReply(profile: any, collected: Record<string, unknown>) {
@@ -768,6 +824,7 @@ serve(async (req) => {
     const history = [...parseTranscript(chatLog.transcript || ""), { role: "user", content: message } as ChatMessage];
     const holdReply = requiredContactHoldReply(profile.metadata || {}, collected, history);
     let reply = holdReply;
+    const toolState = readChatToolHooks(profile.metadata).length ? readChatToolState(chatLog.metadata) : null;
     if (!reply) {
       // Build the KB search query from recent turns of BOTH roles: a follow-up like
       // "yes give me details" only carries meaning through the assistant turn that
@@ -793,7 +850,17 @@ serve(async (req) => {
       });
       const memoryBlock = buildMemoryBlock(contactContext);
       const contactNote = requiredContactNote(profile.metadata || {}, collected, history);
-      reply = (await callOpenAi(profile, history, kbContext, memoryBlock, contactNote)) ||
+      const toolRun = toolState
+        ? {
+          state: toolState,
+          context: {
+            profileId: profile.id,
+            callId: chatLog.call_id,
+            callerId: String(collected.contact_phone || ""),
+          },
+        }
+        : null;
+      reply = (await callOpenAi(profile, history, kbContext, memoryBlock, contactNote, toolRun)) ||
         fallbackReply(profile, collected);
     }
     const updatedMessages = [...history, { role: "assistant", content: reply } as ChatMessage];
@@ -812,6 +879,7 @@ serve(async (req) => {
         channel: "chat",
         last_page_url: body.page_url || chatLog.metadata?.page_url,
         last_message_at: new Date().toISOString(),
+        ...(toolState ? { chat_tool_state: toolState } : {}),
       },
     };
 
