@@ -404,9 +404,25 @@ const KB_MIN_SIMILARITY = 0.35;
 // scoped to this agent's profile id). Relevance-gated: returns a context block
 // built only from sufficiently-similar chunks, or null when nothing is a good
 // match. Never throws, KB lookup is best-effort and must not break the chat.
-async function fetchKbContext(profileId: string, query: string): Promise<string | null> {
+// metadata.chat_kb_timeout_ms (opt-in) stops a slow search holding up the reply; the
+// agent then answers from its prompt alone.
+async function fetchKbContext(profileId: string, query: string, timeoutMs?: unknown): Promise<string | null> {
   try {
-    return await fetchMergedKbContext(profileId, query);
+    const search = fetchMergedKbContext(profileId, query);
+    if (typeof timeoutMs !== "number" || timeoutMs <= 0) return await search;
+    let timer: number | undefined;
+    const timeout = new Promise<null>((resolve) => {
+      timer = setTimeout(() => {
+        console.warn("[wisecall-live-chat] kb context: over time budget, replying without it");
+        resolve(null);
+      }, timeoutMs);
+    });
+    search.catch(() => null); // a late failure must not surface as unhandled
+    try {
+      return await Promise.race([search, timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
   } catch (e) {
     console.error("[wisecall-live-chat] kb context:", (e as Error).message);
     return null;
@@ -840,7 +856,7 @@ serve(async (req) => {
       const enquiry = firstEnquiry(history);
       const kbQuery = enquiry && !recentTurns.includes(enquiry) ? `${enquiry} ${recentTurns}`.slice(-1500) : recentTurns;
       const [kbFound, listingCheck] = await Promise.all([
-        fetchKbContext(profile.id, kbQuery || message),
+        fetchKbContext(profile.id, kbQuery || message, profile.metadata?.chat_kb_timeout_ms),
         fetchListingCheck(profile, history),
       ]);
       const kbContext = listingCheck ? [listingCheck, kbFound].filter(Boolean).join("\n\n") : kbFound;
