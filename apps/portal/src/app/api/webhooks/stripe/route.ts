@@ -1,3 +1,4 @@
+import { effectiveSubscriptionStatus } from "@/lib/billing-status";
 import type Stripe from "stripe";
 import {
   getStripe,
@@ -121,7 +122,8 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
   const notificationPhone = await fetchStripeCustomerPhone(getStripe(), customerId);
   const plan = sub.metadata?.plan ?? "professional";
   const newPeriodEnd = periodEnd(sub);
-  const planActive = sub.status === "active" || sub.status === "trialing";
+  const status = effectiveSubscriptionStatus(sub);
+  const planActive = status === "active" || status === "trialing";
 
   // Detect billing period change so we can reset usage counters for the new period.
   const { data: existing, error: existingError } = await service
@@ -149,7 +151,7 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
       stripe_customer_id: customerId ?? null,
       subscription_id: sub.id,
       plan,
-      status: sub.status,
+      status,
       trial_end: unixToIso(sub.trial_end),
       current_period_end: newPeriodEnd,
       // Bundled channel allowances (single-platform model).
@@ -158,7 +160,7 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
       // AI email is bundled into every plan. Enable it for any active/trialing
       // plan so the email-inbound gate passes, and set the per-plan allowance.
       email_channel_enabled: planActive ? true : false,
-      email_channel_status: planActive ? "active" : sub.status,
+      email_channel_status: planActive ? "active" : status,
       email_monthly_allowance: planEmailIncluded(plan) || undefined,
       whatsapp_monthly_allowance: planWhatsappIncluded(plan) || undefined,
       whatsapp_period_end: newPeriodEnd,
@@ -191,7 +193,7 @@ async function upsertPlanSubscription(sub: Stripe.Subscription) {
 
   // Mirror email-enabled onto the owner's agent profiles (runtime/UI reads metadata).
   await syncEmailChannelProfiles(userId, planActive);
-  if (sub.status === "active") {
+  if (status === "active") {
     await clearTrialCapBlock(userId);
   }
 }

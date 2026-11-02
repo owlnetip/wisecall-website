@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBillingForUser, hasActiveAccess } from "@/lib/billing";
 import { planDisplayName, TRIAL_CALL_CAP, TRIAL_DAYS } from "@/lib/stripe";
 import { isNoCardTrial } from "@/lib/trial";
+import { isBespokePlan } from "@/lib/billing-status";
 import { ManageSubscriptionButton } from "./start-trial-button";
 import { PlanGrid } from "./plan-grid";
 import { getEmailChannelUsage } from "@/lib/billing";
@@ -102,6 +103,33 @@ export default async function BillingPage() {
   const currentPlan = billing?.plan ?? null;
   const emailChannel = getEmailChannelUsage(billing, hasPlan);
 
+  // Contracted accounts have nothing to pick here, and switching plan would
+  // cancel their agreement.
+  if (isBespokePlan(currentPlan)) {
+    return (
+      <main className="min-h-screen w-full px-4 py-6 text-white sm:py-10" style={{ background: "#172929" }}>
+        <div className="mx-auto max-w-xl text-center">
+          <h1 className="text-3xl font-bold tracking-tight">Billing</h1>
+          <p className="mt-3 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+            Your WiseCall plan is a bespoke agreement and your invoices are sent by email.
+            To change anything, email{" "}
+            <a href="mailto:info@wisecall.io" className="underline">
+              info@wisecall.io
+            </a>
+            .
+          </p>
+          <Link
+            href="/dashboard"
+            className="mt-6 inline-block rounded-xl px-5 py-2.5 text-sm font-bold"
+            style={{ background: "#7de8eb", color: "#0c1717" }}
+          >
+            Back to dashboard
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen w-full px-4 py-6 text-white sm:py-10" style={{ background: "#172929" }}>
       <div className="mx-auto max-w-6xl">
@@ -169,9 +197,12 @@ export default async function BillingPage() {
           plans={PLANS}
           inclusions={INCLUSIONS}
           currentPlan={currentPlan}
-          checkoutLabel={(planId) =>
-            checkoutLabel(planId, currentPlan, billing?.status, hasPlan, noCardUpgrade)
-          }
+          // Plain data: a server component cannot pass a function to a client one.
+          checkoutLabels={{
+            starter: checkoutLabel("starter", currentPlan, billing?.status, hasPlan, noCardUpgrade),
+            professional: checkoutLabel("professional", currentPlan, billing?.status, hasPlan, noCardUpgrade),
+            business: checkoutLabel("business", currentPlan, billing?.status, hasPlan, noCardUpgrade),
+          }}
         />
 
         {hasPlan ? (

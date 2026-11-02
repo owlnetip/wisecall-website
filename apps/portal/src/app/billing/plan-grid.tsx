@@ -25,12 +25,12 @@ function formatGbp(value: number) {
 export function PlanGrid({
   plans,
   inclusions,
-  checkoutLabel,
+  checkoutLabels,
   currentPlan,
 }: {
   plans: Plan[];
   inclusions: string[];
-  checkoutLabel: (planId: PlanId) => string;
+  checkoutLabels: Record<PlanId, string>;
   currentPlan: string | null;
 }) {
   const [interval, setInterval] = useState<BillingInterval>("year");
@@ -137,10 +137,10 @@ export function PlanGrid({
                   interval={interval}
                   label={
                     currentPlan === plan.id
-                      ? checkoutLabel(plan.id)
+                      ? checkoutLabels[plan.id]
                       : interval === "year"
-                        ? `${checkoutLabel(plan.id)} · annual`
-                        : checkoutLabel(plan.id)
+                        ? `${checkoutLabels[plan.id]} · annual`
+                        : checkoutLabels[plan.id]
                   }
                   variant={plan.popular ? "primary" : "secondary"}
                 />

@@ -1,5 +1,6 @@
 "use server";
 
+import { isBespokePlan } from "@/lib/billing-status";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAppBaseUrl } from "@/lib/env";
@@ -48,9 +49,15 @@ export async function startCheckout(
   // Reuse an existing Stripe customer if we've made one before.
   const { data: existing } = await service
     .from("wisecall_billing")
-    .select("stripe_customer_id, status, subscription_id")
+    .select("stripe_customer_id, status, subscription_id, plan")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  // A new checkout cancels the customer's current subscription, so a contracted
+  // account must never start one from the portal.
+  if (isBespokePlan(existing?.plan as string | null | undefined)) {
+    return { ok: false, error: "Your plan is a bespoke agreement. Please contact us to change it." };
+  }
 
   let customerId = existing?.stripe_customer_id as string | undefined;
   const createdBillingRow = !existing;
