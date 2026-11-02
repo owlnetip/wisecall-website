@@ -1,3 +1,4 @@
+import { effectiveSubscriptionStatus } from "@/lib/billing-status";
 import { getServiceSupabase } from "@/lib/supabase";
 import {
   TRIAL_CALL_CAP,
@@ -234,7 +235,10 @@ export async function reconcileBillingFromStripe(
     // Newest plan subscription that grants access; ignore historical legacy email subscriptions.
     const planSub = subs.data
       .filter((s) => !isEmailChannelSubscription(s.metadata))
-      .filter((s) => s.status === "trialing" || s.status === "active")
+      .filter((s) => {
+        const status = effectiveSubscriptionStatus(s);
+        return status === "trialing" || status === "active";
+      })
       .sort((a, b) => b.created - a.created)[0];
     if (!planSub) return billing;
 
@@ -248,7 +252,7 @@ export async function reconcileBillingFromStripe(
         stripe_customer_id: customerId,
         subscription_id: planSub.id,
         plan: planSub.metadata?.plan ?? billing?.plan ?? "professional",
-        status: planSub.status,
+        status: effectiveSubscriptionStatus(planSub),
         trial_end:
           typeof planSub.trial_end === "number"
             ? new Date(planSub.trial_end * 1000).toISOString()
