@@ -99,6 +99,10 @@ test("an unknown outcome blocks a retry of a one-shot tool", async () => {
   const result = await runChatTool([book], ["book"], "book", "{}", context, state, boom);
   assert.equal(result.ok, false);
   assert.deepEqual(state.completed, ["book"]);
+  assert.ok((earlierToolResultsBlock(state) ?? "").includes("unknown"));
+  const retry = await runChatTool([book], ["book"], "book", "{}", context, state, reply('{"confirmed":true}'));
+  assert.equal(retry.ok, false);
+  assert.ok(retry.error?.includes("do not say it worked"));
 });
 
 test("the per-chat call limit holds", async () => {

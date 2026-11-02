@@ -8,6 +8,9 @@
 
 export const MAX_TOOL_CALLS_PER_CHAT = 20;
 const WEBHOOK_TIMEOUT_MS = 8000;
+// One-shot actions do real work before answering (a booking creates the calendar
+// entry and sends the text). Giving up early would turn a success into "unknown".
+const ONE_SHOT_TIMEOUT_MS = 25000;
 const RESULT_MAX_CHARS = 8000;
 const REMEMBERED_RESULTS = 4;
 
@@ -150,7 +153,10 @@ export async function runChatTool(
   const hook = hooks.find((h) => h.name === name);
   if (!hook) return { ok: false, error: `Unknown tool: ${name}` };
   if (state.completed.includes(name)) {
-    return { ok: false, error: "Already done once on this chat. Do not repeat it. Tell the visitor what the earlier result was." };
+    return {
+      ok: false,
+      error: "This has already been attempted on this chat and cannot be repeated. Use the earlier tool result. If that result says the outcome is unknown, do not say it worked: tell the visitor the team will confirm it.",
+    };
   }
   if (state.calls >= MAX_TOOL_CALLS_PER_CHAT) {
     return { ok: false, error: "Tool limit reached on this chat. Offer to take their details for a callback." };
@@ -166,7 +172,7 @@ export async function runChatTool(
       headers: buildHeaders(hook),
       body: JSON.stringify(buildChatToolPayload(hook, context, args)),
       redirect: "error",
-      signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
+      signal: AbortSignal.timeout(once ? ONE_SHOT_TIMEOUT_MS : WEBHOOK_TIMEOUT_MS),
     });
     const content = (await response.text().catch(() => "")).slice(0, RESULT_MAX_CHARS);
     if (once && succeeded(response.ok, content)) state.completed.push(name);
@@ -175,7 +181,12 @@ export async function runChatTool(
   } catch (error) {
     console.error(`[chat-tools] ${name}:`, (error as Error).message);
     // A timeout may still have gone through, so a retry could repeat a one-shot action.
-    if (once) state.completed.push(name);
+    // Remember that on later turns, or the model is left guessing what happened.
+    if (once) {
+      state.completed.push(name);
+      const content = JSON.stringify({ outcome: "unknown", note: "No answer was received. It may or may not have worked." });
+      state.results = [...state.results, { name, content }].slice(-REMEMBERED_RESULTS);
+    }
     return {
       ok: false,
       error: once
