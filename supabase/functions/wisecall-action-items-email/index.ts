@@ -185,8 +185,11 @@ serve(async (req) => {
   }
 
   const collected = isPlainObject(logMeta.collected) ? logMeta.collected : {};
+  // The name given in this conversation beats the stored contact's: a contact
+  // matched by email or phone can carry an older, wrong name.
+  const conversationName = typeof collected.contact_name === "string" ? collected.contact_name.trim() : "";
   const callerName = callerNameFromSources({
-    callerName: bodyCallerName || contactName,
+    callerName: bodyCallerName || conversationName || contactName,
     analysisJson,
     summary,
     transcript,
@@ -197,9 +200,14 @@ serve(async (req) => {
     (typeof collected.company === "string" ? collected.company : "") ||
     (typeof collected.contact_company === "string" ? collected.contact_company : "");
   const company = details.company || (details.companyStatus ? "" : collectedCompany);
+  // Chats collect both; staff want both in the Contact row.
+  const collectedEmail = typeof collected.contact_email === "string" ? collected.contact_email.trim() : "";
+  const contactLine = collectedEmail && !callerId.toLowerCase().includes(collectedEmail.toLowerCase())
+    ? `${callerId === "Unknown" ? "" : `${callerId} · `}${collectedEmail}`
+    : callerId;
   const emailInput = {
     businessName,
-    callerId,
+    callerId: contactLine,
     callerName,
     company,
     companyStatus: details.companyStatus,

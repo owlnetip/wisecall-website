@@ -22,3 +22,10 @@ Deno.test("a later clear answer changes it; unrelated messages don't", () => {
   assertEquals(detectEnquiryType("07700 900123"), null);
   assertEquals(detectEnquiryType("I want to sell my house and buy another"), "seller");
 });
+
+Deno.test("viewings and offers are buyer enquiries", () => {
+  assertEquals(detectEnquiryType("I'd like to arrange a viewing"), "buyer");
+  assertEquals(detectEnquiryType("Can I view the house on Delhi Street?"), "buyer");
+  assertEquals(detectEnquiryType("I want to make an offer on Station Road"), "buyer");
+  assertEquals(detectEnquiryType("Can you give me a cash offer on my house?"), "seller");
+});

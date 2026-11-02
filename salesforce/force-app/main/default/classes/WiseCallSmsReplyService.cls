@@ -7,8 +7,11 @@
  *   2. The phone number: Person Account first, then an unconverted Lead.
  *   3. No match: email the fallback inbox (label WiseCall_SMS_Fallback_Email).
  *
- * A match gets a completed Task (Type SMS, Direction Inbound) owned by the
- * record owner, plus a WiseCall SMS reply bell notification to that owner.
+ * A match gets a completed Task (Type SMS, Direction Inbound) plus a WiseCall
+ * SMS reply bell notification, both for the person who last texted that
+ * customer (their latest outbound SMS Task), else the record owner. A Lead
+ * still sitting in a queue has no user owner, so without the sender the Task
+ * would land on the integration user and nobody would be told.
  * Runs as the WiseCall integration user, so it needs to see all records.
  */
 public without sharing class WiseCallSmsReplyService {
@@ -54,6 +57,8 @@ public without sharing class WiseCallSmsReplyService {
         outcome.matchType = target.matchType;
         outcome.recordId = target.recordId;
         String note = WiseCallSms.messageIdNote(reply.messageId);
+        Id sender = lastSmsSender(target.recordId);
+        if (sender != null) target.ownerId = sender;
         outcome.taskId = WiseCallSms.logTask(target.recordId, reply.content.trim(), 'Inbound', target.ownerId, note);
         outcome.notified = notifyOwner(target, reply);
         return outcome;
@@ -139,6 +144,32 @@ public without sharing class WiseCallSmsReplyService {
             if (value != null && normalise(String.valueOf(value)) == digits) return true;
         }
         return false;
+    }
+
+    /** Owner of the newest outbound SMS Task on this record in the last 30 days, if an active user other than us. */
+    @TestVisible
+    static Id lastSmsSender(Id recordId) {
+        Id whoId = WiseCallSms.whoIdFor(recordId);
+        Id integrationUser = UserInfo.getUserId();
+        String filter = whoId != null ? 'WhoId = :whoId' : 'WhatId = :recordId';
+        List<String> outbound = new List<String>{ 'Direction__c = \'Outbound\'', 'Subject LIKE \'SMS sent:%\'' };
+        for (String direction : outbound) {
+            try {
+                List<Task> tasks = Database.query(
+                    'SELECT OwnerId FROM Task WHERE ' + filter + ' AND Type = \'SMS\' AND ' + direction
+                    + ' AND CreatedDate = LAST_N_DAYS:30 AND OwnerId != :integrationUser'
+                    + ' ORDER BY CreatedDate DESC LIMIT 5'
+                );
+                Set<Id> owners = new Set<Id>();
+                for (Task t : tasks) if (String.valueOf(t.OwnerId).startsWith('005')) owners.add(t.OwnerId);
+                if (owners.isEmpty()) continue;
+                Map<Id, User> active = new Map<Id, User>([SELECT Id FROM User WHERE Id IN :owners AND IsActive = true]);
+                for (Task t : tasks) if (active.containsKey(t.OwnerId)) return t.OwnerId;
+            } catch (QueryException e) {
+                // Direction__c missing in this org: try the subject convention instead.
+            }
+        }
+        return null;
     }
 
     private static Target target(Id recordId, Id ownerId, String matchType) {

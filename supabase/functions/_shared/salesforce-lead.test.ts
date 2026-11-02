@@ -17,6 +17,7 @@ const CFG: SalesforceLeadConfig = {
   leadSource: "Website Chat",
   company: null,
   recordTypeId: null,
+  recordTypes: {},
   brand: null,
 };
 
@@ -153,6 +154,25 @@ Deno.test("existing Contact gets a completed Task owned by the record owner, no 
   assert(!calls.some((c) => c.path.startsWith("/sobjects/Lead")));
 });
 
+Deno.test("a Task the integration user cannot edit is replaced by one it owns, then updated in place", async () => {
+  const denied = [{ errorCode: "INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY", message: "insufficient access rights on object id", fields: [] }];
+  const { calls, client } = fakeSalesforce({
+    "PATCH /sobjects/Task/00TT": () => ({ status: 400, body: denied }),
+    "POST /sobjects/Task": () => ({ status: 201, body: { id: "00TN" } }),
+  });
+  const log = chatLog({
+    salesforce_lead: { status: "task_logged", object: "Task", record_id: "00TT", who_id: "003C", who_object: "Contact", transcript_length: 5, at: "x" },
+  });
+  const state = await syncChatToSalesforce(client, CFG, log);
+  assertEquals(state?.record_id, "00TN");
+  assertEquals(state?.status, "task_logged");
+  assertEquals(state?.error, undefined);
+  const created = calls.find((c) => c.method === "POST" && c.path === "/sobjects/Task")!;
+  assertEquals(created.body.WhoId, "003C");
+  assertEquals(created.body.OwnerId, undefined);
+  assert(created.body.Description.includes("I want to sell my house"));
+});
+
 Deno.test("phone-only match requires the exact number, not SOSL's fuzzy hit", async () => {
   const { calls, client } = fakeSalesforce({
     "GET /search": () => ({
@@ -221,6 +241,7 @@ Deno.test("no email or phone means nothing is sent", async () => {
 const BRANDED: SalesforceLeadConfig = {
   ...CFG,
   recordTypeId: "012Q1000000AbCdIAK",
+  recordTypes: {},
   brand: { field: "Brand__c", sites: { "bettermove.co.uk": "Bettermove", "second.co.uk": "Second Brand" } },
 };
 
@@ -285,4 +306,27 @@ Deno.test("unknown site sets no brand; a rejected brand or record type is droppe
   const last = calls.filter((c) => c.method === "POST").at(-1)!;
   assertEquals(last.body.Brand__c, undefined);
   assertEquals(last.body.RecordTypeId, undefined);
+});
+
+Deno.test("a new Lead gets the record type for the chat's enquiry type, looked up by name", async () => {
+  const cfg = { ...CFG, instanceUrl: "https://rt-test.my.salesforce.com", recordTypes: { seller: "Vendor", buyer: "Buyer" } };
+  const { calls, client } = fakeSalesforce({
+    "GET /query?q=SELECT Id FROM RecordType": () => ({ body: { records: [{ Id: "012BUYER000000AAA" }] } }),
+    "POST /sobjects/Lead": () => ({ status: 201, body: { id: "00QB" } }),
+  });
+  await syncChatToSalesforce(client, cfg, chatLog({}, { enquiry_type: "viewing" }));
+  const lead = calls.find((c) => c.method === "POST" && c.path === "/sobjects/Lead")!;
+  assertEquals(lead.body.RecordTypeId, "012BUYER000000AAA");
+  assert(calls.some((c) => c.path.includes("DeveloperName = 'Buyer'")));
+});
+
+Deno.test("no mapping for the enquiry type falls back to record_type_id", async () => {
+  const cfg = { ...CFG, recordTypeId: "012DEFAULT00000AAA", recordTypes: { buyer: "Buyer" } };
+  const { calls, client } = fakeSalesforce({
+    "POST /sobjects/Lead": () => ({ status: 201, body: { id: "00QD" } }),
+  });
+  await syncChatToSalesforce(client, cfg, chatLog({}, { enquiry_type: "general" }));
+  const lead = calls.find((c) => c.method === "POST" && c.path === "/sobjects/Lead")!;
+  assertEquals(lead.body.RecordTypeId, "012DEFAULT00000AAA");
+  assert(!calls.some((c) => c.path.includes("RecordType")));
 });

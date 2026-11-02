@@ -30,7 +30,7 @@ Deno.test("a later real name still wins after a sentence", () => {
   assertEquals(extractChatName("I'm hoping to sell. I'm Dave Brown"), "Dave Brown");
 });
 
-import { agentAskedForName, bareNameReply } from "./chat-contact-name.ts";
+import { agentAskedForContact, agentAskedForName, bareNameReply } from "./chat-contact-name.ts";
 
 Deno.test("a bare reply to a name question is the name", () => {
   assertEquals(agentAskedForName("Thanks for letting me know. What's your name, please?"), true);
@@ -58,4 +58,13 @@ Deno.test("a name sent together with an email or phone is captured", () => {
   assertEquals(nameAlongsideContact("call me on 07700900461"), undefined);
   assertEquals(nameAlongsideContact("Email me at a@b.com"), undefined);
   assertEquals(nameAlongsideContact("yes 07700900461"), undefined);
+});
+
+Deno.test("a reply that carries on the visitor's sentence is not a name", () => {
+  assertEquals(bareNameReply("Flat quickly"), undefined);
+  assertEquals(bareNameReply("my house asap"), undefined);
+  assertEquals(bareNameReply("gmail"), undefined);
+  assertEquals(bareNameReply("Sophia"), "Sophia");
+  assertEquals(agentAskedForContact("Thanks, Flat. What's the best email address for you?"), true);
+  assertEquals(agentAskedForContact("What's the address of the property?"), false);
 });

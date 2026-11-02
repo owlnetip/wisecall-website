@@ -56,6 +56,15 @@ export function extractChatName(text: string): string | undefined {
   return undefined;
 }
 
+// Words that mean the reply is the visitor carrying on their own sentence
+// ("I want to sell" → "Flat quickly"), or an email provider, not a name.
+const NOT_NAME_WORDS = new Set([
+  "flat", "flats", "house", "houses", "home", "property", "bungalow", "maisonette", "apartment", "cottage",
+  "quick", "quickly", "asap", "fast", "soon", "urgent", "urgently", "today", "tomorrow", "now", "sale",
+  "cash", "offer", "viewing", "valuation", "tenants", "tenanted", "mortgage", "probate", "rent", "let",
+  "gmail", "hotmail", "outlook", "yahoo", "icloud", "none", "nothing", "dont", "don't", "rather", "skip",
+]);
+
 /**
  * The visitor's reply straight after the agent asked for their name
  * ("What's your name?" → "Sam Route"). Only accepts 1-3 name-like words.
@@ -67,7 +76,13 @@ export function bareNameReply(message: string): string | undefined {
   const first = words[0].toLowerCase();
   if (NOT_NAME_START.has(first) || STOP_WORDS.has(first)) return undefined;
   if (/^(yes|yeah|yep|no|nope|ok|okay|thanks|thank|hi|hello|hey|sure|fine|selling|buying|sell|buy|general)$/i.test(text)) return undefined;
+  if (words.some((w) => NOT_NAME_WORDS.has(w.toLowerCase()))) return undefined;
   return words.map(titleCase).join(" ");
+}
+
+/** The agent's last turn asked for an email address or phone number. */
+export function agentAskedForContact(lastAgentMessage: string): boolean {
+  return /\b(email( address)?|phone number|mobile number|number to reach)\b/i.test(String(lastAgentMessage || ""));
 }
 
 export function agentAskedForName(lastAgentMessage: string): boolean {

@@ -124,6 +124,27 @@ private class WiseCallSmsTest {
     }
 
     @IsTest
+    static void replyGoesToWhoeverLastTextedTheCustomer() {
+        Lead lead = newLead('07700900471');
+        Profile standard = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+        String suffix = String.valueOf(Crypto.getRandomInteger()).replace('-', '');
+        User sender = new User(
+            ProfileId = standard.Id, LastName = 'Sender', Alias = 'wcsend', Email = 'sender' + suffix + '@example.com',
+            Username = 'wisecall.sender.' + suffix + '@example.com', TimeZoneSidKey = 'Europe/London',
+            LocaleSidKey = 'en_GB', EmailEncodingKey = 'UTF-8', LanguageLocaleKey = 'en_US'
+        );
+        insert sender;
+        WiseCallSms.logTask(lead.Id, 'Hi, we can secure a sale', 'Outbound', sender.Id);
+
+        WiseCallSmsReplyService.Reply reply = new WiseCallSmsReplyService.Reply();
+        reply.phone = '07700900471';
+        reply.content = 'Please call me';
+        reply.recordId = lead.Id;
+        WiseCallSmsReplyService.Outcome outcome = WiseCallSmsReplyService.handle(reply);
+        System.assertEquals(sender.Id, [SELECT OwnerId FROM Task WHERE Id = :outcome.taskId].OwnerId);
+    }
+
+    @IsTest
     static void replyForConvertedLeadFollowsTheConvertedAccount() {
         Lead lead = newLead('07700900467');
         Database.LeadConvert convert = new Database.LeadConvert();

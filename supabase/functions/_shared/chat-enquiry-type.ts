@@ -13,7 +13,7 @@ const STRONG: Array<[EnquiryType, RegExp]> = [
 
 const WEAK: Array<[EnquiryType, RegExp]> = [
   ["seller", /\b(valuation|value (of )?my|cash offer|quick sale|probate|reposs|downsiz|my (house|home|property|flat|bungalow))\b/],
-  ["buyer", /\b(looking for a (house|home|property|flat)|properties (for sale|available)|available properties|portfolio|rental yield)\b/],
+  ["buyer", /\b(looking for a (house|home|property|flat)|properties (for sale|available)|available properties|portfolio|rental yield|viewings?|view (the|this|that|a) (house|home|property|flat|bungalow)|book a view|make an offer|put in an offer|offer on|my offer)\b/],
 ];
 
 function firstMatch(text: string, rules: Array<[EnquiryType, RegExp]>): EnquiryType | null {
