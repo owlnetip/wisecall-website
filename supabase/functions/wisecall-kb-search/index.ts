@@ -26,10 +26,8 @@ const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
 type KbMatch = { content: string; title: string | null; similarity: number };
-type KbCandidate = { content: string | null; title: string | null; embedding: unknown };
 
-const FALLBACK_LIMIT = 750;
-const FALLBACK_MIN_SIMILARITY = 0.35;
+const MIN_SIMILARITY = 0.35;
 
 // Must match kb-ingest. The Jina key is gone from the project, so kb-ingest has
 // embedded with OpenAI text-embedding-3-small (1024 dims) since Sep 2026, and
@@ -57,33 +55,6 @@ function formatPgVector(embedding: number[]): string {
   return `[${embedding.map((x) => x.toFixed(12).replace(/\.?0+$/, "") || "0").join(",")}]`;
 }
 
-function parsePgVector(value: unknown): number[] {
-  if (Array.isArray(value)) {
-    return value.map((x) => Number(x));
-  }
-  if (typeof value !== "string") return [];
-  const raw = value.trim().replace(/^\[|\]$/g, "");
-  if (!raw) return [];
-  return raw.split(",").map((x) => Number(x));
-}
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (!a.length || a.length !== b.length) return Number.NEGATIVE_INFINITY;
-  let dot = 0;
-  let aNorm = 0;
-  let bNorm = 0;
-  for (let i = 0; i < a.length; i++) {
-    const av = a[i];
-    const bv = b[i];
-    if (!Number.isFinite(av) || !Number.isFinite(bv)) return Number.NEGATIVE_INFINITY;
-    dot += av * bv;
-    aNorm += av * av;
-    bNorm += bv * bv;
-  }
-  if (!aNorm || !bNorm) return Number.NEGATIVE_INFINITY;
-  return dot / (Math.sqrt(aNorm) * Math.sqrt(bNorm));
-}
-
 async function rpcMatchKnowledgeBase(
   supabaseUrl: string,
   svcKey: string,
@@ -91,7 +62,7 @@ async function rpcMatchKnowledgeBase(
   profileId: string,
   matchCount: number,
 ): Promise<KbMatch[] | null> {
-  const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/wisecall_kb_match`, {
+  const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/wisecall_kb_match_scoped`, {
     method: "POST",
     headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -105,36 +76,6 @@ async function rpcMatchKnowledgeBase(
     return null;
   }
   return (await rpcRes.json()) as KbMatch[];
-}
-
-async function fallbackMatchKnowledgeBase(
-  supabaseUrl: string,
-  svcKey: string,
-  embedding: number[],
-  profileId: string,
-  matchCount: number,
-): Promise<KbMatch[]> {
-  const url =
-    `${supabaseUrl}/rest/v1/knowledge_base` +
-    `?select=content,title,embedding&bot_ids=cs.{${profileId}}&limit=${FALLBACK_LIMIT}`;
-  const res = await fetch(url, {
-    headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` },
-  });
-  if (!res.ok) {
-    console.error("[wisecall-kb-search] fallback:", res.status, (await res.text()).slice(0, 200));
-    return [];
-  }
-
-  const rows = (await res.json()) as KbCandidate[];
-  return rows
-    .map((row) => ({
-      content: row.content || "",
-      title: row.title,
-      similarity: cosineSimilarity(embedding, parsePgVector(row.embedding)),
-    }))
-    .filter((row) => row.content && row.similarity >= FALLBACK_MIN_SIMILARITY)
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, matchCount);
 }
 
 Deno.serve(async (req: Request) => {
@@ -167,14 +108,11 @@ Deno.serve(async (req: Request) => {
   const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !svcKey) return json({ ok: false, error: "Supabase not configured" }, 500);
 
-  // Use the database RPC as the fast path. If it returns no rows, fall back to
-  // bounded in-function ranking because the deployed RPC currently filters out
-  // valid Jina query matches with a too-high similarity threshold.
+  // Filters by agent first, so an empty result really means no match. On an error
+  // or timeout, answer without KB context rather than hold up the caller.
   const data =
     (await rpcMatchKnowledgeBase(supabaseUrl, svcKey, embedding, profileId, matchCount)) ?? [];
-  const matches = data.length
-    ? data
-    : await fallbackMatchKnowledgeBase(supabaseUrl, svcKey, embedding, profileId, matchCount);
+  const matches = data.filter((row) => row.similarity >= MIN_SIMILARITY);
 
   let chunks = (matches ?? []).map((r) => ({
     content: r.content,
