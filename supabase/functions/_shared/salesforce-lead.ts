@@ -350,12 +350,39 @@ export async function findExistingRecord(
   return leads.find((m) => m.ours) ?? contacts[0] ?? leads[0] ?? null;
 }
 
+const UK_POSTCODE = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i;
+// Optional org fields: if the run-as user can't write one, drop it rather than lose the Lead.
+const OPTIONAL_LEAD_FIELDS = ["Street", "PostalCode", "General_Notes__c"];
+
+// Staff work from the standard Street/PostalCode fields (the "Selling Address" block).
+export function addressFields(value: unknown): Record<string, string> {
+  const address = String(value || "").replace(/\s+/g, " ").trim();
+  if (!address) return {};
+  const postcode = address.match(UK_POSTCODE)?.[0];
+  const street = (postcode ? address.replace(postcode, "") : address).replace(/[\s,]+$/, "").trim();
+  const out: Record<string, string> = {};
+  if (street) out.Street = street.slice(0, 255);
+  if (postcode) out.PostalCode = postcode.toUpperCase().replace(/\s+/g, " ").replace(/^(\S+?)(\d[A-Z]{2})$/, "$1 $2").slice(0, 20);
+  return out;
+}
+
+function generalNotes(collected: Record<string, unknown>): string {
+  const lines = [
+    collected.enquiry_type ? `Enquiry type: ${collected.enquiry_type}` : "",
+    collected.property_address ? `Property: ${String(collected.property_address).trim()}` : "",
+  ].filter(Boolean);
+  return lines.length ? `Website chat. ${lines.join(". ")}. Full transcript in Description.`.slice(0, 2000) : "";
+}
+
 function leadFields(cfg: SalesforceLeadConfig, collected: Record<string, unknown>, description: string) {
   const { firstName, lastName } = splitName(collected.contact_name);
   const fields: Record<string, unknown> = { LastName: lastName, Description: description };
   if (firstName) fields.FirstName = firstName;
   if (collected.contact_email) fields.Email = String(collected.contact_email).trim().slice(0, 80);
   if (collected.contact_phone) fields.Phone = String(collected.contact_phone).trim().slice(0, 40);
+  Object.assign(fields, addressFields(collected.property_address));
+  const notes = generalNotes(collected);
+  if (notes) fields.General_Notes__c = notes;
   return fields;
 }
 
@@ -436,7 +463,7 @@ async function createLead(
       }
       // A bad Brand value or record type must not lose the lead: drop it and let
       // the org's default apply.
-      const badExtra = Object.keys(extra).find(
+      const badExtra = [...Object.keys(extra), ...OPTIONAL_LEAD_FIELDS].find(
         (name) => name in body && (codes.some((e) => e.fields.includes(name)) || err.message.includes(name)),
       );
       if (badExtra) {

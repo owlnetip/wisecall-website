@@ -30,7 +30,7 @@ Deno.test("a later real name still wins after a sentence", () => {
   assertEquals(extractChatName("I'm hoping to sell. I'm Dave Brown"), "Dave Brown");
 });
 
-import { agentAskedForContact, agentAskedForName, bareNameReply } from "./chat-contact-name.ts";
+import { agentAskedForContact, agentAskedForName, bareNameReply, extractPhone } from "./chat-contact-name.ts";
 
 Deno.test("a bare reply to a name question is the name", () => {
   assertEquals(agentAskedForName("Thanks for letting me know. What's your name, please?"), true);
@@ -67,4 +67,17 @@ Deno.test("a reply that carries on the visitor's sentence is not a name", () => 
   assertEquals(bareNameReply("Sophia"), "Sophia");
   assertEquals(agentAskedForContact("Thanks, Flat. What's the best email address for you?"), true);
   assertEquals(agentAskedForContact("What's the address of the property?"), false);
+});
+
+Deno.test("international numbers keep their country code", () => {
+  assertEquals(extractPhone("+905458394279"), "+905458394279");
+  assertEquals(extractPhone("my number is +90 545 839 4279"), "+905458394279");
+  assertEquals(extractPhone("0090 545 839 4279"), "00905458394279");
+  assertEquals(extractPhone("07700 900123"), "07700900123");
+  assertEquals(extractPhone("+44 7700 900123"), "+447700900123");
+});
+
+Deno.test("names with non-ASCII letters are captured", () => {
+  assertEquals(bareNameReply("alı"), "Ali");
+  assertEquals(bareNameReply("Zoë Müller"), "Zoë Müller");
 });
