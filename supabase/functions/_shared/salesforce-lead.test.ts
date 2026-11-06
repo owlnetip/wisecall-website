@@ -1,5 +1,6 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  addressFields,
   brandForPageUrl,
   normalisePhone,
   SalesforceClient,
@@ -329,4 +330,11 @@ Deno.test("no mapping for the enquiry type falls back to record_type_id", async 
   const lead = calls.find((c) => c.method === "POST" && c.path === "/sobjects/Lead")!;
   assertEquals(lead.body.RecordTypeId, "012DEFAULT00000AAA");
   assert(!calls.some((c) => c.path.includes("RecordType")));
+});
+
+Deno.test("addressFields splits the postcode out for the Selling Address block", () => {
+  assertEquals(addressFields("95 NINE ELMS LANE wv10 9AN"), { Street: "95 NINE ELMS LANE", PostalCode: "WV10 9AN" });
+  assertEquals(addressFields("28 Arksey Terrace, Leeds, LS12 2NQ"), { Street: "28 Arksey Terrace, Leeds", PostalCode: "LS12 2NQ" });
+  assertEquals(addressFields("somewhere in Leeds"), { Street: "somewhere in Leeds" });
+  assertEquals(addressFields(""), {});
 });

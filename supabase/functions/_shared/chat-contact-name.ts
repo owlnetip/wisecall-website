@@ -32,7 +32,7 @@ function candidateWords(raw: string): string[] {
 // Keep the visitor's own capitalisation (McTestface); only fix all-lower-case input.
 function titleCase(word: string): string {
   if (word !== word.toLowerCase()) return word;
-  return word.replace(/(^|[-'])([a-z])/g, (_m, sep, ch) => sep + ch.toUpperCase());
+  return word.replace(/(^|[-'])(\p{Ll})/gu, (_m, sep, ch) => sep + ch.toUpperCase());
 }
 
 export function extractChatName(text: string): string | undefined {
@@ -71,13 +71,14 @@ const NOT_NAME_WORDS = new Set([
  */
 export function bareNameReply(message: string): string | undefined {
   const text = String(message || "").trim().replace(/[.!]+$/, "");
-  if (!/^[A-Za-z][A-Za-z'-]*(?:\s+[A-Za-z][A-Za-z'-]*){0,2}$/.test(text)) return undefined;
+  if (!/^\p{L}[\p{L}'-]*(?:\s+\p{L}[\p{L}'-]*){0,2}$/u.test(text)) return undefined;
   const words = text.split(/\s+/);
   const first = words[0].toLowerCase();
   if (NOT_NAME_START.has(first) || STOP_WORDS.has(first)) return undefined;
   if (/^(yes|yeah|yep|no|nope|ok|okay|thanks|thank|hi|hello|hey|sure|fine|selling|buying|sell|buy|general)$/i.test(text)) return undefined;
   if (words.some((w) => NOT_NAME_WORDS.has(w.toLowerCase()))) return undefined;
-  return words.map(titleCase).join(" ");
+  // Turkish keyboards type a dotless "ı" for "i" ("alı"); store it the way staff would read it.
+  return words.map((w) => titleCase(w.replace(/ı/g, "i"))).join(" ");
 }
 
 /** The agent's last turn asked for an email address or phone number. */
@@ -102,7 +103,8 @@ export function extractEmail(text: string): string | undefined {
   return spaced ? spaced.replace(/\s+/g, "") : undefined;
 }
 
-const PHONE = /(?:\+44|0)\s?[\d\s().-]{9,}/;
+// UK (0…) or international (+90…, 0090…) numbers; matching only "0…" would clip "+905…" to a bogus UK-looking "05…".
+const PHONE = /(?:\+\d{1,3}|00\d{1,3}|0)\s?[\d\s().-]{9,}/;
 
 export function extractPhone(text: string): string | undefined {
   const raw = String(text || "").match(PHONE)?.[0];
